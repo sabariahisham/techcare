@@ -73,6 +73,15 @@ This template includes Laravel Jetstream authentication and provides:
 - Laravel Jetstream: [Jetstream Documentation](https://jetstream.laravel.com/introduction.html)
 - Sneat Template: [Sneat Documentation](https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/laravel-introduction.html)
 
+## Possible Enhancements
+
+1. **Migration already uses UUIDs**
+   - Ensure that controllers refer to UUIDs instead of numeric IDs where applicable.
+
+2. **Implement Thin Controller, Fat Service**
+   - This approach promotes cleaner, more maintainable code by keeping controllers focused on handling HTTP requests while delegating business logic to service classes.
+   - Benefits include improved testability, reusability, and separation of concerns.
+
 ---
 
 Enjoy building with Laravel! 🚀
