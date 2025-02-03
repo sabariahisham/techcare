@@ -1,0 +1,50 @@
+{
+  "menu": [
+    {
+      "url": "home",
+      "icon": "menu-icon tf-icons bx bx-home-smile",
+      "name": "Dashboard",
+      "slug": "index"
+    },
+    {
+      "url": "user-management/index",
+      "icon": "menu-icon tf-icons bx bx-user",
+      "name": "User Management",
+      "slug": "user-management-index"
+    },
+    {
+      "name": "Access Control List",
+      "icon": "menu-icon tf-icons bx bx-check-shield",
+      "slug": "acl",
+      "submenu": [
+        {
+          "url": "acl/roles/index",
+          "name": "Roles",
+          "slug": "acl-roles-index"
+        },
+        {
+          "url": "acl/module-list/index",
+          "name": "Module",
+          "slug": "acl-module-list-index"
+        }
+      ]
+    },
+    {
+      "menuHeader": "Misc"
+    },
+    {
+      "url": "https://themeselection.com/support/",
+      "icon": "menu-icon tf-icons bx bx-support",
+      "name": "Support",
+      "slug": "support",
+      "target": "_blank"
+    },
+    {
+      "url": "https://themeselection.com/demo/sneat-bootstrap-html-admin-template/documentation/laravel-introduction.html",
+      "icon": "menu-icon tf-icons bx bx-file",
+      "name": "Documentation",
+      "slug": "documentation",
+      "target": "_blank"
+    }
+  ]
+}
