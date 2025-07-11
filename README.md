@@ -1,7 +1,7 @@
-# Laravel 11 Project
+# Laravel 12 Project
 
 ## Introduction
-This project is built using Laravel 11. Please ensure that your environment is properly set up for Laravel 11. To use Laravel 12, checkout/clone branch laravel-12-upgrade
+This project is built using Laravel 12. Please ensure that your environment is properly set up for Laravel 12.
 
 ## Installation Steps
 
