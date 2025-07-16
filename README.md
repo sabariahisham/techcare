@@ -79,6 +79,12 @@ This template comes with Laravel Jetstream authentication and includes the follo
 5. Multi-Factor Authentication (MFA) (can be enabled/disabled in the user profile)
 6. Basic CRUD for user management
 7. Role and permission management using Spatie
+8. Comprehensive Password Policy
+9. Advanced User Management & Access Review
+10. Comprehensive Audit Trail & Activity Log
+11. Session Management & Clear Screen Policy
+12. Data Encryption & Masking
+13. Secure File Upload Scanning
 
 ## Documentation
 - [Laravel Jetstream Documentation](https://jetstream.laravel.com/introduction.html)
