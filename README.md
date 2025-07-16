@@ -75,16 +75,16 @@ This template comes with Laravel Jetstream authentication and includes the follo
 1. **User Registration:** Standard process for new users to create an account.
 2. **Email Verification:** Ensures every user account is tied to a valid and confirmed email address.
 3. **User Login:** Secure mechanism for registered users to access the system.
-4. User Logout: Allows users to safely terminate their application session.
-5. Multi-Factor Authentication (MFA): An optional extra security layer that users can enable in their profile, requiring a second verification step (e.g., from an authenticator app).
-6. Basic CRUD for user management: An admin interface to Create, Read, Update, and Delete user records.
-7. Role and permission management using Spatie: A powerful system to define user roles (e.g., 'Admin', 'Supervisor') and assign specific permissions, enforcing the Principle of Least Privilege.
-8. Comprehensive Password Policy: Enforces strong password rules: minimum length, complexity (uppercase, lowercase, numbers, symbols), password history, and expiry.
-9. Advanced User Management & Access Review: Includes features for admins to conduct periodic reviews of user access rights and manage the account lifecycle (e.g., deactivate inactive users).
-10. Comprehensive Audit Trail & Activity Log: Logs all critical actions (logins, data changes, failed attempts) for monitoring and forensic analysis.
-11. Session Management & Clear Screen Policy: Automatically logs out users after a period of inactivity to prevent unauthorized access to unattended sessions.
-12. Data Encryption & Masking: Provides helpers and methods to encrypt sensitive data (like IC numbers) in the database and mask it when displayed on screen.
-13. Secure File Upload Scanning: Automatically scans all user-uploaded files for malware and viruses to protect the server and other users.
+4. **User Logout:** Allows users to safely terminate their application session.
+5. **Multi-Factor Authentication (MFA):** An optional extra security layer that users can enable in their profile, requiring a second verification step (e.g., from an authenticator app).
+6. **Basic CRUD for user management:** An admin interface to Create, Read, Update, and Delete user records.
+7. **Role and permission management using Spatie:** A powerful system to define user roles (e.g., 'Admin', 'Supervisor') and assign specific permissions, enforcing the Principle of Least Privilege.
+8. **Comprehensive Password Policy:** Enforces strong password rules: minimum length, complexity (uppercase, lowercase, numbers, symbols), password history, and expiry.
+9. **Advanced User Management & Access Review: **Includes features for admins to conduct periodic reviews of user access rights and manage the account lifecycle (e.g., deactivate inactive users).
+10. **Comprehensive Audit Trail & Activity Log:** Logs all critical actions (logins, data changes, failed attempts) for monitoring and forensic analysis.
+11. **Session Management & Clear Screen Policy:** Automatically logs out users after a period of inactivity to prevent unauthorized access to unattended sessions.
+12. **Data Encryption & Masking:** Provides helpers and methods to encrypt sensitive data (like IC numbers) in the database and mask it when displayed on screen.
+13. **Secure File Upload Scanning:** Automatically scans all user-uploaded files for malware and viruses to protect the server and other users.
 
 ## Documentation
 - [Laravel Jetstream Documentation](https://jetstream.laravel.com/introduction.html)
