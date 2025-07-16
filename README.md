@@ -80,7 +80,7 @@ This template comes with Laravel Jetstream authentication and includes the follo
 6. **Basic CRUD for user management:** An admin interface to Create, Read, Update, and Delete user records.
 7. **Role and permission management using Spatie:** A powerful system to define user roles (e.g., 'Admin', 'Supervisor') and assign specific permissions, enforcing the Principle of Least Privilege.
 8. **Comprehensive Password Policy:** Enforces strong password rules: minimum length, complexity (uppercase, lowercase, numbers, symbols), password history, and expiry.
-9. **Advanced User Management & Access Review: **Includes features for admins to conduct periodic reviews of user access rights and manage the account lifecycle (e.g., deactivate inactive users).
+9. **Advanced User Management & Access Review:** Includes features for admins to conduct periodic reviews of user access rights and manage the account lifecycle (e.g., deactivate inactive users).
 10. **Comprehensive Audit Trail & Activity Log:** Logs all critical actions (logins, data changes, failed attempts) for monitoring and forensic analysis.
 11. **Session Management & Clear Screen Policy:** Automatically logs out users after a period of inactivity to prevent unauthorized access to unattended sessions.
 12. **Data Encryption & Masking:** Provides helpers and methods to encrypt sensitive data (like IC numbers) in the database and mask it when displayed on screen.
