@@ -104,6 +104,8 @@ Schema::table('users', function (Blueprint $table) {
     $table->boolean('is_active')->default(true);
 });
 
+test
+
 ## Documentation
 - [Laravel Jetstream Documentation](https://jetstream.laravel.com/introduction.html)
 - [Sneat Template Documentation](https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/laravel-introduction.html)
