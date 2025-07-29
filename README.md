@@ -159,6 +159,38 @@ This section outlines the logic and flow for forcing users to change their passw
     4.  If valid, the new password is saved, and critically, the `password_changed_at` timestamp for that user is updated to the current time.
     5.  The user is then redirected to the application's main dashboard, and the expiry "timer" is now reset.
 
+### Implementing Password History Policy
+
+This section details the logic for preventing users from reusing their recent passwords (e.g., their last 5 passwords). This check is integrated directly into the password update process.
+
+**1. Data Foundation: Storing Old Passwords Securely**
+
+* **Logic:** The system needs a dedicated, secure place to store a user's previously used passwords.
+* **Flow:**
+    * A new database table is created, for example, `password_histories`.
+    * This table will have columns like `user_id` (to link to the user) and `password`.
+    * **Crucial Security Note:** Passwords in this history table **must be stored as a hash**, using the same secure hashing algorithm as the primary password. **Never store old passwords in plain text.**
+
+**2. The Validation Gate: Checking Against History**
+
+* **Logic:** Before accepting a new password from a user, the system must check it against their recent password history.
+* **Flow:** This logic is added as a custom validation rule during any password change event (forced expiry or voluntary change).
+    1.  When a user submits a new password, the validation process begins.
+    2.  The system retrieves the user's most recent 'N' (e.g., 5) hashed passwords from the `password_histories` table.
+    3.  The system takes the **newly submitted password** and hashes it.
+    4.  It then compares this new hash against the list of historical hashes.
+    5.  **Decision Point:**
+        * **If a match is found**, the validation fails. An error message is returned to the user (e.g., "You cannot reuse one of your last 5 passwords."). The password is not changed.
+        * **If no match is found**, the validation for this rule passes, and the system can proceed to the next step.
+
+**3. The Update Process: Recording and Housekeeping**
+
+* **Logic:** Once a new, valid password is confirmed, it must be saved as the current password, and also added to the history. The history log should also be kept tidy.
+* **Flow:**
+    1.  **Save Current Password:** The system updates the `password` field in the main `users` table with the new hashed password. It also updates the `password_changed_at` timestamp as per the expiry policy.
+    2.  **Record in History:** Immediately after, a new entry is created in the `password_histories` table containing the `user_id` and the new hashed password.
+    3.  **Cleanup (Optional but Recommended):** To prevent the history table from growing indefinitely, a cleanup task runs. It checks if the user now has more than 'N' passwords in their history. If so, it deletes the oldest record, ensuring only the most recent 'N' passwords are retained for future checks.
+    
 ## Documentation
 - [Laravel Jetstream Documentation](https://jetstream.laravel.com/introduction.html)
 - [Sneat Template Documentation](https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/laravel-introduction.html)
