@@ -103,6 +103,7 @@ Schema::table('users', function (Blueprint $table) {
     $table->timestamp('last_login_at')->nullable();
     $table->boolean('is_active')->default(true);
 });
+```
 
 test
 
