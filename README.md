@@ -122,6 +122,43 @@ This section outlines the conceptual flow for automatically deactivating user ac
 * **Logic:** An inactive status must effectively prevent a user from accessing the system.
 * **Flow:** The core login function of the application is modified. Before attempting to validate a user's password, it performs a preliminary check on the user's `is_active` status. If the status is `false`, the login process is immediately halted, and the user is denied access, typically with a message indicating their account is inactive.
 
+### Implementing a Password Expiry Policy
+
+This section outlines the logic and flow for forcing users to change their password after a specific period (e.g., 90 days). The core of this implementation relies on a custom middleware to act as a gatekeeper.
+
+**1. Data Foundation: Tracking Password Age**
+
+* **Logic:** The system needs to know when a user last changed their password to calculate its age.
+* **Flow:** The `users` table in the database is modified to include a new timestamp column: `password_changed_at`.
+    * This field is populated with the current date and time whenever a user successfully sets or resets their password.
+    * For new user registrations, this field is also set to the registration time.
+
+**2. The Gatekeeper: `CheckPasswordExpiry` Middleware**
+
+* **Logic:** A middleware is created to intercept user requests after they log in but before they access protected pages. It checks if the user's password has expired and takes action if it has.
+* **Flow:**
+    1.  **Creation:** A new middleware is created (e.g., `CheckPasswordExpiryMiddleware`).
+    2.  **Registration:** This middleware is applied to all web routes that require an authenticated user (e.g., dashboard, settings, etc.). It should **not** be applied to the login/logout routes or the password reset page itself to avoid infinite redirect loops.
+    3.  **Execution:** After a user logs in, for every subsequent request to a protected page, this middleware runs.
+    4.  **Verification:** Inside the middleware, it retrieves the logged-in user's `password_changed_at` date. It then calculates if the duration since that date has exceeded the policy limit (e.g., 90 days).
+
+**3. The Logic Branch: Handling an Expired Password**
+
+* **Logic:** The middleware must decide what to do based on the password's age.
+* **Flow:**
+    * **IF Password is OK (Not Expired):** The middleware does nothing and allows the user's request to proceed to the intended page (e.g., `/dashboard`).
+    * **IF Password HAS EXPIRED:** The middleware intercepts the request. It redirects the user to a dedicated "password reset" page. A message is often included to inform the user why they were redirected (e.g., "Your password has expired and must be changed.").
+
+**4. The Forced Reset Page**
+
+* **Logic:** A secure page where the user can only set a new password and cannot navigate elsewhere.
+* **Flow:**
+    1.  The user is "trapped" on this page after being redirected by the middleware.
+    2.  The page provides a form to enter and confirm a new password.
+    3.  Upon submission, the system validates the new password against any rules (e.g., complexity, not same as old password).
+    4.  If valid, the new password is saved, and critically, the `password_changed_at` timestamp for that user is updated to the current time.
+    5.  The user is then redirected to the application's main dashboard, and the expiry "timer" is now reset.
+
 ## Documentation
 - [Laravel Jetstream Documentation](https://jetstream.laravel.com/introduction.html)
 - [Sneat Template Documentation](https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/laravel-introduction.html)
