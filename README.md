@@ -86,7 +86,7 @@ This template comes with Laravel Jetstream authentication and includes the follo
 12. **Data Encryption & Masking:** Provides helpers and methods to encrypt sensitive data (like IC numbers) in the database and mask it when displayed on screen.
 13. **Secure File Upload Scanning:** Automatically scans all user-uploaded files for malware and viruses to protect the server and other users.
 
-### **How-to**
+## **How-to**
 
 #### Implementing Automated User Deactivation
 
