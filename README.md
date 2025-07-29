@@ -87,7 +87,7 @@ This template comes with Laravel Jetstream authentication and includes the follo
 13. **Secure File Upload Scanning:** Automatically scans all user-uploaded files for malware and viruses to protect the server and other users.
 
 ## **How-to**
-<u>**Implementing Automated User Deactivation**</u>
+**Implementing Automated User Deactivation**
 
 Here is a conceptual guide on how to implement the automated user deactivation feature. This approach focuses on tracking user activity to automatically disable accounts that have been dormant for a security-enhancing period.
 
@@ -104,6 +104,28 @@ Schema::table('users', function (Blueprint $table) {
     $table->boolean('is_active')->default(true);
 });
 ```
+last_login_at: Stores the timestamp of the user's last successful login.
+
+is_active: A boolean to easily enable or disable a user account. Inactive users will be prevented from logging in.
+
+**Step 2: Track User Activity**
+
+To automatically update the last_login_at field, create an event listener that hooks into Laravel's built-in Login event.
+
+Create a listener (e.g., UpdateLastLoginAt).
+
+In the listener's handle method, update the timestamp for the authenticated user.
+
+```php
+// In app/Listeners/UpdateLastLoginAt.php
+
+public function handle(Login $event)
+{
+    $event->user->last_login_at = now();
+    $event->user->save();
+}
+```
+Remember to register the event and listener in app/Providers/EventServiceProvider.php.
 
 ## Documentation
 - [Laravel Jetstream Documentation](https://jetstream.laravel.com/introduction.html)
