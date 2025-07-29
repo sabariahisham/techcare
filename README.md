@@ -86,46 +86,41 @@ This template comes with Laravel Jetstream authentication and includes the follo
 12. **Data Encryption & Masking:** Provides helpers and methods to encrypt sensitive data (like IC numbers) in the database and mask it when displayed on screen.
 13. **Secure File Upload Scanning:** Automatically scans all user-uploaded files for malware and viruses to protect the server and other users.
 
-## **How-to**
-**Implementing Automated User Deactivation**
+## How-to
 
-Here is a conceptual guide on how to implement the automated user deactivation feature. This approach focuses on tracking user activity to automatically disable accounts that have been dormant for a security-enhancing period.
+### Implementing Automated User Deactivation (Logic & Flow)
 
-**Step 1: Database Schema Enhancements**
+This section outlines the conceptual flow for automatically deactivating user accounts that have been inactive for a specified period. The entire process is automated and does not require manual intervention.
 
-You only need to add two columns to your `users` table migration to track user activity and status.
+**1. Data Foundation: Tracking User Status**
 
-```php
-// In database/migrations/xxxx_xx_xx_xxxxxx_create_users_table.php
+* **Logic:** The system must be able to track two key pieces of information for every user: their last known activity time and their current account status (active or inactive).
+* **Flow:** The user data model in the database is extended to store two new attributes:
+    * `last_login_at`: A timestamp that records the exact date and time of the user's last successful login.
+    * `is_active`: A status flag, typically a boolean (true/false), that indicates whether the account is currently enabled. By default, all new accounts are set to active.
 
-Schema::table('users', function (Blueprint $table) {
-    // Add these columns after the existing ones
-    $table->timestamp('last_login_at')->nullable();
-    $table->boolean('is_active')->default(true);
-});
-```
-last_login_at: Stores the timestamp of the user's last successful login.
+**2. Activity Recording: Updating Last Login Time**
 
-is_active: A boolean to easily enable or disable a user account. Inactive users will be prevented from logging in.
+* **Logic:** The `last_login_at` timestamp must be updated automatically upon a successful login to remain accurate.
+* **Flow:** An automated trigger is set within the application's authentication process. Whenever a user successfully authenticates and logs in, this trigger fires and updates the `last_login_at` field for that specific user to the current time.
 
-**Step 2: Track User Activity**
+**3. The Automated Janitor: Daily System Check**
 
-To automatically update the last_login_at field, create an event listener that hooks into Laravel's built-in Login event.
+* **Logic:** A recurring, automated task is needed to periodically scan for and handle dormant accounts.
+* **Flow:** A scheduled task (often called a cron job) is configured to run automatically at a fixed interval, typically once every 24 hours. This task is responsible for initiating the deactivation process.
 
-Create a listener (e.g., UpdateLastLoginAt).
+**4. Deactivation Process: Identifying and Flagging**
 
-In the listener's handle method, update the timestamp for the authenticated user.
+* **Logic:** The daily task needs to identify which users have become inactive based on a predefined business rule.
+* **Flow:** During its daily run, the scheduled task queries the user database. It searches for all users that meet **both** of the following criteria:
+    1.  Their `is_active` status is currently `true`.
+    2.  Their `last_login_at` timestamp is older than a set duration (e.g., 90 days ago).
+* For every user that matches these conditions, the task proceeds to change their `is_active` status from `true` to `false`.
 
-```php
-// In app/Listeners/UpdateLastLoginAt.php
+**5. Enforcing Deactivation: Blocking Login**
 
-public function handle(Login $event)
-{
-    $event->user->last_login_at = now();
-    $event->user->save();
-}
-```
-Remember to register the event and listener in app/Providers/EventServiceProvider.php.
+* **Logic:** An inactive status must effectively prevent a user from accessing the system.
+* **Flow:** The core login function of the application is modified. Before attempting to validate a user's password, it performs a preliminary check on the user's `is_active` status. If the status is `false`, the login process is immediately halted, and the user is denied access, typically with a message indicating their account is inactive.
 
 ## Documentation
 - [Laravel Jetstream Documentation](https://jetstream.laravel.com/introduction.html)
