@@ -72,7 +72,7 @@ This project is built using Laravel 12. Please ensure that your environment is p
 ## Features
 This template comes with Laravel Jetstream authentication and includes the following features:
 
-1. **User Registration:** Standard process for new users to create an account.
+1. **User Registration:** ✅ Standard process for new users to create an account.
 2. **Email Verification:** Ensures every user account is tied to a valid and confirmed email address.
 3. **User Login:** Secure mechanism for registered users to access the system.
 4. **User Logout:** Allows users to safely terminate their application session.
