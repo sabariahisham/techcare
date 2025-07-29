@@ -86,6 +86,25 @@ This template comes with Laravel Jetstream authentication and includes the follo
 12. **Data Encryption & Masking:** Provides helpers and methods to encrypt sensitive data (like IC numbers) in the database and mask it when displayed on screen.
 13. **Secure File Upload Scanning:** Automatically scans all user-uploaded files for malware and viruses to protect the server and other users.
 
+### **How-to**
+
+#### Implementing Automated User Deactivation
+
+Here is a conceptual guide on how to implement the automated user deactivation feature. This approach focuses on tracking user activity to automatically disable accounts that have been dormant for a security-enhancing period.
+
+**Step 1: Database Schema Enhancements**
+
+You only need to add two columns to your `users` table migration to track user activity and status.
+
+```php
+// In database/migrations/xxxx_xx_xx_xxxxxx_create_users_table.php
+
+Schema::table('users', function (Blueprint $table) {
+    // Add these columns after the existing ones
+    $table->timestamp('last_login_at')->nullable();
+    $table->boolean('is_active')->default(true);
+});
+
 ## Documentation
 - [Laravel Jetstream Documentation](https://jetstream.laravel.com/introduction.html)
 - [Sneat Template Documentation](https://demos.themeselection.com/sneat-bootstrap-html-admin-template/documentation/laravel-introduction.html)
