@@ -87,8 +87,7 @@ This template comes with Laravel Jetstream authentication and includes the follo
 13. **Secure File Upload Scanning:** Automatically scans all user-uploaded files for malware and viruses to protect the server and other users.
 
 ## **How-to**
-
-#### Implementing Automated User Deactivation
+Implementing Automated User Deactivation
 
 Here is a conceptual guide on how to implement the automated user deactivation feature. This approach focuses on tracking user activity to automatically disable accounts that have been dormant for a security-enhancing period.
 
