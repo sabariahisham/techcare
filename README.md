@@ -88,7 +88,7 @@ This template comes with Laravel Jetstream authentication and includes the follo
 
 ## How-to
 
-### Implementing Automated User Deactivation (Logic & Flow)
+### Implementing Automated Account Lifecycle Management (Logic & Flow)
 
 This section outlines the conceptual flow for automatically deactivating user accounts that have been inactive for a specified period. The entire process is automated and does not require manual intervention.
 
