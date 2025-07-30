@@ -87,6 +87,7 @@ This template comes with Laravel Jetstream authentication and includes the follo
 13. **Secure & Validated File Uploads:** Provides a secure file upload mechanism that includes robust backend validation for file types (MIME) and size. The handler is built with security hooks, allowing for easy integration with a server-side file scanning engine.
 14. **Robust Input Validation:** A mechanism to filter, sanitize, and validate all user inputs (from forms, URL parameters, etc.) to prevent common attacks like SQL Injection and Cross-Site Scripting (XSS).
 15. **HTTPS Connection Enforcement:** Includes a middleware that automatically forces all connections to the application to use a secure HTTPS connection, redirecting any insecure HTTP requests. This ensures all data transmitted between the user and the server is encrypted.
+16. **Content Security Policy (CSP) Header:** Adds an HTTP security header that tells the browser which sources of content are allowed on the site, helping to prevent the injection of malicious content like in Cross-Site Scripting (XSS) attacks.
 
 ## How-to
 
