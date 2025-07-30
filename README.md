@@ -84,7 +84,9 @@ This template comes with Laravel Jetstream authentication and includes the follo
 10. **Comprehensive Audit Trail & Activity Log:** Logs all critical actions (logins, data changes, failed attempts) for monitoring and forensic analysis.
 11. **Session Management & Clear Screen Policy:** Automatically logs out users after a period of inactivity to prevent unauthorized access to unattended sessions.
 12. **Data Encryption & Masking:** Provides helpers and methods to encrypt sensitive data (like IC numbers) in the database and mask it when displayed on screen.
-13. **Secure File Upload Scanning:** Automatically scans all user-uploaded files for malware and viruses to protect the server and other users.
+13. **Secure & Validated File Uploads:** Provides a secure file upload mechanism that includes robust backend validation for file types (MIME) and size. The handler is built with security hooks, allowing for easy integration with a server-side file scanning engine.
+14. **Robust Input Validation:** A mechanism to filter, sanitize, and validate all user inputs (from forms, URL parameters, etc.) to prevent common attacks like SQL Injection and Cross-Site Scripting (XSS).
+15. **HTTPS Connection Enforcement:** Includes a middleware that automatically forces all connections to the application to use a secure HTTPS connection, redirecting any insecure HTTP requests. This ensures all data transmitted between the user and the server is encrypted.
 
 ## How-to
 
