@@ -10,53 +10,23 @@
   <x-slot name="form">
     <div class="mb-6">
       <x-label class="form-label" for="current_password" value="{{ __('Current Password') }}" />
-      <div x-data="{ show: false }" class="input-group input-group-merge">
-        <input :type="show ? 'text' : 'password'" id="current_password"
-          class="form-control {{ $errors->has('current_password') ? 'is-invalid' : '' }}" wire:model="state.current_password" />
-        <span class="input-group-text cursor-pointer" @click="show = !show">
-          <template x-if="!show">
-            <i class="bx bx-hide"></i>
-          </template>
-          <template x-if="show">
-            <i class="bx bx-show"></i>
-          </template>
-        </span>
-      </div>
+      <x-input id="current_password" type="password"
+        class="{{ $errors->has('current_password') ? 'is-invalid' : '' }}" wire:model="state.current_password"/>
       <x-input-error for="current_password" />
     </div>
 
     <div class="mb-6">
       <x-label class="form-label" for="password" value="{{ __('New Password') }}" />
-      <div x-data="{ show: false }" class="input-group input-group-merge">
-        <input :type="show ? 'text' : 'password'" id="password"
-          class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}" wire:model="state.password" x-ref="pwd" />
-        <span class="input-group-text cursor-pointer" @click="show = !show">
-          <template x-if="!show">
-            <i class="bx bx-hide"></i>
-          </template>
-          <template x-if="show">
-            <i class="bx bx-show"></i>
-          </template>
-        </span>
-      </div>
+      <x-input id="password" type="password" class="{{ $errors->has('password') ? 'is-invalid' : '' }}"
+        wire:model="state.password" x-ref="pwd"/>
       <x-input-error for="password" />
     </div>
 
     <div class="mb-6">
       <x-label class="form-label" for="password_confirmation" value="{{ __('Confirm Password') }}" />
-      <div x-data="{ show: false }" class="input-group input-group-merge">
-        <input :type="show ? 'text' : 'password'" id="password_confirmation"
-          class="form-control {{ $errors->has('password_confirmation') ? 'is-invalid' : '' }}"
-          wire:model="state.password_confirmation" x-ref="pwdc" />
-        <span class="input-group-text cursor-pointer" @click="show = !show">
-          <template x-if="!show">
-            <i class="bx bx-hide"></i>
-          </template>
-          <template x-if="show">
-            <i class="bx bx-show"></i>
-          </template>
-        </span>
-      </div>
+      <x-input id="password_confirmation" type="password"
+        class="{{ $errors->has('password_confirmation') ? 'is-invalid' : '' }}"
+        wire:model="state.password_confirmation" x-ref="pwdc" />
       <x-input-error for="password_confirmation" />
       <!-- Password matched error (Alpine.js) -->
       <div x-data="{
