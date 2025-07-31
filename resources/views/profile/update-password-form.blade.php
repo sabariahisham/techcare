@@ -18,7 +18,7 @@
       <template x-if="$refs.pwd">
         <div style="display:none"></div>
       </template>
-      <div class="w-full max-w-md bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+      <div class="w-full max-w-md border border-secondary rounded-lg shadow-sm p-4 dark-mode-bg">
         <div class="font-semibold text-base mb-2 text-gray-700">Password Requirements</div>
         <ul class="space-y-2">
           <li class="flex items-center" :class="length ? 'text-success' : 'text-danger'">
