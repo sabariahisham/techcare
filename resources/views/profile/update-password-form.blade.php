@@ -18,7 +18,7 @@
     <div class="mb-6">
       <x-label class="form-label" for="password" value="{{ __('New Password') }}" />
       <x-input id="password" type="password" class="{{ $errors->has('password') ? 'is-invalid' : '' }}"
-        wire:model="state.password"/>
+        wire:model="state.password" x-ref="pwd"/>
       <x-input-error for="password" />
     </div>
 
@@ -26,8 +26,22 @@
       <x-label class="form-label" for="password_confirmation" value="{{ __('Confirm Password') }}" />
       <x-input id="password_confirmation" type="password"
         class="{{ $errors->has('password_confirmation') ? 'is-invalid' : '' }}"
-        wire:model="state.password_confirmation" />
+        wire:model="state.password_confirmation" x-ref="pwdc" />
       <x-input-error for="password_confirmation" />
+      <!-- Password matched error (Alpine.js) -->
+      <div x-data="{
+        password: '',
+        password_confirmation: ''
+      }" x-init="
+        password = $refs.pwd ? $refs.pwd.value : '';
+        password_confirmation = $refs.pwdc ? $refs.pwdc.value : '';
+        $refs.pwd && $refs.pwd.addEventListener('input', e => { password = e.target.value });
+        $refs.pwdc && $refs.pwdc.addEventListener('input', e => { password_confirmation = e.target.value });
+      ">
+        <div x-show="password_confirmation.length > 0 && password !== password_confirmation" class="text-danger text-sm mt-2">
+          New password and confirmation password do not match
+        </div>
+      </div>
     </div>
 
     <!-- Password requirements indicator (plain checklist, below Confirm Password) -->
@@ -38,11 +52,10 @@
       get lowercase() { return /[a-z]/.test(this.password) },
       get number() { return /[0-9]/.test(this.password) },
       get symbol() { return /[^A-Za-z0-9]/.test(this.password) }
-    }" class="mt-2">
-      <input type="hidden" x-model="password" x-effect="password = $refs.pwd.value" />
-      <template x-if="$refs.pwd">
-        <div style="display:none"></div>
-      </template>
+    }" x-init="
+      password = $refs.pwd ? $refs.pwd.value : '';
+      $refs.pwd && $refs.pwd.addEventListener('input', e => { password = e.target.value });
+    " class="mt-2">
       <div class="text-sm text-gray-700 font-semibold mb-1">Password must contain:</div>
       <ul class="space-y-1 text-sm">
         <li :class="length ? 'text-success' : 'text-danger'">
@@ -81,6 +94,10 @@
           At least one special character
         </li>
       </ul>
+      <!-- Password matched error -->
+      <div x-show="password_confirmation.length > 0 && !matched" class="text-danger text-sm mt-2">
+        New password and confirmation password do not match
+      </div>
     </div>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
