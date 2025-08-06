@@ -79,7 +79,7 @@ This template comes with Laravel Jetstream authentication and includes the follo
 5. **Multi-Factor Authentication (MFA):** An optional extra security layer that users can enable in their profile, requiring a second verification step (e.g., from an authenticator app). ✅
 6. **Basic CRUD for user management:** An admin interface to Create, Read, Update, and Delete user records. ✅
 7. **Role and permission management using Spatie:** A powerful system to define user roles (e.g., 'Admin', 'Supervisor') and assign specific permissions, enforcing the Principle of Least Privilege. ✅
-8. **Comprehensive Password Policy:** Enforces strong password rules: minimum length (12), complexity (uppercase, lowercase, numbers, symbols), password history, and expiry.
+8. **Comprehensive Password Policy:** Enforces strong password rules: minimum length (12) ✅, complexity (uppercase, lowercase, numbers, symbols) ✅, password history, and expiry.
 9. **Automated Account Lifecycle Management:** The system automatically deactivates user accounts that have been inactive for a specified period (e.g., 90 days) to enhance security by removing dormant access.
 10. **Comprehensive Audit Trail & Activity Log:** Logs all critical actions (logins, data changes, failed attempts) for monitoring and forensic analysis.
 11. **Session Management & Clear Screen Policy:** Automatically logs out users after a period of inactivity to prevent unauthorized access to unattended sessions.
