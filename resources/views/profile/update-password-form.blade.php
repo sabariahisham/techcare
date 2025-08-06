@@ -41,6 +41,11 @@
           </span>
         </div>
         <x-input-error for="current_password" />
+        @if ($errors->get('current_password'))
+          <div class="invalid-feedback d-block text-danger" style="font-size: 0.875em; margin-top: 0.25rem;">
+            {{ $errors->get('current_password')[0] }}
+          </div>
+        @endif
       </div>
       <div class="mb-6">
         <x-label class="form-label" for="password" value="{{ __('New Password') }}" />
