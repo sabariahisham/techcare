@@ -62,6 +62,11 @@
           </span>
         </div>
         <x-input-error for="password" />
+        @if ($errors->get('password'))
+          <div class="invalid-feedback d-block text-danger" style="font-size: 0.875em; margin-top: 0.25rem;">
+            Password does not meet all requirements.
+          </div>
+        @endif
       </div>
       <div class="mb-6">
         <x-label class="form-label" for="password_confirmation" value="{{ __('Confirm Password') }}" />
