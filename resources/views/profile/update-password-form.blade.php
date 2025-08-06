@@ -51,7 +51,15 @@
         <x-label class="form-label" for="password" value="{{ __('New Password') }}" />
         <div class="input-group input-group-merge">
           <input :type="showNew ? 'text' : 'password'" id="password"
-            class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}" wire:model="state.password" x-ref="pwd" @input="password = $event.target.value" />
+            class="form-control {{
+              ($errors->has('password') && $errors->get('password')[0] !== 'The password field confirmation does not match.')
+                ? 'is-invalid'
+                : (
+                  ($errors->has('password_confirmation') || ($errors->has('password') && $errors->get('password')[0] === 'The password field confirmation does not match.'))
+                  ? 'is-invalid'
+                  : ''
+                )
+            }}" wire:model="state.password" x-ref="pwd" @input="password = $event.target.value" />
           <span class="input-group-text cursor-pointer" @click="showNew = !showNew">
             <template x-if="!showNew">
               <i class="bx bx-hide"></i>
@@ -62,7 +70,7 @@
           </span>
         </div>
         <x-input-error for="password" />
-        @if ($errors->get('password'))
+        @if ($errors->get('password') && $errors->get('password')[0] !== 'The password field confirmation does not match.')
           <div class="invalid-feedback d-block text-danger" style="font-size: 0.875em; margin-top: 0.25rem;">
             Password does not meet all requirements.
           </div>
@@ -72,7 +80,11 @@
         <x-label class="form-label" for="password_confirmation" value="{{ __('Confirm Password') }}" />
         <div class="input-group input-group-merge">
           <input :type="showConfirm ? 'text' : 'password'" id="password_confirmation"
-            class="form-control {{ $errors->has('password_confirmation') ? 'is-invalid' : '' }}"
+            class="form-control {{
+              ($errors->has('password_confirmation') || ($errors->has('password') && $errors->get('password')[0] === 'The password field confirmation does not match.'))
+                ? 'is-invalid'
+                : ''
+            }}"
             wire:model="state.password_confirmation" x-ref="pwdc" @input="password_confirmation = $event.target.value" />
           <span class="input-group-text cursor-pointer" @click="showConfirm = !showConfirm">
             <template x-if="!showConfirm">
@@ -84,10 +96,15 @@
           </span>
         </div>
         <x-input-error for="password_confirmation" />
-        <!-- Password matched error (Alpine.js) -->
-        <div x-show="password_confirmation.length > 0 && !matched" class="text-danger text-sm mt-2">
-          New password and confirmation password do not match
-        </div>
+        @if ($errors->get('password_confirmation'))
+          <span class="invalid-feedback d-block text-danger" style="font-size: 0.875em; margin-top: 0.25rem;" role="alert">
+            <span class="fw-medium">{{ $errors->get('password_confirmation')[0] }}</span>
+          </span>
+        @elseif ($errors->get('password') && $errors->get('password')[0] === 'The password field confirmation does not match.')
+          <span class="invalid-feedback d-block text-danger" style="font-size: 0.875em; margin-top: 0.25rem;" role="alert">
+            <span class="fw-medium">{{ $errors->get('password')[0] }}</span>
+          </span>
+        @endif
       </div>
       <!-- Password requirements indicator (plain checklist, below Confirm Password) -->
       <div class="mt-2">
