@@ -23,6 +23,11 @@
           "slug": "acl-roles-index"
         },
         {
+          "url": "acl/permissions/index",
+          "name": "Permission",
+          "slug": "acl-permissions-index"
+        },
+        {
           "url": "acl/module-list/index",
           "name": "Module",
           "slug": "acl-module-list-index"
