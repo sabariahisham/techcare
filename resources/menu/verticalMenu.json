@@ -7,6 +7,23 @@
       "slug": "index"
     },
     {
+      "name": "Log Tiket",
+      "icon": "menu-icon tf-icons bx bx-task",
+      "slug": "acl",
+      "submenu": [
+        {
+          "url": "acl/roles/index",
+          "name": "Senarai Tiket",
+          "slug": "acl-roles-index"
+        },
+        {
+          "url": "acl/permissions/index",
+          "name": "Log Tiket Baru",
+          "slug": "acl-permissions-index"
+        }
+      ]
+    },
+    {
       "url": "user-management/index",
       "icon": "menu-icon tf-icons bx bx-user",
       "name": "User Management",
