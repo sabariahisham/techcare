@@ -12,14 +12,14 @@
       "slug": "acl",
       "submenu": [
         {
-          "url": "acl/roles/index",
+          "url": "#",
           "name": "Senarai Tiket",
-          "slug": "acl-roles-index"
+          "slug": "ticket-list"
         },
         {
-          "url": "acl/permissions/index",
+          "url": "#",
           "name": "Log Tiket Baru",
-          "slug": "acl-permissions-index"
+          "slug": "ticket-new"
         }
       ]
     },
