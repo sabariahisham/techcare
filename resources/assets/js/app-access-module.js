@@ -23,7 +23,7 @@ $(function () {
   if (dataTableModules.length) {
     dt_module = dataTableModules.DataTable({
       ajax: '/modules', // Point to your backend route
-      serverSide: true,
+      serverSide: false, // Changed to false since backend doesn't support server-side processing
       processing: true,
       columns: [
         { data: 'module_name' },
@@ -128,24 +128,7 @@ $(function () {
           targets: -1,
           searchable: false,
           title: 'Actions',
-          orderable: true,
-          render: function (data, type, full, meta) {
-            return (
-              // '<div class="d-flex align-items-center">' +
-              // '<span class="text-nowrap"><button class="btn btn-icon me-1" data-bs-target="#editPermissionModal" data-bs-toggle="modal" data-bs-dismiss="modal"><i class="bx bx-edit bx-md"></i></button>' +
-              // '<a href="javascript:;" class="btn btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="bx bx-dots-vertical-rounded bx-md"></i></a>' +
-              // '<div class="dropdown-menu dropdown-menu-end m-0">' +
-              // '<a href="javascript:;" class="dropdown-item">Edit</a>' +
-              // '<a href="javascript:;" class="dropdown-item">Suspend</a>' +
-              // '</div>' +
-              // '</div>'
-
-              '<div class="d-flex align-items-center">' +
-              '<span class="text-nowrap"><button class="btn btn-icon me-1" data-bs-target="#editModuleModal" data-bs-toggle="modal" data-bs-dismiss="modal"><i class="bx bx-edit bx-md"></i></button>' +
-              '<button class="btn btn-icon"><i class="bx bx-trash bx-md"></i></button>' +
-              '</div>'
-            );
-          }
+          orderable: false,
         }
       ]
     });
