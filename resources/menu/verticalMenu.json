@@ -10,7 +10,7 @@
     {
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
-      "slug": "acl",
+      "slug": "",
       "permission": "user-management.view",
       "submenu": [
         {
@@ -26,6 +26,20 @@
           "permission": "user-management.view"
         }
       ]
+    },
+    {
+      "url": "#",
+      "icon": "menu-icon icon-base bx bx-book-open",
+      "name": "Knowledge Base",
+      "slug": "knowledge-index",
+      "permission": null
+    },
+    {
+      "url": "#",
+      "icon": "menu-icon icon-base bx bx-spreadsheet",
+      "name": "Laporan",
+      "slug": "report-index",
+      "permission": null
     },
     {
       "name": "Pentadbir",
