@@ -35,14 +35,14 @@ class UserFactory extends Factory
         $schemeAndGrade = $scheme . $grade;
 
         $roles = [
-            'Superadmin',
-            'Penyedia Agensi',
-            'Pentadbir Agensi', 
-            'Penyemak Agensi',
-            'Pengesah Agensi',
-            'Pentadbir MOF',
-            'Penyemak MOF',
-            'Pengesah MOF'
+            'Administrator',
+            'Pentadbir Sistem',
+            'Penyelia Helpdesk', 
+            'Helpdesk On Duty',
+            'Pegawai Tugasan',
+            'Pengurusan MOF',
+            'Pengadu'
+
         ];
 
         return [
@@ -50,16 +50,22 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->safeEmail(),
             'ic_number' => fake()->numerify('############'),
-            'phone_number' => Str::limit(fake()->phoneNumber(), 15),
-            'office_phone_number' => Str::limit(fake()->phoneNumber(), 15),
-            'scheme_and_grade' => $schemeAndGrade,
+            'tel_bimbit' => Str::limit(fake()->phoneNumber(), 15),   // phone_number -> tel_bimbit
+            'tel_pejabat' => Str::limit(fake()->phoneNumber(), 15),  // office_phone_number -> tel_pejabat
+            'gln_jawatan' => $schemeAndGrade,                        // scheme_and_grade -> gln_jawatan
             'agency' => fake()->company(),
-            'position' => fake()->jobTitle(),
+            'jawatan' => fake()->jobTitle(),                         // position -> jawatan
+            // 'phone_number' => Str::limit(fake()->phoneNumber(), 15),
+            // 'office_phone_number' => Str::limit(fake()->phoneNumber(), 15),
+            // 'scheme_and_grade' => $schemeAndGrade,
+            // 'agency' => fake()->company(),
+            // 'position' => fake()->jobTitle(),
             'password' => Hash::make('111111111111'),
             'is_active' => 1,
             'created_at' => now(),
             'updated_at' => now(),
         ];
+
         // return [
         //     'name' => fake()->name(),
         //     'email' => fake()->unique()->safeEmail(),
@@ -80,15 +86,14 @@ class UserFactory extends Factory
 
         return $this->afterCreating(function (User $user) {
             $roles = [
-                'Superadmin',
-                'Penyedia Agensi',
-                'Pentadbir Agensi', 
-                'Penyemak Agensi',
-                'Pengesah Agensi',
-                'Pentadbir MOF',
-                'Penyemak MOF',
-                'Pengesah MOF'
-            ];
+            'Administrator',
+            'Pentadbir Sistem',
+            'Penyelia Helpdesk', 
+            'Helpdesk On Duty',
+            'Pegawai Tugasan',
+            'Pengurusan MOF',
+            'Pengadu'
+        ];
             $user->assignRole($roles[array_rand($roles)]);
         });
     }

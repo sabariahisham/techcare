@@ -4,22 +4,26 @@
       "url": "home",
       "icon": "menu-icon tf-icons bx bx-home-smile",
       "name": "Dashboard",
-      "slug": "index"
+      "slug": "index",
+      "permission": null
     },
     {
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
       "slug": "acl",
+      "permission": "user-management.view",
       "submenu": [
         {
           "url": "#",
           "name": "Senarai Tiket",
-          "slug": "ticket-list"
+          "slug": "ticket-list",
+          "permission": "user-management.view"
         },
         {
           "url": "#",
           "name": "Log Tiket Baru",
-          "slug": "ticket-new"
+          "slug": "ticket-new",
+          "permission": "user-management.view"
         }
       ]
     },
@@ -27,27 +31,33 @@
       "url": "user-management/index",
       "icon": "menu-icon tf-icons bx bx-user",
       "name": "User Management",
-      "slug": "user-management-index"
+      "slug": "user-management-index",
+      "permission": "user.manage"
     },
     {
       "name": "Access Control List",
       "icon": "menu-icon tf-icons bx bx-check-shield",
       "slug": "acl",
+      "permission": "admin-management.view",
       "submenu": [
         {
           "url": "acl/roles/index",
           "name": "Roles",
-          "slug": "acl-roles-index"
+          "slug": "acl-roles-index",
+          "permission": "admin-management.view"
+          
         },
         {
           "url": "acl/permissions/index",
           "name": "Permission",
           "slug": "acl-permissions-index"
+          
         },
         {
           "url": "acl/module-list/index",
           "name": "Module",
           "slug": "acl-module-list-index"
+          
         }
       ]
     },

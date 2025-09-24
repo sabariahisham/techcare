@@ -38,28 +38,28 @@ class RolesAndPermissionSeeder extends Seeder
         Permission::create(['name' => 'role-management.update', 'module' => 'Role Management']);
         Permission::create(['name' => 'role-management.delete', 'module' => 'Role Management']);
 
-        $role = Role::create(['name' => 'Superadmin']);
-        $role->givePermissionTo(Permission::all());
+        // $role = Role::create(['name' => 'Superadmin']);
+        // $role->givePermissionTo(Permission::all());
 
-        $penyediaAgensi = Role::create(['name' => 'Penyedia Agensi'])
-            ->givePermissionTo(['role-management.delete']);
+        // $penyediaAgensi = Role::create(['name' => 'Penyedia Agensi'])
+        //     ->givePermissionTo(['role-management.delete']);
 
-        $pentadbirAgensi = Role::create(['name' => 'Pentadbir Agensi'])
-            ->givePermissionTo(['role-management.delete']);
+        // $pentadbirAgensi = Role::create(['name' => 'Pentadbir Agensi'])
+        //     ->givePermissionTo(['role-management.delete']);
 
-        $penyemakAgensi = Role::create(['name' => 'Penyemak Agensi'])
-            ->givePermissionTo(['report-management.delete']);
+        // $penyemakAgensi = Role::create(['name' => 'Penyemak Agensi'])
+        //     ->givePermissionTo(['report-management.delete']);
 
-        $pengesahAgensi = Role::create(['name' => 'Pengesah Agensi'])
-            ->givePermissionTo(['admin-management.delete']);
+        // $pengesahAgensi = Role::create(['name' => 'Pengesah Agensi'])
+        //     ->givePermissionTo(['admin-management.delete']);
 
-        $pentadbirMof = Role::create(['name' => 'Pentadbir MOF'])
-            ->givePermissionTo(['role-management.delete']);
+        // $pentadbirMof = Role::create(['name' => 'Pentadbir MOF'])
+        //     ->givePermissionTo(['role-management.delete']);
 
-        $penyemakMof = Role::create(['name' => 'Penyemak MOF'])
-            ->givePermissionTo(['role-management.delete']);
+        // $penyemakMof = Role::create(['name' => 'Penyemak MOF'])
+        //     ->givePermissionTo(['role-management.delete']);
 
-        $pengesahMof = Role::create(['name' => 'Pengesah MOF'])
-            ->givePermissionTo(['role-management.delete']);
+        // $pengesahMof = Role::create(['name' => 'Pengesah MOF'])
+        //     ->givePermissionTo(['role-management.delete']);
     }
 }
