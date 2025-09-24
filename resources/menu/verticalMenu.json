@@ -34,38 +34,58 @@
       "permission": "admin-management.view",
       "submenu": [
         {
-          "url": "user-management/index",
-          "name": "User",
-          "slug": "user-management-index",
-          "permission": "user-management.view"
+          "name": "Pengurusan Pengguna",
+          "slug": "user-management",
+          "permission": "user-management.view",
+          "submenu": [
+            {
+              "url": "user-management/index",
+              "name": "User",
+              "slug": "user-management-index",
+              "permission": "user-management.view"
+            },
+            {
+              "url": "acl/roles/index",
+              "name": "Roles",
+              "slug": "acl-roles-index",
+              "permission": "admin-management.view"
+            },
+            {
+              "url": "acl/module-list/index",
+              "name": "Modules",
+              "slug": "acl-module-list-index"
+            }
+          ]
         },
         {
-          "url": "acl/roles/index",
-          "name": "Roles",
-          "slug": "acl-roles-index",
-          "permission": "admin-management.view"
-
-        },
-        {
-          "url": "acl/permissions/index",
-          "name": "Permission",
-          "slug": "acl-permissions-index"
-
-        },
-        {
-          "url": "acl/module-list/index",
-          "name": "Module",
-          "slug": "acl-module-list-index"
-
-        },
-        {
-          "url": "acl/module-list/index",
           "name": "Configuration",
-          "slug": "acl-module-list-index"
-
+          "slug": "configuration",
+          "submenu": [
+            {
+              "url": "configuration/categories/index",
+              "name": "Kategori",
+              "slug": "configuration-categories-index"
+            },
+            {
+              "url": "configuration/sub-categories/index",
+              "name": "Sub-kategori",
+              "slug": "configuration-sub-categories-index"
+            },
+            {
+              "url": "configuration/sla-severity/index",
+              "name": "SLA & Severity",
+              "slug": "configuration-sla-severity-index"
+            },
+            {
+              "url": "configuration/appointed-officer/index",
+              "name": "Pegawai Tugasan",
+              "slug": "configuration-appointed-officer-index"
+            }
+          ]
         }
       ]
     },
+
     {
       "menuHeader": "Misc"
     },
