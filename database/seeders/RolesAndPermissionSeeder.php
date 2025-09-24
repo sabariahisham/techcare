@@ -18,25 +18,25 @@ class RolesAndPermissionSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // create permissions
-        Permission::create(['name' => 'admin-management.view', 'module' => 'Admin Management']);
-        Permission::create(['name' => 'admin-management.create', 'module' => 'Admin Management']);
-        Permission::create(['name' => 'admin-management.update', 'module' => 'Admin Management']);
-        Permission::create(['name' => 'admin-management.delete', 'module' => 'Admin Management']);
+        Permission::firstOrCreate(['name' => 'admin-management.view', 'module' => 'Admin Management']);
+        Permission::firstOrCreate(['name' => 'admin-management.create', 'module' => 'Admin Management']);
+        Permission::firstOrCreate(['name' => 'admin-management.update', 'module' => 'Admin Management']);
+        Permission::firstOrCreate(['name' => 'admin-management.delete', 'module' => 'Admin Management']);
 
-        Permission::create(['name' => 'user-management.view', 'module' => 'User Management']);
-        Permission::create(['name' => 'user-management.create', 'module' => 'User Management']);
-        Permission::create(['name' => 'user-management.update', 'module' => 'User Management']);
-        Permission::create(['name' => 'user-management.delete', 'module' => 'User Management']);
+        Permission::firstOrCreate(['name' => 'user-management.view', 'module' => 'User Management']);
+        Permission::firstOrCreate(['name' => 'user-management.create', 'module' => 'User Management']);
+        Permission::firstOrCreate(['name' => 'user-management.update', 'module' => 'User Management']);
+        Permission::firstOrCreate(['name' => 'user-management.delete', 'module' => 'User Management']);
 
-        Permission::create(['name' => 'report-management.view', 'module' => 'Report Management']);
-        Permission::create(['name' => 'report-management.create', 'module' => 'Report Management']);
-        Permission::create(['name' => 'report-management.update', 'module' => 'Report Management']);
-        Permission::create(['name' => 'report-management.delete', 'module' => 'Report Management']);
+        Permission::firstOrCreate(['name' => 'report-management.view', 'module' => 'Report Management']);
+        Permission::firstOrCreate(['name' => 'report-management.create', 'module' => 'Report Management']);
+        Permission::firstOrCreate(['name' => 'report-management.update', 'module' => 'Report Management']);
+        Permission::firstOrCreate(['name' => 'report-management.delete', 'module' => 'Report Management']);
 
-        Permission::create(['name' => 'role-management.view', 'module' => 'Role Management']);
-        Permission::create(['name' => 'role-management.create', 'module' => 'Role Management']);
-        Permission::create(['name' => 'role-management.update', 'module' => 'Role Management']);
-        Permission::create(['name' => 'role-management.delete', 'module' => 'Role Management']);
+        Permission::firstOrCreate(['name' => 'role-management.view', 'module' => 'Role Management']);
+        Permission::firstOrCreate(['name' => 'role-management.create', 'module' => 'Role Management']);
+        Permission::firstOrCreate(['name' => 'role-management.update', 'module' => 'Role Management']);
+        Permission::firstOrCreate(['name' => 'role-management.delete', 'module' => 'Role Management']);
 
         // $role = Role::create(['name' => 'Superadmin']);
         // $role->givePermissionTo(Permission::all());
