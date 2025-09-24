@@ -18,8 +18,10 @@ class ModuleListController extends Controller
 
     public function getModules()
     {
-        $modules = Module::select(['id', 'module_name', 'created_at', 'updated_at'])
-        ->orderBy('updated_at', 'desc')
+        $modules = Module::select(['module_list.id', 'module_list.module_name', 'module_list.created_at', 'module_list.updated_at'])
+        ->leftJoin('permissions', 'permissions.module', '=', 'module_list.module_name')
+        ->groupBy('module_list.id', 'module_list.module_name', 'module_list.created_at', 'module_list.updated_at')
+        ->orderBy('module_list.updated_at', 'desc')
         ->get();
 
         return response()->json([
