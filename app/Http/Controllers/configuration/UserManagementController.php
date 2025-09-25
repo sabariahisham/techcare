@@ -14,10 +14,24 @@ class UserManagementController extends Controller
 {
     public function index()
     {
-        // Change to guard check to make sure we get all roles
-        $roles = Role::whereNotIn('name', ['super-admin'])->get();
+        // Get roles
+        $roles = Role::whereNotIn('name', ['Administrator'])->get();
+
+        // Get total users count
+        $totalUsers = User::count();
+
+        // Get active users count
+        $activeUsers = User::where('is_active', 1)->count();
+
+        // Get inactive users count
+        $inactiveUsers = User::where('is_active', 0)->count();
+
+        // Calculate percentages
+        $activePercentage = $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100) : 0;
+        $inactivePercentage = $totalUsers > 0 ? round(($inactiveUsers / $totalUsers) * 100) : 0;
+
         Log::debug('Roles being passed to view:', ['roles' => $roles->toArray()]);
-        return view('user_management.index', compact('roles'));
+        return view('user_management.index', compact('roles', 'totalUsers', 'activeUsers', 'inactiveUsers', 'activePercentage', 'inactivePercentage'));
     }
 
     public function getData(Request $request)

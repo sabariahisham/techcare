@@ -1,6 +1,6 @@
 @extends('layouts/layoutMaster')
 
-@section('title', 'User List - Pages')
+@section('title', 'Senarai Pengguna')
 
 @section('vendor-style')
 @vite([
@@ -44,59 +44,59 @@
 @section('content')
 
 <div class="row g-6 mb-6">
-  <div class="col-sm-6 col-xl-3">
+  {{-- <div class="col-sm-6 col-xl-3">
     <div class="card">
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
           <div class="content-left">
-            <span class="text-heading">Agencies</span>
+            <span class="text-heading">Bahagian</span>
             <div class="d-flex align-items-center my-1">
-              <h4 class="mb-0 me-2">21,459</h4>
-              <p class="text-success mb-0">(+29%)</p>
+              <h4 class="mb-0 me-2">23</h4>
+              <p class="text-success mb-0">(??)</p>
             </div>
-            <small class="mb-0">Total Users</small>
+            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }} </small>
+          </div>
+          <div class="avatar">
+            <span class="avatar-initial rounded bg-label-warning">
+              <i class="bx bx-building bx-lg"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div> --}}
+  <div class="col-sm-6 col-xl-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <span class="text-heading">Jumlah Pengguna</span>
+            <div class="d-flex align-items-center my-1">
+              <h4 class="mb-0 me-2">{{ number_format($totalUsers) }}</h4>
+              <p class="text-success mb-0">(100%)</p>
+            </div>
+            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-primary">
-              <i class="bx bx-group bx-lg"></i>
+               <i class="bx bx-group bx-lg"></i>
             </span>
           </div>
         </div>
       </div>
     </div>
   </div>
-  <div class="col-sm-6 col-xl-3">
+  <div class="col-sm-6 col-xl-4">
     <div class="card">
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
           <div class="content-left">
-            <span class="text-heading">Reports</span>
+            <span class="text-heading">Pengguna Aktif</span>
             <div class="d-flex align-items-center my-1">
-              <h4 class="mb-0 me-2">4,567</h4>
-              <p class="text-success mb-0">(+18%)</p>
+              <h4 class="mb-0 me-2">{{ number_format($activeUsers) }}</h4>
+              <p class="text-success mb-0">({{ $activePercentage }}%)</p>
             </div>
-            <small class="mb-0">Last week analytics </small>
-          </div>
-          <div class="avatar">
-            <span class="avatar-initial rounded bg-label-danger">
-              <i class="bx bx-user-plus bx-lg"></i>
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-6 col-xl-3">
-    <div class="card">
-      <div class="card-body">
-        <div class="d-flex align-items-start justify-content-between">
-          <div class="content-left">
-            <span class="text-heading">Active Users</span>
-            <div class="d-flex align-items-center my-1">
-              <h4 class="mb-0 me-2">19,860</h4>
-              <p class="text-danger mb-0">(-14%)</p>
-            </div>
-            <small class="mb-0">Last week analytics</small>
+            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-success">
@@ -107,21 +107,21 @@
       </div>
     </div>
   </div>
-  <div class="col-sm-6 col-xl-3">
+  <div class="col-sm-6 col-xl-4">
     <div class="card">
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
           <div class="content-left">
-            <span class="text-heading">Inactive Users</span>
+            <span class="text-heading">Pengguna Tidak Aktif</span>
             <div class="d-flex align-items-center my-1">
-              <h4 class="mb-0 me-2">237</h4>
-              <p class="text-success mb-0">(+42%)</p>
+              <h4 class="mb-0 me-2">{{ number_format($inactiveUsers) }}</h4>
+              <p class="text-danger mb-0">({{ $inactivePercentage }}%)</p>
             </div>
-            <small class="mb-0">Last week analytics</small>
+            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
           </div>
           <div class="avatar">
-            <span class="avatar-initial rounded bg-label-warning">
-              <i class="bx bx-user-voice bx-lg"></i>
+            <span class="avatar-initial rounded bg-label-danger">
+              <i class="bx bx-user-x bx-lg"></i>
             </span>
           </div>
         </div>
@@ -131,25 +131,34 @@
 </div>
 <!-- Users List Table -->
 <div class="card">
-  <div class="card-header border-bottom">
+  {{-- <div class="card-header border-bottom">
     <h5 class="card-title mb-0">Search Filters</h5>
     <div class="d-flex justify-content-between align-items-center row pt-4 gap-4 gap-md-0 g-6">
       <div class="col-md-4 user_role"></div>
       <div class="col-md-4"></div>
       <div class="col-md-4"></div>
     </div>
-  </div>
+  </div> --}}
   <div class="card-datatable table-responsive">
     <table class="datatables-users table border-top">
       <thead>
         <tr>
           <th></th>
-          <th>No.</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Agency</th>
-          <th>Actions</th>
+          {{-- <th>No.</th> --}}
+          <th>Nama</th>
+          <th>Emel</th>
+          <th>No.KP</th>
+          <th>No.Tel(M)</th>
+          <th>No.Tel(O)</th>
+          <th>Peranan</th>
+          <th>Sektor</th>
+          <th>Bahagian</th>
+          <th>Seksyen</th>
+          <th>Unit</th>
+          <th>Jawatan</th>
+          <th>Gelaran Jawatan</th>
+          <th>Status</th>
+          <th>Tindakan</th>
         </tr>
       </thead>
     </table>

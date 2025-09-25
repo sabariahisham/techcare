@@ -48,19 +48,39 @@ $(function () {
           data: null,
           defaultContent: '',
           orderable: false,
-          searchable: false
+          searchable: true
         },
-         {
-          // Index column
-          data: null,
-          render: function (data, type, row, meta) {
-            return meta.row + meta.settings._iDisplayStart + 1;
-          }
-        },
+        //  {
+        //   // Index column
+        //   data: null,
+        //   render: function (data, type, row, meta) {
+        //     return meta.row + meta.settings._iDisplayStart + 1;
+        //   }
+        // },
         { data: 'name', name: 'name' },
         { data: 'email', name: 'email' },
+        { data: 'ic_number', name: 'ic_number' },
+        { data: 'tel_bimbit', name: 'tel_bimbit' },
+        { data: 'tel_pejabat', name: 'tel_pejabat' },
         { data: 'role', name: 'role' },
+        { data: 'sektor', name: 'sektor' },
         { data: 'agency', name: 'agency' },
+        { data: 'seksyen', name: 'seksyen' },
+        { data: 'unit', name: 'unit' },
+        { data: 'jawatan', name: 'jawatan' },
+        { data: 'gln_jawatan', name: 'gln_jawatan' },
+        {
+          data: 'is_active',
+          name: 'is_active',
+          render: function (data, type, row) {
+            if (type === 'display') {
+              return data == 1 ?
+                '<span class="badge bg-label-success">AKTIF</span>' :
+                '<span class="badge bg-label-danger">TIDAK AKTIF</span>';
+            }
+            return data;
+          }
+        },
         { data: 'action', name: 'action', orderable: false, searchable: false }
       ],
       dom:
@@ -75,7 +95,7 @@ $(function () {
       buttons: [
         {
           extend: 'collection',
-          className: 'btn btn-label-secondary dropdown-toggle me-4',
+          className: 'btn btn-label-secondary dropdown-toggle me-4 d-none', // Add d-none class to hide the button
           text: '<i class="bx bx-export me-2 bx-sm"></i>Export',
           buttons: [
             {
@@ -106,7 +126,7 @@ $(function () {
           ]
         },
         {
-          text: '<i class="bx bx-plus bx-sm me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Add New User</span>',
+          text: '<i class="bx bx-plus bx-sm me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">TAMBAH PENGGUNA</span>',
           className: 'add-new btn btn-primary',
           attr: {
             'data-bs-toggle': 'offcanvas',
@@ -142,7 +162,7 @@ $(function () {
       responsive: true,
       language: {
         search: '',
-        searchPlaceholder: 'Search User'
+        searchPlaceholder: 'Carian'
       }
     });
   }
