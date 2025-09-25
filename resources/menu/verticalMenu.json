@@ -54,7 +54,7 @@
           "submenu": [
             {
               "url": "user-management/index",
-              "name": "User",
+              "name": "Pengguna",
               "slug": "user-management-index",
               "permission": "user-management.view"
             },
