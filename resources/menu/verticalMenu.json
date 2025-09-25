@@ -8,24 +8,11 @@
       "permission": null
     },
     {
+      "url": null,
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
-      "slug": "",
-      "permission": "user-management.view",
-      "submenu": [
-        {
-          "url": "#",
-          "name": "Senarai Tiket",
-          "slug": "ticket-list",
-          "permission": "user-management.view"
-        },
-        {
-          "url": "#",
-          "name": "Log Tiket Baru",
-          "slug": "ticket-new",
-          "permission": "user-management.view"
-        }
-      ]
+      "slug": "ticket",
+      "permission": null
     },
     {
       "url": "#",
@@ -41,6 +28,11 @@
       "slug": "report-index",
       "permission": null
     },
+
+    {
+      "menuHeader": "Pengurusan"
+    },
+
     {
       "name": "Pentadbir",
       "icon": "menu-icon tf-icons bx bx-check-shield",
@@ -101,7 +93,7 @@
     },
 
     {
-      "menuHeader": "Misc"
+      "menuHeader": "#(rujukan developer)"
     },
     {
       "url": "https://themeselection.com/support/",
