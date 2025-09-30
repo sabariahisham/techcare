@@ -165,6 +165,8 @@ use App\Http\Controllers\apps\EcommerceCustomerDetailsNotifications;
 use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 
+use App\Http\Controllers\ticket\TicketController;
+
 Route::get('/', function () {
     if (Auth::check()) {
         return view('content.dashboard.dashboards-analytics');
@@ -222,3 +224,19 @@ Route::get('/app/access-permission', [AccessPermission::class, 'index'])->name('
 Route::get('/ui/toasts', [Toasts::class, 'index'])->name('ui-toasts');
 Route::get('/extended/ui-sweetalert2', [SweetAlert::class, 'index'])->name('extended-ui-sweetalert2');
 Route::get('/app/user/list', [UserList::class, 'index'])->name('app-user-list');
+
+
+// tickets
+//Route::resource('tickets', TicketController::class);
+Route::prefix('tickets')->group(function () {
+    Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
+    Route::get('/create', [TicketController::class, 'create'])->name('tickets.create');
+    Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
+    Route::get('/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+    Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
+    Route::put('/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
+    Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
+});
+
+
+
