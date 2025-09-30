@@ -8,7 +8,7 @@
       "permission": null
     },
     {
-      "url": null,
+      "url": "tickets",
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
       "slug": "ticket",
