@@ -54,6 +54,20 @@ $(function () {
         { data: 'id', name: 'id' },
         { data: 'cat_name', name: 'cat_name' },
         { data: 'cat_desc', name: 'cat_desc' },
+        {
+          data: 'created_at',
+          name: 'created_at',
+          render: function (data) {
+            return moment(data).format('DD-MM-YYYY HH:mm:ss');
+          }
+        },
+        {
+          data: 'updated_at',
+          name: 'updated_at',
+          render: function (data) {
+            return moment(data).format('DD-MM-YYYY HH:mm:ss');
+          }
+        },
         { data: 'action', name: 'action', orderable: false, searchable: false }
       ],
       dom:
@@ -103,7 +117,7 @@ $(function () {
           className: 'add-new btn btn-primary',
           attr: {
             'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddUser'
+            'data-bs-target': '#offcanvasAddCategory'
           }
         }
       ],
@@ -185,55 +199,7 @@ $(function () {
   }, 300);
 });
 
-// Validation & Phone mask
+// Form Initialization
 (function () {
-  const phoneMaskList = document.querySelectorAll('.phone-mask'),
-    addNewUserForm = document.getElementById('addNewUserForm');
-
-  // Phone Number
-  if (phoneMaskList) {
-    phoneMaskList.forEach(function (phoneMask) {
-      new Cleave(phoneMask, {
-        phone: true,
-        phoneRegionCode: 'US'
-      });
-    });
-  }
-  // Add New User Form Validation
-  const fv = FormValidation.formValidation(addNewUserForm, {
-    fields: {
-      userFullname: {
-        validators: {
-          notEmpty: {
-            message: 'Please enter fullname '
-          }
-        }
-      },
-      userEmail: {
-        validators: {
-          notEmpty: {
-            message: 'Please enter your email'
-          },
-          emailAddress: {
-            message: 'The value is not a valid email address'
-          }
-        }
-      }
-    },
-    plugins: {
-      trigger: new FormValidation.plugins.Trigger(),
-      bootstrap5: new FormValidation.plugins.Bootstrap5({
-        // Use this for enabling/changing valid/invalid class
-        eleValidClass: '',
-        rowSelector: function (field, ele) {
-          // field is the field name & ele is the field element
-          return '.mb-6';
-        }
-      }),
-      submitButton: new FormValidation.plugins.SubmitButton(),
-      // Submit the form when all fields are valid
-      // defaultSubmit: new FormValidation.plugins.DefaultSubmit(),
-      autoFocus: new FormValidation.plugins.AutoFocus()
-    }
-  });
+  // No specific initialization needed for the list view
 })();

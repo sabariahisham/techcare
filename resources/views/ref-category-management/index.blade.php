@@ -32,7 +32,8 @@
 
 @section('page-script')
 @vite([
-  'resources/assets/js/app-ref-category-list.js'
+  'resources/assets/js/app-ref-category-list.js',
+  'resources/assets/js/app-ref-category-add.js'
 ])
 @endsection
 
@@ -50,6 +51,8 @@
           <th>ID</th>
           <th>Nama Kategori</th>
           <th>Deskripsi</th>
+          <th>Created_at</th>
+          <th>Updated_at</th>
           <th>Tindakan</th>
         </tr>
       </thead>
@@ -60,19 +63,19 @@
 <!-- Offcanvas to add new category -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddCategory" aria-labelledby="offcanvasAddCategoryLabel">
     <div class="offcanvas-header border-bottom">
-      <h5 id="offcanvasAddCategoryLabel" class="offcanvas-title">Add Category</h5>
+      <h5 id="offcanvasAddCategoryLabel" class="offcanvas-title">Tambah Kategori</h5>
       <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
       <form class="add-new-category pt-0" id="addNewCategoryForm" onsubmit="return false">
         @csrf
         <div class="mb-6">
-          <label class="form-label" for="add-category-name">Category Name</label>
-          <input type="text" class="form-control" id="add-category-name" placeholder="Category Name" name="name" required />
+          <label class="form-label" for="add-category-name">Nama Kategori</label>
+          <input type="text" class="form-control" id="add-category-name" placeholder="Nama Kategori" name="name" required />
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-category-description">Description</label>
-          <input type="text" id="add-category-description" class="form-control" placeholder="Category Description" name="description" required />
+          <label class="form-label" for="add-category-description">Deskripsi</label>
+          <input type="text" id="add-category-description" class="form-control" placeholder="Deskripsi Kategori" name="description" required />
         </div>
         <button type="submit" class="btn btn-primary me-3 data-submit">Submit</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Cancel</button>
