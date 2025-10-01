@@ -6,6 +6,7 @@ use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Module;
 use Illuminate\Database\Seeder;
+use Database\Seeders\TicketSeeder;
 use Illuminate\Database\Eloquent\Model;
 
 class DatabaseSeeder extends Seeder
@@ -16,11 +17,18 @@ class DatabaseSeeder extends Seeder
   public function run(): void
   {
     $this->call([
-      ModuleListSeeder::class,
-      RolesAndPermissionSeeder::class
-    ]);
+            // RefCategorySeeder::class,
+            // RefSubCategorySeeder::class,
+            // RefTicketStatusSeeder::class,
+            TicketSeeder::class,
+        ]);
 
-    User::factory(50)->create();
+    // $this->call([
+    //   ModuleListSeeder::class,
+    //   RolesAndPermissionSeeder::class
+    // ]);
+
+    // User::factory(50)->create();
 
     // Module::factory(3)->create();
 
@@ -30,3 +38,4 @@ class DatabaseSeeder extends Seeder
     // ]);
   }
 }
+
