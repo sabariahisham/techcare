@@ -75,6 +75,33 @@ class RefCategoryManagementController extends Controller
         }
     }
 
+    public function update(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'required|string'
+            ]);
+
+            $category = RefCategory::findOrFail($id);
+            $category->cat_name = $validated['name'];
+            $category->cat_desc = $validated['description'];
+            $category->updated_by = $request->user()->id;
+            $category->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Category updated successfully',
+                'data' => $category
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating category: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function destroy($id)
     {
         try {
