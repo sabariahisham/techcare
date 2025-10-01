@@ -11,7 +11,7 @@ class TicketController extends Controller
 {
     public function index()
     {
-        $tickets = Ticket::with(['user', 'category', 'subCategory', 'document', 'status'])
+        $tickets = Ticket::with(['user', 'category', 'subCategory', 'status'])
             ->latest()
             ->paginate(10);
 

@@ -6,6 +6,7 @@ use Ramsey\Uuid\Uuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use League\CommonMark\Node\Block\Document;
 
 class Ticket extends Model
 {
@@ -65,25 +66,25 @@ class Ticket extends Model
         return $this->belongsTo(User::class);
     }
 
-    // public function category()
-    // {
-    //     return $this->belongsTo(RefCategory::class, 'cat_id');
-    // }
+    public function category()
+    {
+        return $this->belongsTo(RefCategory::class, 'cat_id');
+    }
 
-    // public function subCategory()
-    // {
-    //     return $this->belongsTo(RefSubCategory::class, 'subcat_id');
-    // }
+    public function subCategory()
+    {
+        return $this->belongsTo(RefSubCategory::class, 'subcat_id');
+    }
 
     // public function document()
     // {
     //     return $this->belongsTo(Document::class, 'doc_id');
     // }
 
-    // public function status()
-    // {
-    //     return $this->belongsTo(RefTicketStatus::class, 'tick_status');
-    // }
+    public function status()
+    {
+        return $this->belongsTo(RefTicketStatus::class, 'tick_status');
+    }
 
     public function createdBy()
     {
