@@ -48,6 +48,33 @@ class RefCategoryManagementController extends Controller
         }
     }
 
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'required|string'
+            ]);
+
+            $category = new RefCategory();
+            $category->cat_name = $validated['name'];
+            $category->cat_desc = $validated['description'];
+            $category->created_by = $request->user()->id;
+            $category->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Category created successfully',
+                'data' => $category
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating category: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function destroy($id)
     {
         try {
