@@ -68,9 +68,9 @@
           "slug": "configuration",
           "submenu": [
             {
-              "url": "configuration/categories/index",
+              "url": "ref-category-management/index",
               "name": "Kategori",
-              "slug": "configuration-categories-index"
+              "slug": "ref-category-management-index"
             },
             {
               "url": "configuration/sub-categories/index",

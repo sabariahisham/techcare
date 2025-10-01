@@ -160,6 +160,7 @@ use App\Http\Controllers\user_interface\PaginationBreadcrumbs;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsOverview;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsSecurity;
 use App\Http\Controllers\configuration\UserManagementController;
+use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use App\Http\Controllers\wizard_example\Checkout as WizardCheckout;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsNotifications;
 use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
@@ -213,10 +214,20 @@ Route::delete('/modules/{id}', [ModuleListController::class, 'destroy']);
 // user management
 Route::get('/user-management/index', [UserManagementController::class, 'index'])->name('user-management-index');
 Route::get('/user-management/data', [UserManagementController::class, 'getData'])->name('user-management.data');
-Route::post('/user-management/store', [UserManagementController::class, 'store'])->name('user-management.store');
 Route::get('/user-management/{id}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');
 Route::post('/user-management/update/{id}', [UserManagementController::class, 'update'])->name('user-management.update');
 Route::delete('/user-management/{id}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
+
+// ref category management
+Route::get('/ref-category/data', [RefCategoryManagementController::class, 'getAllCategories'])->name('ref-category.data');
+Route::delete('/ref-category/{id}', [RefCategoryManagementController::class, 'destroy'])->name('ref-category.destroy');
+Route::post('/user-management/store', [UserManagementController::class, 'store'])->name('user-management.store');
+
+// reference category management
+Route::get('/ref-category-management/index', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'index'])->name('ref-category-management-index');
+Route::get('/ref-category-management/data', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'getAllCategories'])->name('ref-category-management.data');
+Route::get('/ref-category-management/{id}/edit', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'edit'])->name('ref-category-management.edit');
+Route::delete('/ref-category-management/{id}', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'destroy'])->name('ref-category-management.destroy');
 
 // references
 Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');
