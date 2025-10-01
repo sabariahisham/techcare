@@ -33,7 +33,8 @@
 @section('page-script')
 @vite([
   'resources/assets/js/app-ref-category-list.js',
-  'resources/assets/js/app-ref-category-add.js'
+  'resources/assets/js/app-ref-category-add.js',
+  'resources/assets/js/app-ref-category-edit.js'
 ])
 @endsection
 
@@ -78,6 +79,31 @@
           <input type="text" id="add-category-description" class="form-control" placeholder="Deskripsi Kategori" name="description" required />
         </div>
         <button type="submit" class="btn btn-primary me-3 data-submit">Submit</button>
+        <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Cancel</button>
+      </form>
+    </div>
+  </div>
+
+   <!-- Offcanvas to edit category -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditCategory" aria-labelledby="offcanvasEditCategoryLabel">
+    <div class="offcanvas-header border-bottom">
+      <h5 id="offcanvasEditCategoryLabel" class="offcanvas-title">Edit Kategori</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
+      <form class="edit-category pt-0" id="editCategoryForm" onsubmit="return false">
+        @csrf
+        <input type="hidden" id="edit-category-id" name="id">
+        <div class="mb-6">
+          <label class="form-label" for="edit-category-name">Nama Kategori</label>
+          <input type="text" class="form-control" id="edit-category-name" placeholder="Nama Kategori" name="name" required />
+        </div>
+        <div class="mb-6">
+          <label class="form-label" for="edit-category-description">Deskripsi</label>
+          <input type="text" id="edit-category-description" class="form-control" placeholder="Deskripsi Kategori" name="description" required />
+        </div>
+    
+        <button type="submit" class="btn btn-primary me-3 data-submit">Update</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Cancel</button>
       </form>
     </div>

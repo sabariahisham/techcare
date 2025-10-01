@@ -35,7 +35,7 @@ $(function () {
     var dt_category = dt_category_table.DataTable({
       processing: true,
       serverSide: true,
-      ajax: '/ref-category/data',
+      ajax: '/ref-category-management/data',
       columns: [
         {
           // For Responsive
@@ -174,7 +174,7 @@ $(function () {
         // Delete record
         $.ajax({
           type: 'DELETE',
-          url: `/ref-category/${id}`,
+          url: `/ref-category-management/${id}`,
           headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
           },
