@@ -49,8 +49,7 @@
       <thead>
         <tr>
           <th></th>
-          <th>No.</th>
-          <th>ID</th>
+          <th>Bil.</th>
           <th>Nama Kategori</th>
           <th>Deskripsi</th>
           <th>Created_at</th>
@@ -79,8 +78,8 @@
           <label class="form-label" for="add-category-description">Deskripsi</label>
           <input type="text" id="add-category-description" class="form-control" placeholder="Deskripsi Kategori" name="description" required />
         </div>
-        <button type="submit" class="btn btn-primary me-3 data-submit">Submit</button>
-        <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Cancel</button>
+        <button type="submit" class="btn btn-primary me-3 data-submit">Simpan</button>
+        <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
       </form>
     </div>
   </div>
@@ -104,8 +103,8 @@
           <input type="text" id="edit-category-description" class="form-control" placeholder="Deskripsi Kategori" name="description" required />
         </div>
 
-        <button type="submit" class="btn btn-primary me-3 data-submit">Update</button>
-        <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Cancel</button>
+        <button type="submit" class="btn btn-primary me-3 data-submit">Kemaskini</button>
+        <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
       </form>
     </div>
   </div>

@@ -51,7 +51,7 @@ $(function () {
           orderable: false,
           searchable: false
         },
-        { data: 'id', name: 'id' },
+        
         { data: 'cat_name', name: 'cat_name' },
         { data: 'cat_desc', name: 'cat_desc' },
         {

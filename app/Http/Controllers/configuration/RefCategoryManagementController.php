@@ -64,7 +64,7 @@ class RefCategoryManagementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Category created successfully',
+                'message' => 'Kategori berjaya ditambah',
                 'data' => $category
             ]);
         } catch (\Exception $e) {
@@ -91,7 +91,7 @@ class RefCategoryManagementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Category updated successfully',
+                'message' => 'Kategori berjaya dikemaskini',
                 'data' => $category
             ]);
         } catch (\Exception $e) {
@@ -110,7 +110,7 @@ class RefCategoryManagementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Category deleted successfully'
+                'message' => 'Kategori berjaya dipadam'
             ]);
         } catch (\Exception $e) {
             return response()->json([

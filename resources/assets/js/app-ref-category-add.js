@@ -11,14 +11,14 @@
         name: {
           validators: {
             notEmpty: {
-              message: 'Please enter category name'
+              message: 'Sila masukkan nama kategori'
             }
           }
         },
         description: {
           validators: {
             notEmpty: {
-              message: 'Please enter category description'
+              message: 'Sila masukkan deskripsi kategori'
             }
           }
         }
@@ -50,7 +50,7 @@
             // Clear form
             addNewCategoryForm.reset();
             // Show success message
-            toastr.success('Category created successfully', 'Success!', {
+            toastr.success('Kategori berjaya ditambah', 'Berjaya!', {
               closeButton: true,
               tapToDismiss: false,
               progressBar: true,
