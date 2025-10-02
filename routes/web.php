@@ -219,10 +219,6 @@ Route::post('/user-management/update/{id}', [UserManagementController::class, 'u
 Route::delete('/user-management/{id}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
 Route::post('/user-management/store', [UserManagementController::class, 'store'])->name('user-management.store');
 
-// ref category management
-Route::get('/ref-category/data', [RefCategoryManagementController::class, 'getAllCategories'])->name('ref-category.data');
-Route::delete('/ref-category/{id}', [RefCategoryManagementController::class, 'destroy'])->name('ref-category.destroy');
-
 // reference category management
 Route::get('/ref-category-management/index', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'index'])->name('ref-category-management-index');
 Route::get('/ref-category-management/data', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'getAllCategories'])->name('ref-category-management.data');

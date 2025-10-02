@@ -34,7 +34,8 @@
 @vite([
   'resources/assets/js/app-ref-category-list.js',
   'resources/assets/js/app-ref-category-add.js',
-  'resources/assets/js/app-ref-category-edit.js'
+  'resources/assets/js/app-ref-category-edit.js',
+  'resources/assets/js/app-ref-category-delete.js',
 ])
 @endsection
 
@@ -102,7 +103,7 @@
           <label class="form-label" for="edit-category-description">Deskripsi</label>
           <input type="text" id="edit-category-description" class="form-control" placeholder="Deskripsi Kategori" name="description" required />
         </div>
-    
+
         <button type="submit" class="btn btn-primary me-3 data-submit">Update</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Cancel</button>
       </form>
