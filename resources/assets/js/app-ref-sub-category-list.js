@@ -32,7 +32,8 @@ $(function () {
 
   // Sub Categories datatable
   if (dt_subcategory_table.length) {
-    var dt_subcategory = dt_subcategory_table.DataTable({
+    // Make dt_subcategory global so it can be accessed from other files
+    window.dt_subcategory = dt_subcategory_table.DataTable({
       processing: true,
       serverSide: true,
       ajax: '/ref-sub-category-management/data',
@@ -182,7 +183,7 @@ $(function () {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
           },
           success: function () {
-            dt_subcategory.ajax.reload();
+            window.dt_subcategory.ajax.reload();
             toastr.success('Sub Category has been deleted successfully.');
           },
           error: function (error) {
@@ -230,54 +231,6 @@ $(function () {
 
 // Form Initialization and submission handlers
 (function () {
-  // Add new sub category form submission
-  $('#addNewSubCategoryForm').on('submit', function (e) {
-    e.preventDefault();
-
-    const formData = new FormData(this);
-
-    $.ajax({
-      type: 'POST',
-      url: '/ref-sub-category-management',
-      data: formData,
-      processData: false,
-      contentType: false,
-      headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-      },
-      success: function (response) {
-        if (response.success) {
-          // Hide offcanvas
-          var addOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasAddSubCategory'));
-          addOffcanvas.hide();
-
-          // Reset form
-          $('#addNewSubCategoryForm')[0].reset();
-
-          // Reload DataTable
-          dt_subcategory.ajax.reload();
-
-          // Show success message
-          toastr.success(response.message);
-        } else {
-          toastr.error(response.message);
-        }
-      },
-      error: function (xhr) {
-        if (xhr.status === 422) {
-          const errors = xhr.responseJSON.errors;
-          let errorMessage = '';
-          for (const field in errors) {
-            errorMessage += errors[field][0] + '\n';
-          }
-          toastr.error(errorMessage);
-        } else {
-          toastr.error('An error occurred while creating the sub category.');
-        }
-      }
-    });
-  });
-
   // Edit sub category form submission
   $('#editSubCategoryForm').on('submit', function (e) {
     e.preventDefault();
@@ -302,7 +255,7 @@ $(function () {
           editOffcanvas.hide();
 
           // Reload DataTable
-          dt_subcategory.ajax.reload();
+          window.dt_subcategory.ajax.reload();
 
           // Show success message
           toastr.success(response.message);
