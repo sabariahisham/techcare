@@ -6,16 +6,86 @@ use App\Models\Ticket;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Yajra\DataTables\Facades\DataTables;
 
 class TicketController extends Controller
 {
-    public function index()
-    {
-        $tickets = Ticket::with(['user', 'category', 'subCategory', 'status'])
-            ->latest()
-            ->paginate(10);
+public function getData(Request $request)
+{
+    $tickets = Ticket::with(['user', 'category', 'subCategory', 'status'])->latest();
 
-        return view('tickets.index', compact('tickets'));
+    return DataTables::of($tickets)
+        ->addIndexColumn()
+        ->addColumn('tarikh_aduan', function ($ticket) {
+            return $ticket->created_at ? $ticket->created_at->format('d-m-Y') : '-';
+        })
+        ->addColumn('nama_pengadu', function ($ticket) {
+            return $ticket->user ? e($ticket->user->name) : '-';
+        })
+        ->addColumn('kategori', function ($ticket) {
+            return $ticket->category ? e($ticket->category->cat_name) : '-';
+        })
+        ->addColumn('sub_kategori', function ($ticket) {
+            return $ticket->subCategory ? e($ticket->subCategory->subcat_name) : '-';
+        })
+        ->addColumn('status', function ($ticket) {
+            return $ticket->status ? e($ticket->status->st_name) : '-';
+        })
+        ->addColumn('action', function ($ticket) {
+            $viewBtn = '<a href="'.route('tickets.show', $ticket->id).'" class="btn btn-icon btn-text-secondary rounded-pill btn-sm" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></a>';
+            $editBtn = '<a href="'.route('tickets.edit', $ticket->id).'" class="btn btn-icon btn-text-secondary rounded-pill btn-sm" data-bs-toggle="tooltip" title="Edit"><i class="bx bx-edit"></i></a>';
+            $deleteBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm delete-record" data-id="'.$ticket->id.'" data-bs-toggle="tooltip" title="Delete"><i class="bx bx-trash"></i></button>';
+            return '<div class="d-inline-block text-nowrap">' . $viewBtn . ' ' . $editBtn . ' ' . $deleteBtn . '</div>';
+        })
+        ->rawColumns(['action'])
+        ->make(true);
+}
+
+
+  public function index()
+    {
+        return view('tickets.index');
+
+      // $tickets = Ticket::with(['user', 'category', 'subCategory', 'status'])
+      //       ->latest()
+      //       ->paginate(10);
+
+      // return DataTables::of($tickets)
+      //       ->addIndexColumn()
+      //       ->addColumn('user', function ($ticket) {
+      //           return $ticket->user ? e($ticket->user->name) : '-';
+      //       })
+      //       ->addColumn('category', function ($ticket) {
+      //           return $ticket->category ? e($ticket->category->name) : '-';
+      //       })
+      //       ->addColumn('subCategory', function ($ticket) {
+      //           return $ticket->subCategory ? e($ticket->subCategory->name) : '-';
+      //       })
+      //       ->addColumn('status', function ($ticket) {
+      //           return $ticket->status ? e($ticket->status->name) : '-';
+      //       })
+      //       ->addColumn('action', function ($ticket) {
+      //           $viewBtn = '<a href="'.route('tickets.show', $ticket->id).'" class="btn btn-icon btn-text-secondary rounded-pill btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="View">
+      //               <i class="bx bx-show"></i>
+      //           </a>';
+
+      //           $editBtn = '<a href="'.route('tickets.edit', $ticket->id).'" class="btn btn-icon btn-text-secondary rounded-pill btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
+      //               <i class="bx bx-edit"></i>
+      //           </a>';
+
+      //           $deleteBtn = '<form action="'.route('tickets.destroy', $ticket->id).'" method="POST" class="d-inline">
+      //               '.csrf_field().'
+      //               '.method_field('DELETE').'
+      //               <button type="submit" class="btn btn-icon btn-text-secondary rounded-pill btn-sm" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete" onclick="return confirm(\'Are you sure?\')">
+      //                   <i class="bx bx-trash"></i>
+      //               </button>
+      //           </form>';
+
+      //           return '<div class="d-inline-block text-nowrap">' . $viewBtn . ' ' . $editBtn . ' ' . $deleteBtn . '</div>';
+      //       })
+      //       ->rawColumns(['action'])
+      //       ->make(true);
+
     }
 
     public function create()
@@ -76,4 +146,5 @@ class TicketController extends Controller
 
         return redirect()->route('tickets.index')->with('success', 'Ticket deleted successfully.');
     }
+
 }

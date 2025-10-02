@@ -22,6 +22,11 @@ class RefSubCategory extends Model
 
     public function category()
     {
-        return $this->belongsTo(RefCategory::class, 'cat_id');
+        return $this->belongsTo(RefCategory::class, 'id');
+    }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class, 'subcat_id');
     }
 }
