@@ -12,6 +12,7 @@ $(function () {
       html: `Anda ingin memadam kategori <b>${categoryName}</b>?`,
       icon: 'warning',
       showCancelButton: true,
+      cancelButtonText: 'Tidak, batal!',
       confirmButtonText: 'Ya, padam!',
       customClass: {
         confirmButton: 'btn btn-danger me-3',
