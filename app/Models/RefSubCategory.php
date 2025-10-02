@@ -22,7 +22,7 @@ class RefSubCategory extends Model
 
     public function category()
     {
-        return $this->belongsTo(RefCategory::class, 'id');
+        return $this->belongsTo(RefCategory::class, 'cat_id');
     }
 
     public function tickets()

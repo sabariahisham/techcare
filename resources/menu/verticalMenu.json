@@ -73,9 +73,9 @@
               "slug": "ref-category-management-index"
             },
             {
-              "url": "configuration/sub-categories/index",
+              "url": "ref-sub-category-management/index",
               "name": "Sub-kategori",
-              "slug": "configuration-sub-categories-index"
+              "slug": "ref-sub-category-management-index"
             },
             {
               "url": "configuration/sla-severity/index",
