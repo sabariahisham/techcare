@@ -18,5 +18,10 @@ class RefTicketStatus extends Model
         'created_by',
         'updated_by',
     ];
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class, 'tick_status');
+    }
 }
 
