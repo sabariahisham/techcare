@@ -245,54 +245,6 @@ $(function () {
 
 // Form Initialization and submission handlers
 (function () {
-  // Add SLA form submission
-  $('#addNewSlaForm').on('submit', function (e) {
-    e.preventDefault();
-
-    const formData = new FormData(this);
-
-    $.ajax({
-      type: 'POST',
-      url: '/sla-severity',
-      data: formData,
-      processData: false,
-      contentType: false,
-      headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-      },
-      success: function (response) {
-        if (response.success) {
-          // Hide offcanvas
-          var addOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasAddSla'));
-          addOffcanvas.hide();
-
-          // Reset form
-          document.getElementById('addNewSlaForm').reset();
-
-          // Reload DataTable
-          window.dt_sla.ajax.reload();
-
-          // Show success message
-          toastr.success(response.message);
-        } else {
-          toastr.error(response.message);
-        }
-      },
-      error: function (xhr) {
-        if (xhr.status === 422) {
-          const errors = xhr.responseJSON.errors;
-          let errorMessage = '';
-          for (const field in errors) {
-            errorMessage += errors[field][0] + '\n';
-          }
-          toastr.error(errorMessage);
-        } else {
-          toastr.error('An error occurred while creating the SLA.');
-        }
-      }
-    });
-  });
-
   // Edit SLA form submission
   $('#editSlaForm').on('submit', function (e) {
     e.preventDefault();
