@@ -29,4 +29,9 @@ class RefSubCategory extends Model
     {
         return $this->hasMany(Ticket::class, 'subcat_id');
     }
+
+    public function slas()
+    {
+        return $this->hasMany(Sla::class, 'subcat_id');
+    }
 }
