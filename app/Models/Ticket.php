@@ -55,4 +55,9 @@ class Ticket extends Model
     {
         return $this->belongsTo(RefTicketStatus::class, 'tick_status', 'id');
     }
+
+    public function sla()
+    {
+        return $this->belongsTo(Sla::class, 'sla_id');
+    }
 }

@@ -78,9 +78,9 @@
               "slug": "ref-sub-category-management-index"
             },
             {
-              "url": "configuration/sla-severity/index",
+              "url": "sla-severity/index",
               "name": "SLA & Severity",
-              "slug": "configuration-sla-severity-index"
+              "slug": "sla-severity-index"
             },
             {
               "url": "configuration/appointed-officer/index",
