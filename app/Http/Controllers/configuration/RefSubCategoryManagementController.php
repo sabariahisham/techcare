@@ -47,9 +47,7 @@ class RefSubCategoryManagementController extends Controller
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+    
     public function store(Request $request)
     {
         $request->validate([
@@ -66,9 +64,9 @@ class RefSubCategoryManagementController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            return response()->json(['success' => true, 'message' => 'Sub category created successfully']);
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error creating sub category']);
+            return response()->json(['success' => false]);
         }
     }
 
@@ -114,9 +112,9 @@ class RefSubCategoryManagementController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            return response()->json(['success' => true, 'message' => 'Sub category updated successfully']);
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error updating sub category']);
+            return response()->json(['success' => false]);
         }
     }
 
