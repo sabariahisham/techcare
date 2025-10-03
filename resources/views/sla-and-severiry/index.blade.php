@@ -35,6 +35,8 @@
 'resources/assets/js/app-sla-and-severity-list.js',
 'resources/assets/js/app-sla-and-severity-add.js',
 'resources/assets/js/app-sla-and-severity-edit.js',
+// 'resources/assets/js/app-sla-and-severity.js',
+'resources/assets/js/app-sla-and-severity-delete.js',
 
 ])
 @endsection
@@ -50,12 +52,11 @@
         <tr>
           <th></th>
           <th>Bil.</th>
-          {{-- <th>ID</th> --}}
           <th>Kategori</th>
           <th>Sub Kategori</th>
           <th>Level Petugas</th>
-          <th>SLA Priority</th>
-          <th>HARI</th>
+          <th>Keutamaan</th>
+          <th>Hari</th>
           <th>Tindakan</th>
         </tr>
       </thead>
@@ -91,20 +92,20 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-sla-level">SLA Level</label>
-          <input type="text" class="form-control" id="add-sla-level" placeholder="SLA Level" name="sla_level" required />
+          <label class="form-label" for="add-sla-level">Level Petugas</label>
+          <input type="text" class="form-control" id="add-sla-level" placeholder="Level Petugas" name="sla_level" required />
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-sla-priority">SLA Priority</label>
+          <label class="form-label" for="add-sla-priority">Keutamaan</label>
           <select class="form-select" id="add-sla-priority" name="sla_priority" required>
-            <option value="">Pilih Priority</option>
+            <option value="">Pilih Keutamaan</option>
             <option value="High">High</option>
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-sla-days">SLA Days</label>
+          <label class="form-label" for="add-sla-days">Hari</label>
           <input type="number" id="add-sla-days" class="form-control" placeholder="SLA Days" name="sla_days" required />
         </div>
         <button type="submit" class="btn btn-primary me-3 data-submit">Simpan</button>
@@ -143,20 +144,20 @@
         </select>
       </div>
       <div class="mb-6">
-        <label class="form-label" for="edit_sla_level">SLA Level</label>
-        <input type="text" class="form-control" id="edit_sla_level" placeholder="SLA Level" name="sla_level" required />
+        <label class="form-label" for="edit_sla_level">Level Petugas</label>
+        <input type="text" class="form-control" id="edit_sla_level" placeholder="Level Petugas" name="sla_level" required />
       </div>
       <div class="mb-6">
-        <label class="form-label" for="edit_sla_priority">SLA Priority</label>
+        <label class="form-label" for="edit_sla_priority">Keutamaan</label>
         <select class="form-select" id="edit_sla_priority" name="sla_priority" required>
-          <option value="">Pilih Priority</option>
+          <option value="">Pilih Keutamaan</option>
           <option value="High">High</option>
           <option value="Medium">Medium</option>
           <option value="Low">Low</option>
         </select>
       </div>
       <div class="mb-6">
-        <label class="form-label" for="edit_sla_days">SLA Days</label>
+        <label class="form-label" for="edit_sla_days">Hari</label>
         <input type="number" id="edit_sla_days" class="form-control" placeholder="SLA Days" name="sla_days" required />
       </div>
       <button type="submit" class="btn btn-primary me-3 data-submit">Kemaskini</button>
