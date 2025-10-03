@@ -207,34 +207,6 @@ $(function () {
     });
   });
 
-  // Edit Record
-  $('.datatables-sla tbody').on('click', '.edit-record', function () {
-    var id = $(this).data('id');
-
-    // Fetch SLA data and populate form
-    $.ajax({
-      type: 'GET',
-      url: `/sla-severity/${id}/edit`,
-      success: function (data) {
-        // Populate the edit form with data
-        $('#edit_sla_level').val(data.sla_level);
-        $('#edit_sla_priority').val(data.sla_priority);
-        $('#edit_sla_days').val(data.sla_days);
-        $('#edit_cat_id').val(data.cat_id).trigger('change');
-        $('#edit_subcat_id').val(data.subcat_id).trigger('change');
-        $('#edit_sla_id').val(data.id);
-
-        // Show the edit offcanvas
-        var editOffcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasEditSla'));
-        editOffcanvas.show();
-      },
-      error: function (error) {
-        toastr.error('An error occurred while fetching SLA data.');
-        console.error(error);
-      }
-    });
-  });
-
   // Filter form control to default size
   // ? setTimeout used for multilingual table initialization
   setTimeout(() => {
@@ -243,52 +215,4 @@ $(function () {
   }, 300);
 });
 
-// Form Initialization and submission handlers
-(function () {
-  // Edit SLA form submission
-  $('#editSlaForm').on('submit', function (e) {
-    e.preventDefault();
 
-    const formData = new FormData(this);
-    const id = $('#edit_sla_id').val();
-
-    $.ajax({
-      type: 'POST',
-      url: `/sla-severity/${id}`,
-      data: formData,
-      processData: false,
-      contentType: false,
-      headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-        'X-HTTP-Method-Override': 'PUT'
-      },
-      success: function (response) {
-        if (response.success) {
-          // Hide offcanvas
-          var editOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasEditSla'));
-          editOffcanvas.hide();
-
-          // Reload DataTable
-          window.dt_sla.ajax.reload();
-
-          // Show success message
-          toastr.success(response.message);
-        } else {
-          toastr.error(response.message);
-        }
-      },
-      error: function (xhr) {
-        if (xhr.status === 422) {
-          const errors = xhr.responseJSON.errors;
-          let errorMessage = '';
-          for (const field in errors) {
-            errorMessage += errors[field][0] + '\n';
-          }
-          toastr.error(errorMessage);
-        } else {
-          toastr.error('An error occurred while updating the SLA.');
-        }
-      }
-    });
-  });
-})();
