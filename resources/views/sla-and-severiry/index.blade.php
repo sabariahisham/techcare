@@ -33,6 +33,9 @@
 @section('page-script')
 @vite([
   'resources/assets/js/app-sla-and-severity-list.js',
+  'resources/assets/js/app-sla-and-severity-add.js',
+  // 'resources/assets/js/modal-edit-user.js',
+  'resources/assets/js/modal-add-user.js',
 ])
 @endsection
 

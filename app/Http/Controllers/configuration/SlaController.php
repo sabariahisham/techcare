@@ -69,9 +69,9 @@ class SlaController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            return response()->json(['success' => true, 'message' => 'SLA created successfully']);
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error creating SLA']);
+            return response()->json(['success' => false]);
         }
     }
 
@@ -81,7 +81,7 @@ class SlaController extends Controller
             $sla = Sla::with(['category', 'subCategory'])->findOrFail($id);
             return response()->json($sla);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'SLA not found'], 404);
+            return response()->json(['error' => true], 404);
         }
     }
 
@@ -107,9 +107,9 @@ class SlaController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            return response()->json(['success' => true, 'message' => 'SLA updated successfully']);
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error updating SLA']);
+            return response()->json(['success' => false]);
         }
     }
 
@@ -119,9 +119,9 @@ class SlaController extends Controller
             $sla = Sla::findOrFail($id);
             $sla->delete();
 
-            return response()->json(['success' => true, 'message' => 'SLA deleted successfully']);
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error deleting SLA']);
+            return response()->json(['success' => false]);
         }
     }
 }

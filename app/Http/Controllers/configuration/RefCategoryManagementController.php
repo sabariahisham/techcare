@@ -119,4 +119,19 @@ class RefCategoryManagementController extends Controller
             ], 500);
         }
     }
+
+    public function getSubcategories($id)
+    {
+        try {
+            $category = RefCategory::findOrFail($id);
+            $subcategories = $category->subCategories()->select('id', 'subcat_name')->get();
+
+            return response()->json($subcategories);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading subcategories: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
