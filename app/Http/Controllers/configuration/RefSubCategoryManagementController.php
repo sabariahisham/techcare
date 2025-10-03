@@ -47,7 +47,7 @@ class RefSubCategoryManagementController extends Controller
         //
     }
 
-    
+
     public function store(Request $request)
     {
         $request->validate([
@@ -127,9 +127,9 @@ class RefSubCategoryManagementController extends Controller
             $subCategory = RefSubCategory::findOrFail($id);
             $subCategory->delete();
 
-            return response()->json(['success' => true, 'message' => 'Sub category deleted successfully']);
+            return response()->json(['success' => true, 'message' => 'Sub-kategori berjaya dipadam']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error deleting sub category']);
+            return response()->json(['success' => false, 'message' => 'Ralat semasa memadam sub-kategori']);
         }
     }
 }
