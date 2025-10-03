@@ -33,7 +33,8 @@
 @section('page-script')
 @vite([
   'resources/assets/js/app-ref-sub-category-list.js',
-  'resources/assets/js/app-ref-sub-category-add.js'
+  'resources/assets/js/app-ref-sub-category-add.js',
+  'resources/assets/js/app-ref-sub-category-edit.js'
 ])
 @endsection
 
