@@ -264,7 +264,6 @@ Route::get('/app/user/list', [UserList::class, 'index'])->name('app-user-list');
 Route::prefix('tickets')->group(function () {
     Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
     Route::get('/data', [TicketController::class, 'getData'])->name('tickets.data');
-    Route::get('/create', [TicketController::class, 'create'])->name('tickets.create');
     Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
     Route::get('/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
     Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
