@@ -72,7 +72,7 @@ $(function () {
           className: 'add-new btn btn-primary',
           attr: {
             'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddUser'
+            'data-bs-target': '#offcanvasAddTicket'
           }
         }
       ],
@@ -143,4 +143,5 @@ $(function () {
       autoFocus: new FormValidation.plugins.AutoFocus()
     }
   });
-})();
+})
+();
