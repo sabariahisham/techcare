@@ -83,9 +83,9 @@
               "slug": "sla-severity-index"
             },
             {
-              "url": "configuration/appointed-officer/index",
+              "url": "officer/index",
               "name": "Pegawai Tugasan",
-              "slug": "configuration-appointed-officer-index"
+              "slug": "officer-index"
             }
           ]
         }

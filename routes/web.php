@@ -242,6 +242,10 @@ Route::get('/sla-severity/{id}/edit', [App\Http\Controllers\Configuration\SlaCon
 Route::put('/sla-severity/{id}', [App\Http\Controllers\Configuration\SlaController::class, 'update'])->name('sla-severity-update');
 Route::delete('/sla-severity/{id}', [App\Http\Controllers\Configuration\SlaController::class, 'destroy'])->name('sla-severity-destroy');
 
+// appointed officer management
+Route::get('/officer/index', [App\Http\Controllers\Configuration\OfficerController::class, 'index'])->name('officer-index');
+Route::get('/officer/data', [App\Http\Controllers\Configuration\OfficerController::class, 'data'])->name('officer-data');
+
 // references
 Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');
 Route::get('/app/access-permission', [AccessPermission::class, 'index'])->name('app-access-permission');
