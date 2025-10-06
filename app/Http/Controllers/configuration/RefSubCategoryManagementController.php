@@ -132,4 +132,16 @@ class RefSubCategoryManagementController extends Controller
             return response()->json(['success' => false, 'message' => 'Ralat semasa memadam sub-kategori']);
         }
     }
+
+    public function getByCategory($categoryId)
+    {
+        $subcategories = RefSubCategory::where('cat_id', $categoryId)
+            ->orderBy('subcat_name')
+            ->get(['id', 'subcat_name']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $subcategories
+        ]);
+    }
 }
