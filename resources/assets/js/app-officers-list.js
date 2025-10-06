@@ -141,42 +141,7 @@ $(function () {
     });
   }
 
-  // Delete Record
-  $('.datatables-refcategory tbody').on('click', '.delete-record', function () {
-    var id = $(this).data('id');
-
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, delete it!',
-      customClass: {
-        confirmButton: 'btn btn-primary me-3',
-        cancelButton: 'btn btn-label-secondary'
-      },
-      buttonsStyling: false
-    }).then(function (result) {
-      if (result.value) {
-        // Delete record
-        $.ajax({
-          type: 'DELETE',
-          url: `/officer/${id}`,
-          headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-          },
-          success: function () {
-            dt_officers.ajax.reload();
-            toastr.success('Officer has been deleted successfully.');
-          },
-          error: function (error) {
-            toastr.error('An error occurred while deleting the officer.');
-            console.error(error);
-          }
-        });
-      }
-    });
-  });
+  // Delete functionality is handled by app-officers-delete.js
 
   // Filter form control to default size
   // ? setTimeout used for multilingual table initialization

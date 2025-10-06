@@ -35,7 +35,7 @@
    'resources/assets/js/app-officers-list.js',
   'resources/assets/js/app-officers-add.js',
   'resources/assets/js/app-officers-edit.js',
-  // 'resources/assets/js/app-officers-delete.js',
+  'resources/assets/js/app-officers-delete.js',
 ])
 @endsection
 
