@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Module;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\Log;
 
 class ModuleListController extends Controller
 {
@@ -43,7 +44,14 @@ class ModuleListController extends Controller
      */
     public function store(Request $request)
     {
-        $moduleExists = Module::where('module_name', $request->modalModuleName)->exists();
+        try {
+            Log::info('Module creation request received:', $request->all());
+
+            $request->validate([
+                'modalModuleName' => 'required|string|max:100|min:3'
+            ]);
+
+            $moduleExists = Module::where('module_name', $request->modalModuleName)->exists();
 
         if ($moduleExists) {
             return response()->json([
@@ -98,6 +106,18 @@ class ModuleListController extends Controller
             'message' => 'Module created successfully',
             'data' => $module
         ]);
+
+        } catch (\Exception $e) {
+            Log::error('Module creation error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->all()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while creating the module: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
 

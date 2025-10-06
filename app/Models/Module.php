@@ -5,8 +5,9 @@ namespace App\Models;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Spatie\Permission\Models\Permission;
 
-class Module extends model
+class Module extends Model
 {
   use HasFactory;
 

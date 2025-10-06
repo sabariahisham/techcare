@@ -29,6 +29,7 @@
 @section('page-script')
 @vite([
   'resources/assets/js/app-modules-list.js',
+  'resources/assets/js/app-modules-add.js',
   'resources/assets/js/modal-add-module.js',
   'resources/assets/js/modal-edit-module.js',
   'resources/assets/js/ui-toasts.js',
@@ -128,8 +129,25 @@
 </div>
 <!--/ Permission Table -->
 
-<!-- Modal -->
-@include('_partials/_modals/modal-add-module')
-@include('_partials/_modals/modal-edit-module')
-<!-- /Modal -->
+<!-- Offcanvas to add new module -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddModule" aria-labelledby="offcanvasAddModuleLabel">
+  <div class="offcanvas-header border-bottom">
+    <h5 id="offcanvasAddModuleLabel" class="offcanvas-title">Tambah Modul Baharu</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
+    <form class="add-new-module pt-0" id="addNewModuleForm" onsubmit="return false">
+      @csrf
+      <div class="mb-6">
+        <label class="form-label" for="add-module-name">Nama Modul <span class="text-danger">*</span></label>
+        <input type="text" class="form-control" id="add-module-name" placeholder="Masukkan nama modul" name="modalModuleName" required />
+        <small class="form-text text-muted">Nama modul akan digunakan untuk menjana permission secara automatik</small>
+      </div>
+      <button type="submit" class="btn btn-primary me-3 data-submit">Simpan</button>
+      <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
+    </form>
+  </div>
+</div>
+
+
 @endsection
