@@ -68,11 +68,11 @@ $(function () {
       // Buttons with Dropdown
       buttons: [
         {
-          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Add Module</span>',
+          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Modul</span>',
           className: 'add-new btn btn-primary mb-6 mb-md-0',
           attr: {
-            'data-bs-toggle': 'modal',
-            'data-bs-target': '#addModuleModal'
+            'data-bs-toggle': 'offcanvas',
+            'data-bs-target': '#offcanvasAddModule'
           },
           init: function (api, node, config) {
             $(node).removeClass('btn-secondary');

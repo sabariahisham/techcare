@@ -198,23 +198,25 @@ Route::middleware([
 });
 
 // roles, permission and modules are under acl (access control list)
-Route::get('/acl/roles/index', [RoleController::class, 'index'])->name('acl-roles-index');
-Route::get('/roles', [RoleController::class, 'getRoles'])->name('roles.data');
-Route::post('/acl/roles/store', [RoleController::class, 'store'])->name('acl-roles-store');
-Route::delete('/acl/roles/{role}', [RoleController::class, 'destroy'])->name('roles-destroy');
-Route::get('/acl/roles/{id}/permissions', [RoleController::class, 'getRolePermissions'])->name('roles.permissions');
-Route::put('/acl/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/acl/roles/index', [RoleController::class, 'index'])->name('acl-roles-index');
+    Route::get('/roles', [RoleController::class, 'getRoles'])->name('roles.data');
+    Route::post('/acl/roles/store', [RoleController::class, 'store'])->name('acl-roles-store');
+    Route::delete('/acl/roles/{role}', [RoleController::class, 'destroy'])->name('roles-destroy');
+    Route::get('/acl/roles/{id}/permissions', [RoleController::class, 'getRolePermissions'])->name('roles.permissions');
+    Route::put('/acl/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
 
-// permissions
-Route::get('/acl/permissions/index', [PermissionController::class, 'index'])->name('acl-permissions-index');
-Route::get('/permissions', [PermissionController::class, 'getData'])->name('permissions.data');
+    // permissions
+    Route::get('/acl/permissions/index', [PermissionController::class, 'index'])->name('acl-permissions-index');
+    Route::get('/permissions', [PermissionController::class, 'getData'])->name('permissions.data');
 
-// modules
-Route::get('/acl/module-list/index', [ModuleListController::class, 'index'])->name('acl-module-list-index');
-Route::get('/modules', [ModuleListController::class, 'getModules'])->name('modules.data');
-Route::post('/modules/store', [ModuleListController::class, 'store'])->name('modules.store');
-Route::post('/modules/update/{id}', [ModuleListController::class, 'update'])->name('modules.update');
-Route::delete('/modules/{id}', [ModuleListController::class, 'destroy']);
+    // modules
+    Route::get('/acl/module-list/index', [ModuleListController::class, 'index'])->name('acl-module-list-index');
+    Route::get('/modules', [ModuleListController::class, 'getModules'])->name('modules.data');
+    Route::post('/modules', [ModuleListController::class, 'store'])->name('modules.store');
+    Route::post('/modules/update/{id}', [ModuleListController::class, 'update'])->name('modules.update');
+    Route::delete('/modules/{id}', [ModuleListController::class, 'destroy']);
+});
 
 // user management
 Route::get('/user-management/index', [UserManagementController::class, 'index'])->name('user-management-index');
