@@ -33,9 +33,9 @@
 @section('page-script')
 @vite([
    'resources/assets/js/app-officers-list.js',
-  // 'resources/assets/js/app-ref-category-add.js',
-  // 'resources/assets/js/app-ref-category-edit.js',
-  // 'resources/assets/js/app-ref-category-delete.js',
+  'resources/assets/js/app-officers-add.js',
+  'resources/assets/js/app-officers-edit.js',
+  // 'resources/assets/js/app-officers-delete.js',
 ])
 @endsection
 
@@ -61,52 +61,90 @@
   </div>
 </div>
 
-<!-- Offcanvas to add new category -->
-  {{-- <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddCategory" aria-labelledby="offcanvasAddCategoryLabel">
+<!-- Offcanvas to add new officer -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddOfficer" aria-labelledby="offcanvasAddOfficerLabel">
     <div class="offcanvas-header border-bottom">
-      <h5 id="offcanvasAddCategoryLabel" class="offcanvas-title">Tambah Kategori</h5>
+      <h5 id="offcanvasAddOfficerLabel" class="offcanvas-title">Tambah Pegawai Tugasan</h5>
       <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
-      <form class="add-new-category pt-0" id="addNewCategoryForm" onsubmit="return false">
+      <form class="add-new-officer pt-0" id="addNewOfficerForm" onsubmit="return false">
         @csrf
         <div class="mb-6">
-          <label class="form-label" for="add-category-name">Nama Kategori</label>
-          <input type="text" class="form-control" id="add-category-name" placeholder="Nama Kategori" name="name" required />
+          <label class="form-label" for="add-officer-category">Kategori <span class="text-danger">*</span></label>
+          <select class="form-select select2" id="add-officer-category" name="cat_id" required>
+            <option value="">Pilih Kategori</option>
+            @foreach($categories as $category)
+              <option value="{{ $category->id }}">{{ $category->cat_name }}</option>
+            @endforeach
+          </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-category-description">Deskripsi</label>
-          <input type="text" id="add-category-description" class="form-control" placeholder="Deskripsi Kategori" name="description" required />
+          <label class="form-label" for="add-officer-subcategory">Sub Kategori <span class="text-danger">*</span></label>
+          <select class="form-select select2" id="add-officer-subcategory" name="subcat_id" required>
+            <option value="">Pilih Sub Kategori</option>
+          </select>
+        </div>
+        <div class="mb-6">
+          <label class="form-label" for="add-officer-level">Level Tugasan <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" id="add-officer-level" placeholder="Masukkan level tugasan (1-10)" name="level_tugasan" min="1" max="10" required />
+        </div>
+        <div class="mb-6">
+          <label class="form-label" for="add-officer-user">Pegawai <span class="text-danger">*</span></label>
+          <select class="form-select select2" id="add-officer-user" name="user_id[]" multiple required>
+            @foreach($users as $user)
+              <option value="{{ $user->id }}">{{ $user->name }}</option>
+            @endforeach
+          </select>
         </div>
         <button type="submit" class="btn btn-primary me-3 data-submit">Simpan</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
       </form>
     </div>
-  </div> --}}
+  </div>
 
-   <!-- Offcanvas to edit category -->
-  {{-- <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditCategory" aria-labelledby="offcanvasEditCategoryLabel">
-    <div class="offcanvas-header border-bottom">
-      <h5 id="offcanvasEditCategoryLabel" class="offcanvas-title">Edit Kategori</h5>
-      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
-      <form class="edit-category pt-0" id="editCategoryForm" onsubmit="return false">
-        @csrf
-        <input type="hidden" id="edit-category-id" name="id">
-        <div class="mb-6">
-          <label class="form-label" for="edit-category-name">Nama Kategori</label>
-          <input type="text" class="form-control" id="edit-category-name" placeholder="Nama Kategori" name="name" required />
-        </div>
-        <div class="mb-6">
-          <label class="form-label" for="edit-category-description">Deskripsi</label>
-          <input type="text" id="edit-category-description" class="form-control" placeholder="Deskripsi Kategori" name="description" required />
-        </div>
-
-        <button type="submit" class="btn btn-primary me-3 data-submit">Kemaskini</button>
-        <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
-      </form>
-    </div>
-  </div> --}}
+<!-- Offcanvas to edit officer -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditOfficer" aria-labelledby="offcanvasEditOfficerLabel">
+  <div class="offcanvas-header border-bottom">
+    <h5 id="offcanvasEditOfficerLabel" class="offcanvas-title">Kemaskini Pegawai Tugasan</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
+    <form class="edit-officer pt-0" id="editOfficerForm" onsubmit="return false">
+      @csrf
+      @method('PUT')
+      <input type="hidden" id="edit-officer-id" name="officer_id" />
+      <div class="mb-6">
+        <label class="form-label" for="edit-officer-category">Kategori <span class="text-danger">*</span></label>
+        <select class="form-select select2" id="edit-officer-category" name="cat_id" required>
+          <option value="">Pilih Kategori</option>
+          @foreach($categories as $category)
+            <option value="{{ $category->id }}">{{ $category->cat_name }}</option>
+          @endforeach
+        </select>
+      </div>
+      <div class="mb-6">
+        <label class="form-label" for="edit-officer-subcategory">Sub Kategori <span class="text-danger">*</span></label>
+        <select class="form-select select2" id="edit-officer-subcategory" name="subcat_id" required>
+          <option value="">Pilih Sub Kategori</option>
+        </select>
+      </div>
+      <div class="mb-6">
+        <label class="form-label" for="edit-officer-level">Level Tugasan <span class="text-danger">*</span></label>
+        <input type="number" class="form-control" id="edit-officer-level" placeholder="Masukkan level tugasan (1-10)" name="level_tugasan" min="1" max="10" required />
+      </div>
+      <div class="mb-6">
+        <label class="form-label" for="edit-officer-user">Pegawai <span class="text-danger">*</span></label>
+        <select class="form-select select2" id="edit-officer-user" name="user_id" required>
+          @foreach($users as $user)
+            <option value="{{ $user->id }}">{{ $user->name }}</option>
+          @endforeach
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary me-3 data-submit">Kemaskini</button>
+      <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
+    </form>
+  </div>
+</div>
 
 @endsection
