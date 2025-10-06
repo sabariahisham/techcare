@@ -16,7 +16,11 @@ class SlaController extends Controller
     {
         $categories = RefCategory::all();
         $subCategories = RefSubCategory::all();
-        return view('sla-and-severiry.index', compact('categories', 'subCategories'));
+        $totalCategories = RefCategory::count();
+        $totalSubCategories = RefSubCategory::count();
+        $totalSlas = Sla::count();
+
+        return view('sla-and-severity.index', compact('categories', 'subCategories', 'totalCategories', 'totalSubCategories', 'totalSlas'));
     }
 
     public function data(Request $request)

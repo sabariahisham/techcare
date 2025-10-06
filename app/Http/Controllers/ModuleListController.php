@@ -13,7 +13,8 @@ class ModuleListController extends Controller
      */
     public function index()
     {
-        return view('module.list.index');
+        $totalModules = Module::count();
+        return view('module.list.index', compact('totalModules'));
     }
 
     public function getModules()

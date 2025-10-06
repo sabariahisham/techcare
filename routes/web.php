@@ -161,6 +161,9 @@ use App\Http\Controllers\apps\EcommerceCustomerDetailsOverview;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsSecurity;
 use App\Http\Controllers\configuration\UserManagementController;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
+use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
+use App\Http\Controllers\Configuration\SlaController;
+use App\Http\Controllers\Configuration\OfficerController;
 use App\Http\Controllers\wizard_example\Checkout as WizardCheckout;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsNotifications;
 use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
@@ -196,6 +199,7 @@ Route::middleware([
 
 // roles, permission and modules are under acl (access control list)
 Route::get('/acl/roles/index', [RoleController::class, 'index'])->name('acl-roles-index');
+Route::get('/roles', [RoleController::class, 'getRoles'])->name('roles.data');
 Route::post('/acl/roles/store', [RoleController::class, 'store'])->name('acl-roles-store');
 Route::delete('/acl/roles/{role}', [RoleController::class, 'destroy'])->name('roles-destroy');
 Route::get('/acl/roles/{id}/permissions', [RoleController::class, 'getRolePermissions'])->name('roles.permissions');
@@ -203,6 +207,7 @@ Route::put('/acl/roles/{role}', [RoleController::class, 'update'])->name('roles.
 
 // permissions
 Route::get('/acl/permissions/index', [PermissionController::class, 'index'])->name('acl-permissions-index');
+Route::get('/permissions', [PermissionController::class, 'getData'])->name('permissions.data');
 
 // modules
 Route::get('/acl/module-list/index', [ModuleListController::class, 'index'])->name('acl-module-list-index');
@@ -269,6 +274,57 @@ Route::prefix('tickets')->group(function () {
     Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
     Route::put('/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
     Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
+});
+
+// Enhanced User, Role, and Permission Management Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    // Enhanced User Management Routes
+    Route::prefix('admin/users')->name('admin.users.')->group(function () {
+        Route::get('/', [App\Http\Controllers\UserController::class, 'index'])->name('index');
+        Route::get('/data', [App\Http\Controllers\UserController::class, 'getData'])->name('data');
+        Route::post('/', [App\Http\Controllers\UserController::class, 'store'])->name('store');
+        Route::get('/{user}', [App\Http\Controllers\UserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [App\Http\Controllers\UserController::class, 'update'])->name('update');
+        Route::patch('/{user}/toggle-status', [App\Http\Controllers\UserController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{user}', [App\Http\Controllers\UserController::class, 'destroy'])->name('destroy');
+        Route::patch('/{user}/reset-password', [App\Http\Controllers\UserController::class, 'resetPassword'])->name('reset-password');
+        Route::post('/bulk-action', [App\Http\Controllers\UserController::class, 'bulkAction'])->name('bulk-action');
+        Route::get('/statistics', [App\Http\Controllers\UserController::class, 'getStatistics'])->name('statistics');
+        Route::get('/export', [App\Http\Controllers\UserController::class, 'export'])->name('export');
+    });
+
+    // Enhanced Role Management Routes
+    Route::prefix('admin/roles')->name('admin.roles.')->group(function () {
+        Route::get('/', [App\Http\Controllers\RoleController::class, 'index'])->name('index');
+        Route::get('/data', [App\Http\Controllers\RoleController::class, 'getData'])->name('data');
+        Route::post('/', [App\Http\Controllers\RoleController::class, 'store'])->name('store');
+        Route::get('/{role}', [App\Http\Controllers\RoleController::class, 'show'])->name('show');
+        Route::get('/{role}/edit', [App\Http\Controllers\RoleController::class, 'edit'])->name('edit');
+        Route::put('/{role}', [App\Http\Controllers\RoleController::class, 'update'])->name('update');
+        Route::patch('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'updatePermissions'])->name('update-permissions');
+        Route::patch('/{role}/toggle-status', [App\Http\Controllers\RoleController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{role}', [App\Http\Controllers\RoleController::class, 'destroy'])->name('destroy');
+        Route::post('/{role}/duplicate', [App\Http\Controllers\RoleController::class, 'duplicate'])->name('duplicate');
+        Route::get('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'getRolePermissions'])->name('permissions');
+        Route::get('/statistics', [App\Http\Controllers\RoleController::class, 'getStatistics'])->name('statistics');
+    });
+
+    // Enhanced Permission Management Routes
+    Route::prefix('admin/permissions')->name('admin.permissions.')->group(function () {
+        Route::get('/', [App\Http\Controllers\PermissionController::class, 'index'])->name('index');
+        Route::get('/data', [App\Http\Controllers\PermissionController::class, 'getData'])->name('data');
+        Route::post('/', [App\Http\Controllers\PermissionController::class, 'store'])->name('store');
+        Route::get('/{permission}', [App\Http\Controllers\PermissionController::class, 'show'])->name('show');
+        Route::get('/{permission}/edit', [App\Http\Controllers\PermissionController::class, 'edit'])->name('edit');
+        Route::put('/{permission}', [App\Http\Controllers\PermissionController::class, 'update'])->name('update');
+        Route::patch('/{permission}/toggle-status', [App\Http\Controllers\PermissionController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{permission}', [App\Http\Controllers\PermissionController::class, 'destroy'])->name('destroy');
+        Route::post('/create-module-permissions', [App\Http\Controllers\PermissionController::class, 'createModulePermissions'])->name('create-module');
+        Route::post('/bulk-action', [App\Http\Controllers\PermissionController::class, 'bulkAction'])->name('bulk-action');
+        Route::get('/statistics', [App\Http\Controllers\PermissionController::class, 'getStatistics'])->name('statistics');
+    });
 });
 
 

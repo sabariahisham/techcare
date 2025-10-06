@@ -2,6 +2,33 @@
 
 $(function () {
   const editOfficerForm = document.getElementById('editOfficerForm');
+3
+  // Initialize select2 for edit form
+  function initializeEditFormSelect2() {
+    console.log('Initializing select2 for edit form...');
+
+    // Initialize select2 for edit form dropdowns
+    $('#edit-officer-category').select2({
+      placeholder: 'Pilih Kategori',
+      dropdownParent: $('#offcanvasEditOfficer'),
+      width: '100%'
+    });
+
+    $('#edit-officer-subcategory').select2({
+      placeholder: 'Pilih Sub Kategori',
+      dropdownParent: $('#offcanvasEditOfficer'),
+      width: '100%'
+    });
+
+    $('#edit-officer-user').select2({
+      placeholder: 'Pilih Pegawai',
+      dropdownParent: $('#offcanvasEditOfficer'),
+      width: '100%',
+      allowClear: true
+    });
+
+    console.log('Select2 initialization completed for edit form');
+  }
 
   // Form Validation
   const fv = FormValidation.formValidation(editOfficerForm, {
@@ -34,8 +61,8 @@ $(function () {
           },
           between: {
             min: 1,
-            max: 10,
-            message: 'Level tugasan mesti antara 1 hingga 10'
+            max: 3,
+            message: 'Level tugasan mesti antara 1 hingga 3'
           }
         }
       }
@@ -53,16 +80,22 @@ $(function () {
     const formData = new FormData(editOfficerForm);
     const officerId = $('#edit-officer-id').val();
 
+    // Get single selected user ID
+    const selectedUserId = $('#edit-officer-user').val();
+
+    // Prepare data object
+    const requestData = {
+      cat_id: formData.get('cat_id'),
+      subcat_id: formData.get('subcat_id'),
+      level_tugasan: formData.get('level_tugasan'),
+      user_id: selectedUserId,
+      _token: $('meta[name="csrf-token"]').attr('content')
+    };
+
     $.ajax({
       url: `/officer/${officerId}`,
       type: 'PUT',
-      data: {
-        cat_id: formData.get('cat_id'),
-        subcat_id: formData.get('subcat_id'),
-        user_id: formData.get('user_id'),
-        level_tugasan: formData.get('level_tugasan'),
-        _token: $('meta[name="csrf-token"]').attr('content')
-      },
+      data: requestData,
       success: function(response) {
         if (response.success) {
           $('#offcanvasEditOfficer').offcanvas('hide');
@@ -101,6 +134,16 @@ $(function () {
   $(document).on('click', '.edit-record', function() {
     const officerId = $(this).data('id');
 
+    // Destroy all select2 instances to ensure clean initialization
+    $('#edit-officer-category, #edit-officer-subcategory, #edit-officer-user').each(function() {
+      if ($(this).hasClass('select2-hidden-accessible')) {
+        $(this).select2('destroy');
+      }
+    });
+
+    // Force re-initialize all select2 elements
+    initializeEditFormSelect2();
+
     $.ajax({
       url: `/officer/${officerId}/edit`,
       type: 'GET',
@@ -110,7 +153,16 @@ $(function () {
 
           $('#edit-officer-id').val(data.id);
           $('#edit-officer-category').val(data.cat_id).trigger('change');
-          $('#edit-officer-user').val(data.user_id).trigger('change');
+
+          // Set single user ID for Select2
+          console.log('Setting user ID:', data.user_id);
+          if (Array.isArray(data.user_id) && data.user_id.length > 0) {
+            $('#edit-officer-user').val(data.user_id[0]).trigger('change');
+          } else if (data.user_id) {
+            $('#edit-officer-user').val(data.user_id).trigger('change');
+          } else {
+            $('#edit-officer-user').val(null).trigger('change');
+          }
           $('#edit-officer-level').val(data.level_tugasan);
 
           // Load subcategories for the selected category
@@ -168,5 +220,13 @@ $(function () {
     fv.resetForm();
     editOfficerForm.reset();
     $('#edit-officer-subcategory').empty().append('<option value="">Pilih Sub Kategori</option>');
+  });
+
+  // Initialize select2 on document ready
+  $(document).ready(function() {
+    // Initialize select2 for edit form on page load if elements exist
+    if ($('#edit-officer-category').length && !$('#edit-officer-category').hasClass('select2-hidden-accessible')) {
+      initializeEditFormSelect2();
+    }
   });
 });

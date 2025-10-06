@@ -16,16 +16,26 @@ class DatabaseSeeder extends Seeder
    */
   public function run(): void
   {
+    // First run reference data seeders
     $this->call([
       RefCategorySeeder::class,
       RefSubCategorySeeder::class,
       RefTicketStatusSeeder::class,
+    ]);
+
+    // Then run permission and role seeders
+    $this->call([
+      RolesAndPermissionSeeder::class,
+      SuperAdminSeeder::class,
+    ]);
+
+    // Finally run data seeders that might depend on roles/permissions
+    $this->call([
       TicketSeeder::class,
     ]);
 
     // $this->call([
     //   ModuleListSeeder::class,
-    //   RolesAndPermissionSeeder::class
     // ]);
 
     // User::factory(50)->create();

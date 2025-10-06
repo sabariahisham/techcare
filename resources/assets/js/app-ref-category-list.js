@@ -51,23 +51,10 @@ $(function () {
           orderable: false,
           searchable: false
         },
-        
+
         { data: 'cat_name', name: 'cat_name' },
         { data: 'cat_desc', name: 'cat_desc' },
-        {
-          data: 'created_at',
-          name: 'created_at',
-          render: function (data) {
-            return moment(data).format('DD-MM-YYYY HH:mm:ss');
-          }
-        },
-        {
-          data: 'updated_at',
-          name: 'updated_at',
-          render: function (data) {
-            return moment(data).format('DD-MM-YYYY HH:mm:ss');
-          }
-        },
+        
         { data: 'action', name: 'action', orderable: false, searchable: false }
       ],
       dom:

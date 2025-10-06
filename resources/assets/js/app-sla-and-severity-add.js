@@ -88,7 +88,15 @@ $(function () {
   }
 
   // Add SLA form submission function
+  let isSubmitting = false;
+
   function submitSlaForm() {
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+
+    isSubmitting = true;
     const formData = new FormData(addNewSlaForm);
 
     $.ajax({
@@ -120,7 +128,7 @@ $(function () {
           }
 
           // Show success message (defined in JS, not from controller)
-          toastr.success('SLA created successfully', '', {
+          toastr.success('SLA berjaya ditambah', '', {
             timeOut: 3000,
             closeButton: true,
             progressBar: true
@@ -140,6 +148,9 @@ $(function () {
             progressBar: true
           });
         }
+
+        // Reset submission flag
+        isSubmitting = false;
       },
       error: function (xhr) {
         if (xhr.status === 422) {
@@ -183,6 +194,9 @@ $(function () {
             progressBar: true
           });
         }
+
+        // Reset submission flag
+        isSubmitting = false;
       }
     });
   }
@@ -203,6 +217,9 @@ $(function () {
       // Clear any validation errors
       $('.is-invalid').removeClass('is-invalid');
       $('.invalid-feedback').remove();
+
+      // Reset submission flag
+      isSubmitting = false;
     }
   });
 
@@ -211,8 +228,8 @@ $(function () {
     const categoryId = $(this).val();
     const subcategorySelect = $('#add-subcat-id');
 
-    // Clear subcategory dropdown
-    subcategorySelect.empty().append('<option value="">Select Subcategory</option>');
+    // Clear subcategory dropdown completely
+    subcategorySelect.empty().append('<option value="">Pilih Sub Kategori</option>');
 
     if (categoryId) {
       $.ajax({

@@ -47,6 +47,14 @@ $(function () {
           console.error('Response:', xhr.responseText);
         }
       },
+      rowGroup: {
+        dataSrc: 'cat_name',
+        startRender: function (rows, group) {
+          return '<strong style="color: ' + headingColor + '; background-color: ' + bodyBg + '; padding: 8px; display: block; border-left: 4px solid #696cff;">' +
+                 'Kategori: ' + group + ' (' + rows.count() + ' items)</strong>';
+        }
+      },
+      order: [[2, 'asc']], // Order by category name (cat_name column)
       columns: [
         {
           // For Responsive
@@ -63,25 +71,12 @@ $(function () {
           searchable: false
         },
         // { data: 'id', name: 'id' },
-        { data: 'cat_name', name: 'cat_name' },
+        // { data: 'cat_name', name: 'cat_name' },
         { data: 'subcat_name', name: 'subcat_name' },
         { data: 'sla_level', name: 'sla_level' },
         { data: 'sla_priority', name: 'sla_priority' },
         { data: 'sla_days', name: 'sla_days' },
-        // {
-        //   data: 'created_at',
-        //   name: 'created_at',
-        //   render: function (data) {
-        //     return moment(data).format('DD-MM-YYYY HH:mm:ss');
-        //   }
-        // },
-        // {
-        //   data: 'updated_at',
-        //   name: 'updated_at',
-        //   render: function (data) {
-        //     return moment(data).format('DD-MM-YYYY HH:mm:ss');
-        //   }
-        // },
+
         { data: 'action', name: 'action', orderable: false, searchable: false }
       ],
       dom:

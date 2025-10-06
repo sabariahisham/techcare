@@ -12,15 +12,23 @@ $(function () {
   // Users List datatable
   if (dataTablePermissions.length) {
     dt_permission = dataTablePermissions.DataTable({
-      ajax: assetsPath + 'json/permissions-list.json', // JSON file to add data
+      ajax: '/permissions', // Point to your backend route
+      serverSide: true, // Enable server-side processing since backend supports it
+      processing: true,
+      rowGroup: {
+        dataSrc: 'module', // Group by module column
+        startRender: function (rows, group) {
+          return '<strong>' + group + ' (' + rows.count() + ' permissions)</strong>';
+        }
+      },
       columns: [
-        // columns according to JSON
         { data: '' },
-        { data: 'id' },
+        { data: 'DT_RowIndex', orderable: false, searchable: false },
         { data: 'name' },
+        { data: 'module' },
         { data: 'assigned_to' },
-        { data: 'created_date' },
-        { data: '' }
+        // { data: 'created_date' },
+        { data: 'action' }
       ],
       columnDefs: [
         {
@@ -35,70 +43,58 @@ $(function () {
           }
         },
         {
+          // Bil. (Row Number)
           targets: 1,
           searchable: false,
-          visible: false
+          orderable: false
         },
         {
-          // Name
+          // Permission Name
           targets: 2,
           render: function (data, type, full, meta) {
-            var $name = full['name'];
-            return '<span class="text-nowrap text-heading">' + $name + '</span>';
+            return '<span class="text-nowrap text-heading">' + data + '</span>';
           }
         },
         {
-          // User Role
+          // Module
           targets: 3,
-          orderable: false,
-          render: function (data, type, full, meta) {
-            var $assignedTo = full['assigned_to'],
-              $output = '';
-            var roleBadgeObj = {
-              Admin: '<a href="' + userList + '"><span class="badge  bg-label-primary me-4">Administrator</span></a>',
-              Manager: '<a href="' + userList + '"><span class="badge  bg-label-warning me-4">Manager</span></a>',
-              Users: '<a href="' + userList + '"><span class="badge  bg-label-success me-4">Users</span></a>',
-              Support: '<a href="' + userList + '"><span class="badge  bg-label-info me-4">Support</span></a>',
-              Restricted:
-                '<a href="' + userList + '"><span class="badge  bg-label-danger me-4">Restricted User</span></a>'
-            };
-            for (var i = 0; i < $assignedTo.length; i++) {
-              var val = $assignedTo[i];
-              $output += roleBadgeObj[val];
-            }
-            return '<span class="text-nowrap">' + $output + '</span>';
-          }
+          visible: false // Hide this column since we're using it for grouping
         },
         {
-          // remove ordering from Name
+          // Assigned To (Roles) - server already renders HTML
           targets: 4,
-          orderable: false,
-          render: function (data, type, full, meta) {
-            var $date = full['created_date'];
-            return '<span class="text-nowrap">' + $date + '</span>';
-          }
+          orderable: false
         },
+        // {
+        //   // Created Date
+        //   targets: 5,
+        //   orderable: true,
+        //   render: function (data, type, full, meta) {
+        //     var $date = new Date(full['created_at']);
+        //     return '<span class="text-nowrap">' +
+        //       $date.toLocaleDateString('en-MY', {
+        //         day: 'numeric',
+        //         month: 'short',
+        //         year: 'numeric',
+        //         timeZone: 'Asia/Kuala_Lumpur'
+        //       }) + ', ' +
+        //       $date.toLocaleTimeString('en-MY', {
+        //         hour: 'numeric',
+        //         minute: '2-digit',
+        //         hour12: true,
+        //         timeZone: 'Asia/Kuala_Lumpur'
+        //       }) + '</span>';
+        //   }
+        // },
         {
-          // Actions
+          // Actions - server already renders HTML
           targets: -1,
           searchable: false,
           title: 'Actions',
-          orderable: false,
-          render: function (data, type, full, meta) {
-            return (
-              '<div class="d-flex align-items-center">' +
-              '<span class="text-nowrap"><button class="btn btn-icon me-1" data-bs-target="#editPermissionModal" data-bs-toggle="modal" data-bs-dismiss="modal"><i class="bx bx-edit bx-md"></i></button>' +
-              '<a href="javascript:;" class="btn btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="bx bx-dots-vertical-rounded bx-md"></i></a>' +
-              '<div class="dropdown-menu dropdown-menu-end m-0">' +
-              '<a href="javascript:;" class="dropdown-item">Edit</a>' +
-              '<a href="javascript:;" class="dropdown-item">Suspend</a>' +
-              '</div>' +
-              '</div>'
-            );
-          }
+          orderable: false
         }
       ],
-      order: [[1, 'asc']],
+      order: [[3, 'asc'], [2, 'asc']], // Order by module first, then by name
       dom:
         '<"row"' +
         '<"col-sm-12 col-md-3" l>' +
@@ -167,7 +163,7 @@ $(function () {
       initComplete: function () {
         // Adding role filter once table initialized
         this.api()
-          .columns(3)
+          .columns(4)
           .every(function () {
             var column = this;
             var select = $(
@@ -176,16 +172,23 @@ $(function () {
               .appendTo('.user_role')
               .on('change', function () {
                 var val = $.fn.dataTable.util.escapeRegex($(this).val());
-                column.search(val ? '^' + val + '$' : '', true, false).draw();
+                column.search(val ? val : '', true, false).draw();
               });
 
-            column
-              .data()
-              .unique()
-              .sort()
-              .each(function (d, j) {
-                select.append('<option value="' + d + '" class="text-capitalize">' + d + '</option>');
-              });
+            // Get unique roles from all permissions
+            var roles = new Set();
+            column.data().each(function (d, j) {
+              if (d && Array.isArray(d)) {
+                d.forEach(function(role) {
+                  roles.add(role);
+                });
+              }
+            });
+
+            // Add roles to select
+            Array.from(roles).sort().forEach(function(role) {
+              select.append('<option value="' + role + '" class="text-capitalize">' + role + '</option>');
+            });
           });
       }
     });

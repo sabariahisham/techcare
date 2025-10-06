@@ -15,12 +15,20 @@ class RefSubCategoryManagementController extends Controller
     public function index()
     {
         $categories = RefCategory::all();
-        return view('ref-sub-category-management.index', compact('categories'));
+
+        $totalCategories = RefCategory::count();
+        $totalSubCategories = RefSubCategory::count();
+
+        return view('ref-sub-category-management.index', compact('categories', 'totalCategories', 'totalSubCategories'));
     }
 
     public function data(Request $request)
     {
-        $subCategories = RefSubCategory::with('category')->select('ref_sub_categories.*');
+        $subCategories = RefSubCategory::with('category')
+            ->join('ref_categories', 'ref_sub_categories.cat_id', '=', 'ref_categories.id')
+            ->orderBy('ref_categories.cat_name')
+            ->orderBy('ref_sub_categories.subcat_name')
+            ->select('ref_sub_categories.*');
 
         return DataTables::of($subCategories)
             ->addIndexColumn()
