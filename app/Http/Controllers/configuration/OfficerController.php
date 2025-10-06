@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Configuration;
 use App\Http\Controllers\Controller;
 use App\Models\Officer;
 use App\Models\RefCategory;
+use App\Models\RefSubCategory;
 use App\Models\User;
+use App\Models\Sla;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
@@ -17,12 +19,22 @@ class OfficerController extends Controller
         $categories = RefCategory::orderBy('cat_name')->get();
         $users = User::orderBy('name')->get();
 
-        return view('officers.index', compact('categories', 'users'));
+        $totalCategories = RefCategory::count();
+        $totalSubCategories = RefSubCategory::count();
+        $totalSlas = Sla::count();
+        $totalOfficers = Officer::count();
+
+        return view('officers.index', compact('categories', 'users', 'totalCategories', 'totalSubCategories', 'totalSlas', 'totalOfficers'));
     }
 
     public function data(Request $request)
     {
         $officers = Officer::with(['subcategory.category', 'user'])
+            ->join('ref_sub_categories', 'officers.subcat_id', '=', 'ref_sub_categories.id')
+            ->join('ref_categories', 'ref_sub_categories.cat_id', '=', 'ref_categories.id')
+            ->orderBy('ref_categories.cat_name')
+            ->orderBy('ref_sub_categories.subcat_name')
+            ->orderBy('officers.level_tugasan')
             ->select('officers.*');
 
         return DataTables::of($officers)
@@ -55,15 +67,27 @@ class OfficerController extends Controller
         $request->validate([
             'cat_id' => 'required|exists:ref_categories,id',
             'subcat_id' => 'required|exists:ref_sub_categories,id',
-            'user_id' => 'required|array|min:1',
-            'user_id.*' => 'required|exists:users,id',
+            'user_id' => 'required',
             'level_tugasan' => 'required|integer|between:1,10',
         ]);
 
-        $createdOfficers = [];
-        $duplicates = [];
+        // Convert single user_id to array if needed
+        $userIds = is_array($request->user_id) ? $request->user_id : [$request->user_id];
 
-        foreach ($request->user_id as $userId) {
+        // Validate each user_id exists
+        foreach ($userIds as $userId) {
+            if (!User::find($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pegawai yang dipilih tidak wujud dalam sistem.'
+                ], 422);
+            }
+        }
+
+        $createdOfficers = [];
+        $existingAssignments = [];
+
+        foreach ($userIds as $userId) {
             // Check if officer assignment already exists for this user, category and subcategory
             $existingOfficer = Officer::where('cat_id', $request->cat_id)
                 ->where('subcat_id', $request->subcat_id)
@@ -71,8 +95,8 @@ class OfficerController extends Controller
                 ->first();
 
             if ($existingOfficer) {
-                $user = \App\Models\User::find($userId);
-                $duplicates[] = $user->name ?? "User ID: $userId";
+                $user = User::find($userId);
+                $existingAssignments[] = $user->name ?? "User ID: $userId";
                 continue;
             }
 
@@ -87,29 +111,16 @@ class OfficerController extends Controller
             $createdOfficers[] = $officer;
         }
 
-        // Prepare response message
-        $message = '';
-        if (!empty($createdOfficers)) {
-            $count = count($createdOfficers);
-            $message = $count > 1
-                ? "$count pegawai tugasan berjaya ditambah."
-                : "Pegawai tugasan berjaya ditambah.";
-        }
-
-        if (!empty($duplicates)) {
-            $duplicateNames = implode(', ', $duplicates);
-            $duplicateMessage = "Pegawai berikut sudah wujud dalam sistem: $duplicateNames";
-            $message = !empty($message)
-                ? "$message $duplicateMessage"
-                : $duplicateMessage;
-        }
-
-        // If no officers were created (all duplicates)
-        if (empty($createdOfficers)) {
+        if (empty($createdOfficers) && !empty($existingAssignments)) {
             return response()->json([
                 'success' => false,
-                'message' => $message
+                'message' => 'Semua pegawai yang dipilih sudah mempunyai tugasan untuk kategori dan sub kategori ini: ' . implode(', ', $existingAssignments)
             ], 422);
+        }
+
+        $message = count($createdOfficers) . ' pegawai tugasan berjaya ditambah.';
+        if (!empty($existingAssignments)) {
+            $message .= ' Pegawai berikut sudah mempunyai tugasan: ' . implode(', ', $existingAssignments);
         }
 
         return response()->json([

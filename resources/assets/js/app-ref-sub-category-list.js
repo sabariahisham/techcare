@@ -4,6 +4,49 @@
 
 'use strict';
 
+// Add custom CSS for row grouping
+const groupingStyles = `
+  <style>
+    .dataTables_wrapper .group-header td {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dataTables_wrapper .group-header td::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #696cff 0%, #8b5fbf 50%, #ff6b9d 100%);
+      opacity: 0.95;
+      z-index: -1;
+    }
+
+    .dataTables_wrapper .group-header:hover td::before {
+      opacity: 1;
+    }
+
+    .dataTables_wrapper .group-header {
+      cursor: default;
+    }
+
+    .dataTables_wrapper .group-header td {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s ease;
+    }
+  </style>
+`;
+
+// Inject the styles
+if (!document.querySelector('#row-grouping-styles')) {
+  const styleElement = document.createElement('div');
+  styleElement.id = 'row-grouping-styles';
+  styleElement.innerHTML = groupingStyles;
+  document.head.appendChild(styleElement);
+}
+
 // Datatable (jquery)
 $(function () {
   let borderColor, bodyBg, headingColor;
@@ -53,25 +96,25 @@ $(function () {
           searchable: false
         },
         // { data: 'id', name: 'id' },
-        { data: 'cat_name', name: 'cat_name' },
+        { data: 'cat_name', name: 'cat_name', visible: false },
         { data: 'subcat_name', name: 'subcat_name' },
         { data: 'subcat_desc', name: 'subcat_desc' },
-        {
-          data: 'created_at',
-          name: 'created_at',
-          render: function (data) {
-            return moment(data).format('DD-MM-YYYY HH:mm:ss');
-          }
-        },
-        {
-          data: 'updated_at',
-          name: 'updated_at',
-          render: function (data) {
-            return moment(data).format('DD-MM-YYYY HH:mm:ss');
-          }
-        },
         { data: 'action', name: 'action', orderable: false, searchable: false }
       ],
+      order: [[2, 'asc']], // Order by category name
+      rowGroup: {
+        dataSrc: 'cat_name',
+        startRender: function (rows, group) {
+          return $('<tr class="group-header"/>')
+            .append('<td colspan="5" class="table-group-header" style="background: linear-gradient(90deg, #696cff 0%, #8b5fbf 100%); color: white; font-weight: 600; padding: 12px 16px; border: none;">' +
+                    '<i class="bx bx-category me-2" style="font-size: 16px;"></i>' +
+                    '<span style="font-size: 14px;">' + group + '</span>' +
+                    ' <span class="badge bg-white text-primary ms-2" style="font-size: 11px; padding: 4px 8px;">' + rows.count() + ' sub kategori</span>' +
+                    '</td>');
+        },
+        endRender: null,
+        className: 'group-end'
+      },
       dom:
         '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +
@@ -125,13 +168,13 @@ $(function () {
       ],
       // Initialize category filter
       initComplete: function () {
-        // Adding category filter once table initialized
+        // Adding category filter once table initialized for the hidden category column
         this.api()
-          .columns(2)
+          .columns(2) // Category column (now hidden)
           .every(function () {
             var column = this;
             var select = $(
-              '<select id="CategoryFilter" class="form-select text-capitalize"><option value=""> Select Category </option></select>'
+              '<select id="CategoryFilter" class="form-select text-capitalize"><option value=""> Pilih Kategori </option></select>'
             )
               .appendTo('.category_filter')
               .on('change', function () {
@@ -139,12 +182,13 @@ $(function () {
                 column.search(val ? '^' + val + '$' : '', true, false).draw();
               });
 
+            // Get unique categories from server data
             column
               .data()
               .unique()
               .sort()
               .each(function (d, j) {
-                if (d) {
+                if (d && d !== '-') {
                   select.append('<option value="' + d + '" class="text-capitalize">' + d + '</option>');
                 }
               });

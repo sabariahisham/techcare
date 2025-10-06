@@ -19,16 +19,9 @@ $(function () {
   }
 
   // Variable declaration for table
-  var dt_officers_table = $('.datatables-refcategory'),
-    select2 = $('.select2');
+  var dt_officers_table = $('.datatables-refcategory');
 
-  if (select2.length) {
-    var $this = select2;
-    $this.wrap('<div class="position-relative"></div>').select2({
-      placeholder: 'Select Level',
-      dropdownParent: $this.parent()
-    });
-  }
+  // Don't initialize select2 globally here - it's handled in individual form files
 
   // Officers datatable
   if (dt_officers_table.length) {
@@ -57,6 +50,13 @@ $(function () {
         { data: 'user_name', name: 'user_name' },
         { data: 'action', name: 'action', orderable: false, searchable: false }
       ],
+      order: [[3, 'asc']], // Order by sub kategori
+      rowGroup: {
+        dataSrc: 'subcat_name',
+        startRender: function (rows, group) {
+          return '<strong>' + group + '</strong> (' + rows.count() + ' pegawai)';
+        }
+      },
       dom:
         '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +

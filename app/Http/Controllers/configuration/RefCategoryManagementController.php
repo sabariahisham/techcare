@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Configuration;
 use App\Http\Controllers\Controller;
 use App\Models\RefCategory;
 use Illuminate\Http\Request;
+use LDAP\Result;
 use Yajra\DataTables\Facades\DataTables;
 
 class RefCategoryManagementController extends Controller
 {
     public function index()
     {
-        return view('ref-category-management.index');
+      // Get total categories count
+        $totalCategories = RefCategory::count();
+        
+        return view('ref-category-management.index', compact('totalCategories'));
     }
 
     public function getAllCategories(Request $request)

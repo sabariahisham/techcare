@@ -7,6 +7,7 @@
   'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
   'resources/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.scss',
   'resources/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.scss',
+  'resources/assets/vendor/libs/datatables-rowgroup-bs5/rowgroup.bootstrap5.scss',
   'resources/assets/vendor/libs/select2/select2.scss',
   'resources/assets/vendor/libs/@form-validation/form-validation.scss',
   'resources/assets/vendor/libs/toastr/toastr.scss',
@@ -40,6 +41,92 @@
 @endsection
 
 @section('content')
+
+<div class="row g-6 mb-6">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <span class="text-heading">Jumlah Kategori</span>
+            <div class="d-flex align-items-center my-1">
+              <h4 class="mb-0 me-2">{{ $totalCategories }}</h4>
+              {{-- <p class="text-success mb-0">(100%)</p> --}}
+            </div>
+            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
+          </div>
+          <div class="avatar">
+            <span class="avatar-initial rounded bg-label-primary">
+               <i class="bx bx-list-ul bx-lg"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+   <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <span class="text-heading">Jumlah Sub-Kategori</span>
+            <div class="d-flex align-items-center my-1">
+              <h4 class="mb-0 me-2">{{ $totalSubCategories }}</h4>
+              {{-- <p class="text-success mb-0">(100%)</p> --}}
+            </div>
+            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
+          </div>
+          <div class="avatar">
+            <span class="avatar-initial rounded bg-label-success">
+              <i class="bx bx-list-ul bx-lg"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <span class="text-heading">Jumlah SLA</span>
+            <div class="d-flex align-items-center my-1">
+              <h4 class="mb-0 me-2">{{ $totalSlas }}</h4>
+              {{-- <p class="text-danger mb-0">()</p> --}}
+            </div>
+            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
+          </div>
+          <div class="avatar">
+            <span class="avatar-initial rounded bg-label-danger">
+              <i class="bx bx-list-ul bx-lg"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div class="content-left">
+            <span class="text-heading">Jumlah Pegawai Tugasan</span>
+            <div class="d-flex align-items-center my-1">
+              <h4 class="mb-0 me-2">{{ $totalOfficers }}</h4>
+              {{-- <p class="text-danger mb-0">()</p> --}}
+            </div>
+            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
+          </div>
+          <div class="avatar">
+            <span class="avatar-initial rounded bg-label-warning">
+              <i class="bx bx-user bx-lg"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 <div class="card">
   <div class="card-header border-bottom">
     <h5 class="card-title mb-0">SENARAI PEGAWAI TUGASAN</h5>
@@ -72,7 +159,7 @@
         @csrf
         <div class="mb-6">
           <label class="form-label" for="add-officer-category">Kategori <span class="text-danger">*</span></label>
-          <select class="form-select select2" id="add-officer-category" name="cat_id" required>
+          <select class="form-select" id="add-officer-category" name="cat_id" required>
             <option value="">Pilih Kategori</option>
             @foreach($categories as $category)
               <option value="{{ $category->id }}">{{ $category->cat_name }}</option>
@@ -81,7 +168,7 @@
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-officer-subcategory">Sub Kategori <span class="text-danger">*</span></label>
-          <select class="form-select select2" id="add-officer-subcategory" name="subcat_id" required>
+          <select class="form-select" id="add-officer-subcategory" name="subcat_id" required>
             <option value="">Pilih Sub Kategori</option>
           </select>
         </div>
@@ -91,11 +178,13 @@
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-officer-user">Pegawai <span class="text-danger">*</span></label>
-          <select class="form-select select2" id="add-officer-user" name="user_id[]" multiple required>
+          <select class="form-select" id="add-officer-user" name="user_id[]" multiple required>
+            <option value="">Pilih Pegawai</option>
             @foreach($users as $user)
               <option value="{{ $user->id }}">{{ $user->name }}</option>
             @endforeach
           </select>
+          <small class="form-text text-muted">Tekan Ctrl (Windows) atau Cmd (Mac) untuk memilih beberapa pegawai</small>
         </div>
         <button type="submit" class="btn btn-primary me-3 data-submit">Simpan</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
@@ -116,7 +205,7 @@
       <input type="hidden" id="edit-officer-id" name="officer_id" />
       <div class="mb-6">
         <label class="form-label" for="edit-officer-category">Kategori <span class="text-danger">*</span></label>
-        <select class="form-select select2" id="edit-officer-category" name="cat_id" required>
+        <select class="form-select" id="edit-officer-category" name="cat_id" required>
           <option value="">Pilih Kategori</option>
           @foreach($categories as $category)
             <option value="{{ $category->id }}">{{ $category->cat_name }}</option>
@@ -125,7 +214,7 @@
       </div>
       <div class="mb-6">
         <label class="form-label" for="edit-officer-subcategory">Sub Kategori <span class="text-danger">*</span></label>
-        <select class="form-select select2" id="edit-officer-subcategory" name="subcat_id" required>
+        <select class="form-select" id="edit-officer-subcategory" name="subcat_id" required>
           <option value="">Pilih Sub Kategori</option>
         </select>
       </div>
@@ -135,7 +224,8 @@
       </div>
       <div class="mb-6">
         <label class="form-label" for="edit-officer-user">Pegawai <span class="text-danger">*</span></label>
-        <select class="form-select select2" id="edit-officer-user" name="user_id" required>
+        <select class="form-select" id="edit-officer-user" name="user_id" required>
+          <option value="">Pilih Pegawai</option>
           @foreach($users as $user)
             <option value="{{ $user->id }}">{{ $user->name }}</option>
           @endforeach

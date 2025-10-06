@@ -1,50 +1,51 @@
 /**
- * App user list (jquery)
+ * App roles list (jquery)
  */
 
 'use strict';
 
 $(function () {
   // Add click handler for edit button
-  $(document).on('click', '.edit-module', function() {
-      const moduleId = $(this).data('id');
-      const moduleName = $(this).data('name');
+  $(document).on('click', '.edit-role', function() {
+      const roleId = $(this).data('id');
+      const roleName = $(this).data('name');
 
-      $('#editModuleName').val(moduleName);
-      $('#editModuleForm').attr('data-module-id', moduleId);
-      $('#editModuleModal').modal('show');
+      $('#editRoleName').val(roleName);
+      $('#editRoleForm').attr('data-role-id', roleId);
+      $('#editRoleModal').modal('show');
   });
 
-  var dataTableModules = $('.datatables-modules'),
-    dt_module,
-    userList = baseUrl + 'app/user/list';
+  var dataTableRoles = $('.datatables-roles'),
+    dt_role;
 
-  // Users List datatable
-  if (dataTableModules.length) {
-    dt_module = dataTableModules.DataTable({
-      ajax: '/modules', // Point to your backend route
+  // Roles List datatable
+  if (dataTableRoles.length) {
+    dt_role = dataTableRoles.DataTable({
+      ajax: '/admin/roles/data', // Point to your backend route
       serverSide: false, // Changed to false since backend doesn't support server-side processing
       processing: true,
       columns: [
-        { data: 'module_name' },
-        { data: 'updated_at' },
-        { data: 'created_at' },
+        { data: '' },
+        { data: null },
+        { data: 'name' },
+        { data: 'user_names' },
+        { data: 'users_count' },
         {
             data: null,
             render: function (data, type, row) {
                 return `
-                    <div class="d-inline-block">
-                        <button class="btn btn-sm btn-icon edit-module" data-id="${row.id}" data-name="${row.module_name}">
+                    <div class="d-flex justify-content-center gap-1">
+                        <button class="btn btn-sm btn-icon edit-role" data-id="${row.id}" data-name="${row.name}" title="Edit Role">
                             <i class="bx bx-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-icon delete-module" data-id="${row.id}">
+                        <button class="btn btn-sm btn-icon delete-role" data-id="${row.id}" title="Delete Role">
                             <i class="bx bx-trash"></i>
                         </button>
                     </div>`;
             }
         }
       ],
-      order: [[1, 'desc']],
+      order: [[2, 'asc']],
       dom:
         '<"row"' +
         '<"col-sm-12 col-md-3" l>' +
@@ -57,7 +58,7 @@ $(function () {
       language: {
         sLengthMenu: 'Show _MENU_',
         search: '',
-        searchPlaceholder: 'Search Modules',
+        searchPlaceholder: 'Search Roles',
         paginate: {
           next: '<i class="bx bx-chevron-right bx-18px"></i>',
           previous: '<i class="bx bx-chevron-left bx-18px"></i>'
@@ -66,11 +67,11 @@ $(function () {
       // Buttons with Dropdown
       buttons: [
         {
-          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Add Module</span>',
+          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Add Role</span>',
           className: 'add-new btn btn-primary mb-6 mb-md-0',
           attr: {
-            'data-bs-toggle': 'modal',
-            'data-bs-target': '#addModuleModal'
+            'data-bs-toggle': 'offcanvas',
+            'data-bs-target': '#offcanvasAddRole'
           },
           init: function (api, node, config) {
             $(node).removeClass('btn-secondary');
@@ -79,56 +80,63 @@ $(function () {
       ],
       columnDefs: [
         {
+          // For Responsive
+          className: 'control',
+          orderable: false,
+          searchable: false,
+          responsivePriority: 2,
           targets: 0,
-          orderable: true,
-        },
-        {
-          targets: 1,
-          orderable: true,
           render: function (data, type, full, meta) {
-            var $date = new Date(full['updated_at']);
-            return '<span class="text-nowrap">' +
-              $date.toLocaleDateString('en-MY', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                timeZone: 'Asia/Kuala_Lumpur'
-              }) + ', ' +
-              $date.toLocaleTimeString('en-MY', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-                timeZone: 'Asia/Kuala_Lumpur'
-              }) + '</span>';
+            return '';
           }
         },
         {
+          // Bil. (Row Number)
+          targets: 1,
+          searchable: false,
+          orderable: false,
+          render: function (data, type, full, meta) {
+            return meta.row + 1;
+          }
+        },
+        {
+          // Role Name
           targets: 2,
-          // visible: false,
+          orderable: true,
+        },
+        {
+          // Users
+          targets: 3,
           orderable: true,
           render: function (data, type, full, meta) {
-            var $date = new Date(full['created_at']);
-            return '<span class="text-nowrap">' +
-              $date.toLocaleDateString('en-MY', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                timeZone: 'Asia/Kuala_Lumpur'
-              }) + ', ' +
-              $date.toLocaleTimeString('en-MY', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-                timeZone: 'Asia/Kuala_Lumpur'
-              }) + '</span>';
+            if (full['user_names'] && full['user_names'].length > 0) {
+              // Display user names as badges
+              let userBadges = full['user_names'].map(function(userName) {
+                return '<span class="badge bg-label-primary me-1 mb-1">' + userName + '</span>';
+              }).join('');
+
+              return '<div class="d-flex flex-wrap">' + userBadges + '</div>';
+            } else {
+              return '<span class="badge bg-label-secondary">No users assigned</span>';
+            }
+          }
+        },
+        {
+          // Total Users
+          targets: 4,
+          orderable: true,
+          render: function (data, type, full, meta) {
+            return '<span class="badge bg-label-info">' + (full['users_count'] || 0) + ' users</span>';
           }
         },
         {
           // Actions
-          targets: -1,
+          targets: 5,
           searchable: false,
           title: 'Actions',
           orderable: false,
+          width: '120px',
+          className: 'text-center',
         }
       ]
     });
@@ -143,8 +151,8 @@ $(function () {
   }, 300);
 
   // Add click handler for delete button
-  $(document).on('click', '.delete-module', function() {
-      const moduleId = $(this).data('id');
+  $(document).on('click', '.delete-role', function() {
+      const roleId = $(this).data('id');
       Swal.fire({
           title: 'Are you sure?',
           text: "You won't be able to revert this!",
@@ -159,14 +167,14 @@ $(function () {
           buttonsStyling: false
       }).then((result) => {
           if (result.isConfirmed) {
-              deleteModule(moduleId);
+              deleteRole(roleId);
           }
       });
   });
 
-  function deleteModule(moduleId) {
+  function deleteRole(roleId) {
       $.ajax({
-          url: '/modules/' + moduleId,
+          url: '/admin/roles/' + roleId,
           type: 'DELETE',
           headers: {
               'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -174,7 +182,7 @@ $(function () {
           success: function(data) {
               if (data.success) {
                   // Reload the datatable
-                  $('.datatables-modules').DataTable().ajax.reload();
+                  $('.datatables-roles').DataTable().ajax.reload();
 
                   toastr.success(data.message, '', {
                       closeButton: true,
@@ -207,7 +215,7 @@ $(function () {
               }
           },
           error: function(xhr, status, error) {
-              toastr.error('An error occurred while deleting the module.', '', {
+              toastr.error('An error occurred while deleting the role.', '', {
                   closeButton: true,
                   timeOut: 3000,
                   progressBar: true,
