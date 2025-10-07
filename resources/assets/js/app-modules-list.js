@@ -5,15 +5,7 @@
 'use strict';
 
 $(function () {
-  // Add click handler for edit button
-  $(document).on('click', '.edit-module', function() {
-      const moduleId = $(this).data('id');
-      const moduleName = $(this).data('name');
-
-      $('#editModuleName').val(moduleName);
-      $('#editModuleForm').attr('data-module-id', moduleId);
-      $('#editModuleModal').modal('show');
-  });
+  // Edit button click handler is now in app-modules-edit.js
 
   var dataTableModules = $('.datatables-modules'),
     dt_module,
@@ -22,24 +14,35 @@ $(function () {
   // Users List datatable
   if (dataTableModules.length) {
     dt_module = dataTableModules.DataTable({
-      ajax: '/modules', // Point to your backend route
+      ajax: {
+        url: '/modules',
+        type: 'GET',
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        error: function (xhr, error, code) {
+          console.error('DataTable AJAX Error:', error, code);
+          console.error('Response Status:', xhr.status);
+          console.error('Response Text:', xhr.responseText);
+        }
+      },
       serverSide: false, // Changed to false since backend doesn't support server-side processing
       processing: true,
       columns: [
-        { data: '' },
-        { data: null },
+        { data: null, orderable: false, searchable: false },
+        { data: null, orderable: false, searchable: false },
         { data: 'module_name' },
-        { data: 'updated_at' },
         { data: 'created_at' },
+         { data: 'updated_at' },
         {
             data: null,
             render: function (data, type, row) {
                 return `
                     <div class="d-inline-block">
-                        <button class="btn btn-sm btn-icon edit-module" data-id="${row.id}" data-name="${row.module_name}">
+                        <button class="btn btn-sm btn-icon edit-record" data-id="${row.id}" data-name="${row.module_name}">
                             <i class="bx bx-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-icon delete-module" data-id="${row.id}">
+                        <button class="btn btn-sm btn-icon delete-module" data-id="${row.id}" data-name="${row.module_name}">
                             <i class="bx bx-trash"></i>
                         </button>
                     </div>`;
@@ -59,7 +62,7 @@ $(function () {
       language: {
         sLengthMenu: 'Show _MENU_',
         search: '',
-        searchPlaceholder: 'Search Modules',
+        searchPlaceholder: 'Carian Modul',
         paginate: {
           next: '<i class="bx bx-chevron-right bx-18px"></i>',
           previous: '<i class="bx bx-chevron-left bx-18px"></i>'
@@ -151,7 +154,6 @@ $(function () {
           // Actions
           targets: -1,
           searchable: false,
-          title: 'Actions',
           orderable: false,
         }
       ]
@@ -166,85 +168,6 @@ $(function () {
     $('.dataTables_length .form-select').removeClass('form-select-sm');
   }, 300);
 
-  // Add click handler for delete button
-  $(document).on('click', '.delete-module', function() {
-      const moduleId = $(this).data('id');
-      Swal.fire({
-          title: 'Are you sure?',
-          text: "You won't be able to revert this!",
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonText: 'Yes, delete it!',
-          cancelButtonText: 'No, cancel!',
-          customClass: {
-              confirmButton: 'btn btn-primary me-3',
-              cancelButton: 'btn btn-label-secondary'
-          },
-          buttonsStyling: false
-      }).then((result) => {
-          if (result.isConfirmed) {
-              deleteModule(moduleId);
-          }
-      });
-  });
-
-  function deleteModule(moduleId) {
-      $.ajax({
-          url: '/modules/' + moduleId,
-          type: 'DELETE',
-          headers: {
-              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-          },
-          success: function(data) {
-              if (data.success) {
-                  // Reload the datatable
-                  $('.datatables-modules').DataTable().ajax.reload();
-
-                  toastr.success(data.message, '', {
-                      closeButton: true,
-                      timeOut: 3000,
-                      progressBar: true,
-                      positionClass: 'toast-top-right',
-                      showClass: "animate__animated animate__bounceInRight",
-                      hideClass: "animate__animated animate__fadeOut",
-                      "toastClass": "toast ngx-toastr bg-success text-white",
-                      "closeClass": "toast-close-button",
-                      "titleClass": "toast-title",
-                      "messageClass": "toast-message",
-                      "progressClass": "toast-progress"
-                  });
-
-              } else {
-                  toastr.error(data.message, '', {
-                      closeButton: true,
-                      timeOut: 3000,
-                      progressBar: true,
-                      positionClass: 'toast-top-right',
-                      showClass: "animate__animated animate__bounceInRight",
-                      hideClass: "animate__animated animate__fadeOut",
-                      "toastClass": "toast ngx-toastr bg-danger text-white",
-                      "closeClass": "toast-close-button",
-                      "titleClass": "toast-title",
-                      "messageClass": "toast-message",
-                      "progressClass": "toast-progress"
-                  });
-              }
-          },
-          error: function(xhr, status, error) {
-              toastr.error('An error occurred while deleting the module.', '', {
-                  closeButton: true,
-                  timeOut: 3000,
-                  progressBar: true,
-                  positionClass: 'toast-top-right',
-                  showClass: "animate__animated animate__bounceInRight",
-                  hideClass: "animate__animated animate__fadeOut",
-                  "toastClass": "toast ngx-toastr bg-danger text-white",
-                  "closeClass": "toast-close-button",
-                  "titleClass": "toast-title",
-                  "messageClass": "toast-message",
-                  "progressClass": "toast-progress"
-              });
-          }
-      });
-  }
+  // Delete functionality has been moved to delete.js for better organization
+  // The delete.js file handles all module deletion with proper validation
 });

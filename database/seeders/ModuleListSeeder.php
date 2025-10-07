@@ -14,41 +14,26 @@ class ModuleListSeeder extends Seeder
      */
     public function run(): void
     {
-        /*
-        seed dummy module list as below:
-        Admin Management
-        User Management
-        Report Management
-        Role Management
-        */
+        // Clear existing module_list data
+        DB::table('module_list')->truncate();
 
-        $modules = [
-            [
-                'uuid' => Str::uuid()->toString(),
-                'module_name' => 'Admin Management',
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
-                'uuid' => Str::uuid()->toString(),
-                'module_name' => 'User Management',
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
-                'uuid' => Str::uuid()->toString(),
-                'module_name' => 'Report Management',
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-            [
-                'uuid' => Str::uuid()->toString(),
-                'module_name' => 'Role Management',
-                'created_at' => now(),
-                'updated_at' => now()
-            ]
-        ];
+        // Extract unique modules from permissions table and populate module_list
+        $uniqueModules = DB::table('permissions')
+            ->select('module')
+            ->whereNotNull('module')
+            ->where('module', '!=', '')
+            ->distinct()
+            ->pluck('module');
 
-        DB::table('module_list')->insert($modules);
+        foreach ($uniqueModules as $module) {
+            DB::table('module_list')->insert([
+                'uuid' => Str::uuid()->toString(),
+                'module_name' => $module,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $this->command->info('Successfully populated module_list with ' . $uniqueModules->count() . ' unique modules from permissions table.');
     }
 }
