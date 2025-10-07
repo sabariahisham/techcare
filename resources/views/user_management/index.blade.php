@@ -146,19 +146,22 @@
           <th></th>
           {{-- <th>No.</th> --}}
           <th>Nama</th>
+          {{-- <th>LDAP</th> --}}
           <th>Emel</th>
           <th>No.KP</th>
-          <th>No.Tel(M)</th>
           <th>No.Tel(O)</th>
-          <th>Peranan</th>
+          <th>No.Tel(M)</th>
           <th>Sektor</th>
           <th>Bahagian</th>
           <th>Seksyen</th>
           <th>Unit</th>
-          <th>Jawatan</th>
+          <th>Kod Skim</th>
+          <th>Kod Kump Khidmat</th>
+          <th>Kod Jwtn</th>
+          <th>Kod Jawatan</th>
           <th>Gelaran Jawatan</th>
           <th>Status</th>
-          <th>Tindakan</th>
+          {{-- <th>Tindakan</th> --}}
         </tr>
       </thead>
     </table>

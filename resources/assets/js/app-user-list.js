@@ -57,21 +57,33 @@ $(function () {
         //     return meta.row + meta.settings._iDisplayStart + 1;
         //   }
         // },
-        { data: 'name', name: 'name' },
+        { data: 'nama', name: 'nama' },
+        // { data: 'id_pgn_ldap', name: 'id_pgn_ldap' },
         { data: 'email', name: 'email' },
-        { data: 'ic_number', name: 'ic_number' },
-        { data: 'tel_bimbit', name: 'tel_bimbit' },
-        { data: 'tel_pejabat', name: 'tel_pejabat' },
-        { data: 'role', name: 'role' },
-        { data: 'sektor', name: 'sektor' },
-        { data: 'agency', name: 'agency' },
-        { data: 'seksyen', name: 'seksyen' },
-        { data: 'unit', name: 'unit' },
-        { data: 'jawatan', name: 'jawatan' },
-        { data: 'gln_jawatan', name: 'gln_jawatan' },
+        { data: 'no_kp', name: 'no_kp' },
+        { data: 'tel_no_p', name: 'tel_no_p' },
+        { data: 'tel_no_hp', name: 'tel_no_hp' },
+        { data: 'kod_sektor', name: 'kod_sektor' },
+        { data: 'kod_bah', name: 'kod_bah' },
+        { data: 'kod_sec', name: 'kod_sec' },
+        { data: 'kod_unit', name: 'kod_unit' },
+        { data: 'kod_skim', name: 'kod_skim' },
+        { data: 'kod_kump_khidmat', name: 'kod_kump_khidmat' },
         {
-          data: 'is_active',
-          name: 'is_active',
+          data: 'kod_jwtn',
+          name: 'kod_jwtn',
+          render: function (data, type, row) {
+            if (type === 'display') {
+              return data == 1 ? 'AKTIF' : 'TIDAK AKTIF';
+            }
+            return data;
+          }
+        },
+        { data: 'kod_jawatan', name: 'kod_jawatan' },
+        { data: 'nama_gred', name: 'nama_gred' },
+        {
+          data: 'kodaktif',
+          name: 'kodaktif',
           render: function (data, type, row) {
             if (type === 'display') {
               return data == 1 ?
@@ -80,8 +92,7 @@ $(function () {
             }
             return data;
           }
-        },
-        { data: 'action', name: 'action', orderable: false, searchable: false }
+        }
       ],
       dom:
         '<"row"' +
@@ -124,14 +135,6 @@ $(function () {
               className: 'dropdown-item'
             }
           ]
-        },
-        {
-          text: '<i class="bx bx-plus bx-sm me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">TAMBAH PENGGUNA</span>',
-          className: 'add-new btn btn-primary',
-          attr: {
-            'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddUser'
-          }
         }
       ],
       // Initialize role filter

@@ -12,6 +12,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -23,6 +24,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use Notifiable;
     use TwoFactorAuthenticatable;
     use HasRoles;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -31,24 +33,33 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
         'uuid',
-        'name',
+        'id_pgn_ldap',
+        'nama',
         'email',
         'password',
-        'ic_number',
-        'phone_number',
-        'office_phone_number',
-        'scheme_and_grade',
-        'agency',
-        'position',
-        'department',
-        'section',
-        'unit',
-        'position_title',
-        'last_login_at',
-        'last_login_ip',
-        'password_change_at',
-        'first_time_login',
-        'is_active',
+        'no_kp',
+        'kodjantina',
+        'kod_skim',
+        'kod_kump_khidmat',
+        'kod_jwtn',
+        'kod_jawatan',
+        'nama_gred',
+        'tel_no_p',
+        'tel_no_hp',
+        'kod_sektor',
+        'kod_bah',
+        'kod_sec',
+        'kod_unit',
+        'tarikh_lapormof',
+        'wf_ramadhan',
+        'hiraki',
+        'lastlogin_at',
+        'kodaktif',
+        'dataaktif',
+        'hadir_kurang_jam',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     /**
@@ -73,10 +84,18 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'last_login_at' => 'datetime',
-            'password_change_at' => 'datetime',
-            'first_time_login' => 'boolean',
-            'is_active' => 'boolean',
+            'lastlogin_at' => 'datetime',
+            'tarikh_lapormof' => 'date',
+            'kodaktif' => 'boolean',
+            'kod_sektor' => 'integer',
+            'kod_bah' => 'integer',
+            'kod_sec' => 'integer',
+            'kod_unit' => 'integer',
+            'wf_ramadhan' => 'integer',
+            'hiraki' => 'integer',
+            'dataaktif' => 'integer',
+            'hadir_kurang_jam' => 'integer',
+            'deleted_at' => 'datetime',
         ];
     }
 
@@ -113,7 +132,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getFullNameAttribute(): string
     {
-        return $this->name ?? 'Unknown User';
+        return $this->nama ?? 'Unknown User';
     }
 
     /**
@@ -134,8 +153,8 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getStatusBadgeAttribute(): array
     {
         return [
-            'status' => $this->is_active ? 'Active' : 'Inactive',
-            'class' => $this->is_active ? 'badge bg-label-success' : 'badge bg-label-secondary',
+            'status' => $this->kodaktif ? 'Active' : 'Inactive',
+            'class' => $this->kodaktif ? 'badge bg-label-success' : 'badge bg-label-secondary',
         ];
     }
 
@@ -146,7 +165,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isActive(): bool
     {
-        return $this->is_active;
+        return $this->kodaktif;
     }
 
     /**
@@ -156,7 +175,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isInactive(): bool
     {
-        return !$this->is_active;
+        return !$this->kodaktif;
     }
 
     /**
@@ -166,7 +185,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function activate(): bool
     {
-        return $this->update(['is_active' => true]);
+        return $this->update(['kodaktif' => true]);
     }
 
     /**
@@ -176,7 +195,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function deactivate(): bool
     {
-        return $this->update(['is_active' => false]);
+        return $this->update(['kodaktif' => false]);
     }
 
     /**
@@ -196,7 +215,9 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isFirstTimeLogin(): bool
     {
-        return $this->first_time_login;
+        // This field doesn't exist in current DB structure
+        // You may need to add this field or use another logic
+        return false;
     }
 
     /**
@@ -206,7 +227,9 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function completeFirstLogin(): bool
     {
-        return $this->update(['first_time_login' => false]);
+        // This field doesn't exist in current DB structure
+        // You may need to add this field or use another logic
+        return true;
     }
 
     /**
@@ -218,8 +241,8 @@ class User extends Authenticatable implements MustVerifyEmail
     public function updateLastLogin(?string $ip = null): bool
     {
         return $this->update([
-            'last_login_at' => now(),
-            'last_login_ip' => $ip ?? request()->ip(),
+            'lastlogin_at' => now(),
+            // Note: last_login_ip field doesn't exist in current DB structure
         ]);
     }
 
@@ -228,7 +251,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('kodaktif', true);
     }
 
     /**
@@ -236,7 +259,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function scopeInactive($query)
     {
-        return $query->where('is_active', false);
+        return $query->where('kodaktif', false);
     }
 
     /**
@@ -261,12 +284,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function scopeSearch($query, $search)
     {
         return $query->where(function ($q) use ($search) {
-            $q->where('name', 'LIKE', "%{$search}%")
+            $q->where('nama', 'LIKE', "%{$search}%")
               ->orWhere('email', 'LIKE', "%{$search}%")
-              ->orWhere('ic_number', 'LIKE', "%{$search}%")
-              ->orWhere('phone_number', 'LIKE', "%{$search}%")
-              ->orWhere('agency', 'LIKE', "%{$search}%")
-              ->orWhere('position', 'LIKE', "%{$search}%");
+              ->orWhere('no_kp', 'LIKE', "%{$search}%")
+              ->orWhere('tel_no_hp', 'LIKE', "%{$search}%")
+              ->orWhere('tel_no_p', 'LIKE', "%{$search}%")
+              ->orWhere('id_pgn_ldap', 'LIKE', "%{$search}%");
         });
     }
 
@@ -342,9 +365,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email' => $this->email,
-            'mobile_phone' => $this->phone_number,
-            'office_phone' => $this->office_phone_number,
-            'ic_number' => $this->ic_number,
+            'mobile_phone' => $this->tel_no_hp,
+            'office_phone' => $this->tel_no_p,
+            'ic_number' => $this->no_kp,
+            'ldap_id' => $this->id_pgn_ldap,
         ];
     }
 
@@ -356,13 +380,16 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getWorkInfo(): array
     {
         return [
-            'agency' => $this->agency,
-            'department' => $this->department,
-            'section' => $this->section,
-            'unit' => $this->unit,
-            'position' => $this->position,
-            'position_title' => $this->position_title,
-            'scheme_and_grade' => $this->scheme_and_grade,
+            'kod_sektor' => $this->kod_sektor,
+            'kod_bah' => $this->kod_bah,
+            'kod_sec' => $this->kod_sec,
+            'kod_unit' => $this->kod_unit,
+            'kod_jawatan' => $this->kod_jawatan,
+            'kod_jwtn' => $this->kod_jwtn,
+            'kod_skim' => $this->kod_skim,
+            'kod_kump_khidmat' => $this->kod_kump_khidmat,
+            'nama_gred' => $this->nama_gred,
+            'hiraki' => $this->hiraki,
         ];
     }
 
@@ -375,10 +402,84 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'total_logins' => 0, // You can track this with a separate model/table
-            'last_login' => $this->last_login_at?->format('d M Y, h:i A'),
+            'last_login' => $this->lastlogin_at?->format('d M Y, h:i A'),
             'member_since' => $this->created_at->format('d M Y'),
             'roles_count' => $this->roles->count(),
             'permissions_count' => $this->getAllPermissions()->count(),
+            'reporting_date' => $this->tarikh_lapormof?->format('d M Y'),
+            'data_active' => $this->dataaktif,
         ];
+    }
+
+    /**
+     * Check if user is male.
+     *
+     * @return bool
+     */
+    public function isMale(): bool
+    {
+        return $this->kodjantina === '1' || $this->kodjantina === 'L';
+    }
+
+    /**
+     * Check if user is female.
+     *
+     * @return bool
+     */
+    public function isFemale(): bool
+    {
+        return $this->kodjantina === '2' || $this->kodjantina === 'P';
+    }
+
+    /**
+     * Check if user has Ramadan working arrangement.
+     *
+     * @return bool
+     */
+    public function hasRamadanArrangement(): bool
+    {
+        return $this->wf_ramadhan == 1;
+    }
+
+    /**
+     * Check if user has attendance issues.
+     *
+     * @return bool
+     */
+    public function hasAttendanceIssues(): bool
+    {
+        return $this->hadir_kurang_jam > 0;
+    }
+
+    /**
+     * Scope to filter users by sector.
+     */
+    public function scopeBySector($query, $sector)
+    {
+        return $query->where('kod_sektor', $sector);
+    }
+
+    /**
+     * Scope to filter users by department.
+     */
+    public function scopeByDepartment($query, $department)
+    {
+        return $query->where('kod_bah', $department);
+    }
+
+    /**
+     * Scope to filter users by section.
+     */
+    public function scopeBySection($query, $section)
+    {
+        return $query->where('kod_sec', $section);
+    }
+
+    /**
+     * Scope to filter users by unit.
+     */
+    public function scopeByUnit($query, $unit)
+    {
+        return $query->where('kod_unit', $unit);
     }
 }
