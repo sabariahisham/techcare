@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
     // Then run permission and role seeders
     $this->call([
       RolesAndPermissionSeeder::class,
+      UpdateRolesSeeder::class,
       SuperAdminSeeder::class,
     ]);
 

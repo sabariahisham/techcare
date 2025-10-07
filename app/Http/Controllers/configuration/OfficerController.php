@@ -17,7 +17,7 @@ class OfficerController extends Controller
     public function index()
     {
         $categories = RefCategory::orderBy('cat_name')->get();
-        $users = User::orderBy('name')->get();
+        $users = User::orderBy('nama')->get();
 
         $totalCategories = RefCategory::count();
         $totalSubCategories = RefSubCategory::count();
