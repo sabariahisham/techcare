@@ -214,8 +214,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/acl/module-list/index', [ModuleListController::class, 'index'])->name('acl-module-list-index');
     Route::get('/modules', [ModuleListController::class, 'getModules'])->name('modules.data');
     Route::post('/modules', [ModuleListController::class, 'store'])->name('modules.store');
+    Route::get('/modules/{id}/edit', [ModuleListController::class, 'edit'])->name('modules.edit');
     Route::post('/modules/update/{id}', [ModuleListController::class, 'update'])->name('modules.update');
     Route::delete('/modules/{id}', [ModuleListController::class, 'destroy']);
+
+    // Module List Resource Routes
+    Route::get('/module-list/get-modules', [ModuleListController::class, 'getModules'])->name('module-list.get-modules');
+    Route::get('/module-list/{id}/edit', [ModuleListController::class, 'edit'])->name('module-list.edit');
+    Route::put('/module-list/{id}', [ModuleListController::class, 'update'])->name('module-list.update');
+    Route::delete('/module-list/{id}', [ModuleListController::class, 'destroy'])->name('module-list.destroy');
+    Route::post('/module-list', [ModuleListController::class, 'store'])->name('module-list.store');
 });
 
 // user management

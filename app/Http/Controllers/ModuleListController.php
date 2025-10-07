@@ -48,17 +48,19 @@ class ModuleListController extends Controller
             Log::info('Module creation request received:', $request->all());
 
             $request->validate([
-                'modalModuleName' => 'required|string|max:100|min:3'
+                'modalModuleName' => [
+                    'required',
+                    'string',
+                    'max:100',
+                    'min:3',
+                    'unique:module_list,module_name'
+                ]
+            ], [
+                'modalModuleName.required' => 'Sila masukkan nama modul',
+                'modalModuleName.min' => 'Nama modul mestilah sekurang-kurangnya 3 aksara',
+                'modalModuleName.max' => 'Nama modul tidak boleh melebihi 100 aksara',
+                'modalModuleName.unique' => 'Nama modul telah wujud. Sila pilih nama yang lain.'
             ]);
-
-            $moduleExists = Module::where('module_name', $request->modalModuleName)->exists();
-
-        if ($moduleExists) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Module already exists'
-            ], 422);
-        }
 
         $module = Module::create([
             'module_name' => $request->modalModuleName
@@ -134,7 +136,33 @@ class ModuleListController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        try {
+            $module = Module::find($id);
+
+            if (!$module) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Module not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Module data retrieved successfully',
+                'data' => $module
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Module edit error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'module_id' => $id
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while retrieving the module data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -142,22 +170,31 @@ class ModuleListController extends Controller
      */
     public function update(Request $request, string $id)
     {
-      $module = Module::find($id);
-      if (!$module) {
-          return response()->json([
-              'status' => 'error',
-              'message' => 'Module not found'
-          ], 404);
-      }
-      $moduleExists = Module::where('module_name', $request->editModuleName)
-          ->where('id', '!=', $id)
-          ->exists();
-      if ($moduleExists) {
-          return response()->json([
-              'status' => 'error',
-              'message' => 'Module name already exists'
-          ], 422);
-      }
+      try {
+          // Find the module first
+          $module = Module::find($id);
+          if (!$module) {
+              return response()->json([
+                  'status' => 'error',
+                  'message' => 'Module not found'
+              ], 404);
+          }
+
+          // Validate the request with custom rule to check for duplicate names
+          $request->validate([
+              'editModuleName' => [
+                  'required',
+                  'string',
+                  'max:100',
+                  'min:3',
+                  'unique:module_list,module_name,' . $id . ',id'
+              ]
+          ], [
+              'editModuleName.required' => 'Sila masukkan nama modul',
+              'editModuleName.min' => 'Nama modul mestilah sekurang-kurangnya 3 aksara',
+              'editModuleName.max' => 'Nama modul tidak boleh melebihi 100 aksara',
+              'editModuleName.unique' => 'Nama modul telah wujud. Sila pilih nama yang lain.'
+          ]);
 
       $oldModuleName = $module->module_name;
       $module->module_name = $request->editModuleName;
@@ -180,9 +217,22 @@ class ModuleListController extends Controller
 
       return response()->json([
           'status' => 'success',
-          'message' => 'Module updated successfully',
+          'message' => 'Modul berjaya dikemaskini',
           'data' => $module
       ]);
+
+      } catch (\Exception $e) {
+          Log::error('Module update error: ' . $e->getMessage(), [
+              'trace' => $e->getTraceAsString(),
+              'request' => $request->all(),
+              'module_id' => $id
+          ]);
+
+          return response()->json([
+              'status' => 'error',
+              'message' => 'An error occurred while updating the module: ' . $e->getMessage()
+          ], 500);
+      }
     }
 
     /**
