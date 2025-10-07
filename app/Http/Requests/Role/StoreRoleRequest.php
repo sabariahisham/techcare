@@ -31,6 +31,8 @@ class StoreRoleRequest extends FormRequest
             'is_active' => ['boolean'],
             'permissions' => ['array'],
             'permissions.*' => ['exists:permissions,name'],
+            'users' => ['nullable', 'array'],
+            'users.*' => ['exists:users,id'],
         ];
     }
 

@@ -13,7 +13,7 @@
           @csrf
           <div class="col-12">
             <label class="form-label" for="modalRoleName">Role Name</label>
-            <input type="text" id="modalRoleName" name="modalRoleName" class="form-control" placeholder="Enter a role name" tabindex="-1" />
+            <input type="text" id="modalRoleName" name="name" class="form-control" placeholder="Enter a role name" tabindex="-1" />
           </div>
           <div class="col-12">
             <h5 class="mb-6">Role Permissions</h5>

@@ -51,6 +51,12 @@
               "permission": "user-management.view"
             },
             {
+              "url": "acl/module-list/index",
+              "name": "Modules",
+              "slug": "acl-module-list-index",
+              "permission": "admin-management.view"
+            },
+            {
               "url": "acl/roles/index",
               "name": "Roles",
               "slug": "acl-roles-index",
@@ -61,14 +67,7 @@
               "name": "Permissions",
               "slug": "acl-permissions-index",
               "permission": "permission-management.view"
-            },
-            {
-              "url": "acl/module-list/index",
-              "name": "Modules",
-              "slug": "acl-module-list-index",
-              "permission": "admin-management.view"
             }
-
           ]
         },
         {

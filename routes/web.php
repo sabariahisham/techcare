@@ -293,6 +293,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('admin/users')->name('admin.users.')->group(function () {
         Route::get('/', [App\Http\Controllers\UserController::class, 'index'])->name('index');
         Route::get('/data', [App\Http\Controllers\UserController::class, 'getData'])->name('data');
+        Route::get('/search', [App\Http\Controllers\UserController::class, 'search'])->name('search');
         Route::post('/', [App\Http\Controllers\UserController::class, 'store'])->name('store');
         Route::get('/{user}', [App\Http\Controllers\UserController::class, 'show'])->name('show');
         Route::get('/{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])->name('edit');
@@ -316,9 +317,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'updatePermissions'])->name('update-permissions');
         Route::patch('/{role}/toggle-status', [App\Http\Controllers\RoleController::class, 'toggleStatus'])->name('toggle-status');
         Route::delete('/{role}', [App\Http\Controllers\RoleController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-delete', [App\Http\Controllers\RoleController::class, 'bulkDelete'])->name('bulk-delete');
         Route::post('/{role}/duplicate', [App\Http\Controllers\RoleController::class, 'duplicate'])->name('duplicate');
         Route::get('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'getRolePermissions'])->name('permissions');
         Route::get('/statistics', [App\Http\Controllers\RoleController::class, 'getStatistics'])->name('statistics');
+        Route::delete('/{role}/users/{user}', [App\Http\Controllers\RoleController::class, 'removeUserFromRole'])->name('remove-user');
+        Route::post('/{role}/users', [App\Http\Controllers\RoleController::class, 'addUserToRole'])->name('add-user');
+        Route::get('/dashboard-stats', [App\Http\Controllers\RoleController::class, 'getRoleStatsForDashboard'])->name('dashboard-stats');
     });
 
     // Enhanced Permission Management Routes
