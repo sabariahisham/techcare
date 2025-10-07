@@ -42,7 +42,7 @@ class RoleController extends Controller
         return DataTables::of($roles)
             ->addIndexColumn()
             ->addColumn('user_names', function ($role) {
-                return $role->users->pluck('name')->toArray();
+                return $role->users->pluck('nama')->toArray();
             })
             ->addColumn('users', function ($role) {
                 $users = $role->users->take(3);
@@ -54,8 +54,8 @@ class RoleController extends Controller
 
                 $avatars = '';
                 foreach ($users as $user) {
-                    $initials = strtoupper(substr($user->name, 0, 2));
-                    $avatars .= '<div class="avatar avatar-xs pull-up me-1" title="' . e($user->name) . '">
+                    $initials = strtoupper(substr($user->nama, 0, 2));
+                    $avatars .= '<div class="avatar avatar-xs pull-up me-1" title="' . e($user->nama) . '">
                                     <span class="avatar-initial rounded-circle bg-label-primary">' . $initials . '</span>
                                 </div>';
                 }
@@ -70,9 +70,7 @@ class RoleController extends Controller
                 return '<div class="d-flex align-items-center">' . $avatars . '</div>';
             })
             ->addColumn('users_count', function ($role) {
-                $count = $role->users->count();
-                $badgeClass = $count > 0 ? 'bg-label-success' : 'bg-label-secondary';
-                return '<span class="badge ' . $badgeClass . '">' . $count . ' users</span>';
+                return $role->users->count();
             })
             ->addColumn('permissions_count', function ($role) {
                 $count = $role->permissions->count();
@@ -128,7 +126,7 @@ class RoleController extends Controller
                        $viewBtn . $editBtn . $permissionsBtn . $deleteBtn .
                        '</div>';
             })
-            ->rawColumns(['users', 'users_count', 'permissions_count', 'status', 'action'])
+            ->rawColumns(['users', 'permissions_count', 'status', 'action'])
             ->make(true);
     }
 
@@ -155,12 +153,20 @@ class RoleController extends Controller
                 $role->syncPermissions($request->permissions);
             }
 
+            // Assign users if provided
+            if ($request->users && is_array($request->users)) {
+                $users = \App\Models\User::whereIn('id', $request->users)->get();
+                foreach ($users as $user) {
+                    $user->assignRole($role->name);
+                }
+            }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Role created successfully',
-                'role' => $role->load('permissions')
+                'role' => $role->load('permissions', 'users')
             ]);
 
         } catch (\Exception $e) {
@@ -360,24 +366,101 @@ class RoleController extends Controller
             if (!$canDelete['can_delete']) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete role',
-                    'errors' => $canDelete['errors']
+                    'message' => implode(', ', $canDelete['errors'])
                 ], 403);
             }
 
+            DB::beginTransaction();
+
+            // Remove role from all users
+            $role->users()->detach();
+
+            // Remove all permissions from role
+            $role->permissions()->detach();
+
+            // Delete the role
             $role->delete();
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Role deleted successfully'
+                'message' => 'Peranan berjaya dipadam'
             ]);
 
         } catch (\Exception $e) {
+            DB::rollback();
             Log::error('Role deletion failed: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting role: ' . $e->getMessage()
+                'message' => 'Ralat semasa memadam peranan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk delete roles.
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'role_ids' => 'required|array',
+            'role_ids.*' => 'exists:roles,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $roleIds = $request->role_ids;
+            $roles = Role::whereIn('id', $roleIds)->get();
+            $deletedCount = 0;
+            $errors = [];
+
+            foreach ($roles as $role) {
+                // Check if role can be deleted
+                $canDelete = $role->canBeDeleted();
+
+                if (!$canDelete['can_delete']) {
+                    $errors[] = "Role '{$role->name}': " . implode(', ', $canDelete['errors']);
+                    continue;
+                }
+
+                // Remove role from all users
+                $role->users()->detach();
+
+                // Remove all permissions from role
+                $role->permissions()->detach();
+
+                // Delete the role
+                $role->delete();
+                $deletedCount++;
+            }
+
+            DB::commit();
+
+            if (count($errors) > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Beberapa peranan tidak dapat dipadam: ' . implode('; ', $errors),
+                    'deleted_count' => $deletedCount,
+                    'total_requested' => count($roleIds)
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$deletedCount} peranan berjaya dipadam",
+                'deleted_count' => $deletedCount
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Bulk role deletion failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ralat semasa memadam peranan: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -462,6 +545,129 @@ class RoleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error retrieving statistics'
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove user from role
+     */
+    public function removeUserFromRole(Role $role, $userId)
+    {
+        try {
+            $user = \App\Models\User::findOrFail($userId);
+
+            // Check if user has this role
+            if (!$user->hasRole($role->name)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User does not have this role'
+                ], 400);
+            }
+
+            // Remove role from user
+            $user->removeRole($role->name);
+
+            Log::info("User {$user->nama} removed from role {$role->name}");
+
+            return response()->json([
+                'success' => true,
+                'message' => "User {$user->nama} removed from role {$role->name} successfully"
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error removing user from role: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error removing user from role: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get role statistics with user counts for specific roles
+     */
+    public function getRoleStatsForDashboard()
+    {
+        try {
+            $roleStats = [];
+
+            // Define the roles we want to show in the dashboard
+            $dashboardRoles = [
+                'Super Admin',
+                'Administrator',
+                'Penyelia Helpdesk',
+                'Helpdesk On Duty',
+                'Pegawai Tugasan',
+                'Pengurusan'
+            ];
+
+            foreach ($dashboardRoles as $roleName) {
+                $role = Role::where('name', $roleName)->with('users')->first();
+
+                $roleStats[$roleName] = [
+                    'user_count' => $role ? $role->users->count() : 0,
+                    'active_users' => $role ? $role->users->where('is_active', true)->count() : 0,
+                    'exists' => $role !== null
+                ];
+            }
+
+            // Add general statistics
+            $generalStats = $this->getRoleStatistics();
+
+            return response()->json([
+                'success' => true,
+                'role_stats' => $roleStats,
+                'general_stats' => $generalStats
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting role statistics for dashboard: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving role statistics'
+            ], 500);
+        }
+    }
+
+    /**
+     * Add user to role
+     */
+    public function addUserToRole(Request $request, Role $role)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        try {
+            $user = \App\Models\User::findOrFail($request->user_id);
+
+            // Check if user already has this role
+            if ($user->hasRole($role->name)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User already has this role'
+                ], 400);
+            }
+
+            // Add role to user
+            $user->assignRole($role->name);
+
+            Log::info("User {$user->nama} added to role {$role->name}");
+
+            return response()->json([
+                'success' => true,
+                'message' => "User {$user->nama} added to role {$role->name} successfully"
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error adding user to role: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error adding user to role: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -432,26 +432,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if user has Ramadan working arrangement.
-     *
-     * @return bool
-     */
-    public function hasRamadanArrangement(): bool
-    {
-        return $this->wf_ramadhan == 1;
-    }
-
-    /**
-     * Check if user has attendance issues.
-     *
-     * @return bool
-     */
-    public function hasAttendanceIssues(): bool
-    {
-        return $this->hadir_kurang_jam > 0;
-    }
-
-    /**
      * Scope to filter users by sector.
      */
     public function scopeBySector($query, $sector)

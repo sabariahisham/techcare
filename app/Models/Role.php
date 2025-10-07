@@ -222,7 +222,7 @@ class Role extends SpatieRole
     public function getUsersWithDetails()
     {
         return $this->users()
-                   ->select(['id', 'name', 'email', 'is_active', 'last_login_at'])
+                   ->select(['id', 'nama', 'email', 'kodaktif', 'lastlogin_at'])
                    ->with(['roles' => function ($query) {
                        $query->select(['id', 'name']);
                    }])

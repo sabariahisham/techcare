@@ -5,15 +5,7 @@
 'use strict';
 
 $(function () {
-  // Add click handler for edit button
-  $(document).on('click', '.edit-role', function() {
-      const roleId = $(this).data('id');
-      const roleName = $(this).data('name');
-
-      $('#editRoleName').val(roleName);
-      $('#editRoleForm').attr('data-role-id', roleId);
-      $('#editRoleModal').modal('show');
-  });
+  // Note: Edit button click handler is now in app-roles-edit.js
 
   var dataTableRoles = $('.datatables-roles'),
     dt_role;
@@ -38,7 +30,7 @@ $(function () {
                         <button class="btn btn-sm btn-icon edit-role" data-id="${row.id}" data-name="${row.name}" title="Edit Role">
                             <i class="bx bx-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-icon delete-role" data-id="${row.id}" title="Delete Role">
+                        <button class="btn btn-sm btn-icon delete-record" data-id="${row.id}" title="Delete Role">
                             <i class="bx bx-trash"></i>
                         </button>
                     </div>`;
@@ -70,8 +62,8 @@ $(function () {
           text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Add Role</span>',
           className: 'add-new btn btn-primary mb-6 mb-md-0',
           attr: {
-            'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddRole'
+            'data-bs-toggle': 'modal',
+            'data-bs-target': '#modalAddRole'
           },
           init: function (api, node, config) {
             $(node).removeClass('btn-secondary');
@@ -109,7 +101,7 @@ $(function () {
           targets: 3,
           orderable: true,
           render: function (data, type, full, meta) {
-            if (full['user_names'] && full['user_names'].length > 0) {
+            if (full['user_names'] && Array.isArray(full['user_names']) && full['user_names'].length > 0) {
               // Display user names as badges
               let userBadges = full['user_names'].map(function(userName) {
                 return '<span class="badge bg-label-primary me-1 mb-1">' + userName + '</span>';
@@ -126,7 +118,8 @@ $(function () {
           targets: 4,
           orderable: true,
           render: function (data, type, full, meta) {
-            return '<span class="badge bg-label-info">' + (full['users_count'] || 0) + ' users</span>';
+            const count = typeof full['users_count'] === 'number' ? full['users_count'] : (full['users_count'] || 0);
+            return '<span class="badge bg-label-info">' + count + ' users</span>';
           }
         },
         {
@@ -150,85 +143,5 @@ $(function () {
     $('.dataTables_length .form-select').removeClass('form-select-sm');
   }, 300);
 
-  // Add click handler for delete button
-  $(document).on('click', '.delete-role', function() {
-      const roleId = $(this).data('id');
-      Swal.fire({
-          title: 'Are you sure?',
-          text: "You won't be able to revert this!",
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonText: 'Yes, delete it!',
-          cancelButtonText: 'No, cancel!',
-          customClass: {
-              confirmButton: 'btn btn-primary me-3',
-              cancelButton: 'btn btn-label-secondary'
-          },
-          buttonsStyling: false
-      }).then((result) => {
-          if (result.isConfirmed) {
-              deleteRole(roleId);
-          }
-      });
-  });
-
-  function deleteRole(roleId) {
-      $.ajax({
-          url: '/admin/roles/' + roleId,
-          type: 'DELETE',
-          headers: {
-              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-          },
-          success: function(data) {
-              if (data.success) {
-                  // Reload the datatable
-                  $('.datatables-roles').DataTable().ajax.reload();
-
-                  toastr.success(data.message, '', {
-                      closeButton: true,
-                      timeOut: 3000,
-                      progressBar: true,
-                      positionClass: 'toast-top-right',
-                      showClass: "animate__animated animate__bounceInRight",
-                      hideClass: "animate__animated animate__fadeOut",
-                      "toastClass": "toast ngx-toastr bg-success text-white",
-                      "closeClass": "toast-close-button",
-                      "titleClass": "toast-title",
-                      "messageClass": "toast-message",
-                      "progressClass": "toast-progress"
-                  });
-
-              } else {
-                  toastr.error(data.message, '', {
-                      closeButton: true,
-                      timeOut: 3000,
-                      progressBar: true,
-                      positionClass: 'toast-top-right',
-                      showClass: "animate__animated animate__bounceInRight",
-                      hideClass: "animate__animated animate__fadeOut",
-                      "toastClass": "toast ngx-toastr bg-danger text-white",
-                      "closeClass": "toast-close-button",
-                      "titleClass": "toast-title",
-                      "messageClass": "toast-message",
-                      "progressClass": "toast-progress"
-                  });
-              }
-          },
-          error: function(xhr, status, error) {
-              toastr.error('An error occurred while deleting the role.', '', {
-                  closeButton: true,
-                  timeOut: 3000,
-                  progressBar: true,
-                  positionClass: 'toast-top-right',
-                  showClass: "animate__animated animate__bounceInRight",
-                  hideClass: "animate__animated animate__fadeOut",
-                  "toastClass": "toast ngx-toastr bg-danger text-white",
-                  "closeClass": "toast-close-button",
-                  "titleClass": "toast-title",
-                  "messageClass": "toast-message",
-                  "progressClass": "toast-progress"
-              });
-          }
-      });
-  }
+  // Note: Delete functionality is handled in app-roles-delete.js
 });
