@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function (e) {
     }
   }).on('core.form.valid', function() {
     // Submit form data via Ajax
-    fetch('/modules/store', {
+    fetch('/modules', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
