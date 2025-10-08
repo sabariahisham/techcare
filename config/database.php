@@ -59,6 +59,16 @@ return [
       ]) : [],
     ],
 
+    'spp' => [
+      'driver' => env('DB_SPP_CONNECTION', 'mysql'),
+      'url' => env('DB_URL'),
+      'host' => env('DB_SPP_HOST', '127.0.0.1'),
+      'port' => env('DB_SPP_PORT', '3306'),
+      'database' => env('DB_SPP_DATABASE', 'spp_db'),
+      'username' => env('DB_SPP_USERNAME', 'root'),
+      'password' => env('DB_SPP_PASSWORD', ''),   
+    ],
+
     'mariadb' => [
       'driver' => 'mariadb',
       'url' => env('DB_URL'),
