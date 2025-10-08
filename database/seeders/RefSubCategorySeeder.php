@@ -11,52 +11,51 @@ class RefSubCategorySeeder extends Seeder
     public function run(): void
     {
         $mapping = [
-            'Peralatan Komputer' => [
-                'Komputer Desktop', 'Laptop', 'Monitor', 'Keyboard/Mouse',
-                'Pencetak', 'Scanner', 'Aksesori (USB, Headset, Cable, Projector)'
-            ],
-            'Rangkaian (Network)' => [
-                'Sambungan Internet (LAN/WiFi)', 'VPN/Remote Access',
-                'Switch/Router', 'Firewall/Security', 'Gangguan Rangkaian'
-            ],
-            'Akses Sistem/Akaun' => [
-                'Login ID/Password Reset', 'Akaun Dikunci', 'Pendaftaran Akaun Baru',
-                'Tukar Peranan/Hak Akses', 'Sistem Tidak Berfungsi'
-            ],
-            'Perisian & Aplikasi' => [
-                'Sistem Dalaman (HRMIS, ePerolehan, dll.)',
-                'Microsoft Office (Word, Excel, Outlook, PowerPoint)',
-                'Browser (Chrome, Edge, Firefox)',
-                'Email (Outlook/Webmail)',
-                'Antivirus/Security Software',
-                'Perisian Pihak Ketiga (Adobe, AutoCAD, dll.)'
-            ],
-            'Percetakan & Imbasan' => [
-                'Printer Offline', 'Paper Jam', 'Tidak Boleh Cetak/Scan',
-                'Printer Sharing/Network Printer', 'Toner/Cartridge'
-            ],
-            'Telefon & Komunikasi' => [
-                'Telefon IP/PABX', 'VoIP', 'Webex/Zoom/MS Teams',
-                'Emel Rasmi', 'SMS Gateway'
-            ],
-            'Keselamatan ICT' => [
-                'Virus/Malware', 'Phishing/Spam', 'Kebocoran Data',
-                'Akses Tidak Sah', 'Insiden Keselamatan'
-            ],
-            'Pelayan & Storan' => [
-                'Server Down', 'Backup & Restore',
-                'Database Issue (MySQL, MSSQL, Oracle)',
-                'Storage/Disk Full', 'Virtual Machine (VM)'
-            ],
-            'Permintaan ICT' => [
-                'Permohonan Peralatan ICT Baru', 'Permohonan Akses Sistem',
-                'Permohonan Upgrade Software', 'Permohonan Upgrade Hardware',
-                'Permohonan Domain/Hosting'
-            ],
-            'Lain-lain' => [
-                'Pertanyaan Umum ICT', 'Bantuan Teknikal Lain', 'Aduan Tidak Spesifik'
-            ],
-        ];
+        'Aplikasi' => [
+            'Akan ditentukan semula',
+        ],
+
+        'Perkakasan & Perkhidmatan ICT' => [
+            'Komputer Desktop/Laptop',
+            'Peralatan Komputer (Monitor/Mouse/Keyboard/etc)',
+            'Pencetak',
+            'Perisian (Software)',
+            'Sidang Video',
+            'Sokongan Teknikal (Mesyuarat/Majlis/Acara Rasmi/etc)',
+        ],
+
+        'Keselamatan ICT' => [
+            'Antivirus',
+            'Serangan Siber',
+            'Firewall/WAF',
+            'VPN/PRA',
+            'Prot-On (File Encryption)',
+        ],
+
+        'Pangkalan Data & Sysadmin' => [
+            'Pangkalan Data',
+            'Sistem Aplikasi (Backend)',
+            'Integrasi Sistem',
+        ],
+
+        'Pusat Data' => [
+            'Pusat Data',
+            'Server',
+            'Backup dan Restore',
+        ],
+
+        'Rangkaian' => [
+            'Rangkaian (Wired dan Wifi)',
+            'Perkhidmatan Rangkaian (DHCP, DNS, AD)',
+            'Server File Sharing dan MOFStore',
+        ],
+
+        'Emel/SSO' => [
+            'Emel MyGovUC',
+            'SSO SatuID',
+            'SSO TERAS',
+        ],
+    ];
 
         foreach ($mapping as $catName => $subcats) {
             $category = RefCategory::where('cat_name', $catName)->first();
