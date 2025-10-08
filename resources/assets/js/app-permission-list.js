@@ -5,6 +5,9 @@
 'use strict';
 
 $(function () {
+  console.log('Permission list script loaded');
+  console.log('jQuery available:', typeof $ !== 'undefined');
+  console.log('DataTables available:', typeof $.fn.DataTable !== 'undefined');
   var dataTablePermissions = $('.datatables-permissions'),
     dt_permission,
     userList = baseUrl + 'app/user/list';
@@ -12,7 +15,7 @@ $(function () {
   // Users List datatable
   if (dataTablePermissions.length) {
     dt_permission = dataTablePermissions.DataTable({
-      ajax: '/permissions', // Point to your backend route
+      ajax: '/admin/permissions/data', // Point to your backend route
       serverSide: true, // Enable server-side processing since backend supports it
       processing: true,
       rowGroup: {
@@ -26,6 +29,7 @@ $(function () {
         { data: 'DT_RowIndex', orderable: false, searchable: false },
         { data: 'name' },
         { data: 'module' },
+        { data: 'description' },
         { data: 'assigned_to' },
         // { data: 'created_date' },
         { data: 'action' }
@@ -87,11 +91,12 @@ $(function () {
         //   }
         // },
         {
-          // Actions - server already renders HTML
+          // Actions - Use server-generated HTML (backend handles button rendering)
           targets: -1,
           searchable: false,
           title: 'Actions',
-          orderable: false
+          orderable: false,
+          className: 'text-center'
         }
       ],
       order: [[3, 'asc'], [2, 'asc']], // Order by module first, then by name
@@ -107,7 +112,7 @@ $(function () {
       language: {
         sLengthMenu: 'Show _MENU_',
         search: '',
-        searchPlaceholder: 'Search Permissions',
+        searchPlaceholder: 'Carian Permission',
         paginate: {
           next: '<i class="bx bx-chevron-right bx-18px"></i>',
           previous: '<i class="bx bx-chevron-left bx-18px"></i>'
@@ -119,8 +124,8 @@ $(function () {
           text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Add Permission</span>',
           className: 'add-new btn btn-primary mb-6 mb-md-0',
           attr: {
-            'data-bs-toggle': 'modal',
-            'data-bs-target': '#addPermissionModal'
+            'data-bs-toggle': 'offcanvas',
+            'data-bs-target': '#offcanvasAddPermission'
           },
           init: function (api, node, config) {
             $(node).removeClass('btn-secondary');
@@ -161,6 +166,23 @@ $(function () {
         }
       },
       initComplete: function () {
+        console.log('DataTable initialized');
+
+        // Check if buttons exist after initialization
+        setTimeout(function() {
+          const editButtons = $('.edit-permission');
+          const deleteButtons = $('.delete-permission');
+          console.log('Edit buttons found:', editButtons.length);
+          console.log('Delete buttons found:', deleteButtons.length);
+
+          if (editButtons.length > 0) {
+            console.log('First edit button data-id:', editButtons.first().data('id'));
+          }
+          if (deleteButtons.length > 0) {
+            console.log('First delete button data-id:', deleteButtons.first().data('id'));
+          }
+        }, 1000);
+
         // Adding role filter once table initialized
         this.api()
           .columns(4)
