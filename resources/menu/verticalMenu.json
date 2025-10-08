@@ -15,7 +15,7 @@
       "permission": "log-tiket.view"
     },
     {
-      "url": "#",
+      "url": "knowledgebase",
       "icon": "menu-icon icon-base bx bx-book-open",
       "name": "Knowledge Base",
       "slug": "knowledge-index",
