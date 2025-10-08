@@ -69,26 +69,15 @@ $(function () {
         { data: 'kod_unit', name: 'kod_unit' },
         { data: 'kod_skim', name: 'kod_skim' },
         { data: 'kod_kump_khidmat', name: 'kod_kump_khidmat' },
-        {
-          data: 'kod_jwtn',
-          name: 'kod_jwtn',
-          render: function (data, type, row) {
-            if (type === 'display') {
-              return data == 1 ? 'AKTIF' : 'TIDAK AKTIF';
-            }
-            return data;
-          }
-        },
+        {data: 'kod_jwtn',name: 'kod_jwtn'},
         { data: 'kod_jawatan', name: 'kod_jawatan' },
         { data: 'nama_gred', name: 'nama_gred' },
         {
           data: 'kodaktif',
           name: 'kodaktif',
-          render: function (data, type, row) {
+           render: function (data, type, row) {
             if (type === 'display') {
-              return data == 1 ?
-                '<span class="badge bg-label-success">AKTIF</span>' :
-                '<span class="badge bg-label-danger">TIDAK AKTIF</span>';
+              return data == 1 ? 'AKTIF' : 'TIDAK AKTIF';
             }
             return data;
           }

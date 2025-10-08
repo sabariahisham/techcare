@@ -55,10 +55,10 @@ class StorePermissionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'The permission name field is required.',
-            'name.unique' => 'This permission name already exists.',
-            'module.required' => 'The module field is required.',
-            'roles.*.exists' => 'One or more selected roles are invalid.',
+            'name.required' => 'Sila masukkan nama permission.',
+            'name.unique' => 'Nama permission ini sudah wujud. Sila gunakan nama lain.',
+            'module.required' => 'Sila pilih modul.',
+            'roles.*.exists' => 'Satu atau lebih peranan yang dipilih tidak sah.',
         ];
     }
 }
