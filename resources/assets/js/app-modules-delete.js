@@ -41,11 +41,11 @@ $(function () {
     return new Promise((resolve) => {
       Swal.fire({
         title: 'Are you sure?',
-        html: `You are about to delete the module <strong>${moduleName}</strong>.<br><br>This action cannot be undone!`,
+        html: `Anda pasti untuk memadam <strong>${moduleName}</strong>.<br><br>Tindakan ini tidak boleh dibatalkan!`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'No, cancel!',
+        confirmButtonText: 'Ya, padam!',
+        cancelButtonText: 'Tidak, batalkan!',
         customClass: {
           confirmButton: 'btn btn-danger me-3',
           cancelButton: 'btn btn-secondary'

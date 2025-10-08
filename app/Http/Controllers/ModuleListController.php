@@ -6,12 +6,61 @@ use App\Models\Module;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ModuleListController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Standardized error response
      */
+    private function errorResponse($message = 'An error occurred', $statusCode = 500)
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => $message
+        ], $statusCode);
+    }
+
+    /**
+     * Standardized success response
+     */
+    private function successResponse($message = 'Operation successful', $data = null)
+    {
+        $response = [
+            'status' => 'success',
+            'message' => $message
+        ];
+
+        if ($data !== null) {
+            $response['data'] = $data;
+        }
+
+        return response()->json($response);
+    }
+
+    /**
+     * Sanitize input data to prevent XSS and injection attacks
+     */
+    private function sanitizeInput($input)
+    {
+        if (is_null($input)) {
+            return null;
+        }
+
+        // Remove any potential XSS attempts
+        $sanitized = strip_tags($input);
+
+        // Trim whitespace
+        $sanitized = trim($sanitized);
+
+        // Remove multiple consecutive spaces
+        $sanitized = preg_replace('/\s+/', ' ', $sanitized);
+
+        // Only allow alphanumeric, spaces, hyphens and underscores
+        $sanitized = preg_replace('/[^a-zA-Z0-9\s\-\_]/', '', $sanitized);
+
+        return $sanitized;
+    }
     public function index()
     {
         $totalModules = Module::count();
@@ -31,21 +80,18 @@ class ModuleListController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+
     public function create()
     {
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         try {
-            Log::info('Module creation request received:', $request->all());
+            // Sanitize input data
+            $sanitizedInput = $this->sanitizeInput($request->input('modalModuleName'));
+            $request->merge(['modalModuleName' => $sanitizedInput]);
 
             $request->validate([
                 'modalModuleName' => [
@@ -53,13 +99,9 @@ class ModuleListController extends Controller
                     'string',
                     'max:100',
                     'min:3',
+                    'regex:/^[a-zA-Z0-9\s\-\_]+$/',
                     'unique:module_list,module_name'
                 ]
-            ], [
-                'modalModuleName.required' => 'Sila masukkan nama modul',
-                'modalModuleName.min' => 'Nama modul mestilah sekurang-kurangnya 3 aksara',
-                'modalModuleName.max' => 'Nama modul tidak boleh melebihi 100 aksara',
-                'modalModuleName.unique' => 'Nama modul telah wujud. Sila pilih nama yang lain.'
             ]);
 
         $module = Module::create([
@@ -103,54 +145,39 @@ class ModuleListController extends Controller
           app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
         }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Module created successfully',
-            'data' => $module
-        ]);
+        return $this->successResponse('Module created successfully', $module);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             Log::error('Module creation error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
-                'request' => $request->all()
+                'request' => $request->except(['_token'])
             ]);
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while creating the module: ' . $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Unable to create module', 500);
         }
     }
 
-
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         try {
             $module = Module::find($id);
 
             if (!$module) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Module not found'
-                ], 404);
+                return $this->errorResponse('Module not found', 404);
             }
 
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Module data retrieved successfully',
-                'data' => $module
-            ]);
+            return $this->successResponse('Module data retrieved successfully', $module);
 
         } catch (\Exception $e) {
             Log::error('Module edit error: ' . $e->getMessage(), [
@@ -158,27 +185,28 @@ class ModuleListController extends Controller
                 'module_id' => $id
             ]);
 
-            return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while retrieving the module data: ' . $e->getMessage()
-            ], 500);
+            return $this->errorResponse('Unable to retrieve module data', 500);
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+
     public function update(Request $request, string $id)
     {
       try {
+          // Validate ID parameter
+          if (!is_numeric($id) || $id <= 0) {
+              return $this->errorResponse('Invalid module ID', 400);
+          }
+
           // Find the module first
           $module = Module::find($id);
           if (!$module) {
-              return response()->json([
-                  'status' => 'error',
-                  'message' => 'Module not found'
-              ], 404);
+              return $this->errorResponse('Module not found', 404);
           }
+
+          // Sanitize input data
+          $sanitizedInput = $this->sanitizeInput($request->input('editModuleName'));
+          $request->merge(['editModuleName' => $sanitizedInput]);
 
           // Validate the request with custom rule to check for duplicate names
           $request->validate([
@@ -187,13 +215,9 @@ class ModuleListController extends Controller
                   'string',
                   'max:100',
                   'min:3',
+                  'regex:/^[a-zA-Z0-9\s\-\_]+$/',
                   'unique:module_list,module_name,' . $id . ',id'
               ]
-          ], [
-              'editModuleName.required' => 'Sila masukkan nama modul',
-              'editModuleName.min' => 'Nama modul mestilah sekurang-kurangnya 3 aksara',
-              'editModuleName.max' => 'Nama modul tidak boleh melebihi 100 aksara',
-              'editModuleName.unique' => 'Nama modul telah wujud. Sila pilih nama yang lain.'
           ]);
 
       $oldModuleName = $module->module_name;
@@ -215,23 +239,22 @@ class ModuleListController extends Controller
       // Clear the permissions cache
       app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
-      return response()->json([
-          'status' => 'success',
-          'message' => 'Modul berjaya dikemaskini',
-          'data' => $module
-      ]);
+      return $this->successResponse('Module updated successfully', $module);
 
+      } catch (\Illuminate\Validation\ValidationException $e) {
+          return response()->json([
+              'status' => 'error',
+              'message' => 'Validation failed',
+              'errors' => $e->errors()
+          ], 422);
       } catch (\Exception $e) {
           Log::error('Module update error: ' . $e->getMessage(), [
               'trace' => $e->getTraceAsString(),
-              'request' => $request->all(),
+              'request' => $request->except(['_token']),
               'module_id' => $id
           ]);
 
-          return response()->json([
-              'status' => 'error',
-              'message' => 'An error occurred while updating the module: ' . $e->getMessage()
-          ], 500);
+          return $this->errorResponse('Unable to update module', 500);
       }
     }
 
@@ -240,23 +263,36 @@ class ModuleListController extends Controller
      */
     public function destroy($id)
     {
-        $module = Module::find($id);
+        try {
+            // Validate ID parameter
+            if (!is_numeric($id) || $id <= 0) {
+                return $this->errorResponse('Invalid module ID', 400);
+            }
 
-        /*
-         * Checks if the module exists. If it does, it deletes all permissions
-         * associated with the module and then deletes the module itself.
-         */
-        if ($module) {
-          Permission::where('module', $module->module_name)->delete();
+            $module = Module::find($id);
 
-          // Clear the permissions cache
-          app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+            if (!$module) {
+                return response()->json(['success' => false, 'message' => 'Module not found']);
+            }
 
-          $module->delete();
+            // Delete associated permissions
+            Permission::where('module', $module->module_name)->delete();
 
-          return response()->json(['success' => true, 'message' => 'Module deleted successfully.']);
-        } else {
-          return response()->json(['success' => false, 'message' => 'Module not found.']);
+            // Clear the permissions cache
+            app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+            // Delete the module
+            $module->delete();
+
+            return response()->json(['success' => true, 'message' => 'Module deleted successfully']);
+
+        } catch (\Exception $e) {
+            Log::error('Module deletion error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'module_id' => $id
+            ]);
+
+            return response()->json(['success' => false, 'message' => 'Unable to delete module']);
         }
     }
 }
