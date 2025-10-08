@@ -15,6 +15,10 @@ $(function () {
             min: 3,
             max: 100,
             message: 'Nama modul mestilah antara 3 hingga 100 aksara'
+          },
+          regexp: {
+            regexp: /^[a-zA-Z0-9\s\-\_]+$/,
+            message: 'Nama modul hanya boleh mengandungi huruf(a-z), nombor(0-9), ruang kosong( ), tanda sempang(-) dan garis bawah(_)'
           }
         }
       }
@@ -75,27 +79,44 @@ $(function () {
         let errorMessage = 'Ralat mengemas kini modul';
 
         if (xhr.responseJSON) {
-          if (xhr.responseJSON.message) {
-            errorMessage = xhr.responseJSON.message;
-          } else if (xhr.responseJSON.errors) {
-            // Handle validation errors
+          if (xhr.responseJSON.errors) {
+            // Handle validation errors with user-friendly messages
             const errors = xhr.responseJSON.errors;
-            errorMessage = Object.values(errors).flat().join('<br>');
+            const errorMessages = [];
 
-            // Highlight the specific field with error if it's a validation error
-            if (errors.editModuleName) {
-              $('#edit-module-name').addClass('is-invalid');
-              // Remove invalid class after user starts typing
-              $('#edit-module-name').on('input', function() {
-                $(this).removeClass('is-invalid');
-              });
+            Object.keys(errors).forEach(function(key) {
+              if (key === 'editModuleName') {
+                const fieldErrors = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
+                fieldErrors.forEach(function(error) {
+                  if (error.includes('required')) {
+                    errorMessages.push('Sila masukkan nama modul');
+                  } else if (error.includes('unique')) {
+                    errorMessages.push('Nama modul telah wujud. Sila pilih nama yang lain.');
+                  } else if (error.includes('regex')) {
+                    errorMessages.push('Nama modul hanya boleh mengandungi huruf(a-z), nombor(0-9), ruang kosong( ), tanda sempang(-) dan garis bawah(_)');
+                  } else if (error.includes('min')) {
+                    errorMessages.push('Nama modul mestilah sekurang-kurangnya 3 aksara');
+                  } else if (error.includes('max')) {
+                    errorMessages.push('Nama modul tidak boleh melebihi 100 aksara');
+                  } else {
+                    errorMessages.push(error);
+                  }
+                });
+
+                // Highlight the field with error
+                $('#edit-module-name').addClass('is-invalid');
+                $('#edit-module-name').on('input', function() {
+                  $(this).removeClass('is-invalid');
+                });
+              }
+            });
+
+            if (errorMessages.length > 0) {
+              errorMessage = errorMessages.join('<br>');
             }
+          } else if (xhr.responseJSON.message) {
+            errorMessage = xhr.responseJSON.message;
           }
-        }
-
-        // Show specific error message for duplicate module name
-        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors && xhr.responseJSON.errors.editModuleName) {
-          errorMessage = xhr.responseJSON.errors.editModuleName[0];
         }
 
         toastr.error(errorMessage, 'Ralat!', {
