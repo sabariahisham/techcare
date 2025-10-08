@@ -18,15 +18,15 @@ return new class extends Migration
             $table->string('kod_sektor', 10); // Foreign key ke sektor.kod_sektor
             $table->string('kod_bah', 10); // Foreign key ke bahagian.kod_bah
             $table->timestamps(); // created_at & updated_at
-            
+
             // Index untuk performance
             $table->index('kod_sec');
             $table->index('kod_sektor');
             $table->index('kod_bah');
-            
+
             // Foreign key constraints
-            $table->foreign('kod_sektor')->references('kod_sektor')->on('sektor')->onDelete('cascade');
-            $table->foreign('kod_bah')->references('kod_bah')->on('bahagian')->onDelete('cascade');
+            $table->foreign('kod_sektor')->references('kod_sektor')->on('ref_sektor')->onDelete('cascade');
+            $table->foreign('kod_bah')->references('kod_bah')->on('ref_bahagian')->onDelete('cascade');
         });
     }
 

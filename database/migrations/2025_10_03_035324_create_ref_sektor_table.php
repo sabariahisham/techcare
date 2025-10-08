@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('kod_sektor', 10)->unique(); // Kod sektor - unique
             $table->string('nama_sektor', 100); // Nama sektor
             $table->timestamps(); // created_at & updated_at
-            
+
             // Index untuk performance
             $table->index('kod_sektor');
         });
@@ -27,6 +27,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sektor');
+        Schema::dropIfExists('ref_sektor');
     }
 };
+
