@@ -61,7 +61,7 @@ class MigrateSPPData extends Command
             }
 
             //ini ke db ehelp - guna table name yang betul
-            DB::table('ref_bahagian')->updateOrInsert(
+            DB::connection('ehelp')->table('ref_bahagian')->updateOrInsert(
             ['kod_bah' => $bahagian->kod_bah],
             [
                 'nama_bah' => $bahagian->nama_bah,  
@@ -88,7 +88,7 @@ class MigrateSPPData extends Command
                 continue;
             }
 
-            DB::table('ref_sektor')->updateOrInsert(
+            DB::connection('ehelp')->table('ref_sektor')->updateOrInsert(
                 ['kod_sektor' => $sektor->kod_sektor],
                 [
                     'nama_sektor' => $sektor->nama_sektor,
@@ -126,7 +126,7 @@ class MigrateSPPData extends Command
                 continue;
             }
 
-            DB::table('ref_seksyen')->updateOrInsert(
+            DB::connection('ehelp')->table('ref_seksyen')->updateOrInsert(
                 ['kod_sec' => $seksyen->kod_sec],
                 [
                     'nama_sec' => $seksyen->nama_sec,
@@ -173,7 +173,7 @@ class MigrateSPPData extends Command
                 continue;
             }
 
-            DB::table('ref_unit')->updateOrInsert(
+            DB::connection('ehelp')->table('ref_unit')->updateOrInsert(
                 ['kod_unit' => $unit->kod_unit],
                 [
                     'nama_unit' => $unit->nama_unit,
@@ -200,7 +200,7 @@ class MigrateSPPData extends Command
                 continue;
             }
 
-            DB::table('ref_jawatan')->updateOrInsert(
+            DB::connection('ehelp')->table('ref_jawatan')->updateOrInsert(
                 ['kod_jawatan' => $jawatan->kod_jawatan],
                 [
                     'nama_jawatan' => $jawatan->nama_jawatan,
@@ -224,7 +224,7 @@ class MigrateSPPData extends Command
                 continue;
             }
 
-            DB::table('ref_khidmat')->updateOrInsert(
+            DB::connection('ehelp')->table('ref_khidmat')->updateOrInsert(
                 ['kod_kump_khidmat' => $khidmat->kod_kump_khidmat],
                 [
                     'nama_kumpulan_khidmat' => $khidmat->nama_kumpulan_khidmat,
@@ -255,7 +255,7 @@ class MigrateSPPData extends Command
                 continue;
             }
 
-            DB::table('ref_gred')->updateOrInsert(
+            DB::connection('ehelp')->table('ref_gred')->updateOrInsert(
                 ['nama_gred' => $gred->nama_gred, 'kod_kump_khidmat' => $gred->kod_kump_khidmat],
                 [
                     'nama_gred' => $gred->nama_gred,
