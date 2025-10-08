@@ -161,6 +161,9 @@ use App\Http\Controllers\apps\EcommerceCustomerDetailsOverview;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsSecurity;
 use App\Http\Controllers\configuration\UserManagementController;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
+use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
+use App\Http\Controllers\Configuration\SlaController;
+use App\Http\Controllers\Configuration\OfficerController;
 use App\Http\Controllers\wizard_example\Checkout as WizardCheckout;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsNotifications;
 use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
@@ -194,30 +197,29 @@ Route::middleware([
     })->name('index');
 });
 
-// roles, permission and modules are under acl (access control list)
-Route::get('/acl/roles/index', [RoleController::class, 'index'])->name('acl-roles-index');
-Route::post('/acl/roles/store', [RoleController::class, 'store'])->name('acl-roles-store');
-Route::delete('/acl/roles/{role}', [RoleController::class, 'destroy'])->name('roles-destroy');
-Route::get('/acl/roles/{id}/permissions', [RoleController::class, 'getRolePermissions'])->name('roles.permissions');
-Route::put('/acl/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+// ACL (Access Control List) Routes - Modules only (Users, Roles, Permissions use /admin/* routes below)
+Route::middleware(['auth', 'verified'])->group(function () {
+    // modules (actively used by JavaScript)
+    Route::get('/acl/module-list/index', [ModuleListController::class, 'index'])->name('acl-module-list-index');
+    Route::get('/modules', [ModuleListController::class, 'getModules'])->name('modules.data');
+    Route::post('/modules', [ModuleListController::class, 'store'])->name('modules.store');
+    Route::get('/modules/{id}/edit', [ModuleListController::class, 'edit'])->name('modules.edit');
+    Route::post('/modules/update/{id}', [ModuleListController::class, 'update'])->name('modules.update');
+    Route::delete('/modules/{id}', [ModuleListController::class, 'destroy'])->name('modules.destroy');
 
-// permissions
-Route::get('/acl/permissions/index', [PermissionController::class, 'index'])->name('acl-permissions-index');
+    // Legacy user management (for menu compatibility)
+    Route::get('/user-management/index', [UserManagementController::class, 'index'])->name('user-management-index');
+    Route::get('/user-management/data', [UserManagementController::class, 'getData'])->name('user-management.data');
+    Route::get('/user-management/{id}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');
+    Route::post('/user-management/update/{id}', [UserManagementController::class, 'update'])->name('user-management.update');
+    Route::delete('/user-management/{id}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
+    Route::post('/user-management/store', [UserManagementController::class, 'store'])->name('user-management.store');
 
-// modules
-Route::get('/acl/module-list/index', [ModuleListController::class, 'index'])->name('acl-module-list-index');
-Route::get('/modules', [ModuleListController::class, 'getModules'])->name('modules.data');
-Route::post('/modules/store', [ModuleListController::class, 'store'])->name('modules.store');
-Route::post('/modules/update/{id}', [ModuleListController::class, 'update'])->name('modules.update');
-Route::delete('/modules/{id}', [ModuleListController::class, 'destroy']);
-
-// user management
-Route::get('/user-management/index', [UserManagementController::class, 'index'])->name('user-management-index');
-Route::get('/user-management/data', [UserManagementController::class, 'getData'])->name('user-management.data');
-Route::get('/user-management/{id}/edit', [UserManagementController::class, 'edit'])->name('user-management.edit');
-Route::post('/user-management/update/{id}', [UserManagementController::class, 'update'])->name('user-management.update');
-Route::delete('/user-management/{id}', [UserManagementController::class, 'destroy'])->name('user-management.destroy');
-Route::post('/user-management/store', [UserManagementController::class, 'store'])->name('user-management.store');
+    // Legacy ACL routes (for menu compatibility only - redirect to admin routes)
+    // TODO: Update menu URLs in resources/menu/verticalMenu.json to use /admin/* instead of /acl/*
+    Route::get('/acl/roles/index', function () { return redirect('/admin/roles'); })->name('acl-roles-index');
+    Route::get('/acl/permissions/index', function () { return redirect('/admin/permissions'); })->name('acl-permissions-index');
+});
 
 // reference category management
 Route::get('/ref-category-management/index', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'index'])->name('ref-category-management-index');
@@ -226,6 +228,30 @@ Route::post('/ref-category-management/store', [App\Http\Controllers\Configuratio
 Route::get('/ref-category-management/{id}/edit', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'edit'])->name('ref-category-management.edit');
 Route::post('/ref-category-management/update/{id}', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'update'])->name('ref-category-management.update');
 Route::delete('/ref-category-management/{id}', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'destroy'])->name('ref-category-management.destroy');
+Route::get('/categories/{id}/subcategories', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'getSubcategories'])->name('categories.subcategories');
+
+
+// reference sub-category management
+Route::get('/ref-sub-category-management/index', [App\Http\Controllers\Configuration\RefSubCategoryManagementController::class, 'index'])->name('ref-sub-category-management-index');
+Route::get('/ref-sub-category-management/data', [App\Http\Controllers\Configuration\RefSubCategoryManagementController::class, 'data'])->name('ref-sub-category-management-data');
+Route::get('/ref-subcategory-management/by-category/{categoryId}', [App\Http\Controllers\Configuration\RefSubCategoryManagementController::class, 'getByCategory'])->name('ref-subcategory.by-category');
+Route::resource('ref-sub-category-management', App\Http\Controllers\Configuration\RefSubCategoryManagementController::class)->except(['index']);
+
+// reference sla and severity management
+Route::get('/sla-severity/index', [App\Http\Controllers\Configuration\SlaController::class, 'index'])->name('sla-severity-index');
+Route::get('/sla-severity/data', [App\Http\Controllers\Configuration\SlaController::class, 'data'])->name('sla-severity-data');
+Route::post('/sla-severity', [App\Http\Controllers\Configuration\SlaController::class, 'store'])->name('sla-severity-store');
+Route::get('/sla-severity/{id}/edit', [App\Http\Controllers\Configuration\SlaController::class, 'edit'])->name('sla-severity-edit');
+Route::put('/sla-severity/{id}', [App\Http\Controllers\Configuration\SlaController::class, 'update'])->name('sla-severity-update');
+Route::delete('/sla-severity/{id}', [App\Http\Controllers\Configuration\SlaController::class, 'destroy'])->name('sla-severity-destroy');
+
+// appointed officer management
+Route::get('/officer/index', [App\Http\Controllers\Configuration\OfficerController::class, 'index'])->name('officer-index');
+Route::get('/officer/data', [App\Http\Controllers\Configuration\OfficerController::class, 'data'])->name('officer-data');
+Route::post('/officer/store', [App\Http\Controllers\Configuration\OfficerController::class, 'store'])->name('officer-store');
+Route::get('/officer/{id}/edit', [App\Http\Controllers\Configuration\OfficerController::class, 'edit'])->name('officer-edit');
+Route::put('/officer/{id}', [App\Http\Controllers\Configuration\OfficerController::class, 'update'])->name('officer-update');
+Route::delete('/officer/{id}', [App\Http\Controllers\Configuration\OfficerController::class, 'destroy'])->name('officer-destroy');
 
 // references
 Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');
@@ -247,5 +273,35 @@ Route::prefix('tickets')->group(function () {
     Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
 });
 
+// Main Admin Management Routes (Users, Roles, Permissions)
+Route::middleware(['auth', 'verified'])->group(function () {
 
+    // User Management Routes (used by JavaScript)
+    Route::prefix('admin/users')->name('admin.users.')->group(function () {
+        Route::get('/search', [App\Http\Controllers\UserController::class, 'search'])->name('search');
+        // Add other user routes as needed when implemented
+    });
 
+    // Role Management Routes (actively used)
+    Route::prefix('admin/roles')->name('admin.roles.')->group(function () {
+        Route::get('/', [App\Http\Controllers\RoleController::class, 'index'])->name('index');
+        Route::get('/data', [App\Http\Controllers\RoleController::class, 'getData'])->name('data');
+        Route::post('/', [App\Http\Controllers\RoleController::class, 'store'])->name('store');
+        Route::get('/{role}/edit', [App\Http\Controllers\RoleController::class, 'edit'])->name('edit');
+        Route::put('/{role}', [App\Http\Controllers\RoleController::class, 'update'])->name('update');
+        Route::delete('/{role}', [App\Http\Controllers\RoleController::class, 'destroy'])->name('destroy');
+        Route::get('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'getRolePermissions'])->name('permissions');
+        Route::delete('/{role}/users/{user}', [App\Http\Controllers\RoleController::class, 'removeUserFromRole'])->name('remove-user');
+        Route::post('/{role}/users', [App\Http\Controllers\RoleController::class, 'addUserToRole'])->name('add-user');
+    });
+
+    // Permission Management Routes (actively used)
+    Route::prefix('admin/permissions')->name('admin.permissions.')->group(function () {
+        Route::get('/', [App\Http\Controllers\PermissionController::class, 'index'])->name('index');
+        Route::get('/data', [App\Http\Controllers\PermissionController::class, 'getData'])->name('data');
+        Route::post('/', [App\Http\Controllers\PermissionController::class, 'store'])->name('store');
+        Route::get('/{permission}/edit', [App\Http\Controllers\PermissionController::class, 'edit'])->name('edit');
+        Route::put('/{permission}', [App\Http\Controllers\PermissionController::class, 'update'])->name('update');
+        Route::delete('/{permission}', [App\Http\Controllers\PermissionController::class, 'destroy'])->name('destroy');
+    });
+});

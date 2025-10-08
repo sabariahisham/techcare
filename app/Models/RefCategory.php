@@ -21,11 +21,17 @@ class RefCategory extends Model
 
     public function subCategories()
     {
-        return $this->hasMany(RefSubCategory::class, 'id');
+        return $this->hasMany(RefSubCategory::class, 'cat_id');
     }
+
     public function tickets()
     {
         return $this->hasMany(Ticket::class, 'cat_id');
+    }
+
+    public function slas()
+    {
+        return $this->hasMany(Sla::class, 'cat_id');
     }
 }
 

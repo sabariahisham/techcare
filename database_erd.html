@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Help Database ERD</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .erd-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        .table-box {
+            border: 2px solid #333;
+            border-radius: 5px;
+            background: white;
+            margin: 10px;
+            display: inline-block;
+            vertical-align: top;
+            min-width: 200px;
+        }
+        
+        .table-header {
+            background: #4a90e2;
+            color: white;
+            padding: 8px 12px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .table-fields {
+            padding: 10px;
+        }
+        
+        .field {
+            padding: 3px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .field:last-child {
+            border-bottom: none;
+        }
+        
+        .primary-key {
+            background: #ffe6e6;
+            font-weight: bold;
+        }
+        
+        .foreign-key {
+            background: #e6f3ff;
+            color: #0066cc;
+        }
+        
+        .nullable {
+            color: #888;
+            font-style: italic;
+        }
+        
+        .relationship-line {
+            position: absolute;
+            background: #666;
+            height: 2px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .legend {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        .legend-item {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="erd-container">
+        <h1>E-Help Database ERD</h1>
+        
+        <!-- Users Table -->
+        <div class="table-box">
+            <div class="table-header">users</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">uuid - string</div>
+                <div class="field">name - string</div>
+                <div class="field">email - string</div>
+                <div class="field nullable">ic_number - string(12)</div>
+                <div class="field nullable">phone_number - string(20)</div>
+                <div class="field nullable">office_phone_number - string(20)</div>
+                <div class="field nullable">scheme_and_grade - string(4)</div>
+                <div class="field nullable">agency - string</div>
+                <div class="field nullable">position - string</div>
+                <div class="field nullable">last_login_at - datetime</div>
+                <div class="field nullable">last_login_ip - string</div>
+                <div class="field nullable">password_change_at - datetime</div>
+                <div class="field nullable">email_verified_at - datetime</div>
+                <div class="field">first_time_login - tinyint</div>
+                <div class="field">password - string</div>
+                <div class="field">is_active - boolean</div>
+                <div class="field nullable">remember_token - string</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Permissions Table -->
+        <div class="table-box">
+            <div class="table-header">permissions</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">name - string</div>
+                <div class="field nullable">module - string</div>
+                <div class="field">guard_name - string</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Roles Table -->
+        <div class="table-box">
+            <div class="table-header">roles</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">name - string</div>
+                <div class="field">guard_name - string</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Model Has Permissions Table -->
+        <div class="table-box">
+            <div class="table-header">model_has_permissions</div>
+            <div class="table-fields">
+                <div class="field foreign-key">permission_id (FK) - bigint</div>
+                <div class="field">model_type - string</div>
+                <div class="field">model_id - bigint</div>
+            </div>
+        </div>
+
+        <!-- Model Has Roles Table -->
+        <div class="table-box">
+            <div class="table-header">model_has_roles</div>
+            <div class="table-fields">
+                <div class="field foreign-key">role_id (FK) - bigint</div>
+                <div class="field">model_type - string</div>
+                <div class="field">model_id - bigint</div>
+            </div>
+        </div>
+
+        <!-- Role Has Permissions Table -->
+        <div class="table-box">
+            <div class="table-header">role_has_permissions</div>
+            <div class="table-fields">
+                <div class="field foreign-key">permission_id (FK) - bigint</div>
+                <div class="field foreign-key">role_id (FK) - bigint</div>
+            </div>
+        </div>
+
+        <!-- Ref Categories Table -->
+        <div class="table-box">
+            <div class="table-header">ref_categories</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">cat_name - string</div>
+                <div class="field nullable">cat_desc - text</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Ref Sub Categories Table -->
+        <div class="table-box">
+            <div class="table-header">ref_sub_categories</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field foreign-key">cat_id (FK) - bigint → ref_categories.id</div>
+                <div class="field">subcat_name - string</div>
+                <div class="field nullable">subcat_desc - text</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Ref Ticket Statuses Table -->
+        <div class="table-box">
+            <div class="table-header">ref_ticket_statuses</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">status_name - string</div>
+                <div class="field nullable">status_desc - text</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Documents Table -->
+        <div class="table-box">
+            <div class="table-header">documents</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">uuid - string</div>
+                <div class="field">doc_mime - string</div>
+                <div class="field">doc_size - integer</div>
+                <div class="field">doc_name - string</div>
+                <div class="field">doc_type - enum('doc_ticket', 'doc_kb')</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Knowledge Base Table -->
+        <div class="table-box">
+            <div class="table-header">knowledge_base</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">uuid - string</div>
+                <div class="field">kb_title - string</div>
+                <div class="field">kb_content - text</div>
+                <div class="field foreign-key nullable">doc_id (FK) - bigint → documents.id</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Subcat Level Pegtugas Table -->
+        <div class="table-box">
+            <div class="table-header">subcat_level_pegtugas</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field foreign-key">subcat_id (FK) - bigint → ref_sub_categories.id</div>
+                <div class="field foreign-key">user_id (FK) - bigint → users.id</div>
+                <div class="field">level_tugasan - enum(1,2,3)</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Tickets Table -->
+        <div class="table-box">
+            <div class="table-header">tickets</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">uuid - string</div>
+                <div class="field">ticket_nolog - string</div>
+                <div class="field">tick_title - string</div>
+                <div class="field">tick_desc - text</div>
+                <div class="field">ticket_type - enum</div>
+                <div class="field foreign-key">user_id (FK) - bigint → users.id</div>
+                <div class="field foreign-key">cat_id (FK) - bigint → ref_categories.id</div>
+                <div class="field foreign-key nullable">doc_id (FK) - bigint → documents.id</div>
+                <div class="field foreign-key">subcat_id (FK) - bigint → ref_sub_categories.id</div>
+                <div class="field foreign-key">tick_status (FK) - bigint → ref_ticket_statuses.id</div>
+                <div class="field nullable">tick_duedate - datetime</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Tickets Chronologies Table -->
+        <div class="table-box">
+            <div class="table-header">tickets_chronologies</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field foreign-key">ticket_id (FK) - bigint → tickets.id</div>
+                <div class="field foreign-key">frm_user_id (FK) - bigint → users.id</div>
+                <div class="field foreign-key">level_pegtugas_id (FK) - bigint → subcat_level_pegtugas.id</div>
+                <div class="field foreign-key">tick_status (FK) - bigint → ref_ticket_statuses.id</div>
+                <div class="field foreign-key nullable">escalate_to (FK) - bigint → users.id</div>
+                <div class="field nullable">sla_duedate - datetime</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Comments Table -->
+        <div class="table-box">
+            <div class="table-header">comments</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">uuid - string</div>
+                <div class="field foreign-key">ticket_id (FK) - bigint → tickets.id</div>
+                <div class="field foreign-key">user_id (FK) - bigint → users.id</div>
+                <div class="field">comment_text - text</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- SLA Table -->
+        <div class="table-box">
+            <div class="table-header">sla</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">sla_name - string</div>
+                <div class="field">sla_hours - integer</div>
+                <div class="field foreign-key nullable">created_by (FK) - bigint → users.id</div>
+                <div class="field foreign-key nullable">updated_by (FK) - bigint → users.id</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+                <div class="field nullable">deleted_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Module List Table -->
+        <div class="table-box">
+            <div class="table-header">module_list</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field">name - string</div>
+                <div class="field nullable">description - text</div>
+                <div class="field">created_at - timestamp</div>
+                <div class="field">updated_at - timestamp</div>
+            </div>
+        </div>
+
+        <!-- Audits Table -->
+        <div class="table-box">
+            <div class="table-header">audits</div>
+            <div class="table-fields">
+                <div class="field primary-key">id (PK) - bigint</div>
+                <div class="field nullable">user_type - string</div>
+                <div class="field nullable">user_id - bigint</div>
+                <div class="field">event - string</div>
+                <div class="field">auditable_type - string</div>
+                <div class="field">auditable_id - bigint</div>
+                <div class="field nullable">old_values - text</div>
+                <div class="field nullable">new_values - text</div>
+                <div class="field nullable">url - text</div>
+                <div class="field nullable">ip_address - string(45)</div>
+                <div class="field nullable">user_agent - string(1023)</div>
+                <div class="field nullable">tags - string</div>
+                <div class="field nullable">created_at - timestamp</div>
+                <div class="field nullable">updated_at - timestamp</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>Legend:</h3>
+            <div class="legend-item"><span style="background: #ffe6e6; padding: 2px 5px;">PK</span> - Primary Key</div>
+            <div class="legend-item"><span style="background: #e6f3ff; padding: 2px 5px;">FK</span> - Foreign Key</div>
+            <div class="legend-item"><span style="color: #888; font-style: italic;">italic</span> - Nullable Field</div>
+        </div>
+
+        <h3>Key Relationships:</h3>
+        <ul>
+            <li><strong>Users</strong> → Central table for authentication and user management</li>
+            <li><strong>Permissions & Roles</strong> → Spatie permission system for access control</li>
+            <li><strong>Categories → Sub Categories</strong> → Hierarchical ticket categorization</li>
+            <li><strong>Tickets</strong> → Main entity linking users, categories, documents, and status</li>
+            <li><strong>Tickets Chronologies</strong> → Track ticket workflow and escalation</li>
+            <li><strong>Comments</strong> → User interactions on tickets</li>
+            <li><strong>Documents</strong> → File attachments for tickets and knowledge base</li>
+            <li><strong>Knowledge Base</strong> → Help articles and documentation</li>
+            <li><strong>Subcat Level Pegtugas</strong> → Assignment rules for subcategories</li>
+            <li><strong>Audits</strong> → Activity logging for all entities</li>
+        </ul>
+    </div>
+</body>
+</html>

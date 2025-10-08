@@ -9,14 +9,14 @@ $(function () {
       name: {
         validators: {
           notEmpty: {
-            message: 'Please enter category name'
+            message: 'Sila masukkan nama kategori'
           }
         }
       },
       description: {
         validators: {
           notEmpty: {
-            message: 'Please enter category description'
+            message: 'Sila masukkan deskripsi kategori'
           }
         }
       }

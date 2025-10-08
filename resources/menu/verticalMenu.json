@@ -5,28 +5,28 @@
       "icon": "menu-icon tf-icons bx bx-home-smile",
       "name": "Dashboard",
       "slug": "index",
-      "permission": null
+      "permission": "dashboard.view"
     },
     {
       "url": "tickets",
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
       "slug": "ticket",
-      "permission": null
+      "permission": "log-tiket.view"
     },
     {
       "url": "#",
       "icon": "menu-icon icon-base bx bx-book-open",
       "name": "Knowledge Base",
       "slug": "knowledge-index",
-      "permission": null
+      "permission": "knowledge-base.view"
     },
     {
       "url": "#",
       "icon": "menu-icon icon-base bx bx-spreadsheet",
       "name": "Laporan",
       "slug": "report-index",
-      "permission": null
+      "permission": "laporan.view"
     },
 
     {
@@ -37,7 +37,7 @@
       "name": "Pentadbir",
       "icon": "menu-icon tf-icons bx bx-check-shield",
       "slug": "acl",
-      "permission": "admin-management.view",
+      "permission": "pentadbir.view",
       "submenu": [
         {
           "name": "Pengurusan Pengguna",
@@ -51,41 +51,53 @@
               "permission": "user-management.view"
             },
             {
-              "url": "acl/roles/index",
-              "name": "Roles",
-              "slug": "acl-roles-index",
+              "url": "acl/module-list/index",
+              "name": "Modules",
+              "slug": "acl-module-list-index",
               "permission": "admin-management.view"
             },
             {
-              "url": "acl/module-list/index",
-              "name": "Modules",
-              "slug": "acl-module-list-index"
+              "url": "acl/roles/index",
+              "name": "Roles",
+              "slug": "acl-roles-index",
+              "permission": "role-management.view"
+            },
+             {
+              "url": "acl/permissions/index",
+              "name": "Permissions",
+              "slug": "acl-permissions-index",
+              "permission": "permission-management.view"
             }
           ]
         },
         {
           "name": "Konfigurasi",
           "slug": "configuration",
+          "permission": "configuration.view",
           "submenu": [
             {
               "url": "ref-category-management/index",
               "name": "Kategori",
-              "slug": "ref-category-management-index"
+              "slug": "ref-category-management-index",
+              "permission": "configuration.view"
             },
             {
-              "url": "configuration/sub-categories/index",
+              "url": "ref-sub-category-management/index",
               "name": "Sub-kategori",
-              "slug": "configuration-sub-categories-index"
+              "slug": "ref-sub-category-management-index",
+              "permission": "configuration.view"
             },
             {
-              "url": "configuration/sla-severity/index",
+              "url": "sla-severity/index",
               "name": "SLA & Severity",
-              "slug": "configuration-sla-severity-index"
+              "slug": "sla-severity-index",
+              "permission": "configuration.view"
             },
             {
-              "url": "configuration/appointed-officer/index",
+              "url": "officer/index",
               "name": "Pegawai Tugasan",
-              "slug": "configuration-appointed-officer-index"
+              "slug": "officer-index",
+              "permission": "configuration.view"
             }
           ]
         }

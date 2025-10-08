@@ -21,10 +21,10 @@ class UserManagementController extends Controller
         $totalUsers = User::count();
 
         // Get active users count
-        $activeUsers = User::where('is_active', 1)->count();
+        $activeUsers = User::where('kodaktif', 1)->count();
 
         // Get inactive users count
-        $inactiveUsers = User::where('is_active', 0)->count();
+        $inactiveUsers = User::where('kodaktif', 0)->count();
 
         // Calculate percentages
         $activePercentage = $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100) : 0;

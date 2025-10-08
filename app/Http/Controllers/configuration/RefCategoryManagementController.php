@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Configuration;
 use App\Http\Controllers\Controller;
 use App\Models\RefCategory;
 use Illuminate\Http\Request;
+use LDAP\Result;
 use Yajra\DataTables\Facades\DataTables;
 
 class RefCategoryManagementController extends Controller
 {
     public function index()
     {
-        return view('ref-category-management.index');
+      // Get total categories count
+        $totalCategories = RefCategory::count();
+        
+        return view('ref-category-management.index', compact('totalCategories'));
     }
 
     public function getAllCategories(Request $request)
@@ -64,7 +68,7 @@ class RefCategoryManagementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Category created successfully',
+                'message' => 'Kategori berjaya ditambah',
                 'data' => $category
             ]);
         } catch (\Exception $e) {
@@ -91,7 +95,7 @@ class RefCategoryManagementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Category updated successfully',
+                'message' => 'Kategori berjaya dikemaskini',
                 'data' => $category
             ]);
         } catch (\Exception $e) {
@@ -110,12 +114,27 @@ class RefCategoryManagementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Category deleted successfully'
+                'message' => 'Kategori berjaya dipadam'
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting category: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getSubcategories($id)
+    {
+        try {
+            $category = RefCategory::findOrFail($id);
+            $subcategories = $category->subCategories()->select('id', 'subcat_name')->get();
+
+            return response()->json($subcategories);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading subcategories: ' . $e->getMessage()
             ], 500);
         }
     }
