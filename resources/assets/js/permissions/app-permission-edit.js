@@ -40,11 +40,6 @@ $(document).ready(function () {
               }
             }
           },
-          category: {
-            validators: {
-              // Optional field - no validation needed
-            }
-          },
           description: {
             validators: {
               notEmpty: {
@@ -110,7 +105,6 @@ $(document).ready(function () {
     // Populate basic fields using correct IDs
     $('#edit-permission-name').val(permission.name || '');
     $('#edit-permission-module').val(permission.module || '');
-    $('#edit-permission-category').val(permission.category || '');
     $('#edit-permission-description').val(permission.description || '');
 
     // Handle role assignments if role selection exists

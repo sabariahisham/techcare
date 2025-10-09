@@ -170,6 +170,7 @@ use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 
 use App\Http\Controllers\ticket\TicketController;
+use App\Http\Controllers\knowledgebase\KnowledgeBaseController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -271,6 +272,17 @@ Route::prefix('tickets')->group(function () {
     Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
     Route::put('/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
     Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
+});
+
+// knowledgebase
+Route::middleware(['auth', 'verified'])->prefix('knowledgebase')->group(function () {
+    Route::get('/', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'index'])->name('knowledgebase.index');
+    Route::get('/data', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'getData'])->name('knowledgebase.data');
+    Route::post('/', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'store'])->name('knowledgebase.store');
+    Route::get('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'show'])->name('knowledgebase.show');
+    Route::get('/{article}/edit', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'edit'])->name('knowledgebase.edit');
+    Route::put('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'update'])->name('knowledgebase.update');
+    Route::delete('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'destroy'])->name('knowledgebase.destroy');
 });
 
 // Main Admin Management Routes (Users, Roles, Permissions)

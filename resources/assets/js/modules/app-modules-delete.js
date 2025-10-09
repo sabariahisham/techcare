@@ -19,33 +19,10 @@ $(function () {
         throw new Error('Invalid module ID provided');
       }
 
-      // Check if module exists and get module details
-      const moduleResponse = await fetch(`/modules/${moduleId}`, {
-        method: 'GET',
-        headers: {
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-          'Accept': 'application/json'
-        }
-      });
-
-      if (!moduleResponse.ok) {
-        if (moduleResponse.status === 404) {
-          throw new Error('Module not found');
-        }
-        throw new Error('Failed to validate module');
-      }
-
-      const moduleData = await moduleResponse.json();
-
-      // Check if module is in use (has associated permissions, roles, etc.)
-      // You can add more validation checks here based on your business logic
-      if (moduleData.permissions_count && moduleData.permissions_count > 0) {
-        throw new Error(`Cannot delete module. It has ${moduleData.permissions_count} associated permissions.`);
-      }
-
-      if (moduleData.roles_count && moduleData.roles_count > 0) {
-        throw new Error(`Cannot delete module. It is assigned to ${moduleData.roles_count} roles.`);
-      }
+      // Since we don't have a GET endpoint for individual modules,
+      // we'll rely on the server-side validation in the destroy method
+      // The controller will handle checking if the module exists and
+      // will also delete associated permissions automatically
 
       return true;
     } catch (error) {
@@ -63,12 +40,12 @@ $(function () {
   function showDeleteConfirmation(moduleId, moduleName) {
     return new Promise((resolve) => {
       Swal.fire({
-        title: 'Are you sure?',
-        html: `You are about to delete the module <strong>${moduleName}</strong>.<br><br>This action cannot be undone!`,
+        title: 'Adakah anda pasti?',
+        html: `Anda pasti untuk memadam <strong>${moduleName}</strong>.<br><br>Tindakan ini tidak boleh dibatalkan!`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'No, cancel!',
+        confirmButtonText: 'Ya, padam!',
+        cancelButtonText: 'Tidak, batalkan!',
         customClass: {
           confirmButton: 'btn btn-danger me-3',
           cancelButton: 'btn btn-secondary'

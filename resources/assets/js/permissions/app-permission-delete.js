@@ -58,11 +58,11 @@ $(document).ready(function () {
 
     Swal.fire({
       title: 'Adakah anda pasti?',
-      html: `Anda ingin memadam ${permissionName}?`,
+      html: `Anda pasti untuk memadam <strong>${permissionName}</strong>.<br><br>Tindakan ini tidak boleh dibatalkan!`,
       icon: 'warning',
       showCancelButton: true,
-      cancelButtonText: 'Tidak, batal!',
       confirmButtonText: 'Ya, padam!',
+      cancelButtonText: 'Tidak, batal!',
       customClass: {
         confirmButton: 'btn btn-danger me-3',
         cancelButton: 'btn btn-secondary'
@@ -113,16 +113,16 @@ $(document).ready(function () {
     .then(response => {
       console.log('Response status:', response.status);
       console.log('Response headers:', response.headers);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return response.json();
     })
     .then(data => {
       console.log('Response data:', data);
-      
+
       if(data.success) {
         if (typeof Swal !== 'undefined') {
           Swal.fire({
@@ -212,7 +212,7 @@ $(document).ready(function () {
   window.testDeleteButtonEvents = function() {
     const deleteButtons = $('.delete-permission');
     console.log('Total delete buttons:', deleteButtons.length);
-    
+
     deleteButtons.each(function(index) {
       const button = $(this);
       const events = $._data(this, 'events') || {};

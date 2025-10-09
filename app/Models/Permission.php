@@ -16,7 +16,6 @@ class Permission extends SpatiePermission
         'guard_name',
         'module',
         'description',
-        'category',
         'is_active',
         'sort_order',
     ];
@@ -342,7 +341,6 @@ class Permission extends SpatiePermission
             ], [
                 'module' => ucwords(str_replace(['-', '_'], ' ', $module)),
                 'description' => $description ? $description . ' - ' . ucfirst($action) : null,
-                'category' => 'Module',
                 'is_active' => true,
                 'sort_order' => $sortOrder,
             ]);
