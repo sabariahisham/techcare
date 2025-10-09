@@ -44,6 +44,21 @@ class RoleController extends Controller
             ->addColumn('user_names', function ($role) {
                 return $role->users->pluck('nama')->toArray();
             })
+            ->addColumn('module_names', function ($role) {
+                $moduleNames = $role->module_names;
+
+                if (empty($moduleNames)) {
+                    return '<span class="badge bg-label-secondary">No modules</span>';
+                }
+
+                // Display all modules as badges
+                $badges = '';
+                foreach ($moduleNames as $module) {
+                    $badges .= '<span class="badge bg-label-primary me-1 mb-1">' . e($module) . '</span>';
+                }
+
+                return '<div class="d-flex flex-wrap">' . $badges . '</div>';
+            })
             ->addColumn('users', function ($role) {
                 $users = $role->users->take(3);
                 $totalUsers = $role->users->count();
@@ -126,7 +141,7 @@ class RoleController extends Controller
                        $viewBtn . $editBtn . $permissionsBtn . $deleteBtn .
                        '</div>';
             })
-            ->rawColumns(['users', 'permissions_count', 'status', 'action'])
+            ->rawColumns(['users', 'module_names', 'permissions_count', 'status', 'action'])
             ->make(true);
     }
 
@@ -202,7 +217,7 @@ class RoleController extends Controller
     public function edit(Role $role)
     {
         try {
-            $role->load('permissions');
+            $role->load(['permissions', 'users']);
             return response()->json([
                 'success' => true,
                 'role' => $role,
@@ -372,20 +387,36 @@ class RoleController extends Controller
 
             DB::beginTransaction();
 
+            // Count users and permissions before deletion for feedback
+            $userCount = $role->users()->count();
+            $permissionCount = $role->permissions()->count();
+
             // Remove role from all users
-            $role->users()->detach();
+            if ($userCount > 0) {
+                $role->users()->detach();
+                Log::info("Removed role '{$role->name}' from {$userCount} users");
+            }
 
             // Remove all permissions from role
-            $role->permissions()->detach();
+            if ($permissionCount > 0) {
+                $role->permissions()->detach();
+            }
 
             // Delete the role
             $role->delete();
 
             DB::commit();
 
+            // Create informative success message
+            $message = "Peranan '{$role->name}' berjaya dipadam";
+            if ($userCount > 0) {
+                $message .= " dan dikeluarkan dari {$userCount} pengguna";
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Peranan berjaya dipadam'
+                'message' => $message,
+                'affected_users' => $userCount
             ]);
 
         } catch (\Exception $e) {
@@ -417,6 +448,8 @@ class RoleController extends Controller
             $deletedCount = 0;
             $errors = [];
 
+            $totalAffectedUsers = 0;
+
             foreach ($roles as $role) {
                 // Check if role can be deleted
                 $canDelete = $role->canBeDeleted();
@@ -426,8 +459,15 @@ class RoleController extends Controller
                     continue;
                 }
 
+                // Count affected users before removal
+                $userCount = $role->users()->count();
+                $totalAffectedUsers += $userCount;
+
                 // Remove role from all users
-                $role->users()->detach();
+                if ($userCount > 0) {
+                    $role->users()->detach();
+                    Log::info("Bulk delete: Removed role '{$role->name}' from {$userCount} users");
+                }
 
                 // Remove all permissions from role
                 $role->permissions()->detach();
@@ -448,10 +488,17 @@ class RoleController extends Controller
                 ], 422);
             }
 
+            // Create informative success message
+            $message = "{$deletedCount} peranan berjaya dipadam";
+            if ($totalAffectedUsers > 0) {
+                $message .= " dan dikeluarkan dari {$totalAffectedUsers} pengguna";
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => "{$deletedCount} peranan berjaya dipadam",
-                'deleted_count' => $deletedCount
+                'message' => $message,
+                'deleted_count' => $deletedCount,
+                'affected_users' => $totalAffectedUsers
             ]);
 
         } catch (\Exception $e) {

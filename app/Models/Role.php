@@ -42,6 +42,7 @@ class Role extends SpatieRole
         'permissions_count',
         'display_name',
         'status_badge',
+        'module_names',
     ];
 
     /**
@@ -95,6 +96,21 @@ class Role extends SpatieRole
             'status' => $this->is_active ? 'Active' : 'Inactive',
             'class' => $this->is_active ? 'badge bg-label-success' : 'badge bg-label-secondary',
         ];
+    }
+
+    /**
+     * Get the module names associated with this role through permissions.
+     */
+    public function getModuleNamesAttribute(): array
+    {
+        return $this->permissions()
+                   ->select('module')
+                   ->distinct()
+                   ->whereNotNull('module')
+                   ->pluck('module')
+                   ->filter()
+                   ->values()
+                   ->toArray();
     }
 
     /**
@@ -240,9 +256,10 @@ class Role extends SpatieRole
             $errors[] = 'System roles cannot be deleted';
         }
 
-        if ($this->users()->count() > 0) {
-            $errors[] = 'Role is assigned to ' . $this->users()->count() . ' user(s)';
-        }
+        // Allow deletion even if users are assigned since the controller will handle user removal
+        // if ($this->users()->count() > 0) {
+        //     $errors[] = 'Role is assigned to ' . $this->users()->count() . ' user(s)';
+        // }
 
         return [
             'can_delete' => empty($errors),
