@@ -21,6 +21,7 @@ $(function () {
         { data: null },
         { data: 'name' },
         { data: 'user_names' },
+        { data: 'module_names' },
         { data: 'users_count' },
         {
             data: null,
@@ -50,7 +51,7 @@ $(function () {
       language: {
         sLengthMenu: 'Show _MENU_',
         search: '',
-        searchPlaceholder: 'Search Roles',
+        searchPlaceholder: 'Carian...',
         paginate: {
           next: '<i class="bx bx-chevron-right bx-18px"></i>',
           previous: '<i class="bx bx-chevron-left bx-18px"></i>'
@@ -59,7 +60,7 @@ $(function () {
       // Buttons with Dropdown
       buttons: [
         {
-          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Add Role</span>',
+          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Peranan</span>',
           className: 'add-new btn btn-primary mb-6 mb-md-0',
           attr: {
             'data-bs-toggle': 'modal',
@@ -114,19 +115,29 @@ $(function () {
           }
         },
         {
-          // Total Users
+          // Module Names
           targets: 4,
+          orderable: true,
+          title: 'Nama Module',
+          render: function (data, type, full, meta) {
+            // The module_names column is already rendered in the controller
+            return data;
+          }
+        },
+        {
+          // Total Users
+          targets: 5,
           orderable: true,
           render: function (data, type, full, meta) {
             const count = typeof full['users_count'] === 'number' ? full['users_count'] : (full['users_count'] || 0);
-            return '<span class="badge bg-label-info">' + count + ' users</span>';
+            return '<span class="badge bg-label-info">' + count + ' pengguna</span>';
           }
         },
         {
           // Actions
-          targets: 5,
+          targets: 6,
           searchable: false,
-          title: 'Actions',
+          title: 'Tindakan',
           orderable: false,
           width: '120px',
           className: 'text-center',

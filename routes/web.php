@@ -302,6 +302,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{role}/edit', [App\Http\Controllers\RoleController::class, 'edit'])->name('edit');
         Route::put('/{role}', [App\Http\Controllers\RoleController::class, 'update'])->name('update');
         Route::delete('/{role}', [App\Http\Controllers\RoleController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-delete', [App\Http\Controllers\RoleController::class, 'bulkDelete'])->name('bulk-delete');
         Route::get('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'getRolePermissions'])->name('permissions');
         Route::delete('/{role}/users/{user}', [App\Http\Controllers\RoleController::class, 'removeUserFromRole'])->name('remove-user');
         Route::post('/{role}/users', [App\Http\Controllers\RoleController::class, 'addUserToRole'])->name('add-user');
