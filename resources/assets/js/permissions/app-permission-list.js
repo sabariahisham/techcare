@@ -94,7 +94,7 @@ $(function () {
           // Actions - Use server-generated HTML (backend handles button rendering)
           targets: -1,
           searchable: false,
-          title: 'Actions',
+          title: 'Tindakan',
           orderable: false,
           className: 'text-center'
         }

@@ -27,10 +27,10 @@
 
 @section('page-script')
 @vite([
-  'resources/assets/js/app-permission-list.js',
-  'resources/assets/js/app-permission-add.js',
-  'resources/assets/js/app-permission-edit.js',
-  'resources/assets/js/app-permission-delete.js',
+  'resources/assets/js/permissions/app-permission-list.js',
+  'resources/assets/js/permissions/app-permission-add.js',
+  'resources/assets/js/permissions/app-permission-edit.js',
+  'resources/assets/js/permissions/app-permission-delete.js',
   ])
 @endsection
 
@@ -92,12 +92,12 @@
         <tr>
           <th></th>
           <th>Bil.</th>
-          <th>Permission Name</th>
-          <th>Module Name</th>
-          <th>Description</th>
-          <th>Assigned To</th>
+          <th>Nama Permission</th>
+          <th>Nama Module</th>
+          <th>Deskripsi</th>
+          <th>Ditugaskan Kepada</th>
           {{-- <th>Created Date</th> --}}
-          <th>Actions</th>
+          <th>Tindakan</th>
         </tr>
       </thead>
     </table>
@@ -129,17 +129,6 @@
                 @else
                   <option value="{{ $module }}">{{ $module }}</option>
                 @endif
-              @endforeach
-            @endif
-          </select>
-        </div>
-        <div class="mb-6">
-          <label class="form-label" for="add-permission-category">Kategori Permission</label>
-          <select id="add-permission-category" name="category" class="form-select">
-            <option value="">-- Sila pilih kategori (optional) --</option>
-            @if(isset($categories) && count($categories))
-              @foreach($categories as $category)
-                <option value="{{ $category }}">{{ $category }}</option>
               @endforeach
             @endif
           </select>
@@ -178,17 +167,6 @@
                 @else
                   <option value="{{ $module }}">{{ $module }}</option>
                 @endif
-              @endforeach
-            @endif
-          </select>
-        </div>
-        <div class="mb-6">
-          <label class="form-label" for="edit-permission-category">Kategori Permission</label>
-          <select id="edit-permission-category" name="category" class="form-select">
-            <option value="">-- Sila pilih kategori (optional) --</option>
-            @if(isset($categories) && count($categories))
-              @foreach($categories as $category)
-                <option value="{{ $category }}">{{ $category }}</option>
               @endforeach
             @endif
           </select>

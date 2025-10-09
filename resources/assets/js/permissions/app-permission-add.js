@@ -28,11 +28,6 @@ $(document).ready(function () {
             }
           }
         },
-        category: {
-          validators: {
-            // Optional field - no validation needed
-          }
-        },
         description: {
           validators: {
             notEmpty: {
@@ -106,9 +101,9 @@ $(document).ready(function () {
             if (errors.name && errors.name.length > 0) {
               const nameError = errors.name[0];
               console.log('Name validation error:', nameError);
-              
+
               // Check if it's a uniqueness error (both English and Malay)
-              if (nameError.includes('already') || nameError.includes('unique') || nameError.includes('exists') || 
+              if (nameError.includes('already') || nameError.includes('unique') || nameError.includes('exists') ||
                   nameError.includes('sudah wujud') || nameError.includes('sudah ada'))  {
                 // Show specific toastr message for duplicate name
                 if (typeof toastr !== 'undefined') {
@@ -128,7 +123,7 @@ $(document).ready(function () {
                   toastr.error(nameError, 'Ralat Nama Permission');
                 }
               }
-              
+
               // Update form validation for name field
               const nameField = document.querySelector('[name="name"]');
               if (nameField) {
