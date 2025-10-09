@@ -17,6 +17,36 @@ class StorePermissionRequest extends FormRequest
     }
 
     /**
+     * Get the validated data with sanitization.
+     */
+    public function validated($key = null, $default = null)
+    {
+        $validated = parent::validated($key, $default);
+
+        if (is_array($validated)) {
+            foreach (['name', 'description', 'module'] as $field) {
+                if (isset($validated[$field])) {
+                    $validated[$field] = $this->sanitizeInput($validated[$field]);
+                }
+            }
+        }
+
+        return $validated;
+    }
+
+    /**
+     * Sanitize input data
+     */
+    private function sanitizeInput(?string $input): ?string
+    {
+        if (is_null($input)) {
+            return null;
+        }
+
+        return trim(strip_tags($input));
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -24,10 +54,20 @@ class StorePermissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', 'unique:permissions,name'],
-            'module' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:permissions,name',
+                'regex:/^[a-zA-Z0-9\s\-_.]+$/' // Only allow alphanumeric, spaces, hyphens, underscores, and dots
+            ],
+            'module' => [
+                'required',
+                'string',
+                'max:255',
+                'exists:permissions,module' // Ensure module exists from existing permissions
+            ],
             'description' => ['nullable', 'string', 'max:500'],
-            'category' => ['nullable', 'string', 'max:100'],
             'is_active' => ['boolean'],
             'roles' => ['array'],
             'roles.*' => ['exists:roles,name'],
@@ -57,7 +97,9 @@ class StorePermissionRequest extends FormRequest
         return [
             'name.required' => 'Sila masukkan nama permission.',
             'name.unique' => 'Nama permission ini sudah wujud. Sila gunakan nama lain.',
+            'name.regex' => 'Nama permission hanya boleh mengandungi huruf, nombor, ruang, tanda tolak, garis bawah dan titik.',
             'module.required' => 'Sila pilih modul.',
+            'module.exists' => 'Modul yang dipilih tidak wujud. Sila pilih modul yang sah.',
             'roles.*.exists' => 'Satu atau lebih peranan yang dipilih tidak sah.',
         ];
     }

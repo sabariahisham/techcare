@@ -40,7 +40,7 @@ $(function () {
   function showDeleteConfirmation(moduleId, moduleName) {
     return new Promise((resolve) => {
       Swal.fire({
-        title: 'Are you sure?',
+        title: 'Adakah anda pasti?',
         html: `Anda pasti untuk memadam <strong>${moduleName}</strong>.<br><br>Tindakan ini tidak boleh dibatalkan!`,
         icon: 'warning',
         showCancelButton: true,

@@ -28,10 +28,10 @@
 
 @section('page-script')
 @vite([
-  'resources/assets/js/app-modules-list.js',
-  'resources/assets/js/app-modules-add.js',
-  'resources/assets/js/app-modules-edit.js',
-  'resources/assets/js/app-modules-delete.js',
+  'resources/assets/js/modules/app-modules-list.js',
+  'resources/assets/js/modules/app-modules-add.js',
+  'resources/assets/js/modules/app-modules-edit.js',
+  'resources/assets/js/modules/app-modules-delete.js',
   'resources/assets/js/ui-toasts.js',
   'resources/assets/js/extended-ui-sweetalert2.js',
   ])

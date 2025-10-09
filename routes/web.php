@@ -170,6 +170,7 @@ use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 
 use App\Http\Controllers\ticket\TicketController;
+use App\Http\Controllers\knowledgebase\KnowledgeBaseController;
 
 Route::get('/', function () {
     if (Auth::check()) {

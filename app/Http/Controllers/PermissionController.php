@@ -18,7 +18,7 @@ class PermissionController extends Controller
      */
     public function index()
     {
-        // Get available modules and categories
+        // Get available modules
         $modules = Permission::excludeModules()
                             ->select('module')
                             ->distinct()
@@ -26,13 +26,12 @@ class PermissionController extends Controller
                             ->orderBy('module')
                             ->pluck('module');
 
-        $categories = Permission::getCategories();
         $commonActions = Permission::getCommonActions();
 
         // Get statistics
         $stats = $this->getPermissionStatistics();
 
-        return view('permission.index', compact('modules', 'categories', 'commonActions', 'stats'));
+        return view('permission.index', compact('modules', 'commonActions', 'stats'));
     }
 
     /**
@@ -84,28 +83,12 @@ class PermissionController extends Controller
                 return $permission->created_at->format('d M Y');
             })
             ->addColumn('action', function ($permission) {
-                $viewBtn = '<button type="button" class="btn btn-icon btn-text-info rounded-pill btn-sm view-permission"
-                           data-id="' . e($permission->id) . '"
-                           data-bs-toggle="tooltip"
-                           data-bs-placement="top"
-                           title="View Details">
-                    <i class="bx bx-show"></i>
-                </button>';
-
                 $editBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-permission"
                            data-id="' . e($permission->id) . '"
                            data-bs-toggle="tooltip"
                            data-bs-placement="top"
                            title="Edit Permission">
                     <i class="bx bx-edit"></i>
-                </button>';
-
-                $rolesBtn = '<button type="button" class="btn btn-icon btn-text-warning rounded-pill btn-sm manage-roles"
-                            data-id="' . e($permission->id) . '"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="top"
-                            title="Manage Roles">
-                    <i class="bx bx-users"></i>
                 </button>';
 
                 $deleteBtn = '<button type="button" class="btn btn-icon btn-text-danger rounded-pill btn-sm delete-permission"
@@ -117,7 +100,7 @@ class PermissionController extends Controller
                 </button>';
 
                 return '<div class="d-inline-block text-nowrap">' .
-                       $viewBtn . $editBtn . $rolesBtn . $deleteBtn .
+                       $editBtn . $deleteBtn .
                        '</div>';
             })
             ->filterColumn('module', function($query, $keyword) {
@@ -135,19 +118,21 @@ class PermissionController extends Controller
         try {
             DB::beginTransaction();
 
+            // Get validated and sanitized data
+            $validatedData = $request->validated();
+
             // Create permission
             $permission = Permission::create([
-                'name' => $request->name,
+                'name' => $validatedData['name'],
                 'guard_name' => 'web',
-                'module' => $request->module,
-                'description' => $request->description,
-                'category' => $request->category,
-                'is_active' => $request->is_active ?? true,
+                'module' => $validatedData['module'],
+                'description' => $validatedData['description'] ?? null,
+                'is_active' => $validatedData['is_active'] ?? true,
             ]);
 
             // Assign to roles if provided
-            if ($request->roles) {
-                $roles = Role::whereIn('name', $request->roles)->get();
+            if (isset($validatedData['roles']) && is_array($validatedData['roles'])) {
+                $roles = Role::whereIn('name', $validatedData['roles'])->get();
                 foreach ($roles as $role) {
                     $role->givePermissionTo($permission);
                 }
@@ -215,27 +200,27 @@ class PermissionController extends Controller
         try {
             DB::beginTransaction();
 
+            // Get validated and sanitized data
+            $validatedData = $request->validated();
+
             // Update permission data
             $permission->update([
-                'name' => $request->name,
-                'module' => $request->module,
-                'description' => $request->description,
-                'category' => $request->category,
-                'is_active' => $request->is_active ?? true,
+                'name' => $validatedData['name'],
+                'module' => $validatedData['module'],
+                'description' => $validatedData['description'] ?? null,
+                'is_active' => $validatedData['is_active'] ?? true,
             ]);
 
             // Update role assignments if provided
-            if ($request->has('roles')) {
-                $oldRoles = $permission->roles->pluck('name')->toArray();
-
+            if (array_key_exists('roles', $validatedData)) {
                 // Remove from all current roles
                 foreach ($permission->roles as $role) {
                     $role->revokePermissionTo($permission);
                 }
 
                 // Add to new roles
-                if ($request->roles) {
-                    $newRoles = Role::whereIn('name', $request->roles)->get();
+                if (isset($validatedData['roles']) && is_array($validatedData['roles'])) {
+                    $newRoles = Role::whereIn('name', $validatedData['roles'])->get();
                     foreach ($newRoles as $role) {
                         $role->givePermissionTo($permission);
                     }
