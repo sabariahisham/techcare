@@ -3,11 +3,11 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Module;
 use Illuminate\Database\Seeder;
 use Database\Seeders\TicketSeeder;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\PermissionRegistrar;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,21 +16,27 @@ class DatabaseSeeder extends Seeder
    */
   public function run(): void
   {
-    // First run reference data seeders
-    $this->call([
-      RefCategorySeeder::class,
-      RefSubCategorySeeder::class,
-      RefTicketStatusSeeder::class,
-    ]);
+    // Clear cached roles/permissions first
+    app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-    // Then run permission and role seeders
+    // First run permission and role seeders (BEFORE creating users)
     $this->call([
       RolesAndPermissionSeeder::class,
       UpdateRolesSeeder::class,
       SuperAdminSeeder::class,
     ]);
 
-    // Finally run data seeders that might depend on roles/permissions
+    // Create users AFTER roles exist
+    User::factory(25)->create();
+
+    // Then run reference data seeders
+    $this->call([
+      RefCategorySeeder::class,
+      RefSubCategorySeeder::class,
+      RefTicketStatusSeeder::class,
+    ]);
+
+    // Finally run data seeders that depend on users and reference data
     $this->call([
       TicketSeeder::class,
     ]);
@@ -38,8 +44,6 @@ class DatabaseSeeder extends Seeder
     // $this->call([
     //   ModuleListSeeder::class,
     // ]);
-
-    // User::factory(50)->create();
 
     // Module::factory(3)->create();
 
