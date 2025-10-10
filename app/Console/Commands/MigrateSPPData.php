@@ -9,7 +9,8 @@ class MigrateSPPData extends Command
 {
   /**
    * The name and signature of the console command.
-   *
+   * run : php artisan migrate:spp {table}
+   * table: bahagian / sektor / seksyen / unit / jawatan / khid
    * @var string
    */
   protected $signature = 'migrate:spp {table?} ';

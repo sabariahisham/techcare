@@ -6,6 +6,7 @@ use Ramsey\Uuid\Uuid;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Jetstream\HasProfilePhoto;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -24,6 +25,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use Notifiable;
     use TwoFactorAuthenticatable;
     use HasRoles;
+    use HasPermissions;
     use SoftDeletes;
 
     /**
@@ -326,24 +328,6 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return $this->roles->pluck('name')->intersect($roles)->isNotEmpty();
-    }
-
-    /**
-     * Override the hasPermissionTo method to give all permissions to Administrator role.
-     *
-     * @param string|\Spatie\Permission\Contracts\Permission $permission
-     * @param string|null $guardName
-     * @return bool
-     */
-    public function hasPermissionTo($permission, $guardName = null): bool
-    {
-        // Check if user has Administrator role - if so, grant all permissions
-        if ($this->hasRole('Administrator')) {
-            return true;
-        }
-
-        // Otherwise, use the default permission checking logic
-        return parent::hasPermissionTo($permission, $guardName);
     }
 
     /**
