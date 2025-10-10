@@ -11,31 +11,7 @@
   // Initialize user management
   initializeUserManagement();
 
-  // Form validation setup - DISABLED FOR DEBUGGING
   const editRoleForm = document.getElementById('editRoleForm');
-  let fvEdit = null; // Disable FormValidation temporarily
-
-  // Simple form validation function
-  function validateEditForm() {
-    const roleName = $('#edit-role-name').val();
-    const errors = [];
-
-    // Clear previous validation errors
-    $('.is-invalid').removeClass('is-invalid');
-    $('.invalid-feedback').remove();
-
-    if (!roleName || roleName.trim() === '') {
-      $('#edit-role-name').addClass('is-invalid');
-      $('#edit-role-name').after('<div class="invalid-feedback">Role name is required</div>');
-      errors.push('Role name is required');
-    } else if (roleName.trim().length < 2) {
-      $('#edit-role-name').addClass('is-invalid');
-      $('#edit-role-name').after('<div class="invalid-feedback">Role name must be at least 2 characters</div>');
-      errors.push('Role name must be at least 2 characters');
-    }
-
-    return errors.length === 0;
-  }
 
   // Add click handler for edit button in DataTable
   $(document).on('click', '.edit-role', function() {
@@ -46,21 +22,19 @@
   // Form submit handler
   $('#editRoleForm').on('submit', function(e) {
     e.preventDefault();
-    console.log('Form submit triggered');
 
-    // Debug form field values
-    const roleName = $('#edit-role-name').val();
-    const description = $('#edit-role-description').val();
-    console.log('Form values - Name:', roleName, 'Description:', description);
-    console.log('Form element found:', $('#edit-role-name').length > 0);
+    // Validate the form using the shared validation utility
+    const isValid = RoleValidation.validateRoleForm(
+      '#editRoleForm',
+      '#edit-role-name',
+      '.edit-permission',
+      '#editRoleForm .permissions-container'
+    );
 
-    // Validate the form
-    if (!validateEditForm()) {
-      console.log('Form validation failed');
+    if (!isValid) {
       return false;
     }
 
-    console.log('Form validation passed, submitting...');
     submitEditRoleForm();
     return false;
   });
@@ -68,7 +42,6 @@
   // Also handle the submit button click directly
   $('button[form="editRoleForm"]').on('click', function(e) {
     e.preventDefault();
-    console.log('Submit button clicked');
     $('#editRoleForm').trigger('submit');
   });  // Load role data for editing
   function loadRoleData(roleId) {
@@ -83,7 +56,7 @@
           populateEditForm(response.role, response.permissions);
           $('#modalEditRole').modal('show');
         } else {
-          toastr.error(response.message || 'Error loading role data', '', {
+          toastr.error(response.message || 'Ralat memuatkan data peranan', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
@@ -93,7 +66,7 @@
         }
       },
       error: function (xhr) {
-        let errorMessage = 'Error loading role data';
+        let errorMessage = 'Ralat memuatkan data peranan';
         if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMessage = xhr.responseJSON.message;
         }
@@ -111,27 +84,21 @@
 
   // Populate edit form with role data
   function populateEditForm(role, permissions) {
-    console.log('Populating edit form with role data:', role);
-
     // Set role ID
     editRoleForm.setAttribute('data-role-id', role.id);
 
-    // Populate basic fields - ensure elements exist before setting values
+    // Clear previous validation errors
+    RoleValidation.clearValidationErrors('#editRoleForm');
+
+    // Populate basic fields
     const nameField = document.getElementById('edit-role-name');
     const descField = document.getElementById('edit-role-description');
 
-    console.log('Name field found:', nameField !== null);
-    console.log('Description field found:', descField !== null);
-    console.log('Role name to set:', role.name);
-    console.log('Role description to set:', role.description);
-
     if (nameField) {
       nameField.value = role.name || '';
-      console.log('Name field value set to:', nameField.value);
     }
     if (descField) {
       descField.value = role.description || '';
-      console.log('Description field value set to:', descField.value);
     }
 
     // Clear all permission checkboxes first
@@ -147,8 +114,6 @@
 
         if (checkbox.length > 0) {
           checkbox.prop('checked', true);
-        } else {
-          console.warn('Permission checkbox not found:', checkboxId, 'for permission:', permissionName);
         }
       });
 
@@ -157,7 +122,8 @@
     }
 
     // Load users assigned to this role
-    loadRoleUsers(role.id);
+    let users = role.users || [];
+    populateUsersSection(users);
   }
 
   // Update select all permissions checkbox state
@@ -175,44 +141,9 @@
     }
   }
 
-  // Load users assigned to the role
-  function loadRoleUsers(roleId) {
-    $.ajax({
-      type: 'GET',
-      url: `/admin/roles/${roleId}`,
-      headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-      },
-      success: function (response) {
-        console.log('Role users response:', response);
-        if (response.success && response.role) {
-          // Try to get users from different possible locations in the response
-          let users = response.users || response.role.users || [];
-          console.log('Users data:', users);
-          populateUsersSection(users);
-        } else {
-          console.error('Invalid response structure:', response);
-          $('#editRoleUsers').html('<p class="text-muted">No users found for this role</p>');
-        }
-      },
-      error: function (xhr) {
-        console.error('Error loading role users:', xhr);
-        let errorMessage = 'Error loading users';
-        if (xhr.responseJSON && xhr.responseJSON.message) {
-          errorMessage = xhr.responseJSON.message;
-        } else if (xhr.statusText) {
-          errorMessage = `Error: ${xhr.statusText} (${xhr.status})`;
-        }
-        $('#editRoleUsers').html(`<p class="text-danger">${errorMessage}</p>`);
-      }
-    });
-  }
-
   // Populate users section
   function populateUsersSection(users) {
     const usersContainer = $('#editRoleUsers');
-
-    console.log('Populating users section with data:', users);
 
     if (!users || users.length === 0) {
       usersContainer.html('<p class="text-muted">No users assigned to this role</p>');
@@ -220,16 +151,13 @@
     }
 
     let usersList = '<div class="list-group list-group-flush">';
-    users.forEach(function(user, index) {
-      console.log(`Processing user ${index}:`, user);
-
+    users.forEach(function(user) {
       // Handle both field names for backward compatibility
       const userName = user.nama || user.name || 'Unknown User';
       const userEmail = user.email || '';
       const userId = user.id;
 
       if (!userId) {
-        console.warn('User missing ID:', user);
         return; // Skip users without IDs
       }
 
@@ -264,12 +192,12 @@
     const button = $(this);
 
     Swal.fire({
-      title: 'Remove User?',
-      text: "Are you sure you want to remove this user from the role?",
+      title: 'Keluarkan Pengguna?',
+      text: "Adakah anda pasti mahu mengeluarkan pengguna ini dari peranan?",
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Yes, remove',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: 'Ya, keluarkan',
+      cancelButtonText: 'Batal',
       customClass: {
         confirmButton: 'btn btn-danger me-3',
         cancelButton: 'btn btn-label-secondary'
@@ -300,7 +228,7 @@
             }
           });
 
-          toastr.success(response.message || 'User removed from role successfully', '', {
+          toastr.success(response.message || 'Pengguna berjaya dikeluarkan dari peranan', '', {
             timeOut: 3000,
             closeButton: true,
             progressBar: true,
@@ -314,8 +242,11 @@
           } else if ($('.datatables-roles').length) {
             $('.datatables-roles').DataTable().ajax.reload();
           }
+
+          // Trigger statistics refresh
+          $(document).trigger('roleUpdated');
         } else {
-          toastr.error(response.message || 'Error removing user from role', '', {
+          toastr.error(response.message || 'Ralat mengeluarkan pengguna dari peranan', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
@@ -325,7 +256,7 @@
         }
       },
       error: function (xhr) {
-        let errorMessage = 'Error removing user from role';
+        let errorMessage = 'Ralat mengeluarkan pengguna dari peranan';
         if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMessage = xhr.responseJSON.message;
         }
@@ -352,13 +283,7 @@
 
     const roleId = editRoleForm.getAttribute('data-role-id');
     if (!roleId) {
-      toastr.error('Role ID not found', '', {
-        timeOut: 5000,
-        closeButton: true,
-        progressBar: true,
-        positionClass: 'toast-top-right',
-        "toastClass": "toast ngx-toastr bg-danger text-white"
-      });
+      RoleValidation.showFieldError('#edit-role-name', 'Role ID not found');
       return;
     }
 
@@ -380,27 +305,7 @@
       formData.permissions.push($(this).val());
     });
 
-    // Debug logging
-    console.log('Form field values:');
-    console.log('- Name field value:', roleName);
-    console.log('- Name field length:', roleName ? roleName.length : 'null/undefined');
-    console.log('- Description field value:', roleDescription);
-    console.log('- Permissions count:', formData.permissions.length);
-    console.log('Complete formData object:', formData);
-    console.log('Role ID:', roleId);
-
-    // Check if name is empty or just whitespace
-    if (!roleName || roleName.trim() === '') {
-      toastr.error('Role name cannot be empty. Please enter a role name.', '', {
-        timeOut: 5000,
-        closeButton: true,
-        progressBar: true,
-        positionClass: 'toast-top-right',
-        "toastClass": "toast ngx-toastr bg-danger text-white"
-      });
-      isEditSubmitting = false;
-      return;
-    }    $.ajax({
+    $.ajax({
       type: 'POST', // Change to POST with _method field for Laravel
       url: `/admin/roles/${roleId}`,
       data: formData,
@@ -473,6 +378,9 @@
               fvEdit.resetForm(true);
             }
 
+            // Clear the select2 selection
+            $('#edit-role-users').val(null).trigger('change');
+
             // Reload DataTable if it exists on the page
             if (typeof window.dt_role !== 'undefined' && window.dt_role) {
               window.dt_role.ajax.reload();
@@ -482,8 +390,8 @@
 
             // Show success message
             const successMessage = selectedUsers && selectedUsers.length > 0 ?
-              `Role updated successfully and ${selectedUsers.length} user(s) added` :
-              'Role updated successfully';
+              `Peranan berjaya dikemaskini dan ${selectedUsers.length} pengguna ditambah` :
+              'Peranan berjaya dikemaskini';
 
             toastr.success(successMessage, '', {
               timeOut: 3000,
@@ -501,10 +409,13 @@
 
             // Trigger custom event to refresh statistics
             $(document).trigger('roleUpdated');
+
+            // Reset submission flag
+            isEditSubmitting = false;
           }
         } else {
           // Show error message
-          toastr.error(response.message || 'Error updating role', '', {
+          toastr.error(response.message || 'Ralat mengemaskini peranan', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
@@ -519,70 +430,17 @@
         isEditSubmitting = false;
       },
       error: function (xhr) {
-        console.log('Error response:', xhr);
-
         if (xhr.status === 422) {
-          // Validation errors - show specific field errors
-          console.log('Validation errors:', xhr.responseJSON);
-          const errors = xhr.responseJSON.errors || {};
-          let errorMessage = 'Validation failed:\n';
-
-          // Clear previous validation classes
-          $('.is-invalid').removeClass('is-invalid');
-          $('.invalid-feedback').remove();
-
-          for (const field in errors) {
-            if (errors.hasOwnProperty(field)) {
-              errorMessage += '• ' + errors[field][0] + '\n';
-
-              // Add validation styling to specific fields
-              if (field === 'name') {
-                $('#edit-role-name').addClass('is-invalid');
-                $('#edit-role-name').after(`<div class="invalid-feedback">${errors[field][0]}</div>`);
-              } else if (field === 'description') {
-                $('#edit-role-description').addClass('is-invalid');
-                $('#edit-role-description').after(`<div class="invalid-feedback">${errors[field][0]}</div>`);
-              }
-            }
+          // Validation errors - use the shared validation handler
+          const errors = xhr.responseJSON.errors;
+          RoleValidation.handleServerErrors(errors, '#editRoleForm');
+        } else {
+          let errorMessage = 'Ralat mengemaskini peranan';
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMessage = xhr.responseJSON.message;
           }
 
           toastr.error(errorMessage, '', {
-            timeOut: 7000,
-            closeButton: true,
-            progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-danger text-white"
-          });
-        } else if (xhr.status === 500) {
-          // Server error
-          toastr.error('Server error occurred while updating the role. Please try again.', '', {
-            timeOut: 5000,
-            closeButton: true,
-            progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-danger text-white"
-          });
-        } else if (xhr.status === 403) {
-          // Forbidden
-          toastr.error('You do not have permission to update roles.', '', {
-            timeOut: 5000,
-            closeButton: true,
-            progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-danger text-white"
-          });
-        } else if (xhr.status === 401) {
-          // Unauthorized
-          toastr.error('Your session has expired. Please login again.', '', {
-            timeOut: 6000,
-            closeButton: true,
-            progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-danger text-white"
-          });
-        } else {
-          // General error
-          toastr.error('An unexpected error occurred while updating the role. Please try again.', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
@@ -591,39 +449,34 @@
           });
         }
 
-        // Reset submission flag
         isEditSubmitting = false;
       }
     });
   }
 
-  // Reset form when modal is hidden
+
+
+  // Reset edit form when modal is hidden
   $('#modalEditRole').on('hidden.bs.modal', function () {
-    console.log('Modal hidden, resetting form');
     if (editRoleForm) {
+      // Reset the form completely
       editRoleForm.reset();
       editRoleForm.removeAttribute('data-role-id');
 
-      // Reset FormValidation only if it exists
-      if (fvEdit && typeof fvEdit.resetForm === 'function') {
-        fvEdit.resetForm(true);
-      }
+      // Clear validation errors using shared utility
+      RoleValidation.clearValidationErrors('#editRoleForm');
 
       // Uncheck all permission checkboxes
       $('.edit-permission').prop('checked', false);
       $('#editSelectAllPermissions').prop('checked', false).prop('indeterminate', false);
 
       // Clear users sections
-      $('#editRoleUsers').html('');
+      $('#editRoleUsers').html('<p class="text-muted">No users assigned to this role</p>');
+      $('#edit-role-users').val(null).trigger('change');
 
-      // Clear Select2 dropdown properly
-      if ($('#edit-role-users').length && $('#edit-role-users').hasClass('select2-hidden-accessible')) {
-        $('#edit-role-users').val(null).trigger('change');
-      }
-
-      // Clear any validation errors
-      $('.is-invalid').removeClass('is-invalid');
-      $('.invalid-feedback').remove();
+      // Reset form fields explicitly
+      $('#edit-role-name').val('');
+      $('#edit-role-description').val('');
 
       // Reset submission flag
       isEditSubmitting = false;
@@ -751,7 +604,7 @@
           // No need to clear anything since we're using Select2 now
 
           // Show success message
-          toastr.success(response.message || 'User added to role successfully', '', {
+          toastr.success(response.message || 'Pengguna berjaya ditambah ke peranan', '', {
             timeOut: 3000,
             closeButton: true,
             progressBar: true,
@@ -765,8 +618,11 @@
           } else if ($('.datatables-roles').length) {
             $('.datatables-roles').DataTable().ajax.reload();
           }
+
+          // Trigger statistics refresh
+          $(document).trigger('roleUpdated');
         } else {
-          toastr.error(response.message || 'Error adding user to role', '', {
+          toastr.error(response.message || 'Ralat menambah pengguna ke peranan', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
@@ -776,7 +632,7 @@
         }
       },
       error: function(xhr) {
-        let errorMessage = 'Error adding user to role';
+        let errorMessage = 'Ralat menambah pengguna ke peranan';
         if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMessage = xhr.responseJSON.message;
         }
