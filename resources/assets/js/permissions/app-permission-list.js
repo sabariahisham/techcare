@@ -21,7 +21,7 @@ $(function () {
       rowGroup: {
         dataSrc: 'module', // Group by module column
         startRender: function (rows, group) {
-          return '<strong>' + group + ' (' + rows.count() + ' permissions)</strong>';
+          return '<strong>' + group + ' (' + rows.count() + ' capaian)</strong>';
         }
       },
       columns: [
@@ -112,7 +112,7 @@ $(function () {
       language: {
         sLengthMenu: 'Show _MENU_',
         search: '',
-        searchPlaceholder: 'Carian Permission',
+        searchPlaceholder: 'Carian...',
         paginate: {
           next: '<i class="bx bx-chevron-right bx-18px"></i>',
           previous: '<i class="bx bx-chevron-left bx-18px"></i>'
@@ -121,7 +121,7 @@ $(function () {
       // Buttons with Dropdown
       buttons: [
         {
-          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Add Permission</span>',
+          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Capaian</span>',
           className: 'add-new btn btn-primary mb-6 mb-md-0',
           attr: {
             'data-bs-toggle': 'offcanvas',

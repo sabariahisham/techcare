@@ -63,7 +63,7 @@
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
           <div class="content-left">
-            <span class="text-heading">Jumlah Permission</span>
+            <span class="text-heading">Jumlah Capaian</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ $stats['total_permissions'] ?? 0 }}</h4>
               <p class="text-success mb-0">({{ $stats['active_permissions'] ?? 0 }} aktif)</p>
@@ -84,7 +84,7 @@
 <!-- Permission Table -->
 <div class="card">
   <div class="card-header border-bottom">
-    <h5 class="card-title mb-0">SENARAI PERMISSION</h5>
+    <h5 class="card-title mb-0">SENARAI CAPAIAN</h5>
   </div>
   <div class="card-datatable table-responsive">
     <table class="datatables-permissions table">
@@ -92,7 +92,7 @@
         <tr>
           <th></th>
           <th>Bil.</th>
-          <th>Nama Permission</th>
+          <th>Nama Capaian</th>
           <th>Nama Module</th>
           <th>Deskripsi</th>
           <th>Ditugaskan Kepada</th>

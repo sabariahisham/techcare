@@ -17,7 +17,7 @@ $(document).ready(function () {
         name: {
           validators: {
             notEmpty: {
-              message: 'Sila masukkan nama permission'
+              message: 'Sila masukkan nama capaian'
             }
           }
         },
@@ -31,7 +31,7 @@ $(document).ready(function () {
         description: {
           validators: {
             notEmpty: {
-              message: 'Sila masukkan deskripsi permission'
+              message: 'Sila masukkan deskripsi capaian`'
             }
           }
         }
@@ -67,14 +67,14 @@ $(document).ready(function () {
             fv.resetForm();
             // Show success message
             if (typeof toastr !== 'undefined') {
-              toastr.success('Permission berjaya ditambah', 'Berjaya!', {
+              toastr.success('Capaian berjaya ditambah', 'Berjaya!', {
                 closeButton: true,
                 tapToDismiss: false,
                 progressBar: true,
                 rtl: false
               });
             } else {
-              alert('Permission berjaya ditambah!');
+              alert('Capaian berjaya ditambah!');
             }
             // Refresh the datatable
             if ($('.datatables-permissions').length && $('.datatables-permissions').DataTable()) {
@@ -83,9 +83,9 @@ $(document).ready(function () {
           } else {
             // Handle server-side errors
             if (typeof toastr !== 'undefined') {
-              toastr.error(response.message || 'Ralat berlaku semasa menambah permission');
+              toastr.error(response.message || 'Ralat berlaku semasa menambah capaian');
             } else {
-              alert('Error: ' + (response.message || 'Ralat berlaku semasa menambah permission'));
+              alert('Error: ' + (response.message || 'Ralat berlaku semasa menambah capaian'));
             }
           }
         },
@@ -107,7 +107,7 @@ $(document).ready(function () {
                   nameError.includes('sudah wujud') || nameError.includes('sudah ada'))  {
                 // Show specific toastr message for duplicate name
                 if (typeof toastr !== 'undefined') {
-                  toastr.error('Nama permission ini sudah wujud. Sila gunakan nama lain.', 'Nama Sudah Wujud!', {
+                  toastr.error('Nama capaian ini sudah wujud. Sila gunakan nama lain.', 'Nama Sudah Wujud!', {
                     closeButton: true,
                     tapToDismiss: false,
                     progressBar: true,
@@ -115,12 +115,12 @@ $(document).ready(function () {
                     timeOut: 5000
                   });
                 } else {
-                  alert('Nama permission ini sudah wujud. Sila gunakan nama lain.');
+                  alert('Nama capaian ini sudah wujud. Sila gunakan nama lain.');
                 }
               } else {
                 // Show generic name error
                 if (typeof toastr !== 'undefined') {
-                  toastr.error(nameError, 'Ralat Nama Permission');
+                  toastr.error(nameError, 'Ralat Nama Capaian');
                 }
               }
 
@@ -149,7 +149,7 @@ $(document).ready(function () {
             }
           } else {
             // Handle other errors
-            const errorMessage = xhr.responseJSON?.message || 'Ralat berlaku semasa menambah permission';
+            const errorMessage = xhr.responseJSON?.message || 'Ralat berlaku semasa menambah capaian';
             if (typeof toastr !== 'undefined') {
               toastr.error(errorMessage, 'Ralat!');
             } else {

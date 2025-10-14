@@ -13,7 +13,7 @@ class UpdatePermissionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && (Auth::user()->can('kebenaran.edit') ?? true);
+        return Auth::check() && (Auth::user()->can('capaian.edit') ?? true);
     }
 
     /**

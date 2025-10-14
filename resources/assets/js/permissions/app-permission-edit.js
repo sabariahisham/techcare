@@ -29,7 +29,7 @@ $(document).ready(function () {
           name: {
             validators: {
               notEmpty: {
-                message: 'Sila masukkan nama permission'
+                message: 'Sila masukkan nama capaian'
               }
             }
           },
@@ -43,7 +43,7 @@ $(document).ready(function () {
           description: {
             validators: {
               notEmpty: {
-                message: 'Sila masukkan deskripsi permission'
+                message: 'Sila masukkan deskripsi capaian'
               }
             }
           }
@@ -87,7 +87,7 @@ $(document).ready(function () {
       },
       error: function(xhr, status, error) {
         console.error('Error loading permission data:', error);
-        const errorMessage = xhr.responseJSON?.message || 'Ralat memuat data permission';
+        const errorMessage = xhr.responseJSON?.message || 'Ralat memuat data capaian';
         showError(errorMessage);
       }
     });
@@ -125,11 +125,11 @@ $(document).ready(function () {
   // Function to update permission
   function updatePermission() {
     if (!currentPermissionId) {
-      showError('ID permission tidak dijumpai');
+      showError('ID capaian tidak dijumpai');
       return;
     }
 
-    console.log('Updating permission ID:', currentPermissionId);
+    console.log('Updating capaian ID:', currentPermissionId);
 
     // Prepare form data with method spoofing
     var formData = $(editPermissionForm).serialize();
@@ -157,12 +157,12 @@ $(document).ready(function () {
           }
 
           // Show success message
-          showSuccess('Permission berjaya dikemaskini');
+          showSuccess('Capaian berjaya dikemaskini');
 
           // Refresh the datatable
           refreshDataTable();
         } else {
-          showError(response.message || 'Ralat berlaku semasa mengemaskini permission');
+          showError(response.message || 'Ralat berlaku semasa mengemaskini capaian');
         }
       },
       error: function(xhr, status, error) {
@@ -187,9 +187,9 @@ $(document).ready(function () {
         // Check if it's a uniqueness error
         if (nameError.includes('already') || nameError.includes('unique') || nameError.includes('exists') ||
             nameError.includes('sudah wujud') || nameError.includes('sudah ada')) {
-          showError('Nama permission ini sudah wujud. Sila gunakan nama lain.', 'Nama Sudah Wujud!');
+          showError('Nama capaian ini sudah wujud. Sila gunakan nama lain.', 'Nama Sudah Wujud!');
         } else {
-          showError(nameError, 'Ralat Nama Permission');
+          showError(nameError, 'Ralat Nama Capaian');
         }
 
         // Update form validation for name field
@@ -213,7 +213,7 @@ $(document).ready(function () {
       }
     } else {
       // Handle other errors
-      const errorMessage = xhr.responseJSON?.message || 'Ralat berlaku semasa mengemaskini permission';
+      const errorMessage = xhr.responseJSON?.message || 'Ralat berlaku semasa mengemaskini capaian';
       showError(errorMessage);
     }
   }
@@ -237,7 +237,7 @@ $(document).ready(function () {
       // Show the edit offcanvas
       $('#offcanvasEditPermission').offcanvas('show');
     } else {
-      showError('ID permission tidak dijumpai');
+      showError('ID capaian tidak dijumpai');
     }
   });
 
@@ -250,7 +250,7 @@ $(document).ready(function () {
     if (currentPermissionId) {
       updatePermission();
     } else {
-      showError('ID permission tidak dijumpai');
+      showError('ID capaian tidak dijumpai');
     }
   });
 
