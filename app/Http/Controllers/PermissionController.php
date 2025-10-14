@@ -49,8 +49,8 @@ class PermissionController extends Controller
                 return $permission->formatted_module;
             })
             ->addColumn('assigned_to', function ($permission) {
-                $roles = $permission->roles->take(3);
-                $totalRoles = $permission->roles->count();
+                $roles = $permission->roles;
+                $totalRoles = $roles->count();
 
                 if ($totalRoles === 0) {
                     return '<span class="text-muted">No roles assigned</span>';
@@ -59,11 +59,6 @@ class PermissionController extends Controller
                 $badges = '';
                 foreach ($roles as $role) {
                     $badges .= '<span class="badge bg-label-primary me-1">' . e($role->name) . '</span>';
-                }
-
-                if ($totalRoles > 3) {
-                    $remaining = $totalRoles - 3;
-                    $badges .= '<span class="badge bg-label-secondary">+' . $remaining . ' more</span>';
                 }
 
                 return $badges;

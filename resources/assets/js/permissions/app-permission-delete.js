@@ -43,9 +43,29 @@ $(document).ready(function () {
       return;
     }
 
-    // Simple confirmation since we're using backend-generated buttons
-    const permissionName = 'this permission';
+    // Get permission name from DataTable row data
+    let permissionName = 'this permission'; // fallback
+
+    // Find the DataTable row and get the permission name
+    if ($.fn.DataTable.isDataTable('.datatables-permissions')) {
+      const table = $('.datatables-permissions').DataTable();
+      const row = $(this).closest('tr');
+
+      if (row.length) {
+        const rowData = table.row(row).data();
+        if (rowData && rowData.name) {
+          permissionName = rowData.name;
+        }
+      }
+    }
+
+    // Fallback: try to get from data attributes if DataTable method fails
+    if (permissionName === 'this permission') {
+      permissionName = $(this).data('name') || $(this).data('permission-name') || $(this).attr('data-name') || $(this).attr('title') || 'this permission';
+    }
+
     console.log('Proceeding with delete for permission ID:', permissionId);
+    console.log('Permission name:', permissionName);
 
     // Check if SweetAlert2 is available
     if (typeof Swal === 'undefined') {
