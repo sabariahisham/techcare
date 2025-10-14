@@ -13,7 +13,7 @@ class StorePermissionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && (Auth::user()->can('permission-management.create') ?? true);
+        return Auth::check() && (Auth::user()->can('kebenaran.create') ?? true);
     }
 
     /**

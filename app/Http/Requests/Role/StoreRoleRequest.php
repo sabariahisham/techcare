@@ -13,7 +13,7 @@ class StoreRoleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && (Auth::user()->can('role-management.create') ?? true);
+        return Auth::check() && (Auth::user()->can('peranan.create') ?? true);
     }
 
     /**

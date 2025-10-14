@@ -14,7 +14,7 @@ class StoreUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && (Auth::user()->can('user-management.create') ?? true);
+        return Auth::check() && (Auth::user()->can('pengguna.create') ?? true);
     }
 
     /**

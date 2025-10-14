@@ -14,7 +14,7 @@ class UpdateUserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && (Auth::user()->can('user-management.edit') ?? true);
+        return Auth::check() && (Auth::user()->can('pengguna.edit') ?? true);
     }
 
     /**

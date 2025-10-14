@@ -13,7 +13,7 @@ class UpdateRoleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check() && (Auth::user()->can('role-management.edit') ?? true);
+        return Auth::check() && (Auth::user()->can('peranan.edit') ?? true);
     }
 
     /**

@@ -226,6 +226,9 @@ class EnhancedUserRolePermissionSeeder extends Seeder
             // Ticket Management
             'log-tiket.view', 'log-tiket.create', 'log-tiket.edit', 'log-tiket.delete',
             'log-tiket.assign', 'log-tiket.close',
+
+            // Knowledge Base
+            'knowledgebase.view', 'knowledgebase.create', 'knowledgebase.edit', 'knowledgebase.delete',
             // Configuration Management
             'konfigurasi.view', 'konfigurasi.edit',
             // Report Management
