@@ -36,12 +36,24 @@ class UserManagementController extends Controller
 
     public function getData(Request $request)
     {
-        $users = User::with('roles');
+        $users = User::with(['roles', 'sektor', 'bahagian', 'seksyen', 'unit', 'jawatan']);
 
         return DataTables::of($users)
             ->addIndexColumn()
             ->addColumn('role', function ($user) {
                 return $user->roles->first() ? e($user->roles->first()->name) : '-';
+            })
+            ->addColumn('sektor_nama', function ($user) {
+                return $user->sektor ? $user->sektor->nama_sektor : '-';
+            })
+            ->addColumn('bahagian_nama', function ($user) {
+                return $user->bahagian ? $user->bahagian->nama_bah : '-';
+            })
+            ->addColumn('seksyen_nama', function ($user) {
+                return $user->seksyen ? $user->seksyen->nama_sec : '-';
+            })
+            ->addColumn('unit_nama', function ($user) {
+                return $user->unit ? $user->unit->nama_unit : '-';
             })
             ->addColumn('action', function ($user) {
                 $editBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-record" data-id="'.e($user->id).'" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
@@ -57,6 +69,26 @@ class UserManagementController extends Controller
             ->filterColumn('role', function($query, $keyword) {
                 $query->whereHas('roles', function($q) use ($keyword) {
                     $q->where('name', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('sektor_nama', function($query, $keyword) {
+                $query->whereHas('sektor', function($q) use ($keyword) {
+                    $q->where('nama_sektor', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('bahagian_nama', function($query, $keyword) {
+                $query->whereHas('bahagian', function($q) use ($keyword) {
+                    $q->where('nama_bah', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('seksyen_nama', function($query, $keyword) {
+                $query->whereHas('seksyen', function($q) use ($keyword) {
+                    $q->where('nama_sec', 'like', "%{$keyword}%");
+                });
+            })
+            ->filterColumn('unit_nama', function($query, $keyword) {
+                $query->whereHas('unit', function($q) use ($keyword) {
+                    $q->where('nama_unit', 'like', "%{$keyword}%");
                 });
             })
             ->rawColumns(['action'])

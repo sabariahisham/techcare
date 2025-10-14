@@ -36,7 +36,7 @@ class UserController extends Controller
      */
     public function getData(Request $request)
     {
-        $users = User::with(['roles'])
+        $users = User::with(['roles', 'jawatan'])
                     ->select(['users.*']);
 
         return DataTables::of($users)

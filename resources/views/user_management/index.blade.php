@@ -140,27 +140,27 @@
     </div>
   </div> --}}
   <div class="card-datatable table-responsive">
-    <table class="datatables-users table border-top">
+    <table class="datatables-users table border-top table-sm" style="width: 100%; min-width: 1200px; table-layout: fixed; font-size: 0.775rem;">
       <thead>
         <tr>
-          <th></th>
-          {{-- <th>No.</th> --}}
-          <th>Nama</th>
+          {{-- <th style="width: 40px; white-space: nowrap; font-size: 0.75rem;"></th> --}}
+          {{-- <th style="width: 40px; white-space: nowrap; font-size: 0.75rem;">Bil</th> --}}
+          <th style="width: 120px; white-space: nowrap; font-size: 0.75rem;">Nama</th>
           {{-- <th>LDAP</th> --}}
-          <th>Emel</th>
-          <th>No.KP</th>
-          <th>No.Tel(O)</th>
-          <th>No.Tel(M)</th>
-          <th>Sektor</th>
-          <th>Bahagian</th>
-          <th>Seksyen</th>
-          <th>Unit</th>
-          <th>Kod Skim</th>
-          <th>Kod Kump Khidmat</th>
-          <th>Kod Jwtn</th>
-          <th>Kod Jawatan</th>
-          <th>Gelaran Jawatan</th>
-          <th>Status</th>
+          <th style="width: 80px; white-space: nowrap; font-size: 0.75rem;">Emel</th>
+          <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">No.KP</th>
+          <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">No.Tel(O)</th>
+          <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">No.Tel(M)</th>
+          {{-- <th>Sektor</th> --}}
+          <th style="width: 120px; white-space: nowrap; font-size: 0.75rem;">Bahagian</th>
+          <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">Seksyen</th>
+          <th style="width: 80px; white-space: nowrap; font-size: 0.75rem;">Unit</th>
+          {{-- <th>Kod Skim</th> --}}
+          {{-- <th>Kod Kump Khidmat</th> --}}
+          <th style="width: 80px; white-space: nowrap; font-size: 0.75rem;">Kod Jwtn</th>
+          {{-- <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">Kod Jawatan</th> --}}
+          {{-- <th>Gelaran Jawatan</th> --}}
+          <th style="width: 70px; white-space: nowrap; font-size: 0.75rem;">Status</th>
           {{-- <th>Tindakan</th> --}}
         </tr>
       </thead>

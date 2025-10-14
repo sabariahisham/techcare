@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+// use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RefJawatan extends Model
 {
-  use HasFactory, SoftDeletes;
+  use HasFactory;
 
   protected $table = 'ref_jawatan';
 
@@ -28,7 +28,7 @@ class RefJawatan extends Model
    */
   public function users()
   {
-    return $this->hasMany(User::class, 'jawatan_id');
+    return $this->hasMany(User::class, 'kod_jawatan', 'kod_jawatan');
   }
 
   /**

@@ -43,13 +43,13 @@ $(function () {
       serverSide: true,
       ajax: '/user-management/data',
       columns: [
-        {
-          // For Responsive
-          data: null,
-          defaultContent: '',
-          orderable: false,
-          searchable: true
-        },
+        // {
+        //   // For Responsive
+        //   data: null,
+        //   defaultContent: '',
+        //   orderable: false,
+        //   searchable: true
+        // },
         //  {
         //   // Index column
         //   data: null,
@@ -63,15 +63,15 @@ $(function () {
         { data: 'no_kp', name: 'no_kp' },
         { data: 'tel_no_p', name: 'tel_no_p' },
         { data: 'tel_no_hp', name: 'tel_no_hp' },
-        { data: 'kod_sektor', name: 'kod_sektor' },
-        { data: 'kod_bah', name: 'kod_bah' },
-        { data: 'kod_sec', name: 'kod_sec' },
-        { data: 'kod_unit', name: 'kod_unit' },
-        { data: 'kod_skim', name: 'kod_skim' },
-        { data: 'kod_kump_khidmat', name: 'kod_kump_khidmat' },
+        // { data: 'sektor_nama', name: 'sektor_nama' },
+        { data: 'bahagian_nama', name: 'bahagian_nama' },
+        { data: 'seksyen_nama', name: 'seksyen_nama' },
+        { data: 'unit_nama', name: 'unit_nama' },
+        // { data: 'kod_skim', name: 'kod_skim' },
+        // { data: 'kod_kump_khidmat', name: 'kod_kump_khidmat' },
         {data: 'kod_jwtn',name: 'kod_jwtn'},
-        { data: 'kod_jawatan', name: 'kod_jawatan' },
-        { data: 'nama_gred', name: 'nama_gred' },
+        // { data: 'jawatan_name', name: 'jawatan_name' },
+        // { data: 'nama_gred', name: 'nama_gred' },
         {
           data: 'kodaktif',
           name: 'kodaktif',
@@ -81,7 +81,9 @@ $(function () {
             }
             return data;
           }
-        }
+        },
+        // { data: 'actions', name: 'actions', orderable: false, searchable: false }
+
       ],
       dom:
         '<"row"' +

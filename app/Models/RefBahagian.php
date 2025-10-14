@@ -3,12 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RefBahagian extends Model
 {
-  use HasFactory, SoftDeletes;
+  use HasFactory;
 
   protected $table = 'ref_bahagian';
 
@@ -23,7 +22,6 @@ class RefBahagian extends Model
   protected $casts = [
     'created_at' => 'datetime',
     'updated_at' => 'datetime',
-    'deleted_at' => 'datetime',
     'status' => 'string',
   ];
 
