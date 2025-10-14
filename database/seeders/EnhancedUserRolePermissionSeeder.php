@@ -59,11 +59,11 @@ class EnhancedUserRolePermissionSeeder extends Seeder
             ['name' => 'peranan.assign-permissions', 'module' => 'Pengurusan Peranan', 'description' => 'Assign permissions to roles'],
 
             // Permission Management
-            ['name' => 'kebenaran.view', 'module' => 'Pengurusan Kebenaran', 'description' => 'View permissions list and details'],
-            ['name' => 'kebenaran.create', 'module' => 'Pengurusan Kebenaran', 'description' => 'Create new permissions'],
-            ['name' => 'kebenaran.edit', 'module' => 'Pengurusan Kebenaran', 'description' => 'Edit existing permissions'],
-            ['name' => 'kebenaran.delete', 'module' => 'Pengurusan Kebenaran', 'description' => 'Delete permissions'],
-            ['name' => 'kebenaran.manage', 'module' => 'Pengurusan Kebenaran', 'description' => 'Full permission management access'],
+            ['name' => 'capaian.view', 'module' => 'Pengurusan Capaian', 'description' => 'View permissions list and details'],
+            ['name' => 'capaian.create', 'module' => 'Pengurusan Capaian', 'description' => 'Create new permissions'],
+            ['name' => 'capaian.edit', 'module' => 'Pengurusan Capaian', 'description' => 'Edit existing permissions'],
+            ['name' => 'capaian.delete', 'module' => 'Pengurusan Capaian', 'description' => 'Delete permissions'],
+            ['name' => 'capaian.manage', 'module' => 'Pengurusan Capaian', 'description' => 'Full permission management access'],
 
             // Admin Management
             ['name' => 'admin.view', 'module' => 'Pengurusan Admin', 'description' => 'View admin panels and settings'],
@@ -189,7 +189,7 @@ class EnhancedUserRolePermissionSeeder extends Seeder
                 'nama' => 'Super Administrator',
                 'email' => 'superadmin@ehelp.gov.my',
                 'password' => Hash::make('password123'),
-                'is_active' => true,
+                'kodaktif' => true,
                 'email_verified_at' => now(),
                 'first_time_login' => false,
             ],
@@ -217,8 +217,8 @@ class EnhancedUserRolePermissionSeeder extends Seeder
             'peranan.view', 'peranan.create', 'peranan.edit', 'peranan.delete',
             'peranan.manage', 'peranan.assign-permissions',
             // Permission Management
-            'kebenaran.view', 'kebenaran.create', 'kebenaran.edit', 'kebenaran.delete',
-            'kebenaran.manage',
+            'capaian.view', 'capaian.create', 'capaian.edit', 'capaian.delete',
+            'capaian.manage',
             // Admin Management
             'admin.view', 'admin.manage',
             // Dashboard

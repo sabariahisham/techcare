@@ -125,6 +125,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'full_name',
         'display_role',
         'status_badge',
+        'jawatan_name',
     ];
 
     /**
@@ -158,6 +159,16 @@ class User extends Authenticatable implements MustVerifyEmail
             'status' => $this->kodaktif ? 'Active' : 'Inactive',
             'class' => $this->kodaktif ? 'badge bg-label-success' : 'badge bg-label-secondary',
         ];
+    }
+
+    /**
+     * Get the user's jawatan name.
+     *
+     * @return string
+     */
+    public function getJawatanNameAttribute(): string
+    {
+        return $this->jawatan?->nama_jawatan ?? 'No Jawatan';
     }
 
     /**
@@ -368,7 +379,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'kod_bah' => $this->kod_bah,
             'kod_sec' => $this->kod_sec,
             'kod_unit' => $this->kod_unit,
-            'kod_jawatan' => $this->kod_jawatan,
+            'jawatan' => $this->jawatan?->nama_jawatan ?? $this->kod_jawatan,
             'kod_jwtn' => $this->kod_jwtn,
             'kod_skim' => $this->kod_skim,
             'kod_kump_khidmat' => $this->kod_kump_khidmat,
@@ -446,4 +457,46 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $query->where('kod_unit', $unit);
     }
+
+    /**
+     * Get the sektor relationship.
+     */
+    public function sektor()
+    {
+        return $this->belongsTo(RefSektor::class, 'kod_sektor', 'kod_sektor');
+    }
+
+    /**
+     * Get the bahagian relationship.
+     */
+    public function bahagian()
+    {
+        return $this->belongsTo(RefBahagian::class, 'kod_bah', 'kod_bah');
+    }
+
+    /**
+     * Get the seksyen relationship.
+     */
+    public function seksyen()
+    {
+        return $this->belongsTo(RefSeksyen::class, 'kod_sec', 'kod_sec');
+    }
+
+    /**
+     * Get the unit relationship.
+     */
+    public function unit()
+    {
+        return $this->belongsTo(RefUnit::class, 'kod_unit', 'kod_unit');
+    }
+
+    /**
+     * Get the jawatan relationship.
+     */
+    public function jawatan()
+    {
+        return $this->belongsTo(RefJawatan::class, 'kod_jawatan', 'kod_jawatan');
+    }
+
+
 }

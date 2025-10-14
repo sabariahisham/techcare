@@ -53,9 +53,9 @@
 
             {
               "url": "acl/permissions/index",
-              "name": "Kebenaran",
+              "name": "Capaian",
               "slug": "acl-permissions-index",
-              "permission": "kebenaran.view"
+              "permission": "capaian.view"
             },
             {
               "url": "acl/roles/index",
