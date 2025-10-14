@@ -274,6 +274,9 @@ Route::prefix('tickets')->group(function () {
     Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
 });
 
+// Route for getting subcategories by category - for ticket forms
+Route::get('/get-subcategory/{categoryId}', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'getSubcategories'])->name('get.subcategory');
+
 // knowledgebase
 Route::middleware(['auth', 'verified'])->prefix('knowledgebase')->group(function () {
     Route::get('/', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'index'])->name('knowledgebase.index');

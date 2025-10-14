@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
 use App\Models\RefCategory;
+use App\Models\RefTicketStatus;
+use App\Http\Requests\Ticket\StoreTicketRequest;
+use App\Http\Requests\Ticket\UpdateTicketRequest;
+use Illuminate\Support\Facades\Auth;
 
 class TicketController extends Controller
 {
@@ -21,7 +25,7 @@ class TicketController extends Controller
         return $ticket->created_at ? $ticket->created_at->format('d-m-Y') : '-';
       })
       ->addColumn('nama_pengadu', function ($ticket) {
-        return $ticket->user ? e($ticket->user->name) : '-';
+        return $ticket->user ? e($ticket->user->nama) : '-';
       })
       ->addColumn('kategori', function ($ticket) {
         return $ticket->category ? e($ticket->category->cat_name) : '-';
@@ -33,10 +37,9 @@ class TicketController extends Controller
         return $ticket->status ? e($ticket->status->st_name) : '-';
       })
       ->addColumn('action', function ($ticket) {
-        $viewBtn = '<a href="' . route('tickets.show', $ticket->id) . '" class="btn btn-icon btn-text-secondary rounded-pill btn-sm" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></a>';
-        $editBtn = '<a href="' . route('tickets.edit', $ticket->id) . '" class="btn btn-icon btn-text-secondary rounded-pill btn-sm" data-bs-toggle="tooltip" title="Edit"><i class="bx bx-edit"></i></a>';
+        $editBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Edit"><i class="bx bx-edit"></i></button>';
         $deleteBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Delete"><i class="bx bx-trash"></i></button>';
-        return '<div class="d-inline-block text-nowrap">' . $viewBtn . ' ' . $editBtn . ' ' . $deleteBtn . '</div>';
+        return '<div class="d-inline-block text-nowrap">' . $editBtn . ' ' . $deleteBtn . '</div>';
       })
       ->rawColumns(['action'])
       ->make(true);
@@ -45,7 +48,8 @@ class TicketController extends Controller
 
   public function index()
   {
-    return view('tickets.index');
+    $categories = RefCategory::all();
+    return view('tickets.index', compact('categories'));
   }
 
   public function create()
@@ -53,24 +57,48 @@ class TicketController extends Controller
     //using index.blade.php
   }
 
-  public function store(Request $request)
+  public function store(StoreTicketRequest $request)
   {
-    $data = $request->validate([
-      'user_id' => 'required|exists:users,id',
-      'cat_id' => 'required|exists:ref_categories,id',
-      'subcat_id' => 'required|exists:ref_sub_categories,id',
-      'doc_id' => 'nullable|exists:documents,id',
-      'tick_status' => 'required|exists:ref_ticket_statuses,id',
-      'tick_duedate' => 'nullable|date',
+    $validated = $request->validated();
+
+    // Determine user_id based on ticket_type
+    if ($validated['ticket_type'] == 1) {
+      // Diri Sendiri - use authenticated user
+      $user_id = Auth::id();
+    } else {
+      // Bagi Pihak - create or find user based on email
+      // For now, we'll use the authenticated user
+      // You may want to implement user creation logic here
+      $user_id = Auth::id();
+    }
+
+    // Get default status (assuming first status is 'Open' or 'New')
+    $defaultStatus = RefTicketStatus::first();
+
+    $data = [
+      'uuid' => Str::uuid(),
+      'ticket_nolog' => 'HELP-' . strtoupper(Str::random(6)),
+      'user_id' => $user_id,
+      'cat_id' => $validated['cat_id'],
+      'subcat_id' => $validated['subcat_id'],
+      'ticket_title' => $validated['tick_title'], // Map tick_title to ticket_title
+      'ticket_desc' => $validated['tick_desc'], // Map tick_desc to ticket_desc
+      'ticket_type' => $validated['ticket_type'],
+      'tick_status' => $defaultStatus ? $defaultStatus->id : 1,
+      'tick_duedate' => null, // You can add logic for due date calculation
+      'created_by' => Auth::id(),
+    ];
+
+    $ticket = Ticket::create($data);
+
+    // Handle file attachments if any
+    // TODO: Implement file handling logic later
+
+    return response()->json([
+      'success' => true,
+      'message' => 'Tiket berjaya dicipta!',
+      'ticket' => $ticket
     ]);
-
-    $data['uuid'] = Str::uuid();
-    $data['ticket_nolog'] = 'TICK-' . strtoupper(Str::random(6));
-    $data['created_by'] = auth()->id();
-
-    Ticket::create($data);
-
-    return redirect()->route('tickets.index')->with('success', 'Ticket created successfully.');
   }
 
   public function show(Ticket $ticket)
@@ -80,34 +108,46 @@ class TicketController extends Controller
 
   public function edit(Ticket $ticket)
   {
-    $categories = RefCategory::where('is_active', 1)->get();
+    // Load the ticket with its relationships
+    $ticket->load(['category', 'subCategory', 'user']);
+    
+    $categories = RefCategory::all();
+    
     return response()->json([
       'ticket' => $ticket,
       'categories' => $categories
     ]);
   }
 
-  public function update(Request $request, Ticket $ticket)
+  public function update(UpdateTicketRequest $request, Ticket $ticket)
   {
-    $data = $request->validate([
-      'cat_id' => 'required|exists:ref_categories,id',
-      'subcat_id' => 'required|exists:ref_sub_categories,id',
-      'doc_id' => 'nullable|exists:documents,id',
-      'tick_status' => 'required|exists:ref_ticket_statuses,id',
-      'tick_duedate' => 'nullable|date',
-    ]);
+    $validated = $request->validated();
 
-    $data['updated_by'] = auth()->id();
+    $data = [
+      'cat_id' => $validated['cat_id'],
+      'subcat_id' => $validated['subcat_id'],
+      'ticket_title' => $validated['tick_title'], // Map tick_title to ticket_title
+      'ticket_desc' => $validated['tick_desc'], // Map tick_desc to ticket_desc
+      'ticket_type' => $validated['ticket_type'],
+      'updated_by' => Auth::id(),
+    ];
 
     $ticket->update($data);
 
-    return redirect()->route('tickets.index')->with('success', 'Ticket updated successfully.');
+    return response()->json([
+      'success' => true,
+      'message' => 'Tiket berjaya dikemaskini!',
+      'ticket' => $ticket
+    ]);
   }
 
   public function destroy(Ticket $ticket)
   {
     $ticket->delete();
 
-    return redirect()->route('tickets.index')->with('success', 'Ticket deleted successfully.');
+    return response()->json([
+      'success' => true,
+      'message' => 'Tiket berjaya dipadam!'
+    ]);
   }
 }
