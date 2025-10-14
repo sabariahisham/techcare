@@ -19,7 +19,7 @@
       "icon": "menu-icon icon-base bx bx-book-open",
       "name": "Knowledge Base",
       "slug": "knowledge-index",
-      "permission": "knowledge-base.view"
+      "permission": "knowledgebase.view"
     },
     {
       "url": "#",
@@ -37,67 +37,62 @@
       "name": "Pentadbir",
       "icon": "menu-icon tf-icons bx bx-check-shield",
       "slug": "acl",
-      "permission": "pentadbir.view",
+      "permission": "admin.view",
       "submenu": [
         {
           "name": "Pengurusan Pengguna",
           "slug": "user-management",
-          "permission": "user-management.view",
+          "permission": "pengguna.view",
           "submenu": [
             {
               "url": "user-management/index",
               "name": "Pengguna",
               "slug": "user-management-index",
-              "permission": "user-management.view"
+              "permission": "pengguna.view"
             },
-            {
-              "url": "acl/module-list/index",
-              "name": "Modules",
-              "slug": "acl-module-list-index",
-              "permission": "admin-management.view"
-            },
+
             {
               "url": "acl/permissions/index",
-              "name": "Permissions",
+              "name": "Kebenaran",
               "slug": "acl-permissions-index",
-              "permission": "permission-management.view"
+              "permission": "kebenaran.view"
             },
             {
               "url": "acl/roles/index",
-              "name": "Roles",
+              "name": "Peranan",
               "slug": "acl-roles-index",
-              "permission": "role-management.view"
+              "permission": "peranan.view"
             }
           ]
         },
         {
           "name": "Konfigurasi",
           "slug": "configuration",
-          "permission": "configuration.view",
+          "permission": "konfigurasi.view",
           "submenu": [
             {
               "url": "ref-category-management/index",
               "name": "Kategori",
               "slug": "ref-category-management-index",
-              "permission": "configuration.view"
+              "permission": "konfigurasi.view"
             },
             {
               "url": "ref-sub-category-management/index",
               "name": "Sub-kategori",
               "slug": "ref-sub-category-management-index",
-              "permission": "configuration.view"
+              "permission": "konfigurasi.view"
             },
             {
               "url": "sla-severity/index",
               "name": "SLA & Severity",
               "slug": "sla-severity-index",
-              "permission": "configuration.view"
+              "permission": "konfigurasi.view"
             },
             {
               "url": "officer/index",
               "name": "Pegawai Tugasan",
               "slug": "officer-index",
-              "permission": "configuration.view"
+              "permission": "konfigurasi.view"
             }
           ]
         }
@@ -112,6 +107,7 @@
       "icon": "menu-icon tf-icons bx bx-support",
       "name": "Support",
       "slug": "support",
+      "permission": "admin.view",
       "target": "_blank"
     },
     {
@@ -119,6 +115,7 @@
       "icon": "menu-icon tf-icons bx bx-file",
       "name": "Documentation",
       "slug": "documentation",
+      "permission": "admin.view",
       "target": "_blank"
     }
   ]

@@ -21,25 +21,28 @@ class DatabaseSeeder extends Seeder
 
     // First run permission and role seeders (BEFORE creating users)
     $this->call([
-      RolesAndPermissionSeeder::class,
-      UpdateRolesSeeder::class,
-      SuperAdminSeeder::class,
+      EnhancedUserRolePermissionSeeder::class,
+      // RoleSeeder::class,
+      // PermissionSeeder::class,
+
+      // UpdateRolesSeeder::class,
+      // SuperAdminSeeder::class,
     ]);
 
     // Create users AFTER roles exist
-    User::factory(25)->create();
+    // User::factory(25)->create();
 
     // Then run reference data seeders
-    $this->call([
-      RefCategorySeeder::class,
-      RefSubCategorySeeder::class,
-      RefTicketStatusSeeder::class,
-    ]);
+    // $this->call([
+    //   RefCategorySeeder::class,
+    //   RefSubCategorySeeder::class,
+    //   RefTicketStatusSeeder::class,
+    // ]);
 
     // Finally run data seeders that depend on users and reference data
-    $this->call([
-      TicketSeeder::class,
-    ]);
+    // $this->call([
+    //   TicketSeeder::class,
+    // ]);
 
     // $this->call([
     //   ModuleListSeeder::class,
