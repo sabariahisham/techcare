@@ -75,6 +75,12 @@ $(function () {
       console.log('No existing Select2 to destroy');
     }
 
+    // Disable HTML5 validation for custom handling
+    $('#addTicketForm').attr('novalidate', 'novalidate');
+
+    // Remove required attributes from fields that use custom validation
+    $('#cat_id, #subcat_id').removeAttr('required');
+
     // Reinitialize with proper configuration
     setTimeout(function () {
       initializeAddTicketSelect2();
@@ -94,6 +100,12 @@ $(function () {
     } catch (e) {
       console.log('No existing Select2 to destroy');
     }
+
+    // Disable HTML5 validation for custom handling
+    $('#editTicketForm').attr('novalidate', 'novalidate');
+
+    // Remove required attributes from fields that use custom validation
+    $('#edit_cat_id, #edit_subcat_id').removeAttr('required');
 
     // Reinitialize with proper configuration
     setTimeout(function () {
@@ -251,6 +263,9 @@ $(function () {
   function clearValidationErrors() {
     $('.is-invalid').removeClass('is-invalid');
     $('.invalid-feedback').remove();
+
+    // Also clear Select2 validation styling
+    $('.select2-container').removeClass('is-invalid');
   }
 
   // Function to display validation errors
@@ -432,6 +447,11 @@ $(function () {
   // Handle form submission (ADD FORM)
   $('#addTicketForm').on('submit', function (e) {
     e.preventDefault();
+
+    // Prevent default HTML5 validation and use custom validation
+    if (this.checkValidity) {
+      this.checkValidity = function () { return true; };
+    }
 
     // Client-side validation
     if (!validateAddForm()) {
@@ -715,13 +735,27 @@ $(function () {
     clearValidationErrors();
   });
 
-  // Clear validation errors when user starts typing in fields
-  $(document).on('input', 'input[name], select[name], textarea[name]', function () {
+  // Clear validation errors when user starts typing in fields or changes Select2
+  $(document).on('input change', 'input[name], select[name], textarea[name]', function () {
     var field = $(this);
 
     // Remove validation error for this specific field
     field.removeClass('is-invalid');
     field.siblings('.invalid-feedback').remove();
+
+    // Handle Select2 error clearing
+    if (field.hasClass('select2-hidden-accessible')) {
+      field.next('.select2-container').removeClass('is-invalid');
+      field.next('.select2-container').siblings('.invalid-feedback').remove();
+    }
+  });
+
+  // Handle Select2 specific change events
+  $(document).on('select2:select select2:unselect', '#cat_id, #subcat_id, #edit_cat_id, #edit_subcat_id', function () {
+    var field = $(this);
+    field.removeClass('is-invalid');
+    field.next('.select2-container').removeClass('is-invalid');
+    field.next('.select2-container').siblings('.invalid-feedback').remove();
   });
 
   // Initialize custom validation messages on document ready
