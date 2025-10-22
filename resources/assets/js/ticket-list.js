@@ -37,7 +37,7 @@ $(function () {
       serverSide: true,
       ajax: '/tickets/data',
       columns: [
-         { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false }, // Bil
+        { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false }, // Bil
         { data: 'tarikh_aduan', name: 'tarikh_aduan' },
         { data: 'nama_pengadu', name: 'nama_pengadu' },
         { data: 'kategori', name: 'kategori' },
@@ -87,7 +87,107 @@ $(function () {
   // Delete Record
   $('.datatables-tickets tbody').on('click', '.delete-record', function () {
     var id = $(this).data('id');
-    // Add your delete logic here
+
+    // Use SweetAlert2 if available, otherwise use regular confirm
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: 'Adakah anda pasti?',
+        text: "Tiket ini akan dipadam secara kekal!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, padam!',
+        cancelButtonText: 'Batal'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          deleteTicket(id);
+        }
+      });
+    } else {
+      if (confirm('Adakah anda pasti untuk memadam tiket ini?')) {
+        deleteTicket(id);
+      }
+    }
+  });
+
+  // Function to handle the actual delete operation
+  function deleteTicket(id) {
+    $.ajax({
+      url: '/tickets/' + id,
+      type: 'DELETE',
+      data: {
+        "_token": $('meta[name="csrf-token"]').attr('content'),
+      },
+      success: function (response) {
+        dt_user.ajax.reload();
+
+        // Show success message
+        if (typeof Swal !== 'undefined') {
+          Swal.fire('Dipadam!', response.message || 'Tiket telah dipadam.', 'success');
+        } else if (typeof toastr !== 'undefined') {
+          toastr.success(response.message || 'Tiket telah dipadam.');
+        } else {
+          alert(response.message || 'Tiket telah dipadam.');
+        }
+      },
+      error: function (xhr) {
+        var message = 'Ralat berlaku semasa memadam tiket.';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          message = xhr.responseJSON.message;
+        }
+
+        if (typeof Swal !== 'undefined') {
+          Swal.fire('Ralat!', message, 'error');
+        } else if (typeof toastr !== 'undefined') {
+          toastr.error(message);
+        } else {
+          alert(message);
+        }
+      }
+    });
+  }
+
+  // Edit Record - Handle edit button click
+  $('.datatables-tickets tbody').on('click', '.edit-record', function () {
+    var ticketId = $(this).data('id');
+
+    // Show loading if available
+    if (typeof toastr !== 'undefined') {
+      toastr.info('Memuat data tiket...');
+    }
+
+    // Fetch ticket data
+    $.ajax({
+      url: '/tickets/' + ticketId + '/edit',
+      type: 'GET',
+      success: function (response) {
+        // Load data into edit form using the global function from ticket.js
+        if (typeof window.loadTicketData === 'function') {
+          window.loadTicketData(response.ticket);
+          $('#offcanvasEditTicket').offcanvas('show');
+        } else {
+          console.error('loadTicketData function not found - make sure ticket.js is loaded');
+          if (typeof toastr !== 'undefined') {
+            toastr.error('Fungsi edit tidak dijumpai. Sila muat semula halaman.');
+          } else {
+            alert('Fungsi edit tidak dijumpai. Sila muat semula halaman.');
+          }
+        }
+      },
+      error: function (xhr) {
+        var message = 'Ralat memuat data tiket';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          message = xhr.responseJSON.message;
+        }
+
+        if (typeof toastr !== 'undefined') {
+          toastr.error(message);
+        } else {
+          alert(message);
+        }
+      }
+    });
   });
 
   setTimeout(() => {
@@ -95,53 +195,3 @@ $(function () {
     $('.dataTables_length .form-select').removeClass('form-select-sm');
   }, 300);
 });
-
-// Validation & Phone mask
-(function () {
-  const phoneMaskList = document.querySelectorAll('.phone-mask'),
-    addNewUserForm = document.getElementById('addNewUserForm');
-
-  // Phone Number
-  if (phoneMaskList) {
-    phoneMaskList.forEach(function (phoneMask) {
-      new Cleave(phoneMask, {
-        phone: true,
-        phoneRegionCode: 'US'
-      });
-    });
-  }
-  // Add New User Form Validation
-  const fv = FormValidation.formValidation(addNewUserForm, {
-    fields: {
-      userFullname: {
-        validators: {
-          notEmpty: {
-            message: 'Please enter fullname '
-          }
-        }
-      },
-      userEmail: {
-        validators: {
-          notEmpty: {
-            message: 'Please enter your email'
-          },
-          emailAddress: {
-            message: 'The value is not a valid email address'
-          }
-        }
-      }
-    },
-    plugins: {
-      trigger: new FormValidation.plugins.Trigger(),
-      bootstrap5: new FormValidation.plugins.Bootstrap5({
-        eleValidClass: '',
-        rowSelector: function (field, ele) {
-          return '.mb-6';
-        }
-      }),
-      submitButton: new FormValidation.plugins.SubmitButton(),
-      autoFocus: new FormValidation.plugins.AutoFocus()
-    }
-  });
-})
-();

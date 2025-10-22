@@ -128,7 +128,7 @@ class RefCategoryManagementController extends Controller
     {
         try {
             $category = RefCategory::findOrFail($id);
-            $subcategories = $category->subCategories()->select('id', 'subcat_name')->get();
+            $subcategories = $category->subCategories()->select('id', 'subcat_name as name')->get();
 
             return response()->json($subcategories);
         } catch (\Exception $e) {
