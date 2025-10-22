@@ -14,8 +14,8 @@
         }
 
         /* .offcanvas-60 {
-                                width: 60% !important;
-                            } */
+                                        width: 60% !important;
+                                    } */
 
         /* Responsive breakpoints for offcanvas */
         @media (max-width: 1200px) {
@@ -120,11 +120,25 @@
             border-color: #696cff !important;
             box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25) !important;
         }
+
+        /* Select2 Error State */
+        .select2-container.is-invalid .select2-selection--single {
+            border-color: #ea5455 !important;
+            box-shadow: 0 0 0 0.2rem rgba(234, 84, 85, 0.25) !important;
+        }
+
+        /* Style for invalid feedback message next to Select2 */
+        .select2-container+.invalid-feedback {
+            display: block !important;
+            color: #ea5455;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
     </style>
 @endsection
 
 @section('vendor-script')
-    @vite(['resources/assets/js/config.js', 'resources/assets/vendor/libs/jquery/jquery.js', 'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js', 'resources/assets/vendor/libs/select2/select2.js', 'resources/assets/vendor/libs/toastr/toastr.js', 'resources/assets/vendor/libs/sweetalert2/sweetalert2.js'])
+    @vite(['resources/assets/js/config.js', 'resources/assets/vendor/libs/jquery/jquery.js', 'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js', 'resources/assets/vendor/libs/select2/select2.js', 'resources/assets/vendor/libs/@form-validation/popular.js', 'resources/assets/vendor/libs/@form-validation/bootstrap5.js', 'resources/assets/vendor/libs/@form-validation/auto-focus.js', 'resources/assets/vendor/libs/cleavejs/cleave.js', 'resources/assets/vendor/libs/cleavejs/cleave-phone.js', 'resources/assets/vendor/libs/toastr/toastr.js', 'resources/assets/vendor/libs/sweetalert2/sweetalert2.js'])
 @endsection
 
 @section('page-script')
@@ -282,7 +296,7 @@
                     <!-- Kategori -->
                     <div class="mb-3">
                         <label class="form-label">Kategori</label>
-                        <select name="cat_id" id="cat_id" class="form-select" required>
+                        <select name="cat_id" id="cat_id" class="form-select" data-validation="custom">
                             <option value="">-- Pilih Kategori --</option>
                             @if (isset($categories))
                                 @foreach ($categories as $cat)
@@ -295,7 +309,7 @@
                     <!-- Sub Kategori -->
                     <div class="mb-3">
                         <label class="form-label">Sub Kategori</label>
-                        <select name="subcat_id" id="subcat_id" class="form-select" required>
+                        <select name="subcat_id" id="subcat_id" class="form-select" data-validation="custom">
                             <option value="">-- Pilih Sub Kategori --</option>
                         </select>
                     </div>
@@ -450,7 +464,7 @@
                 <!-- Kategori -->
                 <div class="mb-3">
                     <label class="form-label">Kategori</label>
-                    <select name="cat_id" id="edit_cat_id" class="form-select" required>
+                    <select name="cat_id" id="edit_cat_id" class="form-select" data-validation="custom">
                         <option value="">-- Pilih Kategori --</option>
                         @if (isset($categories))
                             @foreach ($categories as $cat)
@@ -463,7 +477,7 @@
                 <!-- Sub Kategori -->
                 <div class="mb-3">
                     <label class="form-label">Sub Kategori</label>
-                    <select name="subcat_id" id="edit_subcat_id" class="form-select" required>
+                    <select name="subcat_id" id="edit_subcat_id" class="form-select" data-validation="custom">
                         <option value="">-- Pilih Sub Kategori --</option>
                     </select>
                 </div>
