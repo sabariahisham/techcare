@@ -14,8 +14,8 @@
         }
 
         /* .offcanvas-60 {
-                                        width: 60% !important;
-                                    } */
+          width: 60% !important;
+          } */
 
         /* Responsive breakpoints for offcanvas */
         @media (max-width: 1200px) {
@@ -121,6 +121,19 @@
             box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25) !important;
         }
 
+        /* Remove focus styling from Select2 elements - normal state */
+        .select2-container--bootstrap-5 .select2-selection--single:not(.select2-container--focus) {
+            border-color: #d9dee3 !important;
+            box-shadow: none !important;
+        }
+
+        /* Override focus state when user wants normal styling */
+        .select2-normal-state .select2-container--bootstrap-5 .select2-selection--single,
+        .select2-normal-state .select2-container--bootstrap-5.select2-container--focus .select2-selection--single {
+            border-color: #d9dee3 !important;
+            box-shadow: none !important;
+        }
+
         /* Select2 Error State */
         .select2-container.is-invalid .select2-selection--single {
             border-color: #ea5455 !important;
@@ -133,6 +146,75 @@
             color: #ea5455;
             font-size: 0.875rem;
             margin-top: 0.25rem;
+        }
+
+        /* File input error state styling - match Bootstrap form-control styling */
+        input[type="file"].is-invalid {
+            border-color: #dc3545 !important;
+            padding-right: calc(1.5em + 0.75rem) !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 1.4 1.4m0-1.4-1.4 1.4'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right calc(0.375em + 0.1875rem) center !important;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem) !important;
+        }
+
+        input[type="file"].is-invalid:focus {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+        }
+
+        /* Make sure file input shows error state clearly - Bootstrap style */
+        .form-field-wrapper input[type="file"].is-invalid,
+        input[name="attachments[]"].is-invalid {
+            border-color: #dc3545 !important;
+            background-color: #fff !important;
+        }
+
+        /* File input focus state when invalid */
+        .form-field-wrapper input[type="file"].is-invalid:focus,
+        input[name="attachments[]"].is-invalid:focus {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+            background-color: #fff !important;
+        }
+
+        /* Ensure invalid feedback is visible for all field types */
+        .invalid-feedback {
+            display: block !important;
+            color: #ea5455;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Search user section styling */
+        .user-search-section {
+            border: 1px solid #d9dee3;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+        }
+
+        .search-loading {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        /* Remove the green box styling - just regular styling for found user info */
+        #foundUserInfo,
+        #editFoundUserInfo {
+            margin-top: 1rem;
+        }
+
+        /* Subtle styling for readonly fields */
+        input[readonly].form-control {
+            background-color: #f8f9fa;
+            border-color: #e9ecef;
+            color: #6c757d;
+        }
+
+        .input-group .btn {
+            white-space: nowrap;
         }
     </style>
 @endsection
@@ -163,11 +245,13 @@
                 <thead class="border-top">
                     <tr>
                         <th>Bil</th>
+                        <th>No. Log Tiket</th>
                         <th>Tarikh Aduan</th>
                         <th>Nama Pengadu</th>
                         <th>Kategori</th>
                         <th>Sub Kategori</th>
                         <th>Status</th>
+                        <th>Pegawai Tugasan</th> <!-- blink username-text if overdue -->
                         <th>Tindakan</th>
                     </tr>
                 </thead>
@@ -240,98 +324,142 @@
                     <div id="otherInfo" class="d-none mb-4">
                         <h6>Maklumat Bagi Pihak</h6>
                         <div class="row g-3">
+                            <!-- Email search field -->
                             <div class="col-12">
-                                <label class="form-label">Nama Pengadu</label>
-                                <input type="text" class="form-control" placeholder="Nama Pengadu" name="other_name">
+                                <label class="form-label">Cari Emel Pengguna</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="search_email"
+                                        placeholder="Contoh: user atau user@treasury.gov.my">
+                                    <button class="btn btn-outline-primary" type="button" id="searchUserBtn">
+                                        <i class="bx bx-search"></i> Cari
+                                    </button>
+                                </div>
+                                <small class="text-muted">Masukkan nama pengguna (tanpa @treasury.gov.my) atau alamat emel
+                                    penuh</small>
                             </div>
-                            <div class="col-12">
-                                <label class="form-label">Emel</label>
-                                <input type="email" class="form-control" placeholder="Emel" name="other_email">
+
+                            <!-- Alert container for search errors -->
+                            <div class="col-12" id="searchAlert" style="display: none;">
+                                <div class="alert alert-danger alert-dismissible" role="alert">
+                                    <span id="searchAlertMessage"></span>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                        aria-label="Close"></button>
+                                </div>
                             </div>
-                            <div class="col-12">
-                                <label class="form-label">Sektor</label>
-                                <select class="form-select" name="other_sektor">
-                                    <option value="">-- Pilih Sektor --</option>
-                                    {{-- @foreach ($sektors as $sek) --}}
-                                    {{-- <option value="{{ $sek->id }}">{{ $sek->name }}</option> --}}
-                                    {{-- @endforeach --}}
-                                </select>
+
+                            <!-- Loading indicator -->
+                            <div class="col-12" id="searchLoading" style="display: none;">
+                                <div class="text-center">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Mencari...</span>
+                                    </div>
+                                    <span class="ms-2">Mencari maklumat pengguna...</span>
+                                </div>
                             </div>
-                            <div class="col-12">
-                                <label class="form-label">Bahagian</label>
-                                <select class="form-select" name="other_agency">
-                                    <option value="">-- Pilih Bahagian --</option>
-                                    {{-- @foreach ($agencies as $ag) --}}
-                                    {{-- <option value="{{ $ag->id }}">{{ $ag->name }}</option> --}}
-                                    {{-- @endforeach --}}
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Seksyen</label>
-                                <select class="form-select" name="other_seksyen">
-                                    <option value="">-- Pilih Seksyen --</option>
-                                    {{-- @foreach ($seksyens as $sx) --}}
-                                    {{-- <option value="{{ $sx->id }}">{{ $sx->name }}</option> --}}
-                                    {{-- @endforeach --}}
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Unit</label>
-                                <select class="form-select" name="other_unit">
-                                    <option value="">-- Pilih Unit --</option>
-                                    {{-- @foreach ($units as $u) --}}
-                                    {{-- <option value="{{ $u->id }}">{{ $u->name }}</option> --}}
-                                    {{-- @endforeach --}}
-                                </select>
+
+                            <!-- User info fields (hidden by default) -->
+                            <div id="foundUserInfo" style="display: none;">
+                                <div class="row g-3">
+                                    <!-- Button to clear and search again -->
+                                    <div class="col-12 text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            id="clearSearchBtn">
+                                            <i class="bx bx-refresh"></i> Cari Pengguna Lain
+                                        </button>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Nama Pengadu</label>
+                                        <input type="text" class="form-control" id="other_name_display"
+                                            name="other_name" readonly>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Emel</label>
+                                        <input type="email" class="form-control" id="other_email_display"
+                                            name="other_email" readonly>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Sektor</label>
+                                        <input type="text" class="form-control" id="other_sektor_display"
+                                            name="other_sektor" readonly>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Bahagian</label>
+                                        <input type="text" class="form-control" id="other_agency_display"
+                                            name="other_agency" readonly>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Seksyen</label>
+                                        <input type="text" class="form-control" id="other_seksyen_display"
+                                            name="other_seksyen" readonly>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Unit</label>
+                                        <input type="text" class="form-control" id="other_unit_display"
+                                            name="other_unit" readonly>
+                                    </div>
+                                    <!-- Button to clear and search again -->
+                                    {{-- <div class="col-12 mt-3">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="editClearSearchBtn1">
+                                        <i class="bx bx-refresh"></i> Cari Pengguna Lain
+                                    </button>
+                                </div> --}}
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tajuk -->
-                    <div class="mb-3">
-                        <label class="form-label">Tajuk</label>
-                        <input type="text" name="tick_title" class="form-control" required>
-                    </div>
+                    <!-- Ticket Form Fields (hidden when Bagi Pihak is selected but no user found) -->
+                    <div id="ticketFormFields">
+                        <!-- Tajuk -->
+                        <div class="mb-3">
+                            <label class="form-label">Tajuk</label>
+                            <input type="text" name="tick_title" class="form-control" required>
+                        </div>
 
-                    <!-- Kategori -->
-                    <div class="mb-3">
-                        <label class="form-label">Kategori</label>
-                        <select name="cat_id" id="cat_id" class="form-select" data-validation="custom">
-                            <option value="">-- Pilih Kategori --</option>
-                            @if (isset($categories))
-                                @foreach ($categories as $cat)
-                                    <option value="{{ $cat->id }}">{{ $cat->cat_name }}</option>
-                                @endforeach
-                            @endif
-                        </select>
-                    </div>
+                        <!-- Kategori -->
+                        <div class="mb-3">
+                            <label class="form-label">Kategori</label>
+                            <select name="cat_id" id="cat_id" class="form-select" data-validation="custom">
+                                <option value="">-- Pilih Kategori --</option>
+                                @if (isset($categories))
+                                    @foreach ($categories as $cat)
+                                        <option value="{{ $cat->id }}">{{ $cat->cat_name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
 
-                    <!-- Sub Kategori -->
-                    <div class="mb-3">
-                        <label class="form-label">Sub Kategori</label>
-                        <select name="subcat_id" id="subcat_id" class="form-select" data-validation="custom">
-                            <option value="">-- Pilih Sub Kategori --</option>
-                        </select>
-                    </div>
+                        <!-- Sub Kategori -->
+                        <div class="mb-3">
+                            <label class="form-label">Sub Kategori</label>
+                            <select name="subcat_id" id="subcat_id" class="form-select" data-validation="custom">
+                                <option value="">-- Pilih Sub Kategori --</option>
+                            </select>
+                        </div>
 
-                    <!-- Keterangan -->
-                    <div class="mb-3">
-                        <label class="form-label">Keterangan</label>
-                        <textarea name="tick_desc" class="form-control" rows="4" required></textarea>
-                    </div>
+                        <!-- Keterangan -->
+                        <div class="mb-3">
+                            <label class="form-label">Keterangan</label>
+                            <textarea name="tick_desc" class="form-control" rows="4" required></textarea>
+                        </div>
 
-                    <!-- Lampiran -->
-                    <div class="mb-3">
-                        <label class="form-label">Lampiran</label>
-                        <input type="file" name="attachments[]" class="form-control" multiple
-                            accept=".pdf,.doc,.jpg,.png">
-                        <small class="text-muted">Saiz maksimum setiap fail 2MB</small>
-                    </div>
+                        <!-- Lampiran -->
+                        <div class="form-field-wrapper mb-3">
+                            <label class="form-label">Lampiran</label>
+                            <input type="file" name="attachments[]" class="form-control" multiple
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                            <small class="text-muted">Format yang dibenarkan: PDF, DOC, DOCX, JPG, JPEG, PNG. Saiz maksimum
+                                setiap fail 2MB</small>
+                            <div class="error-text text-danger mt-1" style="display:none;"></div>
+                        </div>
 
-                    <!-- Butang -->
-                    <div class="text-end">
-                        <button type="submit" class="btn btn-primary">Simpan & Hantar</button>
-                        <button type="button" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
+                        <!-- Butang -->
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">Simpan & Hantar</button>
+                            <button type="button" class="btn btn-label-danger"
+                                data-bs-dismiss="offcanvas">Batal</button>
+                        </div>
                     </div>
 
                 </form>
@@ -406,100 +534,142 @@
                 <div id="edit_otherInfo" class="d-none mb-4">
                     <h6>Maklumat Bagi Pihak</h6>
                     <div class="row g-3">
+                        <!-- Email search field -->
                         <div class="col-12">
-                            <label class="form-label">Nama Pengadu</label>
-                            <input type="text" class="form-control" id="edit_other_name" name="other_name"
-                                placeholder="Nama Pengadu">
+                            <label class="form-label">Cari Emel Pengguna</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="edit_search_email"
+                                    placeholder="Contoh: user atau user@treasury.gov.my">
+                                <button class="btn btn-outline-primary" type="button" id="editSearchUserBtn">
+                                    <i class="bx bx-search"></i> Cari
+                                </button>
+                            </div>
+                            <small class="text-muted">Masukkan nama pengguna (tanpa @treasury.gov.my) atau alamat emel
+                                penuh</small>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Emel</label>
-                            <input type="email" class="form-control" id="edit_other_email" name="other_email"
-                                placeholder="Emel">
+
+                        <!-- Alert container for search errors -->
+                        <div class="col-12" id="editSearchAlert" style="display: none;">
+                            <div class="alert alert-danger alert-dismissible" role="alert">
+                                <span id="editSearchAlertMessage"></span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Close"></button>
+                            </div>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Sektor</label>
-                            <select class="form-select" id="edit_other_sektor" name="other_sektor">
-                                <option value="">-- Pilih Sektor --</option>
-                                {{-- @foreach ($sektors as $sek) --}}
-                                {{-- <option value="{{ $sek->id }}">{{ $sek->name }}</option> --}}
-                                {{-- @endforeach --}}
-                            </select>
+
+                        <!-- Loading indicator -->
+                        <div class="col-12" id="editSearchLoading" style="display: none;">
+                            <div class="text-center">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Mencari...</span>
+                                </div>
+                                <span class="ms-2">Mencari maklumat pengguna...</span>
+                            </div>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Bahagian</label>
-                            <select class="form-select" id="edit_other_agency" name="other_agency">
-                                <option value="">-- Pilih Bahagian --</option>
-                                {{-- @foreach ($agencies as $ag) --}}
-                                {{-- <option value="{{ $ag->id }}">{{ $ag->name }}</option> --}}
-                                {{-- @endforeach --}}
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Seksyen</label>
-                            <select class="form-select" id="edit_other_seksyen" name="other_seksyen">
-                                <option value="">-- Pilih Seksyen --</option>
-                                {{-- @foreach ($seksyens as $sx) --}}
-                                {{-- <option value="{{ $sx->id }}">{{ $sx->name }}</option> --}}
-                                {{-- @endforeach --}}
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Unit</label>
-                            <select class="form-select" id="edit_other_unit" name="other_unit">
-                                <option value="">-- Pilih Unit --</option>
-                                {{-- @foreach ($units as $u) --}}
-                                {{-- <option value="{{ $u->id }}">{{ $u->name }}</option> --}}
-                                {{-- @endforeach --}}
-                            </select>
+
+                        <!-- User info fields (hidden by default) -->
+                        <div id="editFoundUserInfo" style="display: none;">
+                            <div class="row g-3">
+                                <!-- Button to clear and search again -->
+                                <div class="col-12 mb-3 text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="editClearSearchBtn">
+                                        <i class="bx bx-refresh"></i> Cari Pengguna Lain
+                                    </button>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Nama Pengadu</label>
+                                    <input type="text" class="form-control" id="edit_other_name" name="other_name"
+                                        readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Emel</label>
+                                    <input type="email" class="form-control" id="edit_other_email" name="other_email"
+                                        readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Sektor</label>
+                                    <input type="text" class="form-control" id="edit_other_sektor"
+                                        name="other_sektor" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Bahagian</label>
+                                    <input type="text" class="form-control" id="edit_other_agency"
+                                        name="other_agency" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Seksyen</label>
+                                    <input type="text" class="form-control" id="edit_other_seksyen"
+                                        name="other_seksyen" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Unit</label>
+                                    <input type="text" class="form-control" id="edit_other_unit" name="other_unit"
+                                        readonly>
+                                </div>
+
+                                <!-- Button to clear and search again -->
+                                {{-- <div class="col-12 mt-3">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        id="editClearSearchBtn1">
+                                        <i class="bx bx-refresh"></i> Cari Pengguna Lain
+                                    </button>
+                                </div> --}}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Tajuk -->
-                <div class="mb-3">
-                    <label class="form-label">Tajuk</label>
-                    <input type="text" name="tick_title" id="edit_tick_title" class="form-control" required>
-                </div>
+                <!-- Edit Ticket Form Fields (hidden when Bagi Pihak is selected but no user found) -->
+                <div id="editTicketFormFields">
+                    <!-- Tajuk -->
+                    <div class="mb-3">
+                        <label class="form-label">Tajuk</label>
+                        <input type="text" name="tick_title" id="edit_tick_title" class="form-control" required>
+                    </div>
 
-                <!-- Kategori -->
-                <div class="mb-3">
-                    <label class="form-label">Kategori</label>
-                    <select name="cat_id" id="edit_cat_id" class="form-select" data-validation="custom">
-                        <option value="">-- Pilih Kategori --</option>
-                        @if (isset($categories))
-                            @foreach ($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->cat_name }}</option>
-                            @endforeach
-                        @endif
-                    </select>
-                </div>
+                    <!-- Kategori -->
+                    <div class="mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select name="cat_id" id="edit_cat_id" class="form-select" data-validation="custom">
+                            <option value="">-- Pilih Kategori --</option>
+                            @if (isset($categories))
+                                @foreach ($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->cat_name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
 
-                <!-- Sub Kategori -->
-                <div class="mb-3">
-                    <label class="form-label">Sub Kategori</label>
-                    <select name="subcat_id" id="edit_subcat_id" class="form-select" data-validation="custom">
-                        <option value="">-- Pilih Sub Kategori --</option>
-                    </select>
-                </div>
+                    <!-- Sub Kategori -->
+                    <div class="mb-3">
+                        <label class="form-label">Sub Kategori</label>
+                        <select name="subcat_id" id="edit_subcat_id" class="form-select" data-validation="custom">
+                            <option value="">-- Pilih Sub Kategori --</option>
+                        </select>
+                    </div>
 
-                <!-- Keterangan -->
-                <div class="mb-3">
-                    <label class="form-label">Keterangan</label>
-                    <textarea name="tick_desc" id="edit_tick_desc" class="form-control" rows="4" required></textarea>
-                </div>
+                    <!-- Keterangan -->
+                    <div class="mb-3">
+                        <label class="form-label">Keterangan</label>
+                        <textarea name="tick_desc" id="edit_tick_desc" class="form-control" rows="4" required></textarea>
+                    </div>
 
-                <!-- Lampiran -->
-                <div class="mb-3">
-                    <label class="form-label">Lampiran (jika ingin gantikan)</label>
-                    <input type="file" name="attachments[]" class="form-control" multiple
-                        accept=".pdf,.doc,.jpg,.png">
-                    <small class="text-muted">Saiz maksimum setiap fail 2MB</small>
-                </div>
+                    <!-- Lampiran -->
+                    <div class="form-field-wrapper mb-3">
+                        <label class="form-label">Lampiran (jika ingin gantikan)</label>
+                        <input type="file" name="attachments[]" class="form-control" multiple
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <small class="text-muted">Format yang dibenarkan: PDF, DOC, DOCX, JPG, JPEG, PNG. Saiz maksimum
+                            setiap fail 2MB</small>
+                        <div class="error-text text-danger mt-1" style="display:none;"></div>
+                    </div>
 
-                <!-- Butang -->
-                <div class="text-end">
-                    <button type="submit" class="btn btn-primary">Kemaskini Tiket</button>
-                    <button type="button" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
+                    <!-- Butang -->
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">Kemaskini Tiket</button>
+                        <button type="button" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
+                    </div>
                 </div>
             </form>
         </div>

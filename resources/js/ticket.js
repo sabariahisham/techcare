@@ -63,6 +63,14 @@ $(function () {
 
   // Initialize when Add Ticket offcanvas is shown
   $('#offcanvasAddTicket').on('shown.bs.offcanvas', function () {
+    // Auto-scroll to top of the offcanvas content
+    setTimeout(function () {
+      var offcanvasBody = $('#offcanvasAddTicket .offcanvas-body');
+      if (offcanvasBody.length > 0) {
+        offcanvasBody.scrollTop(0);
+      }
+    }, 100);
+
     // Destroy existing select2 instances safely
     try {
       if ($('#cat_id').hasClass('select2-hidden-accessible')) {
@@ -89,6 +97,14 @@ $(function () {
 
   // Initialize when Edit Ticket offcanvas is shown
   $('#offcanvasEditTicket').on('shown.bs.offcanvas', function () {
+    // Auto-scroll to top of the offcanvas content
+    setTimeout(function () {
+      var offcanvasBody = $('#offcanvasEditTicket .offcanvas-body');
+      if (offcanvasBody.length > 0) {
+        offcanvasBody.scrollTop(0);
+      }
+    }, 100);
+
     // Destroy existing select2 instances safely
     try {
       if ($('#edit_cat_id').hasClass('select2-hidden-accessible')) {
@@ -164,9 +180,15 @@ $(function () {
     if ($(this).val() == '0') {
       $('#selfInfo').addClass('d-none');
       $('#otherInfo').removeClass('d-none');
+      // Hide form fields until user is found
+      $('#ticketFormFields').addClass('d-none');
+      // Reset search when switching to "Bagi Pihak"
+      resetUserSearch();
     } else {
       $('#selfInfo').removeClass('d-none');
       $('#otherInfo').addClass('d-none');
+      // Show form fields for "Diri Sendiri"
+      $('#ticketFormFields').removeClass('d-none');
     }
   });
 
@@ -175,11 +197,252 @@ $(function () {
     if ($(this).val() == '0') {
       $('#edit_selfInfo').addClass('d-none');
       $('#edit_otherInfo').removeClass('d-none');
+      // Hide form fields until user is found
+      $('#editTicketFormFields').addClass('d-none');
+      // Reset search when switching to "Bagi Pihak"
+      resetEditUserSearch();
     } else {
       $('#edit_selfInfo').removeClass('d-none');
       $('#edit_otherInfo').addClass('d-none');
+      // Show form fields for "Diri Sendiri"
+      $('#editTicketFormFields').removeClass('d-none');
     }
   });
+
+  // Function to reset user search (ADD FORM)
+  function resetUserSearch() {
+    $('#search_email').val('');
+    $('#foundUserInfo').hide();
+    $('#searchLoading').hide();
+    // Hide alert notifications
+    $('#searchAlert').hide();
+    // Hide form fields when clearing search
+    $('#ticketFormFields').addClass('d-none');
+    // Restore normal Select2 behavior
+    $('#cat_id, #subcat_id').next('.select2-container').removeClass('select2-normal-state');
+    clearUserFields();
+  }
+
+  // Function to reset user search (EDIT FORM)
+  function resetEditUserSearch() {
+    $('#edit_search_email').val('');
+    $('#editFoundUserInfo').hide();
+    $('#editSearchLoading').hide();
+    // Hide alert notifications
+    $('#editSearchAlert').hide();
+    // Hide form fields when clearing search
+    $('#editTicketFormFields').addClass('d-none');
+    // Restore normal Select2 behavior
+    $('#edit_cat_id, #edit_subcat_id').next('.select2-container').removeClass('select2-normal-state');
+    clearEditUserFields();
+  }
+
+  // Function to clear user fields (ADD FORM)
+  function clearUserFields() {
+    $('#other_name_display').val('');
+    $('#other_email_display').val('');
+    $('#other_sektor_display').val('');
+    $('#other_agency_display').val('');
+    $('#other_seksyen_display').val('');
+    $('#other_unit_display').val('');
+  }
+
+  // Function to clear user fields (EDIT FORM)
+  function clearEditUserFields() {
+    $('#edit_other_name').val('');
+    $('#edit_other_email').val('');
+    $('#edit_other_sektor').val('');
+    $('#edit_other_agency').val('');
+    $('#edit_other_seksyen').val('');
+    $('#edit_other_unit').val('');
+  }
+
+  // Handle search user button click (ADD FORM)
+  $('#searchUserBtn').on('click', function () {
+    var email = $('#search_email').val().trim();
+
+    if (!email) {
+      toastr.error('Sila masukkan alamat emel untuk mencari.');
+      return;
+    }
+
+    // Auto-append @treasury.gov.my if not present
+    if (!email.includes('@')) {
+      email = email + '@treasury.gov.my';
+      $('#search_email').val(email); // Update the input field to show full email
+    }
+
+    // Comment out these lines if you want to use full email address validation
+    // if (!isValidEmail(email)) {
+    //   toastr.error('Format alamat emel tidak sah.');
+    //   return;
+    // }
+
+    searchUserByEmail(email, false);
+  });
+
+  // Handle search user button click (EDIT FORM)
+  $('#editSearchUserBtn').on('click', function () {
+    var email = $('#edit_search_email').val().trim();
+
+    if (!email) {
+      toastr.error('Sila masukkan alamat emel untuk mencari.');
+      return;
+    }
+
+    // Auto-append @treasury.gov.my if not present
+    if (!email.includes('@')) {
+      email = email + '@treasury.gov.my';
+      $('#edit_search_email').val(email); // Update the input field to show full email
+    }
+
+    // Comment out these lines if you want to use full email address validation
+    // if (!isValidEmail(email)) {
+    //   toastr.error('Format alamat emel tidak sah.');
+    //   return;
+    // }
+
+    searchUserByEmail(email, true);
+  });
+
+  // Handle clear search button (ADD FORM)
+  $('#clearSearchBtn').on('click', function () {
+    resetUserSearch();
+  });
+
+  // Handle clear search button (EDIT FORM)
+  $('#editClearSearchBtn').on('click', function () {
+    resetEditUserSearch();
+  });
+
+  // Handle Enter key in search email fields
+  $('#search_email').on('keypress', function (e) {
+    if (e.which === 13) { // Enter key
+      e.preventDefault();
+      $('#searchUserBtn').click();
+    }
+  });
+
+  $('#edit_search_email').on('keypress', function (e) {
+    if (e.which === 13) { // Enter key
+      e.preventDefault();
+      $('#editSearchUserBtn').click();
+    }
+  });
+
+  // Function to search user by email
+  function searchUserByEmail(email, isEdit) {
+    var loadingElement = isEdit ? $('#editSearchLoading') : $('#searchLoading');
+    var userInfoElement = isEdit ? $('#editFoundUserInfo') : $('#foundUserInfo');
+    var searchBtn = isEdit ? $('#editSearchUserBtn') : $('#searchUserBtn');
+
+    // Show loading, hide user info
+    loadingElement.show();
+    userInfoElement.hide();
+    searchBtn.prop('disabled', true);
+
+    $.ajax({
+      url: '/search-user-by-email',
+      type: 'POST',
+      data: {
+        email: email,
+        _token: $('meta[name="csrf-token"]').attr('content')
+      },
+      success: function (response) {
+        if (response.success && response.user) {
+          // Populate user fields
+          if (isEdit) {
+            populateEditUserFields(response.user);
+          } else {
+            populateUserFields(response.user);
+          }
+
+          // Show user info section
+          userInfoElement.show();
+
+          // Hide any existing alerts
+          var alertContainer = isEdit ? $('#editSearchAlert') : $('#searchAlert');
+          alertContainer.hide();
+
+          // Show form fields after user is found
+          if (isEdit) {
+            $('#editTicketFormFields').removeClass('d-none');
+            // Remove blue border from Select2 elements in edit form
+            $('#edit_cat_id, #edit_subcat_id').next('.select2-container').addClass('select2-normal-state');
+          } else {
+            $('#ticketFormFields').removeClass('d-none');
+            // Remove blue border from Select2 elements in add form
+            $('#cat_id, #subcat_id').next('.select2-container').addClass('select2-normal-state');
+          }
+
+          // Show success message
+          toastr.success('Maklumat pengguna berjaya ditemui!');
+        } else {
+          // Hide user info and show error message
+          userInfoElement.hide();
+
+          // Show inline alert notification in the form
+          var alertContainer = isEdit ? $('#editSearchAlert') : $('#searchAlert');
+          var alertMessage = isEdit ? $('#editSearchAlertMessage') : $('#searchAlertMessage');
+
+          alertMessage.text(response.message || 'Pengguna tidak ditemui dengan alamat emel tersebut. Sila periksa alamat emel dan cuba lagi.');
+          alertContainer.show();
+
+          // Auto-hide alert after 5 seconds
+          setTimeout(function () {
+            alertContainer.fadeOut();
+          }, 5000);
+        }
+      },
+      error: function (xhr) {
+        var response = xhr.responseJSON;
+        var message = 'Ralat berlaku semasa mencari pengguna.';
+
+        if (response && response.message) {
+          message = response.message;
+        }
+
+        // Hide user info and show error
+        userInfoElement.hide();
+
+        // Show inline alert notification in the form
+        var alertContainer = isEdit ? $('#editSearchAlert') : $('#searchAlert');
+        var alertMessage = isEdit ? $('#editSearchAlertMessage') : $('#searchAlertMessage');
+
+        alertMessage.text(message);
+        alertContainer.show();
+
+        // Auto-hide alert after 5 seconds
+        setTimeout(function () {
+          alertContainer.fadeOut();
+        }, 5000);
+      },
+      complete: function () {
+        loadingElement.hide();
+        searchBtn.prop('disabled', false);
+      }
+    });
+  }
+
+  // Function to populate user fields (ADD FORM)
+  function populateUserFields(user) {
+    $('#other_name_display').val(user.nama || user.name || '');
+    $('#other_email_display').val(user.email || '');
+    $('#other_sektor_display').val(user.sektor_name || (user.kod_sektor ? user.kod_sektor : '-'));
+    $('#other_agency_display').val(user.bahagian_name || (user.kod_bah ? user.kod_bah : '-'));
+    $('#other_seksyen_display').val(user.seksyen_name || (user.kod_sec ? user.kod_sec : '-'));
+    $('#other_unit_display').val(user.unit_name || (user.kod_unit ? user.kod_unit : '-'));
+  }
+
+  // Function to populate user fields (EDIT FORM)
+  function populateEditUserFields(user) {
+    $('#edit_other_name').val(user.nama || user.name || '');
+    $('#edit_other_email').val(user.email || '');
+    $('#edit_other_sektor').val(user.sektor_name || (user.kod_sektor ? user.kod_sektor : '-'));
+    $('#edit_other_agency').val(user.bahagian_name || (user.kod_bah ? user.kod_bah : '-'));
+    $('#edit_other_seksyen').val(user.seksyen_name || (user.kod_sec ? user.kod_sec : '-'));
+    $('#edit_other_unit').val(user.unit_name || (user.kod_unit ? user.kod_unit : '-'));
+  }
 
   // Handle category change for subcategory (ADD FORM)
   $('#cat_id').change(function () {
@@ -266,26 +529,97 @@ $(function () {
 
     // Also clear Select2 validation styling
     $('.select2-container').removeClass('is-invalid');
+    // Remove any error messages after Select2 containers
+    $('.select2-container').siblings('.invalid-feedback').remove();
+
+    // Clear error-text containers
+    $('.error-text').text('').hide();
   }
 
   // Function to display validation errors
   function displayValidationErrors(errors) {
+    console.log('displayValidationErrors called with:', errors);
     clearValidationErrors();
 
     Object.keys(errors).forEach(function (fieldName) {
-      var field = $('[name="' + fieldName + '"]');
+      var field;
       var errorMessage = errors[fieldName][0];
+
+      console.log('Processing field:', fieldName, 'Error:', errorMessage);
+
+      // Handle array-based field names like attachments.0, attachments.1, etc.
+      if (fieldName.includes('.')) {
+        var baseFieldName = fieldName.split('.')[0];
+        console.log('Array field detected. Base name:', baseFieldName);
+        field = $('[name="' + baseFieldName + '[]"]');
+        // If not found, try without array notation
+        if (field.length === 0) {
+          field = $('[name="' + baseFieldName + '"]');
+        }
+      } else {
+        field = $('[name="' + fieldName + '"]');
+      }
+
+      console.log('Field found:', field.length > 0, 'Field type:', field.attr('type'));
 
       // Skip validation display for readonly fields
       if (field.prop('readonly')) {
+        console.log('Skipping readonly field:', fieldName);
         return;
       }
 
-      // Add invalid class
-      field.addClass('is-invalid');
+      // Skip if field not found
+      if (field.length === 0) {
+        console.log('Field not found:', fieldName);
+        return;
+      }
 
-      // Add error message
-      field.after('<div class="invalid-feedback d-block">' + errorMessage + '</div>');
+      // Handle Select2 fields (Kategori and Sub Kategori)
+      if (field.hasClass('select2-hidden-accessible')) {
+        // Add invalid class to the Select2 container
+        field.next('.select2-container').addClass('is-invalid');
+        // Add error message after the Select2 container
+        field.next('.select2-container').after('<div class="invalid-feedback d-block">' + errorMessage + '</div>');
+      } else {
+        // Handle regular fields and file inputs
+        field.addClass('is-invalid');
+
+        // Special handling for file inputs to ensure styling works
+        if (field.attr('type') === 'file') {
+          field.addClass('is-invalid');
+          console.log('Added is-invalid class to file input:', field.attr('name'));
+          console.log('File input classes after adding is-invalid:', field.attr('class'));
+        }
+
+        // Check if field is in a form-field-wrapper (for file inputs and some other fields)
+        var wrapper = field.closest('.form-field-wrapper');
+        if (wrapper.length > 0) {
+          var errorContainer = wrapper.find('.error-text');
+          if (errorContainer.length > 0) {
+            console.log('Using error-text container for field:', fieldName);
+            errorContainer.text(errorMessage).show();
+          } else {
+            console.log('No error-text container found, using fallback for field:', fieldName);
+            // Fallback: add error message after the field
+            field.after('<div class="invalid-feedback d-block">' + errorMessage + '</div>');
+          }
+        } else {
+          console.log('No form-field-wrapper found, adding error after field:', fieldName);
+          // Add error message after the field
+          field.after('<div class="invalid-feedback d-block">' + errorMessage + '</div>');
+        }
+
+        // Focus on the first invalid field
+        if ($('.is-invalid').length === 1) {
+          // Scroll to the field and focus
+          setTimeout(function () {
+            $('html, body').animate({
+              scrollTop: field.offset().top - 100
+            }, 500);
+            field.focus();
+          }, 100);
+        }
+      }
     });
   }
 
@@ -320,28 +654,29 @@ $(function () {
         }
       }
     } else if (ticketType == '0') {
-      // Bagi Pihak - validate other person fields
-      var otherNameField = $('[name="other_name"]');
-      var otherEmailField = $('[name="other_email"]');
+      // Bagi Pihak - validate other person fields (new field names)
+      var otherNameField = $('#other_name_display');
+      var otherEmailField = $('#other_email_display');
 
-      // Only validate if field is not readonly and is visible
-      if (!otherNameField.prop('readonly') && otherNameField.is(':visible')) {
+      // Check if user info is shown (meaning search was successful)
+      if ($('#foundUserInfo').is(':visible')) {
+        // If user info is shown, validate the readonly fields have values
         var otherName = otherNameField.val();
-        if (!otherName || otherName.trim() === '') {
-          errors['other_name'] = ['Nama pengadu diperlukan untuk aduan bagi pihak.'];
-          isValid = false;
-        }
-      }
-
-      if (!otherEmailField.prop('readonly') && otherEmailField.is(':visible')) {
         var otherEmail = otherEmailField.val();
-        if (!otherEmail || otherEmail.trim() === '') {
-          errors['other_email'] = ['Emel diperlukan untuk aduan bagi pihak.'];
-          isValid = false;
-        } else if (!isValidEmail(otherEmail)) {
-          errors['other_email'] = ['Format emel (bagi pihak) tidak sah.'];
+
+        if (!otherName || otherName.trim() === '') {
+          errors['other_name'] = ['Sila cari dan pilih pengguna untuk aduan bagi pihak.'];
           isValid = false;
         }
+
+        if (!otherEmail || otherEmail.trim() === '') {
+          errors['other_email'] = ['Sila cari dan pilih pengguna untuk aduan bagi pihak.'];
+          isValid = false;
+        }
+      } else {
+        // If user info is not shown, user hasn't searched or found a user
+        errors['other_email'] = ['Sila cari pengguna menggunakan alamat emel untuk aduan bagi pihak.'];
+        isValid = false;
       }
     }
 
@@ -371,6 +706,33 @@ $(function () {
       isValid = false;
     }
 
+    // Validate file attachments
+    var attachmentField = $('[name="attachments[]"]');
+    if (attachmentField.length > 0 && attachmentField[0].files && attachmentField[0].files.length > 0) {
+      var allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+      var maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
+
+      for (var i = 0; i < attachmentField[0].files.length; i++) {
+        var file = attachmentField[0].files[i];
+        var fileName = file.name.toLowerCase();
+        var fileExtension = fileName.split('.').pop();
+
+        // Check file extension
+        if (!allowedExtensions.includes(fileExtension)) {
+          errors['attachments'] = ['Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG.'];
+          isValid = false;
+          break;
+        }
+
+        // Check file size
+        if (file.size > maxFileSize) {
+          errors['attachments'] = ['Saiz fail lampiran tidak boleh melebihi 2MB.'];
+          isValid = false;
+          break;
+        }
+      }
+    }
+
     if (!isValid) {
       displayValidationErrors(errors);
     }
@@ -383,6 +745,81 @@ $(function () {
     var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
+
+  // Function to validate files immediately when selected
+  function validateFileInput(fileInput) {
+    var allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+    var maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
+    var wrapper = $(fileInput).closest('.form-field-wrapper');
+    var errorContainer = wrapper.find('.error-text');
+
+    // Clear previous errors
+    errorContainer.text('').hide();
+    $(fileInput).removeClass('is-invalid');
+    wrapper.find('.invalid-feedback').remove(); // Remove any old Bootstrap feedback
+
+    if (fileInput.files && fileInput.files.length > 0) {
+      for (var i = 0; i < fileInput.files.length; i++) {
+        var file = fileInput.files[i];
+        var fileName = file.name.toLowerCase();
+        var fileExtension = fileName.split('.').pop();
+
+        // Check file extension
+        if (!allowedExtensions.includes(fileExtension)) {
+          errorContainer.text('Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG.').show();
+          $(fileInput).addClass('is-invalid');
+          console.log('File validation failed - invalid extension. Added is-invalid class.');
+          return false;
+        }
+
+        // Check file size
+        if (file.size > maxFileSize) {
+          errorContainer.text('Saiz fail lampiran tidak boleh melebihi 2MB.').show();
+          $(fileInput).addClass('is-invalid');
+          console.log('File validation failed - file too large. Added is-invalid class.');
+          return false;
+        }
+      }
+    }
+
+    console.log('File validation passed.');
+    return true;
+  }
+
+  // Add file validation listeners
+  $(document).on('change', '[name="attachments[]"]', function () {
+    validateFileInput(this);
+  });
+
+  // Test function to manually trigger file validation error for testing
+  window.testFileValidation = function () {
+    var fileInput = $('[name="attachments[]"]').first();
+    fileInput.addClass('is-invalid');
+    var wrapper = fileInput.closest('.form-field-wrapper');
+    var errorContainer = wrapper.find('.error-text');
+    errorContainer.text('Test error message - file validation styling test').show();
+    console.log('Test file validation styling applied');
+  };
+
+  // Test function to clear file validation for testing
+  window.clearFileValidation = function () {
+    var fileInput = $('[name="attachments[]"]').first();
+    fileInput.removeClass('is-invalid');
+    var wrapper = fileInput.closest('.form-field-wrapper');
+    var errorContainer = wrapper.find('.error-text');
+    errorContainer.text('').hide();
+    console.log('Test file validation styling cleared');
+  };
+
+  // Test function to simulate server-side attachment validation error
+  window.testServerFileError = function () {
+    var serverErrors = {
+      "attachments.0": ["Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG."]
+    };
+    console.log('Simulating server-side file validation error...');
+    displayValidationErrors(serverErrors);
+    toastr.error('Sila betulkan ralat dalam borang.');
+  };
 
   // Function to override HTML5 validation messages to Bahasa Melayu
   function setCustomValidationMessages() {
@@ -486,6 +923,10 @@ $(function () {
         $('#selfInfo').removeClass('d-none');
         $('#otherInfo').addClass('d-none');
         $('#ticketType').val('1');
+        // Show form fields since we're back to "Diri Sendiri"
+        $('#ticketFormFields').removeClass('d-none');
+        // Restore normal Select2 behavior
+        $('#cat_id, #subcat_id').next('.select2-container').removeClass('select2-normal-state');
 
         // Reload datatable
         if ($.fn.DataTable.isDataTable('.datatables-tickets')) {
@@ -498,8 +939,10 @@ $(function () {
         }
       },
       error: function (xhr) {
+        console.log('Add form submission error:', xhr.responseJSON);
         var response = xhr.responseJSON;
         if (response && response.errors) {
+          console.log('Server validation errors for add form:', response.errors);
           // Display validation errors from server
           displayValidationErrors(response.errors);
           toastr.error('Sila betulkan ralat dalam borang.');
@@ -520,8 +963,23 @@ $(function () {
     var isValid = true;
     var errors = {};
 
-    // For edit form, focus on the main ticket fields that are being updated
-    // User information fields are typically pre-populated and readonly
+    var ticketType = $('#edit_ticketType').val();
+
+    // Validate based on ticket type
+    if (ticketType == '0') {
+      // Bagi Pihak - check if user search was completed
+      if (!$('#editFoundUserInfo').is(':visible')) {
+        errors['other_email'] = ['Sila cari pengguna menggunakan alamat emel untuk aduan bagi pihak.'];
+        isValid = false;
+      } else {
+        // If user info is shown, validate the readonly fields have values
+        var otherEmail = $('#edit_other_email').val();
+        if (!otherEmail || otherEmail.trim() === '') {
+          errors['other_email'] = ['Sila cari dan pilih pengguna untuk aduan bagi pihak.'];
+          isValid = false;
+        }
+      }
+    }
 
     // Common validations
     var title = $('#editTicketForm [name="tick_title"]').val();
@@ -547,6 +1005,33 @@ $(function () {
     if (!description || description.trim() === '') {
       errors['tick_desc'] = ['Keterangan aduan diperlukan.'];
       isValid = false;
+    }
+
+    // Validate file attachments
+    var attachmentField = $('#editTicketForm [name="attachments[]"]');
+    if (attachmentField.length > 0 && attachmentField[0].files && attachmentField[0].files.length > 0) {
+      var allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
+      var maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
+
+      for (var i = 0; i < attachmentField[0].files.length; i++) {
+        var file = attachmentField[0].files[i];
+        var fileName = file.name.toLowerCase();
+        var fileExtension = fileName.split('.').pop();
+
+        // Check file extension
+        if (!allowedExtensions.includes(fileExtension)) {
+          errors['attachments'] = ['Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG.'];
+          isValid = false;
+          break;
+        }
+
+        // Check file size
+        if (file.size > maxFileSize) {
+          errors['attachments'] = ['Saiz fail lampiran tidak boleh melebihi 2MB.'];
+          isValid = false;
+          break;
+        }
+      }
     }
 
     if (!isValid) {
@@ -600,8 +1085,10 @@ $(function () {
         }
       },
       error: function (xhr) {
+        console.log('Edit form submission error:', xhr.responseJSON);
         var response = xhr.responseJSON;
         if (response && response.errors) {
+          console.log('Server validation errors for edit form:', response.errors);
           // Display validation errors from server
           displayValidationErrors(response.errors);
           toastr.error('Sila betulkan ralat dalam borang.');
@@ -690,14 +1177,48 @@ $(function () {
       }
     }, 800);
 
-    // If it's for other person, populate the fields
-    if (ticket.ticket_type == 0) {
-      $('#edit_other_name').val(ticket.other_name || '');
-      $('#edit_other_email').val(ticket.other_email || '');
-      $('#edit_other_sektor').val(ticket.other_sektor || '');
-      $('#edit_other_agency').val(ticket.other_agency || '');
-      $('#edit_other_seksyen').val(ticket.other_seksyen || '');
-      $('#edit_other_unit').val(ticket.other_unit || '');
+    // Handle "Bagi Pihak" (ticket_type == 0) by loading user data
+    if (ticket.ticket_type == 0 && ticket.user) {
+      // Populate search email field with the user's email
+      $('#edit_search_email').val(ticket.user.email);
+
+      // Populate user display fields with the associated user's data
+      $('#edit_other_name').val(ticket.user.nama || ticket.user.name || '');
+      $('#edit_other_email').val(ticket.user.email || '');
+      $('#edit_other_sektor').val(
+        ticket.user.sektor?.nama_sektor ||
+        ticket.user.sektor_name ||
+        (ticket.user.kod_sektor ? ticket.user.kod_sektor : '-')
+      );
+      $('#edit_other_agency').val(
+        ticket.user.bahagian?.nama_bah ||
+        ticket.user.bahagian_name ||
+        (ticket.user.kod_bah ? ticket.user.kod_bah : '-')
+      );
+      $('#edit_other_seksyen').val(
+        ticket.user.seksyen?.nama_sec ||
+        ticket.user.seksyen_name ||
+        (ticket.user.kod_sec ? ticket.user.kod_sec : '-')
+      );
+      $('#edit_other_unit').val(
+        ticket.user.unit?.nama_unit ||
+        ticket.user.unit_name ||
+        (ticket.user.kod_unit ? ticket.user.kod_unit : '-')
+      );
+
+      // Show the user info section
+      $('#editFoundUserInfo').show();
+      // Show form fields since user is already loaded
+      $('#editTicketFormFields').removeClass('d-none');
+      // Remove blue border from Select2 elements since user is found
+      setTimeout(function () {
+        $('#edit_cat_id, #edit_subcat_id').next('.select2-container').addClass('select2-normal-state');
+      }, 1000); // Wait for Select2 to initialize
+    } else {
+      // Reset edit form if switching back to "Diri Sendiri"
+      resetEditUserSearch();
+      // Ensure form fields are shown for "Diri Sendiri" tickets
+      $('#editTicketFormFields').removeClass('d-none');
     }
 
     console.log('Ticket data loaded successfully');
@@ -753,6 +1274,7 @@ $(function () {
   // Handle Select2 specific change events
   $(document).on('select2:select select2:unselect', '#cat_id, #subcat_id, #edit_cat_id, #edit_subcat_id', function () {
     var field = $(this);
+    // Remove validation errors for Select2 fields
     field.removeClass('is-invalid');
     field.next('.select2-container').removeClass('is-invalid');
     field.next('.select2-container').siblings('.invalid-feedback').remove();
