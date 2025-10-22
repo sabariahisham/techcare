@@ -14,8 +14,8 @@
         }
 
         /* .offcanvas-60 {
-                                                                                width: 60% !important;
-                                                                            } */
+          width: 60% !important;
+          } */
 
         /* Responsive breakpoints for offcanvas */
         @media (max-width: 1200px) {
@@ -245,11 +245,13 @@
                 <thead class="border-top">
                     <tr>
                         <th>Bil</th>
+                        <th>No. Log Tiket</th>
                         <th>Tarikh Aduan</th>
                         <th>Nama Pengadu</th>
                         <th>Kategori</th>
                         <th>Sub Kategori</th>
                         <th>Status</th>
+                        <th>Pegawai Tugasan</th> <!-- blink username-text if overdue -->
                         <th>Tindakan</th>
                     </tr>
                 </thead>

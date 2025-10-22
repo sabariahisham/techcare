@@ -21,6 +21,9 @@ class TicketController extends Controller
 
     return DataTables::of($tickets)
       ->addIndexColumn()
+      ->addColumn('no_log_tiket', function ($ticket) {
+        return e($ticket->ticket_nolog);
+      })
       ->addColumn('tarikh_aduan', function ($ticket) {
         return $ticket->created_at ? $ticket->created_at->format('d-m-Y') : '-';
       })
@@ -36,6 +39,11 @@ class TicketController extends Controller
       })
       ->addColumn('status', function ($ticket) {
         return $ticket->status ? e($ticket->status->st_name) : '-';
+      })
+      ->addColumn('pegawai_tugasan', function ($ticket) {
+        // Assuming there's a relationship or field for assigned officer
+        // Replace 'assignedOfficer' with the actual relationship or field name
+        return $ticket->assignedOfficer ? e($ticket->assignedOfficer->nama) : '-';
       })
       ->addColumn('action', function ($ticket) {
         $editBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Edit"><i class="bx bx-edit"></i></button>';
@@ -94,7 +102,7 @@ class TicketController extends Controller
 
     $data = [
       'uuid' => Str::uuid(),
-      'ticket_nolog' => 'HELP-' . strtoupper(Str::random(6)),
+      'ticket_nolog' => $this->generateTicketNumber(),
       'user_id' => $user_id,
       'cat_id' => $validated['cat_id'],
       'subcat_id' => $validated['subcat_id'],
@@ -254,5 +262,32 @@ class TicketController extends Controller
       'message' => 'Pengguna berjaya ditemui.',
       'user' => $userData
     ]);
+  }
+
+  /**
+   * Generate sequential ticket number in format HELP-YYYY-MM-XXXX
+   */
+  private function generateTicketNumber()
+  {
+    $currentDate = now();
+    $year = $currentDate->format('Y');
+    $month = $currentDate->format('m');
+
+    // Find the highest ticket number for the current month
+    $prefix = "HELP-{$year}-{$month}-";
+    $lastTicket = Ticket::where('ticket_nolog', 'LIKE', $prefix . '%')
+      ->orderBy('ticket_nolog', 'desc')
+      ->first();
+
+    $nextNumber = 1;
+
+    if ($lastTicket) {
+      // Extract the last 4 digits and increment
+      $lastNumber = (int) substr($lastTicket->ticket_nolog, -4);
+      $nextNumber = $lastNumber + 1;
+    }
+
+    // Format as 4-digit number with leading zeros
+    return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
   }
 }
