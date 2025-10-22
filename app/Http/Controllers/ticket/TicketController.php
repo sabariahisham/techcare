@@ -25,6 +25,7 @@ class TicketController extends Controller
         return $ticket->created_at ? $ticket->created_at->format('d-m-Y') : '-';
       })
       ->addColumn('nama_pengadu', function ($ticket) {
+        // Now we always show the user's name since user_id points to the correct user
         return $ticket->user ? e($ticket->user->nama) : '-';
       })
       ->addColumn('kategori', function ($ticket) {
@@ -66,10 +67,26 @@ class TicketController extends Controller
       // Diri Sendiri - use authenticated user
       $user_id = Auth::id();
     } else {
-      // Bagi Pihak - create or find user based on email
-      // For now, we'll use the authenticated user
-      // You may want to implement user creation logic here
-      $user_id = Auth::id();
+      // Bagi Pihak - find user by email from search
+      $other_email = $validated['other_email'] ?? null;
+      if ($other_email) {
+        $otherUser = \App\Models\User::where('email', $other_email)->first();
+        if ($otherUser) {
+          $user_id = $otherUser->id;
+        } else {
+          return response()->json([
+            'success' => false,
+            'message' => 'Pengguna tidak dijumpai. Sila pastikan email yang dicari adalah betul.',
+            'errors' => ['other_email' => ['Pengguna dengan email ini tidak dijumpai dalam sistem.']]
+          ], 422);
+        }
+      } else {
+        return response()->json([
+          'success' => false,
+          'message' => 'Email pengguna diperlukan untuk aduan bagi pihak.',
+          'errors' => ['other_email' => ['Sila cari dan pilih pengguna terlebih dahulu.']]
+        ], 422);
+      }
     }
 
     // Get default status (assuming first status is 'Open' or 'New')
@@ -89,6 +106,8 @@ class TicketController extends Controller
       'created_by' => Auth::id(),
     ];
 
+    // Remove the other_person fields logic since we're using user_id directly
+
     $ticket = Ticket::create($data);
 
     // Handle file attachments if any
@@ -103,16 +122,16 @@ class TicketController extends Controller
 
   public function show(Ticket $ticket)
   {
-    return view('tickets.show', compact('ticket'));
+    // Not implemented
   }
 
   public function edit(Ticket $ticket)
   {
-    // Load the ticket with its relationships
-    $ticket->load(['category', 'subCategory', 'user']);
-    
+    // Load the ticket with its relationships including user's organizational data
+    $ticket->load(['category', 'subCategory', 'user.sektor', 'user.bahagian', 'user.seksyen', 'user.unit']);
+
     $categories = RefCategory::all();
-    
+
     return response()->json([
       'ticket' => $ticket,
       'categories' => $categories
@@ -123,7 +142,37 @@ class TicketController extends Controller
   {
     $validated = $request->validated();
 
+    // Determine user_id based on ticket_type
+    $user_id = $ticket->user_id; // Keep existing user_id by default
+
+    if ($validated['ticket_type'] == 1) {
+      // Diri Sendiri - use authenticated user
+      $user_id = Auth::id();
+    } else {
+      // Bagi Pihak - find user by email from search
+      $other_email = $validated['other_email'] ?? null;
+      if ($other_email) {
+        $otherUser = \App\Models\User::where('email', $other_email)->first();
+        if ($otherUser) {
+          $user_id = $otherUser->id;
+        } else {
+          return response()->json([
+            'success' => false,
+            'message' => 'Pengguna tidak dijumpai. Sila pastikan email yang dicari adalah betul.',
+            'errors' => ['other_email' => ['Pengguna dengan email ini tidak dijumpai dalam sistem.']]
+          ], 422);
+        }
+      } else {
+        return response()->json([
+          'success' => false,
+          'message' => 'Email pengguna diperlukan untuk aduan bagi pihak.',
+          'errors' => ['other_email' => ['Sila cari dan pilih pengguna terlebih dahulu.']]
+        ], 422);
+      }
+    }
+
     $data = [
+      'user_id' => $user_id,
       'cat_id' => $validated['cat_id'],
       'subcat_id' => $validated['subcat_id'],
       'ticket_title' => $validated['tick_title'], // Map tick_title to ticket_title
@@ -148,6 +197,62 @@ class TicketController extends Controller
     return response()->json([
       'success' => true,
       'message' => 'Tiket berjaya dipadam!'
+    ]);
+  }
+
+  public function searchUserByEmail(Request $request)
+  {
+    $request->validate([
+      'email' => 'required|email'
+    ]);
+
+    $email = $request->input('email');
+
+    // Search for user by email with relationships
+    $user = \App\Models\User::with(['sektor', 'bahagian', 'seksyen', 'unit'])
+      ->where('email', $email)
+      ->first();
+
+    if (!$user) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Pengguna tidak ditemui dengan alamat emel tersebut.'
+      ], 404);
+    }
+
+    // Prepare user data with related information
+    $userData = [
+      'id' => $user->id,
+      'nama' => $user->nama,
+      'name' => $user->nama, // fallback
+      'email' => $user->email,
+      'kod_sektor' => $user->kod_sektor,
+      'kod_bah' => $user->kod_bah,
+      'kod_sec' => $user->kod_sec,
+      'kod_unit' => $user->kod_unit,
+    ];
+
+    // Get related names if relationships exist
+    if ($user->sektor) {
+      $userData['sektor_name'] = $user->sektor->nama_sektor;
+    }
+
+    if ($user->bahagian) {
+      $userData['bahagian_name'] = $user->bahagian->nama_bah;
+    }
+
+    if ($user->seksyen) {
+      $userData['seksyen_name'] = $user->seksyen->nama_sec;
+    }
+
+    if ($user->unit) {
+      $userData['unit_name'] = $user->unit->nama_unit;
+    }
+
+    return response()->json([
+      'success' => true,
+      'message' => 'Pengguna berjaya ditemui.',
+      'user' => $userData
     ]);
   }
 }
