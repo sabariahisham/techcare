@@ -40,7 +40,8 @@ class TicketController extends Controller
       ->addColumn('action', function ($ticket) {
         $editBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Edit"><i class="bx bx-edit"></i></button>';
         $deleteBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Delete"><i class="bx bx-trash"></i></button>';
-        return '<div class="d-inline-block text-nowrap">' . $editBtn . ' ' . $deleteBtn . '</div>';
+        $viewBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></button>';
+        return '<div class="d-inline-block text-nowrap">' . $editBtn . ' ' . $deleteBtn . ' ' . $viewBtn . '</div>';
       })
       ->rawColumns(['action'])
       ->make(true);
@@ -122,7 +123,26 @@ class TicketController extends Controller
 
   public function show(Ticket $ticket)
   {
-    // Not implemented
+    // Load ticket with comprehensive relationships
+    $ticket->load([
+      'user.sektor',
+      'user.bahagian',
+      'user.seksyen',
+      'user.unit',
+      'category',
+      'subCategory',
+      'status',
+      'createdBy',
+      'updatedBy'
+    ]);
+
+    // Get ticket history/audit trail if available
+    $ticketHistory = $this->getTicketHistory($ticket);
+
+    // Get other relevant data
+    $allStatuses = RefTicketStatus::all();
+
+    return view('tickets.show', compact('ticket', 'ticketHistory', 'allStatuses'));
   }
 
   public function edit(Ticket $ticket)
@@ -254,5 +274,67 @@ class TicketController extends Controller
       'message' => 'Pengguna berjaya ditemui.',
       'user' => $userData
     ]);
+  }
+
+  /**
+   * Generate sequential ticket number in format HELP-YYYY-MM-XXXX
+   */
+  private function generateTicketNumber()
+  {
+    $currentDate = now();
+    $year = $currentDate->format('Y');
+    $month = $currentDate->format('m');
+
+    // Find the highest ticket number for the current month
+    $prefix = "HELP-{$year}-{$month}-";
+    $lastTicket = Ticket::where('ticket_nolog', 'LIKE', $prefix . '%')
+      ->orderBy('ticket_nolog', 'desc')
+      ->first();
+
+    $nextNumber = 1;
+
+    if ($lastTicket) {
+      // Extract the last 4 digits and increment
+      $lastNumber = (int) substr($lastTicket->ticket_nolog, -4);
+      $nextNumber = $lastNumber + 1;
+    }
+
+    // Format as 4-digit number with leading zeros
+    return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+  }
+
+  /**
+   * Get ticket history/kronologi for display
+   */
+  private function getTicketHistory($ticket)
+  {
+    // For now, we'll create basic history from available data
+    // Later this can be enhanced with proper audit trail
+    $history = collect([
+      [
+        'action' => 'Tiket Dicipta',
+        'description' => 'Tiket aduan telah dicipta dalam sistem',
+        'user' => $ticket->createdBy ? $ticket->createdBy->nama : 'Sistem',
+        'timestamp' => $ticket->created_at,
+        'details' => [
+          'Kategori' => $ticket->category ? $ticket->category->cat_name : '-',
+          'Sub Kategori' => $ticket->subCategory ? $ticket->subCategory->subcat_name : '-',
+          'Jenis Tiket' => $ticket->ticket_type == 1 ? 'Diri Sendiri' : 'Bagi Pihak'
+        ]
+      ]
+    ]);
+
+    // Add update history if ticket was updated
+    if ($ticket->updated_at && $ticket->updated_at != $ticket->created_at) {
+      $history->push([
+        'action' => 'Tiket Dikemaskini',
+        'description' => 'Maklumat tiket telah dikemaskini',
+        'user' => $ticket->updatedBy ? $ticket->updatedBy->nama : 'Sistem',
+        'timestamp' => $ticket->updated_at,
+        'details' => []
+      ]);
+    }
+
+    return $history->sortBy('timestamp');
   }
 }
