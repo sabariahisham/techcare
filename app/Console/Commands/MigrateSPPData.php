@@ -10,7 +10,7 @@ class MigrateSPPData extends Command
   /**
    * The name and signature of the console command.
    * run : php artisan migrate:spp {table}
-   * table: sektor / bahagian / seksyen / unit / jawatan / khidmat / gred
+   * table: sektor / bahagian / seksyen / unit / jawatan / khidmat / gred / skim
    * @var string
    */
   protected $signature = 'migrate:spp {table?} ';
@@ -43,8 +43,10 @@ class MigrateSPPData extends Command
       $this->migrateKhidmat();
     } elseif ($table === 'gred') {
       $this->migrateGred();
+    } elseif ($table === 'skim') {
+      $this->migrateSkim();
     } else {
-      $this->info('Sila nyatakan table: bahagian / sektor / seksyen / unit / jawatan / khidmat / gred');
+      $this->info('Sila nyatakan table: bahagian / sektor / seksyen / unit / jawatan / khidmat / gred / skim');
     }
   }
 
@@ -265,5 +267,39 @@ class MigrateSPPData extends Command
     }
 
     $this->info('Migrasi gred selesai.');
+  }
+
+  protected function migrateSkim()
+  {
+    $sppSkim = DB::connection('spp')->table('skim')->get();
+
+    foreach ($sppSkim as $skim) {
+      // Skip jika nama_skim adalah null atau empty
+      if (empty($skim->nama_skim)) {
+        $this->warn("Skipping skim with kod_skim: {$skim->kod_skim} - nama_skim is null/empty");
+        continue;
+      }
+
+      // Skip jika kod_skim adalah null atau empty
+      if (empty($skim->kod_skim)) {
+        $this->warn("Skipping skim with nama_skim: {$skim->nama_skim} - kod_skim is null/empty");
+        continue;
+      }
+
+      // Dynamic create or update - use kod_skim as unique identifier
+      DB::table('ref_skim')->updateOrInsert(
+        ['kod_skim' => $skim->kod_skim],
+        [
+          'kod_skim' => $skim->kod_skim,
+          'nama_skim' => $skim->nama_skim,
+          'created_at' => now(),
+          'updated_at' => now(),
+        ]
+      );
+
+      $this->info("Processed skim: {$skim->kod_skim} - {$skim->nama_skim}");
+    }
+
+    $this->info('Migrasi skim selesai.');
   }
 }

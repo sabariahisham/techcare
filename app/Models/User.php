@@ -6,14 +6,14 @@ use Ramsey\Uuid\Uuid;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Jetstream\HasProfilePhoto;
 use Spatie\Permission\Traits\HasRoles;
-use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasPermissions;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -496,6 +496,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function jawatan()
     {
         return $this->belongsTo(RefJawatan::class, 'kod_jawatan', 'kod_jawatan');
+    }
+
+    public function skim()
+    {
+        return $this->belongsTo(RefSkim::class, 'kod_skim', 'kod_skim');
     }
 
 

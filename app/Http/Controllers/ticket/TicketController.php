@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers\Ticket;
 
+use App\Models\User;
 use App\Models\Ticket;
+use App\Models\RefCategory;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use Yajra\DataTables\Facades\DataTables;
-use App\Models\RefCategory;
 use App\Models\RefTicketStatus;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\Facades\DataTables;
 use App\Http\Requests\Ticket\StoreTicketRequest;
 use App\Http\Requests\Ticket\UpdateTicketRequest;
-use Illuminate\Support\Facades\Auth;
 
 class TicketController extends Controller
 {
@@ -136,7 +137,7 @@ class TicketController extends Controller
   public function edit(Ticket $ticket)
   {
     // Load the ticket with its relationships including user's organizational data
-    $ticket->load(['category', 'subCategory', 'user.sektor', 'user.bahagian', 'user.seksyen', 'user.unit']);
+    $ticket->load(['category', 'subCategory', 'user.sektor', 'user.bahagian', 'user.seksyen', 'user.unit', 'user.jawatan', 'user.skim']);
 
     $categories = RefCategory::all();
 
@@ -217,7 +218,7 @@ class TicketController extends Controller
     $email = $request->input('email');
 
     // Search for user by email with relationships
-    $user = \App\Models\User::with(['sektor', 'bahagian', 'seksyen', 'unit'])
+    $user = User::with(['sektor', 'bahagian', 'seksyen', 'unit', 'jawatan', 'skim'])
       ->where('email', $email)
       ->first();
 
@@ -238,23 +239,35 @@ class TicketController extends Controller
       'kod_bah' => $user->kod_bah,
       'kod_sec' => $user->kod_sec,
       'kod_unit' => $user->kod_unit,
+      'kod_skim' => $user->kod_skim,
+      'nama_gred' => $user->nama_gred,
+      'tel_no_p' => $user->tel_no_p,
+      'tel_no_hp' => $user->tel_no_hp,
     ];
 
     // Get related names if relationships exist
     if ($user->sektor) {
-      $userData['sektor_name'] = $user->sektor->nama_sektor;
+      $userData['nama_sektor'] = $user->sektor->nama_sektor;
     }
 
     if ($user->bahagian) {
-      $userData['bahagian_name'] = $user->bahagian->nama_bah;
+      $userData['nama_bah'] = $user->bahagian->nama_bah;
     }
 
     if ($user->seksyen) {
-      $userData['seksyen_name'] = $user->seksyen->nama_sec;
+      $userData['nama_sec'] = $user->seksyen->nama_sec;
     }
 
     if ($user->unit) {
-      $userData['unit_name'] = $user->unit->nama_unit;
+      $userData['nama_unit'] = $user->unit->nama_unit;
+    }
+
+    if ($user->jawatan) {
+      $userData['nama_jawatan'] = $user->jawatan->nama_jawatan;
+    }
+
+    if ($user->skim) {
+      $userData['nama_skim'] = $user->skim->nama_skim;
     }
 
     return response()->json([
