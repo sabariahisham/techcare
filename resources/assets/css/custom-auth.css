@@ -1,0 +1,57 @@
+/* Custom Login Background Styles */
+
+/* Full background overlay */
+.custom-login-bg {
+  background: linear-gradient(
+    135deg,
+    rgba(103, 58, 183, 0.8),
+    rgba(63, 81, 181, 0.8)
+  ), url('/assets/img/backgrounds/login-bg.jpg');
+  background-size: cover;
+  background-position:center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Alternative solid background with pattern */
+.custom-login-bg-pattern {
+  background: linear-gradient(
+    45deg,
+    #667eea 0%, 
+    #764ba2 100%
+  );
+  min-height: 100vh;
+  position: relative;
+}
+
+.custom-login-bg-pattern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.3;
+}
+
+/* Card glassmorphism effect */
+.auth-glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+}
+
+/* Government-themed background */
+.gov-themed-bg {
+  background: linear-gradient(
+    135deg,
+    rgba(25, 118, 210, 0.9),
+    rgba(13, 71, 161, 0.9)
+  ), url('/assets/img/backgrounds/malaysia-flag-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+}
