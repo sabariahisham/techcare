@@ -209,6 +209,14 @@ $(function () {
     }
   });
 
+  // Helper function to check if value is empty/null/undefined and return fallback
+  function getValueOrFallback(value, fallback = 'Tiada data') {
+    if (value === null || value === undefined || value === '' || value === 0) {
+      return fallback;
+    }
+    return value;
+  }
+
   // Function to reset user search (ADD FORM)
   function resetUserSearch() {
     $('#search_email').val('');
@@ -434,34 +442,52 @@ $(function () {
     });
   }
 
-  // Function to populate user fields (ADD FORM BAGI PIHAK)
+  // Function to populate user fields (VALUE-ADD FORM BAGI PIHAK)
   function populateUserFields(user) {
-    $('#other_name').val(user.nama || user.name || '');
-    $('#other_jawatan').val(user.jawatan_name || (user.kod_jawatan ? user.kod_jawatan : '-'));
-    $('#other_skim').val(user.skim_name || (user.kod_skim ? user.kod_skim : '-'));
-    $('#other_gred').val(user.gred_name || user.nama_gred || (user.kod_gred ? user.kod_gred : '-'));
-    $('#other_email').val(user.email || '');
-    $('#other_sektor').val(user.sektor_name || (user.kod_sektor ? user.kod_sektor : '-'));
-    $('#other_agency').val(user.bahagian_name || (user.kod_bah ? user.kod_bah : '-'));
-    $('#other_seksyen').val(user.seksyen_name || (user.kod_sec ? user.kod_sec : '-'));
-    $('#other_unit').val(user.unit_name || (user.kod_unit ? user.kod_unit : '-'));
-    $('#other_p').val(user.tel_no_p || '-');
-    $('#other_hp').val(user.tel_no_hp || '-');
+    $('#other_name').val(getValueOrFallback(user.nama));
+    $('#other_jawatan').val(getValueOrFallback(user.nama_jawatan) || getValueOrFallback(user.kod_jawatan));
+
+    // Handle Skim Perkhidmatan with complex formatting
+    var skimValue = 'Tiada data';
+    if (getValueOrFallback(user.nama_skim, null) && getValueOrFallback(user.kod_skim, null)) {
+      skimValue = user.nama_skim + ' (' + user.kod_skim + ')';
+    } else if (getValueOrFallback(user.kod_skim, null)) {
+      skimValue = user.kod_skim;
+    }
+    $('#other_skim').val(skimValue);
+
+    $('#other_gred').val(getValueOrFallback(user.nama_gred) || getValueOrFallback(user.kod_gred));
+    $('#other_email').val(getValueOrFallback(user.email));
+    $('#other_sektor').val(getValueOrFallback(user.nama_sektor) || getValueOrFallback(user.kod_sektor));
+    $('#other_agency').val(getValueOrFallback(user.nama_bah) || getValueOrFallback(user.kod_bah));
+    $('#other_seksyen').val(getValueOrFallback(user.nama_sec) || getValueOrFallback(user.kod_sec));
+    $('#other_unit').val(getValueOrFallback(user.nama_unit) || getValueOrFallback(user.kod_unit));
+    $('#other_p').val(getValueOrFallback(user.tel_no_p));
+    $('#other_hp').val(getValueOrFallback(user.tel_no_hp));
   }
 
-  // Function to populate user fields (EDIT FORM BAGI PIHAK)
+  // Function to populate user fields (VALUE-EDIT FORM BAGI PIHAK)
   function populateEditUserFields(user) {
-    $('#edit_other_name').val(user.nama || user.name || '');
-    $('#edit_other_jawatan').val(user.jawatan_name || (user.kod_jawatan ? user.kod_jawatan : '-'));
-    $('#edit_other_skim').val(user.skim_name || (user.kod_skim ? user.kod_skim : '-'));
-    $('#edit_other_gred').val(user.gred_name || user.nama_gred || (user.kod_gred ? user.kod_gred : '-'));
-    $('#edit_other_email').val(user.email || '');
-    $('#edit_other_sektor').val(user.sektor_name || (user.kod_sektor ? user.kod_sektor : '-'));
-    $('#edit_other_agency').val(user.bahagian_name || (user.kod_bah ? user.kod_bah : '-'));
-    $('#edit_other_seksyen').val(user.seksyen_name || (user.kod_sec ? user.kod_sec : '-'));
-    $('#edit_other_unit').val(user.unit_name || (user.kod_unit ? user.kod_unit : '-'));
-    $('#edit_other_p').val(user.tel_no_p || '');
-    $('#edit_other_hp').val(user.tel_no_hp || '');
+    $('#edit_other_name').val(getValueOrFallback(user.nama));
+    $('#edit_other_jawatan').val(getValueOrFallback(user.nama_jawatan) || getValueOrFallback(user.kod_jawatan));
+
+    // Handle Skim Perkhidmatan with complex formatting
+    var skimValue = 'Tiada data';
+    if (getValueOrFallback(user.nama_skim, null) && getValueOrFallback(user.kod_skim, null)) {
+      skimValue = user.nama_skim + ' (' + user.kod_skim + ')';
+    } else if (getValueOrFallback(user.kod_skim, null)) {
+      skimValue = user.kod_skim;
+    }
+    $('#edit_other_skim').val(skimValue);
+
+    $('#edit_other_gred').val(getValueOrFallback(user.nama_gred) || getValueOrFallback(user.kod_gred));
+    $('#edit_other_email').val(getValueOrFallback(user.email));
+    $('#edit_other_sektor').val(getValueOrFallback(user.nama_sektor) || getValueOrFallback(user.kod_sektor));
+    $('#edit_other_agency').val(getValueOrFallback(user.nama_bah) || getValueOrFallback(user.kod_bah));
+    $('#edit_other_seksyen').val(getValueOrFallback(user.nama_sec) || getValueOrFallback(user.kod_sec));
+    $('#edit_other_unit').val(getValueOrFallback(user.nama_unit) || getValueOrFallback(user.kod_unit));
+    $('#edit_other_p').val(getValueOrFallback(user.tel_no_p));
+    $('#edit_other_hp').val(getValueOrFallback(user.tel_no_hp));
   }
 
   // Handle category change for subcategory (ADD FORM)
@@ -1203,39 +1229,41 @@ $(function () {
       $('#edit_search_email').val(ticket.user.email);
 
       // Populate user display fields with the associated user's data
-      $('#edit_other_name').val(ticket.user.nama || ticket.user.name || '');
+      $('#edit_other_name').val(getValueOrFallback(ticket.user.nama));
       $('#edit_other_jawatan').val(
-        ticket.user.jawatan?.nama_jawatan ||
-        ticket.user.jawatan_name ||
-        (ticket.user.kod_jawatan ? ticket.user.kod_jawatan : '-')
+        getValueOrFallback(ticket.user.jawatan?.nama_jawatan) ||
+        getValueOrFallback(ticket.user.kod_jawatan)
       );
-      $('#edit_other_skim').val(
-        ticket.user.skim?.nama_skim ||
-        (ticket.user.kod_skim ? ticket.user.kod_skim : '-')
-      );
-      $('#edit_other_gred').val(ticket.user.nama_gred || '');
-      $('#edit_other_email').val(ticket.user.email || '');
+
+      // Handle Skim Perkhidmatan with complex formatting for loadTicketData
+      var skimValue = 'Tiada data';
+      if (getValueOrFallback(ticket.user.skim?.nama_skim, null) && getValueOrFallback(ticket.user.kod_skim, null)) {
+        skimValue = ticket.user.skim.nama_skim + ' (' + ticket.user.kod_skim + ')';
+      } else if (getValueOrFallback(ticket.user.kod_skim, null)) {
+        skimValue = ticket.user.kod_skim;
+      }
+      $('#edit_other_skim').val(skimValue);
+
+      $('#edit_other_gred').val(getValueOrFallback(ticket.user.nama_gred));
+      $('#edit_other_email').val(getValueOrFallback(ticket.user.email));
       $('#edit_other_sektor').val(
-        ticket.user.sektor?.nama_sektor ||
-        (ticket.user.kod_sektor ? ticket.user.kod_sektor : '-')
+        getValueOrFallback(ticket.user.sektor?.nama_sektor) ||
+        getValueOrFallback(ticket.user.kod_sektor)
       );
       $('#edit_other_agency').val(
-        ticket.user.bahagian?.nama_bah ||
-        ticket.user.bahagian_name ||
-        (ticket.user.kod_bah ? ticket.user.kod_bah : '-')
+        getValueOrFallback(ticket.user.bahagian?.nama_bah) ||
+        getValueOrFallback(ticket.user.kod_bah)
       );
       $('#edit_other_seksyen').val(
-        ticket.user.seksyen?.nama_sec ||
-        ticket.user.seksyen_name ||
-        (ticket.user.kod_sec ? ticket.user.kod_sec : '-')
+        getValueOrFallback(ticket.user.seksyen?.nama_sec) ||
+        getValueOrFallback(ticket.user.kod_sec)
       );
       $('#edit_other_unit').val(
-        ticket.user.unit?.nama_unit ||
-        ticket.user.unit_name ||
-        (ticket.user.kod_unit ? ticket.user.kod_unit : '-')
+        getValueOrFallback(ticket.user.unit?.nama_unit) ||
+        getValueOrFallback(ticket.user.kod_unit)
       );
-      $('#edit_other_p').val(ticket.user.tel_no_p || '');
-      $('#edit_other_hp').val(ticket.user.tel_no_hp || '');
+      $('#edit_other_p').val(getValueOrFallback(ticket.user.tel_no_p));
+      $('#edit_other_hp').val(getValueOrFallback(ticket.user.tel_no_hp));
 
       // Show the user info section
       $('#editFoundUserInfo').show();
