@@ -3,8 +3,8 @@
   return [
     "creatorName" => "ThemeSelection",
     "creatorUrl" => "https://themeselection.com",
-    "templateName" => "sneat",
-    "templateSuffix" => "Bootstrap Dashboard PRO",
+    "templateName" => "Sistem Helpdesk Perbendaharaan",
+    "templateSuffix" => "",
     "templateVersion" => "3.0.0",
     "templateFree" => false,
     "templateDescription" => "Most Powerful & Comprehensive Bootstrap 5 HTML Admin Dashboard Template built for developers!",
