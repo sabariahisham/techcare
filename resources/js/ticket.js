@@ -239,22 +239,32 @@ $(function () {
 
   // Function to clear user fields (ADD FORM)
   function clearUserFields() {
-    $('#other_name_display').val('');
-    $('#other_email_display').val('');
-    $('#other_sektor_display').val('');
-    $('#other_agency_display').val('');
-    $('#other_seksyen_display').val('');
-    $('#other_unit_display').val('');
+    $('#other_name').val('');
+    $('#other_jawatan').val('');
+    $('#other_skim').val('');
+    $('#other_gred').val('');
+    $('#other_email').val('');
+    $('#other_sektor').val('');
+    $('#other_agency').val('');
+    $('#other_seksyen').val('');
+    $('#other_unit').val('');
+    $('#other_p').val('');
+    $('#other_hp').val('');
   }
 
   // Function to clear user fields (EDIT FORM)
   function clearEditUserFields() {
     $('#edit_other_name').val('');
+    $('#edit_other_jawatan').val('');
+    $('#edit_other_skim').val('');
+    $('#edit_other_gred').val('');
     $('#edit_other_email').val('');
     $('#edit_other_sektor').val('');
     $('#edit_other_agency').val('');
     $('#edit_other_seksyen').val('');
     $('#edit_other_unit').val('');
+    $('#edit_other_p').val('');
+    $('#edit_other_hp').val('');
   }
 
   // Handle search user button click (ADD FORM)
@@ -424,24 +434,34 @@ $(function () {
     });
   }
 
-  // Function to populate user fields (ADD FORM)
+  // Function to populate user fields (ADD FORM BAGI PIHAK)
   function populateUserFields(user) {
-    $('#other_name_display').val(user.nama || user.name || '');
-    $('#other_email_display').val(user.email || '');
-    $('#other_sektor_display').val(user.sektor_name || (user.kod_sektor ? user.kod_sektor : '-'));
-    $('#other_agency_display').val(user.bahagian_name || (user.kod_bah ? user.kod_bah : '-'));
-    $('#other_seksyen_display').val(user.seksyen_name || (user.kod_sec ? user.kod_sec : '-'));
-    $('#other_unit_display').val(user.unit_name || (user.kod_unit ? user.kod_unit : '-'));
+    $('#other_name').val(user.nama || user.name || '');
+    $('#other_jawatan').val(user.jawatan_name || (user.kod_jawatan ? user.kod_jawatan : '-'));
+    $('#other_skim').val(user.skim_name || (user.kod_skim ? user.kod_skim : '-'));
+    $('#other_gred').val(user.gred_name || user.nama_gred || (user.kod_gred ? user.kod_gred : '-'));
+    $('#other_email').val(user.email || '');
+    $('#other_sektor').val(user.sektor_name || (user.kod_sektor ? user.kod_sektor : '-'));
+    $('#other_agency').val(user.bahagian_name || (user.kod_bah ? user.kod_bah : '-'));
+    $('#other_seksyen').val(user.seksyen_name || (user.kod_sec ? user.kod_sec : '-'));
+    $('#other_unit').val(user.unit_name || (user.kod_unit ? user.kod_unit : '-'));
+    $('#other_p').val(user.tel_no_p || '-');
+    $('#other_hp').val(user.tel_no_hp || '-');
   }
 
-  // Function to populate user fields (EDIT FORM)
+  // Function to populate user fields (EDIT FORM BAGI PIHAK)
   function populateEditUserFields(user) {
     $('#edit_other_name').val(user.nama || user.name || '');
+    $('#edit_other_jawatan').val(user.jawatan_name || (user.kod_jawatan ? user.kod_jawatan : '-'));
+    $('#edit_other_skim').val(user.skim_name || (user.kod_skim ? user.kod_skim : '-'));
+    $('#edit_other_gred').val(user.gred_name || user.nama_gred || (user.kod_gred ? user.kod_gred : '-'));
     $('#edit_other_email').val(user.email || '');
     $('#edit_other_sektor').val(user.sektor_name || (user.kod_sektor ? user.kod_sektor : '-'));
     $('#edit_other_agency').val(user.bahagian_name || (user.kod_bah ? user.kod_bah : '-'));
     $('#edit_other_seksyen').val(user.seksyen_name || (user.kod_sec ? user.kod_sec : '-'));
     $('#edit_other_unit').val(user.unit_name || (user.kod_unit ? user.kod_unit : '-'));
+    $('#edit_other_p').val(user.tel_no_p || '');
+    $('#edit_other_hp').val(user.tel_no_hp || '');
   }
 
   // Handle category change for subcategory (ADD FORM)
@@ -655,8 +675,8 @@ $(function () {
       }
     } else if (ticketType == '0') {
       // Bagi Pihak - validate other person fields (new field names)
-      var otherNameField = $('#other_name_display');
-      var otherEmailField = $('#other_email_display');
+      var otherNameField = $('#other_name');
+      var otherEmailField = $('#other_email');
 
       // Check if user info is shown (meaning search was successful)
       if ($('#foundUserInfo').is(':visible')) {
@@ -1177,17 +1197,26 @@ $(function () {
       }
     }, 800);
 
-    // Handle "Bagi Pihak" (ticket_type == 0) by loading user data
+    // Handle "Bagi Pihak" (ticket_type == 0) by loading edit user data
     if (ticket.ticket_type == 0 && ticket.user) {
       // Populate search email field with the user's email
       $('#edit_search_email').val(ticket.user.email);
 
       // Populate user display fields with the associated user's data
       $('#edit_other_name').val(ticket.user.nama || ticket.user.name || '');
+      $('#edit_other_jawatan').val(
+        ticket.user.jawatan?.nama_jawatan ||
+        ticket.user.jawatan_name ||
+        (ticket.user.kod_jawatan ? ticket.user.kod_jawatan : '-')
+      );
+      $('#edit_other_skim').val(
+        ticket.user.skim?.nama_skim ||
+        (ticket.user.kod_skim ? ticket.user.kod_skim : '-')
+      );
+      $('#edit_other_gred').val(ticket.user.nama_gred || '');
       $('#edit_other_email').val(ticket.user.email || '');
       $('#edit_other_sektor').val(
         ticket.user.sektor?.nama_sektor ||
-        ticket.user.sektor_name ||
         (ticket.user.kod_sektor ? ticket.user.kod_sektor : '-')
       );
       $('#edit_other_agency').val(
@@ -1205,6 +1234,8 @@ $(function () {
         ticket.user.unit_name ||
         (ticket.user.kod_unit ? ticket.user.kod_unit : '-')
       );
+      $('#edit_other_p').val(ticket.user.tel_no_p || '');
+      $('#edit_other_hp').val(ticket.user.tel_no_hp || '');
 
       // Show the user info section
       $('#editFoundUserInfo').show();
