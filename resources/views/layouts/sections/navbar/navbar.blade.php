@@ -164,7 +164,7 @@
                             <div class="flex-grow-1">
                                 <h6 class="mb-0">
                                     @if (Auth::check())
-                                        {{ Auth::user()->name }}<br>
+                                        {{ Auth::user()->nama }}<br>
                                         <small class="text-muted">{{ Auth::user()->email }}</small><br>
                                         <small
                                             class="text-muted">{{ Auth::user()->getRoleNames()->join(', ') }}</small>
