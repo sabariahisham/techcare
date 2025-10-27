@@ -40,7 +40,6 @@ use App\Http\Controllers\modal\ModalExample;
 use App\Http\Controllers\pages\UserProjects;
 use App\Http\Controllers\apps\InvoicePreview;
 use App\Http\Controllers\apps\LogisticsFleet;
-//use App\Http\Controllers\dashboard\Analytics;
 use App\Http\Controllers\cards\CardAnalytics;
 use App\Http\Controllers\extended_ui\BlockUI;
 use App\Http\Controllers\front_pages\Landing;
@@ -56,7 +55,6 @@ use App\Http\Controllers\form_elements\Picker;
 use App\Http\Controllers\front_pages\Checkout;
 use App\Http\Controllers\ModuleListController;
 use App\Http\Controllers\pages\MiscComingSoon;
-//use App\Http\Controllers\apps\AcademyDashboard;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\apps\AccessPermission;
 use App\Http\Controllers\apps\UserViewSecurity;
@@ -77,10 +75,8 @@ use App\Http\Controllers\user_interface\Toasts;
 use App\Http\Controllers\extended_ui\SweetAlert;
 use App\Http\Controllers\form_elements\Switches;
 use App\Http\Controllers\front_pages\HelpCenter;
-//use App\Http\Controllers\apps\EcommerceDashboard;
 use App\Http\Controllers\user_interface\Buttons;
 use App\Http\Controllers\apps\EcommerceOrderList;
-//use App\Http\Controllers\apps\LogisticsDashboard;
 use App\Http\Controllers\apps\EcommerceReferrals;
 use App\Http\Controllers\cards\CardGamifications;
 use App\Http\Controllers\extended_ui\DragAndDrop;
@@ -168,7 +164,6 @@ use App\Http\Controllers\configuration\UserManagementController;
 use App\Http\Controllers\wizard_example\Checkout as WizardCheckout;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsNotifications;
 use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
-
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
@@ -176,7 +171,7 @@ use App\Http\Controllers\dashboard\DashboardController;
 
 Route::get('/', function () {
   if (Auth::check()) {
-    //return view('content.dashboard.dashboards-analytics');
+    return redirect()->route('index'); // Redirect to dashboard if authenticated
   } else {
     return view('auth.login');
   }
@@ -196,10 +191,6 @@ Route::middleware([
   'verified',
 ])->group(function () {
   Route::get('/home', [DashboardController::class, 'index'])->name('index');
-  // Route::get('/home', function () {
-  //   //return view('content.dashboard.dashboards-analytics');
-  //   //return view('dashboard');
-  // })->name('index');
 });
 
 // ACL (Access Control List) Routes - Modules only (Users, Roles, Permissions use /admin/* routes below)

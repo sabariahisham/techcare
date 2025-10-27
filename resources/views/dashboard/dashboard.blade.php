@@ -26,12 +26,12 @@
         </div>
     </div>
 
-        @include('_partials/_dashboard/cards-status')
-        @include('_partials/_dashboard/chart-bar-assigned')
-        @include('_partials/_dashboard/chart-doughnut-status')
-        @include('_partials/_dashboard/chart-line-trend')
-        @include('_partials/_dashboard/chart-polar-category')
-        @include('_partials/_dashboard/table-ticket-overdue')
-        @include('_partials/_dashboard/card-status-user')
+        @include('dashboard/partials/cards-status')
+        @include('dashboard/partials/chart-bar-assigned')
+        @include('dashboard/partials/chart-doughnut-status')
+        @include('dashboard/partials/chart-line-trend')
+        @include('dashboard/partials/chart-polar-category')
+        @include('dashboard/partials/table-ticket-overdue')
+        @include('dashboard/partials/card-status-user')
 
     @endsection
