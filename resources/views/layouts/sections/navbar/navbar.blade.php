@@ -19,7 +19,8 @@
 @if (isset($navbarFull))
     <div class="navbar-brand app-brand demo d-none d-xl-flex py-0 me-4">
         <a href="{{ url('/') }}" class="app-brand-link gap-2">
-            <span class="app-brand-logo demo">@include('_partials.macros', ['width' => 25, 'withbg' => 'var(--bs-primary)'])</span>
+            {{-- <span class="app-brand-logo demo">@include('_partials.macros', ['width' => 25, 'withbg' => 'var(--bs-primary)'])</span> --}}
+            <img src="{{ asset('assets/img/logos/logo2.png') }}" alt="Your Logo" style="height: 30px; width: auto;">
             <span
                 class="app-brand-text demo menu-text fw-bold text-heading">{{ config('variables.templateName') }}</span>
         </a>

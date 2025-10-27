@@ -8,8 +8,8 @@ use App\Http\Controllers\apps\Kanban;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\maps\Leaflet;
 use App\Http\Controllers\apps\Calendar;
+//use App\Http\Controllers\dashboard\Crm;
 use App\Http\Controllers\apps\UserList;
-use App\Http\Controllers\dashboard\Crm;
 use App\Http\Controllers\layouts\Blank;
 use App\Http\Controllers\layouts\Fluid;
 use App\Http\Controllers\charts\ChartJs;
@@ -41,7 +41,6 @@ use App\Http\Controllers\pages\UserProjects;
 use App\Http\Controllers\apps\InvoicePreview;
 use App\Http\Controllers\apps\LogisticsFleet;
 use App\Http\Controllers\cards\CardAnalytics;
-use App\Http\Controllers\dashboard\Analytics;
 use App\Http\Controllers\extended_ui\BlockUI;
 use App\Http\Controllers\front_pages\Landing;
 use App\Http\Controllers\front_pages\Payment;
@@ -57,7 +56,6 @@ use App\Http\Controllers\front_pages\Checkout;
 use App\Http\Controllers\ModuleListController;
 use App\Http\Controllers\pages\MiscComingSoon;
 use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\apps\AcademyDashboard;
 use App\Http\Controllers\apps\AccessPermission;
 use App\Http\Controllers\apps\UserViewSecurity;
 use App\Http\Controllers\form_elements\Editors;
@@ -78,16 +76,15 @@ use App\Http\Controllers\extended_ui\SweetAlert;
 use App\Http\Controllers\form_elements\Switches;
 use App\Http\Controllers\front_pages\HelpCenter;
 use App\Http\Controllers\user_interface\Buttons;
-use App\Http\Controllers\apps\EcommerceDashboard;
 use App\Http\Controllers\apps\EcommerceOrderList;
 use App\Http\Controllers\apps\EcommerceReferrals;
-use App\Http\Controllers\apps\LogisticsDashboard;
 use App\Http\Controllers\cards\CardGamifications;
 use App\Http\Controllers\extended_ui\DragAndDrop;
 use App\Http\Controllers\extended_ui\MediaPlayer;
 use App\Http\Controllers\extended_ui\StarRatings;
 use App\Http\Controllers\extended_ui\TextDivider;
 use App\Http\Controllers\pages\MiscNotAuthorized;
+use App\Http\Controllers\ticket\TicketController;
 use App\Http\Controllers\user_interface\Carousel;
 use App\Http\Controllers\user_interface\Collapse;
 use App\Http\Controllers\user_interface\Progress;
@@ -121,6 +118,7 @@ use App\Http\Controllers\form_validation\Validation;
 use App\Http\Controllers\pages\MiscUnderMaintenance;
 use App\Http\Controllers\tables\DatatableExtensions;
 use App\Http\Controllers\apps\EcommerceManageReviews;
+use App\Http\Controllers\Configuration\SlaController;
 use App\Http\Controllers\form_elements\CustomOptions;
 use App\Http\Controllers\form_layouts\HorizontalForm;
 use App\Http\Controllers\language\LanguageController;
@@ -144,6 +142,7 @@ use App\Http\Controllers\extended_ui\TimelineFullscreen;
 use App\Http\Controllers\laravel_example\UserManagement;
 use App\Http\Controllers\wizard_example\PropertyListing;
 use App\Http\Controllers\apps\EcommerceSettingsLocations;
+use App\Http\Controllers\Configuration\OfficerController;
 use App\Http\Controllers\user_interface\TooltipsPopovers;
 use App\Http\Controllers\authentications\VerifyEmailBasic;
 use App\Http\Controllers\authentications\VerifyEmailCover;
@@ -160,22 +159,19 @@ use App\Http\Controllers\form_wizard\Icons as FormWizardIcons;
 use App\Http\Controllers\user_interface\PaginationBreadcrumbs;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsOverview;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsSecurity;
+use App\Http\Controllers\knowledgebase\KnowledgeBaseController;
 use App\Http\Controllers\configuration\UserManagementController;
-use App\Http\Controllers\Configuration\RefCategoryManagementController;
-use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
-use App\Http\Controllers\Configuration\SlaController;
-use App\Http\Controllers\Configuration\OfficerController;
 use App\Http\Controllers\wizard_example\Checkout as WizardCheckout;
 use App\Http\Controllers\apps\EcommerceCustomerDetailsNotifications;
 use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
+use App\Http\Controllers\Configuration\RefCategoryManagementController;
+use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
-
-use App\Http\Controllers\ticket\TicketController;
-use App\Http\Controllers\knowledgebase\KnowledgeBaseController;
+use App\Http\Controllers\dashboard\DashboardController;
 
 Route::get('/', function () {
   if (Auth::check()) {
-    return view('content.dashboard.dashboards-analytics');
+    return redirect()->route('index'); // Redirect to dashboard if authenticated
   } else {
     return view('auth.login');
   }
@@ -194,9 +190,7 @@ Route::middleware([
   config('jetstream.auth_session'),
   'verified',
 ])->group(function () {
-  Route::get('/home', function () {
-    return view('content.dashboard.dashboards-analytics');
-  })->name('index');
+  Route::get('/home', [DashboardController::class, 'index'])->name('index');
 });
 
 // ACL (Access Control List) Routes - Modules only (Users, Roles, Permissions use /admin/* routes below)

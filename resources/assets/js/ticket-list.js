@@ -38,11 +38,13 @@ $(function () {
       ajax: '/tickets/data',
       columns: [
         { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false }, // Bil
+        { data: 'no_log_tiket', name: 'no_log_tiket' },
         { data: 'tarikh_aduan', name: 'tarikh_aduan' },
         { data: 'nama_pengadu', name: 'nama_pengadu' },
         { data: 'kategori', name: 'kategori' },
         { data: 'sub_kategori', name: 'sub_kategori' },
         { data: 'status', name: 'status' },
+        { data: 'pegawai_tugasan', name: 'pegawai_tugasan' },
         { data: 'action', name: 'action', orderable: false, searchable: false }
       ],
       dom:

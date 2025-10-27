@@ -10,14 +10,23 @@
     <style>
         /* Custom Offcanvas Styles - Responsive Percentage Widths */
         .offcanvas-50 {
-            width: 50% !important;
+            width: 30% !important;
         }
 
         /* .offcanvas-60 {
-                                                                                width: 60% !important;
-                                                                            } */
+          width: 60% !important;
+          } */
 
         /* Responsive breakpoints for offcanvas */
+
+        /* Between 1200px and 1600px (typical laptops and medium desktops) */
+        @media (max-width: 1600px) and (min-width: 1201px) {
+            .offcanvas-50 {
+                width: 45% !important;
+            }
+        }
+
+        /* Responsive breakpoints for smaller screens */
         @media (max-width: 1200px) {
 
             /* .offcanvas-60, */
@@ -216,6 +225,92 @@
         .input-group .btn {
             white-space: nowrap;
         }
+
+        /* Standard smaller font size for form elements */
+        .offcanvas .form-label {
+            font-size: 0.8125rem !important;
+            /* 13px */
+            font-weight: 500;
+            margin-bottom: 0.375rem;
+        }
+
+        .offcanvas .form-control,
+        .offcanvas .form-select {
+            font-size: 0.8125rem !important;
+            /* 13px */
+            padding: 0.375rem 0.75rem !important;
+            line-height: 1.4 !important;
+        }
+
+        .offcanvas textarea.form-control {
+            font-size: 0.8125rem !important;
+            /* 13px */
+            line-height: 1.4 !important;
+        }
+
+        .offcanvas .btn {
+            font-size: 0.8125rem !important;
+            /* 13px */
+            padding: 0.375rem 0.75rem !important;
+        }
+
+        .offcanvas h6 {
+            font-size: 0.9375rem !important;
+            /* 15px */
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .offcanvas h5 {
+            font-size: 1rem !important;
+            /* 16px */
+            font-weight: 600;
+        }
+
+        .offcanvas .text-muted,
+        .offcanvas small {
+            font-size: 0.75rem !important;
+            /* 12px */
+        }
+
+        /* Ensure Select2 elements also use smaller font */
+        .offcanvas .select2-container--bootstrap-5 .select2-selection--single {
+            font-size: 0.8125rem !important;
+            /* 13px */
+            padding: 0.375rem 0.75rem !important;
+            line-height: 1.4 !important;
+        }
+
+        .offcanvas .select2-container--bootstrap-5 .select2-selection__rendered {
+            font-size: 0.8125rem !important;
+            /* 13px */
+            line-height: 1.4 !important;
+        }
+
+        /* Adjust input group button to match smaller inputs */
+        .offcanvas .input-group .btn {
+            font-size: 0.8125rem !important;
+            /* 13px */
+            padding: 0.375rem 0.75rem !important;
+        }
+
+        /* Make sure file input error text is also smaller */
+        .offcanvas .error-text {
+            font-size: 0.75rem !important;
+            /* 12px */
+        }
+
+        /* Spinner and loading text smaller */
+        .offcanvas .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .offcanvas .search-loading,
+        .offcanvas .alert {
+            font-size: 0.8125rem !important;
+            /* 13px */
+        }
     </style>
 @endsection
 
@@ -245,11 +340,13 @@
                 <thead class="border-top">
                     <tr>
                         <th>Bil</th>
+                        <th>No. Log Tiket</th>
                         <th>Tarikh Aduan</th>
                         <th>Nama Pengadu</th>
                         <th>Kategori</th>
                         <th>Sub Kategori</th>
                         <th>Status</th>
+                        <th>Pegawai Tugasan</th> <!-- blink username-text if overdue -->
                         <th>Tindakan</th>
                     </tr>
                 </thead>
@@ -287,6 +384,22 @@
                                     readonly>
                             </div>
                             <div class="col-12">
+                                <label class="form-label">Jawatan</label>
+                                <input type="text" class="form-control" name="jawatan"
+                                    value="{{ auth()->user()->jawatan_name }}" readonly>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Skim Perkhidmatan</label>
+                                <input type="text" class="form-control" name="skim"
+                                    value="{{ auth()->user()->skim?->nama_skim ? auth()->user()->skim->nama_skim . ' (' . auth()->user()->kod_skim . ')' : auth()->user()->kod_skim ?? '-' }}"
+                                    readonly>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Gred</label>
+                                <input type="text" class="form-control" name="gred"
+                                    value="{{ auth()->user()->nama_gred ?? '-' }}" readonly>
+                            </div>
+                            <div class="col-12">
                                 <label class="form-label">Emel</label>
                                 <input type="email" class="form-control" name="email"
                                     value="{{ auth()->user()->email }}" readonly>
@@ -314,6 +427,16 @@
                                 <input type="text" class="form-control" name="unit"
                                     value="{{ auth()->user()->unit->nama_unit ?? (auth()->user()->kod_unit ?? '-') }}"
                                     readonly>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Telefon Pejabat</label>
+                                <input type="text" class="form-control" name="telefon_pejabat"
+                                    value="{{ auth()->user()->tel_no_p ?? '-' }}" readonly>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Telefon Bimbit</label>
+                                <input type="text" class="form-control" name="telefon_bimbit"
+                                    value="{{ auth()->user()->tel_no_hp ?? '-' }}" readonly>
                             </div>
                         </div>
                     </div>
@@ -367,33 +490,58 @@
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Nama Pengadu</label>
-                                        <input type="text" class="form-control" id="other_name_display"
+                                        <input type="text" class="form-control" id="other_name"
                                             name="other_name" readonly>
                                     </div>
                                     <div class="col-12">
+                                        <label class="form-label">Jawatan</label>
+                                        <input type="text" class="form-control" id="other_jawatan" name="other_jawatan"
+                                            readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Skim Perkhidmatan</label>
+                                        <input type="text" class="form-control" id="other_skim"
+                                            name="other_skim" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Gred</label>
+                                        <input type="text" class="form-control" id="other_gred"
+                                            name="other_gred" readonly>
+                                    </div>
+                                    <div class="col-12">
                                         <label class="form-label">Emel</label>
-                                        <input type="email" class="form-control" id="other_email_display"
+                                        <input type="email" class="form-control" id="other_email"
                                             name="other_email" readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Sektor</label>
-                                        <input type="text" class="form-control" id="other_sektor_display"
+                                        <input type="text" class="form-control" id="other_sektor"
                                             name="other_sektor" readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Bahagian</label>
-                                        <input type="text" class="form-control" id="other_agency_display"
+                                        <input type="text" class="form-control" id="other_agency"
                                             name="other_agency" readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Seksyen</label>
-                                        <input type="text" class="form-control" id="other_seksyen_display"
+                                        <input type="text" class="form-control" id="other_seksyen"
                                             name="other_seksyen" readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Unit</label>
-                                        <input type="text" class="form-control" id="other_unit_display"
+                                        <input type="text" class="form-control" id="other_unit"
                                             name="other_unit" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Telefon Pejabat</label>
+                                        <input type="text" class="form-control" id="other_p"
+                                            name="telefon_pejabat" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Telefon Bimbit</label>
+                                        <input type="text" class="form-control" id="other_hp"
+                                            name="telefon_bimbit" readonly>
                                     </div>
                                     <!-- Button to clear and search again -->
                                     {{-- <div class="col-12 mt-3">
@@ -493,37 +641,63 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Nama Pengadu</label>
-                            <input type="text" class="form-control" id="edit_name" name="name"
+                            <input type="text" class="form-control" name="name"
                                 value="{{ auth()->user()->nama }}" readonly>
                         </div>
                         <div class="col-12">
+                            <label class="form-label">Jawatan</label>
+                            <input type="text" class="form-control" name="jawatan"
+                                value="{{ auth()->user()->jawatan_name }}" readonly>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Skim Perkhidmatan</label>
+                            <input type="text" class="form-control" name="skim"
+                                value="{{ auth()->user()->skim?->nama_skim ? auth()->user()->skim->nama_skim . ' (' . auth()->user()->kod_skim . ')' : auth()->user()->kod_skim ?? '-' }}"
+                                readonly>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Gred</label>
+                            <input type="text" class="form-control" name="gred"
+                                value="{{ auth()->user()->nama_gred ?? '-' }}" readonly>
+                        </div>
+                        <div class="col-12">
                             <label class="form-label">Emel</label>
-                            <input type="email" class="form-control" id="edit_email" name="email"
-                                value="{{ auth()->user()->email }}" readonly>
+                            <input type="email" class="form-control"name="email" value="{{ auth()->user()->email }}"
+                                readonly>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Sektor</label>
-                            <input type="text" class="form-control" id="edit_sektor" name="sektor"
+                            <input type="text" class="form-control" name="sektor"
                                 value="{{ auth()->user()->sektor->nama_sektor ?? (auth()->user()->kod_sektor ?? '-') }}"
                                 readonly>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Bahagian</label>
-                            <input type="text" class="form-control" id="edit_agency" name="agency"
+                            <input type="text" class="form-control" name="agency"
                                 value="{{ auth()->user()->bahagian->nama_bah ?? (auth()->user()->kod_bah ?? '-') }}"
                                 readonly>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Seksyen</label>
-                            <input type="text" class="form-control" id="edit_seksyen" name="seksyen"
+                            <input type="text" class="form-control" name="seksyen"
                                 value="{{ auth()->user()->seksyen->nama_sec ?? (auth()->user()->kod_sec ?? '-') }}"
                                 readonly>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Unit</label>
-                            <input type="text" class="form-control" id="edit_unit" name="unit"
+                            <input type="text" class="form-control" name="unit"
                                 value="{{ auth()->user()->unit->nama_unit ?? (auth()->user()->kod_unit ?? '-') }}"
                                 readonly>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Telefon Pejabat</label>
+                            <input type="text" class="form-control" name="telefon_pejabat"
+                                value="{{ auth()->user()->tel_no_p ?? '-' }}" readonly>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Telefon Bimbit</label>
+                            <input type="text" class="form-control" name="telefon_bimbit"
+                                value="{{ auth()->user()->tel_no_hp ?? '-' }}" readonly>
                         </div>
                     </div>
                 </div>
@@ -581,6 +755,21 @@
                                         readonly>
                                 </div>
                                 <div class="col-12">
+                                    <label class="form-label">Jawatan</label>
+                                    <input type="text" class="form-control" id="edit_other_jawatan"
+                                        name="other_jawatan" readonly>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Skim Perkhidmatan</label>
+                                    <input type="text" class="form-control" id="edit_other_skim" name="other_skim"
+                                        readonly>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Gred</label>
+                                    <input type="text" class="form-control" id="edit_other_gred" name="other_gred"
+                                        readonly>
+                                </div>
+                                <div class="col-12">
                                     <label class="form-label">Emel</label>
                                     <input type="email" class="form-control" id="edit_other_email" name="other_email"
                                         readonly>
@@ -603,6 +792,16 @@
                                 <div class="col-12">
                                     <label class="form-label">Unit</label>
                                     <input type="text" class="form-control" id="edit_other_unit" name="other_unit"
+                                        readonly>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Telefon Pejabat</label>
+                                    <input type="text" class="form-control" id="edit_other_p" name="telefon_pejabat"
+                                        readonly>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Telefon Bimbit</label>
+                                    <input type="text" class="form-control" id="edit_other_hp" name="telefon_bimbit"
                                         readonly>
                                 </div>
 
