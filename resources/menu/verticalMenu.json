@@ -4,15 +4,14 @@
       "url": "home",
       "icon": "menu-icon tf-icons bx bx-home-smile",
       "name": "Dashboard",
-      "slug": "index",
-      "permission": "dashboard.view"
+      "slug": "index"
+
     },
     {
       "url": "tickets",
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
-      "slug": "ticket",
-      "permission": "log-tiket.view"
+      "slug": "ticket"
     },
     {
       "url": "knowledgebase",
