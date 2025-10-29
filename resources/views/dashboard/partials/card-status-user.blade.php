@@ -30,7 +30,7 @@
                         </span>
                     </div>
                 </div>
-                <small class="text-muted mt-auto">Laporan anda telah diterima.</small>
+                <small class="text-muted mt-auto">Laporan anda telah diterima</small>
             </div>
         </div>
     </div>
@@ -50,7 +50,7 @@
                         </span>
                     </div>
                 </div>
-                <small class="text-muted mt-auto">Aduan sedang disemak dan diambil tindakan.</small>
+                <small class="text-muted mt-auto">Aduan sedang disemak dan diambil tindakan</small>
             </div>
         </div>
     </div>
@@ -66,11 +66,11 @@
                     </div>
                     <div class="avatar flex-shrink-0">
                         <span class="avatar-initial rounded bg-label-success">
-                            <i class="bx bx-check-circle bx-lg"></i>
+                            <i class="bx bx-check-shield bx-lg"></i>
                         </span>
                     </div>
                 </div>
-                <small class="text-muted mt-auto">Aduan telah diselesaikan.</small>
+                <small class="text-muted mt-auto">Aduan telah diselesaikan</small>
             </div>
         </div>
     </div>
@@ -90,7 +90,7 @@
                         </span>
                     </div>
                 </div>
-                <small class="text-muted mt-auto">Aduan masih dalam proses semakan.</small>
+                <small class="text-muted mt-auto">Aduan masih dalam proses semakan</small>
             </div>
         </div>
     </div>

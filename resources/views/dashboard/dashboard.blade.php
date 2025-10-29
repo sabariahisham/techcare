@@ -26,12 +26,28 @@
         </div>
     </div>
 
-        @include('dashboard/partials/cards-status')
-        @include('dashboard/partials/chart-bar-assigned')
-        @include('dashboard/partials/chart-doughnut-status')
-        @include('dashboard/partials/chart-line-trend')
-        @include('dashboard/partials/chart-polar-category')
-        @include('dashboard/partials/table-ticket-overdue')
-        @include('dashboard/partials/card-status-user')
+    <!-- User Ticket Status Cards -->
+    @include('dashboard/partials/card-status-user')
 
-    @endsection
+    <!-- Status for Top Management -->
+    <div class="row">
+        @include('dashboard/partials/cards-status') <!-- Card Status -->
+        @include('dashboard/partials/chart-status') <!-- Ticket Status -->
+        @include('dashboard/partials/chart-category') <!-- Ticket Category -->
+        {{-- @include('dashboard/partials/chart-line-trend') <!-- Monthly Ticket Trend --> --}}
+    </div>
+
+    <!-- Additional Components -->
+    <div class="row">
+        @include('dashboard/partials/chart-trend') <!-- Monthly Ticket Trend -->
+        @include('dashboard/partials/chart-total') <!-- XXX -->
+        @include('dashboard/partials/chart-assigned') <!-- Assigned Tickets -->
+
+    </div>
+
+    <!-- Assigned Tickets Table -->
+    <div class="row">
+        @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
+    </div>
+
+@endsection
