@@ -108,9 +108,9 @@
 
           // Reload DataTable if it exists on the page
           if (typeof window.dt_role !== 'undefined' && window.dt_role) {
-            window.dt_role.ajax.reload();
+            window.dt_role.ajax.reload(null, false);
           } else if ($('.datatables-roles').length) {
-            $('.datatables-roles').DataTable().ajax.reload();
+            $('.datatables-roles').DataTable().ajax.reload(null, false);
           }
 
           // Show success message
@@ -532,9 +532,9 @@
 
           // Reload DataTable if it exists
           if (typeof window.dt_role !== 'undefined' && window.dt_role) {
-            window.dt_role.ajax.reload();
+            window.dt_role.ajax.reload(null, false);
           } else if ($('.datatables-roles').length) {
-            $('.datatables-roles').DataTable().ajax.reload();
+            $('.datatables-roles').DataTable().ajax.reload(null, false);
           }
         } else {
           toastr.error(response.message || 'Error adding user to role', '', {
