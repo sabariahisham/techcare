@@ -28,10 +28,10 @@ $(function () {
             render: function (data, type, row) {
                 return `
                     <div class="d-flex justify-content-center gap-1">
-                        <button class="btn btn-sm btn-icon edit-role" data-id="${row.id}" data-name="${row.name}" title="Edit Role">
+                        <button class="btn btn-sm btn-icon edit-role" data-id="${row.id}" data-name="${row.name}" title="Kemaskini Peranan">
                             <i class="bx bx-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-icon delete-record" data-id="${row.id}" title="Delete Role">
+                        <button class="btn btn-sm btn-icon delete-record" data-id="${row.id}" title="Padam Peranan">
                             <i class="bx bx-trash"></i>
                         </button>
                     </div>`;
@@ -145,6 +145,8 @@ $(function () {
       ]
     });
 
+    // Assign to global window object for access from other scripts
+    window.dt_role = dt_role;
   }
 
   // Filter form control to default size

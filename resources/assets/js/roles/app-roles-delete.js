@@ -106,9 +106,9 @@ $(function () {
             }).then(() => {
               // Refresh the DataTable after the timer
               if (typeof window.dt_role !== 'undefined') {
-                window.dt_role.ajax.reload();
+                window.dt_role.ajax.reload(null, false);
               } else {
-                $('.datatables-roles').DataTable().ajax.reload();
+                $('.datatables-roles').DataTable().ajax.reload(null, false);
               }
             });
           } else {
@@ -264,9 +264,9 @@ $(function () {
             }).then(() => {
               // Refresh the DataTable after the timer
               if (typeof window.dt_role !== 'undefined') {
-                window.dt_role.ajax.reload();
+                window.dt_role.ajax.reload(null, false);
               } else {
-                $('.datatables-roles').DataTable().ajax.reload();
+                $('.datatables-roles').DataTable().ajax.reload(null, false);
               }
             });
           } else {

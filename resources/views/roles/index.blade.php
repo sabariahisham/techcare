@@ -87,7 +87,7 @@
           <th>Nama Peranan</th>
           {{-- <th>Deskripsi</th> --}}
           <th>Nama Pengguna</th>
-          <th>Nama Module</th>
+          <th>Nama Modul</th>
           <th>Jumlah Pengguna</th>
           <th>Tindakan</th>
         </tr>
@@ -120,12 +120,12 @@
           </div> --}}
 
           <div class="mb-4">
-            <h6>Kebenaran Peranan</h6>
+            <h6>Capaian Peranan</h6>
             <!-- Select All Permissions -->
             <div class="form-check mb-3">
               <input class="form-check-input" type="checkbox" id="selectAllPermissions">
               <label class="form-check-label fw-bold text-primary" for="selectAllPermissions">
-                Pilih Semua Kebenaran
+                Pilih Semua Capaian
               </label>
             </div>
             <hr class="mb-3">
