@@ -40,7 +40,7 @@
     <!-- Additional Components -->
     <div class="row">
         @include('dashboard/partials/chart-trend') <!-- Monthly Ticket Trend -->
-        @include('dashboard/partials/chart-total') <!-- XXX -->
+        @include('dashboard/partials/chart-total') <!-- Total Tickets -->
         @include('dashboard/partials/chart-assigned') <!-- Assigned Tickets -->
 
     </div>

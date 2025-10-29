@@ -63,6 +63,7 @@ export default defineConfig({
         ...LibsJsFiles,
         'resources/js/laravel-user-management.js', // Processing Laravel User Management CRUD JS File
         'resources/js/ticket.js', // Processing Ticket CRUD JS File
+        'resources/js/dashboard.js', // Processing Dashboard JS File
         ...CoreScssFiles,
         ...LibsScssFiles,
         ...LibsCssFiles,
