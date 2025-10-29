@@ -164,7 +164,7 @@
                             <div class="flex-grow-1">
                                 <h6 class="mb-0">
                                     @if (Auth::check())
-                                        {{ Auth::user()->name }}<br>
+                                        {{ Auth::user()->nama }}<br>
                                         <small class="text-muted">{{ Auth::user()->email }}</small><br>
                                         <small
                                             class="text-muted">{{ Auth::user()->getRoleNames()->join(', ') }}</small>
@@ -190,60 +190,6 @@
                         </a>
                     </li>
                 @endif
-                <li>
-                    <a class="dropdown-item" href="{{ url('pages/account-settings-billing') }}">
-                        <span class="d-flex align-items-center align-middle">
-                            <i class="flex-shrink-0 bx bx-credit-card bx-md me-3"></i><span
-                                class="flex-grow-1 align-middle">Billing Plan</span>
-                            <span class="flex-shrink-0 badge rounded-pill bg-danger">4</span>
-                        </span>
-                    </a>
-                </li>
-                @if (Auth::User() && Laravel\Jetstream\Jetstream::hasTeamFeatures())
-                    <li>
-                        <div class="dropdown-divider my-1"></div>
-                    </li>
-                    <li>
-                        <h6 class="dropdown-header">Manage Team</h6>
-                    </li>
-                    <li>
-                        <div class="dropdown-divider my-1"></div>
-                    </li>
-                    <li>
-                        <a class="dropdown-item"
-                            href="{{ Auth::user() ? route('teams.show', Auth::user()->currentTeam->id) : 'javascript:void(0)' }}">
-                            <i class='bx bx-cog bx-md me-3'></i><span>Team Settings</span>
-                        </a>
-                    </li>
-                    @can('create', Laravel\Jetstream\Jetstream::newTeamModel())
-                        <li>
-                            <a class="dropdown-item" href="{{ route('teams.create') }}">
-                                <i class='bx bx-user bx-md me-3'></i><span>Create New Team</span>
-                            </a>
-                        </li>
-                    @endcan
-                    @if (Auth::user()->allTeams()->count() > 1)
-                        <li>
-                            <div class="dropdown-divider my-1"></div>
-                        </li>
-                        <li>
-                            <h6 class="dropdown-header">Switch Teams</h6>
-                        </li>
-                        <li>
-                            <div class="dropdown-divider my-1"></div>
-                        </li>
-                    @endif
-                    @if (Auth::user())
-                        @foreach (Auth::user()->allTeams() as $team)
-                            {{-- Below commented code read by artisan command while installing jetstream. !! Do not remove if you want to use jetstream. --}}
-
-                            <x-switchable-team :team="$team" />
-                        @endforeach
-                    @endif
-                @endif
-                <li>
-                    <div class="dropdown-divider my-1"></div>
-                </li>
                 @if (Auth::check())
                     <li>
                         <a class="dropdown-item" href="{{ route('logout') }}"

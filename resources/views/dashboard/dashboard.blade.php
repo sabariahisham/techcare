@@ -13,7 +13,6 @@
 @endsection
 
 @section('content')
-
     @php
         use Illuminate\Support\Facades\Auth;
     @endphp
@@ -26,12 +25,62 @@
         </div>
     </div>
 
-        @include('dashboard/partials/cards-status')
-        @include('dashboard/partials/chart-bar-assigned')
-        @include('dashboard/partials/chart-doughnut-status')
-        @include('dashboard/partials/chart-line-trend')
-        @include('dashboard/partials/chart-polar-category')
-        @include('dashboard/partials/table-ticket-overdue')
-        @include('dashboard/partials/card-status-user')
+    <!-- Debug Role Information - Remove after role assignment is complete -->
+    @if (config('app.debug', false))
+        <div class="alert alert-warning mb-4">
+            <h6><i class="fas fa-bug"></i> Debug Role Information:</h6>
+            <strong>Current User:</strong> {{ Auth::user()->nama }}<br>
+            <strong>User Roles:</strong> {{ Auth::user()->getRoleNames()->implode(', ') ?: 'No roles assigned' }}<br>
+            @if (Auth::user()->getRoleNames()->isEmpty())
+                <div class="mt-2 p-2 bg-light border-left border-warning">
+                    <small><strong>Note:</strong> This user has no roles assigned. They will see the default
+                        dashboard.</small>
+                </div>
+            @endif
+        </div>
+    @endif
 
-    @endsection
+    <!-- User Ticket Status Cards - Shown to ALL users -->
+    <div class="row g-4 mb-6">
+        @include('dashboard/partials/card-status-user')
+    </div>
+
+    @if (Auth::user()->hasRole('Administrator'))
+        <div class="row g-4 mb-6">
+            @include('dashboard/partials/cards-status') <!-- Card Status -->
+            @include('dashboard/partials/chart-status') <!-- Ticket Status -->
+            @include('dashboard/partials/chart-category') <!-- Ticket Category -->
+            @include('dashboard/partials/chart-trend') <!-- Monthly Ticket Trend -->
+            @include('dashboard/partials/chart-total') <!-- Total Tickets -->
+            @include('dashboard/partials/chart-assigned') <!-- Assigned Tickets -->
+        </div>
+        <div class="row g-4 mb-6">
+            @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
+        </div>
+    @elseif(Auth::user()->hasRole('Pengurusan MOF'))
+        <div class="row g-4 mb-6">
+            @include('dashboard/partials/cards-status')
+            @include('dashboard/partials/chart-status')
+            @include('dashboard/partials/chart-category')
+            @include('dashboard/partials/chart-trend')
+            @include('dashboard/partials/chart-total')
+        </div>
+    @elseif(Auth::user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
+        <div class="row g-4 mb-6">
+            @include('dashboard/partials/cards-status')
+            @include('dashboard/partials/chart-status')
+            @include('dashboard/partials/chart-category')
+            @include('dashboard/partials/chart-trend')
+            @include('dashboard/partials/chart-total')
+            @include('dashboard/partials/chart-assigned')
+        </div>
+    @elseif(Auth::user()->hasRole('Pegawai Tugasan'))
+        <div class="row">
+            @include('dashboard/partials/cards-status')
+            @include('dashboard/partials/chart-status')
+            @include('dashboard/partials/chart-category')
+            @include('dashboard/partials/table-ticket-overdue')
+        </div>
+    @endif
+
+@endsection

@@ -15,8 +15,9 @@ class RefTicketStatus extends Model
     protected $fillable = [
         'st_name',
         'st_desc',
-        'created_by',
-        'updated_by',
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
 
     public function tickets()
