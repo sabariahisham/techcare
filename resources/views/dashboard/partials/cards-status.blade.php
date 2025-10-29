@@ -1,5 +1,5 @@
-<div class="col-lg-4 col-md-12 mb-6 d-flex align-items-stretch">
-    <div class="row w-100 g-4">
+<div class="col-lg-4 col-md-12">
+    <div class="row g-4">
         <div class="col-lg-6 col-md-6 col-sm-6 col-12 d-flex">
             <div class="card flex-fill">
                 <div class="card-body">
