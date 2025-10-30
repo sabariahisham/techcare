@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Ticket;
 use App\Models\User;
 use App\Models\Ticket;
 use App\Models\RefCategory;
+use App\Models\TicketChronology;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\RefTicketStatus;
@@ -39,7 +40,37 @@ class TicketController extends Controller
         return $ticket->subCategory ? e($ticket->subCategory->subcat_name) : '-';
       })
       ->addColumn('status', function ($ticket) {
-        return $ticket->status ? e($ticket->status->st_name) : '-';
+        if (!$ticket->status) {
+          return '<span class="badge bg-secondary">-</span>';
+        }
+
+        $statusName = $ticket->status->st_name;
+        $badgeClass = '';
+
+        switch ($statusName) {
+          case 'Aduan Baru':
+            $badgeClass = 'bg-primary';
+            break;
+          case 'Aduan Diproses':
+            $badgeClass = 'bg-warning';
+            break;
+          case 'Serahan Kepada':
+            $badgeClass = 'bg-info';
+            break;
+          case 'Aduan Dirujuk':
+            $badgeClass = 'bg-danger';
+            break;
+          case 'Aduan DiBatal':
+            $badgeClass = 'bg-secondary';
+            break;
+          case 'Aduan Selesai':
+            $badgeClass = 'bg-success';
+            break;
+          default:
+            $badgeClass = 'bg-secondary';
+        }
+
+        return '<span class="badge ' . $badgeClass . '">' . e($statusName) . '</span>';
       })
       ->addColumn('pegawai_tugasan', function ($ticket) {
         // Assuming there's a relationship or field for assigned officer
@@ -52,7 +83,7 @@ class TicketController extends Controller
         $viewBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></button>';
         return '<div class="d-inline-block text-nowrap">' . $editBtn . ' ' . $deleteBtn . ' ' . $viewBtn . '</div>';
       })
-      ->rawColumns(['action'])
+      ->rawColumns(['action', 'status'])
       ->make(true);
   }
 
@@ -142,7 +173,11 @@ class TicketController extends Controller
       'subCategory',
       'status',
       'createdBy',
-      'updatedBy'
+      'updatedBy',
+      'chronologies.status',
+      'chronologies.createdBy',
+      'chronologies.fromUser',
+      'chronologies.escalatedTo'
     ]);
 
     // Get ticket history/audit trail if available
@@ -325,37 +360,143 @@ class TicketController extends Controller
   }
 
   /**
-   * Get ticket history/kronologi for display
+   * Get ticket history/kronologi for display from tickets_chronologies table only
    */
   private function getTicketHistory($ticket)
   {
-    // For now, we'll create basic history from available data
-    // Later this can be enhanced with proper audit trail
-    $history = collect([
-      [
-        'action' => 'Tiket Dicipta',
-        'description' => 'Tiket aduan telah dicipta dalam sistem',
-        'user' => $ticket->createdBy ? $ticket->createdBy->nama : 'Sistem',
+    $history = collect();
+
+    // Get chronology data from tickets_chronologies table only
+    if ($ticket->chronologies && $ticket->chronologies->count() > 0) {
+      foreach ($ticket->chronologies as $chronology) {
+        $statusName = $chronology->status ? $chronology->status->st_name : 'Status Tidak Diketahui';
+
+        // Build details array with available chronology information
+        $details = [];
+
+        // Add escalation information
+        if ($chronology->escalate_to && $chronology->escalatedTo) {
+          $details['Diserahkan kepada'] = $chronology->escalatedTo->nama;
+        }
+
+        // Add SLA information
+        if ($chronology->sla_duedate) {
+          $details['SLA Due Date'] = $chronology->sla_duedate->format('d/m/Y H:i:s');
+        }
+
+        // Add level pegtugas information
+        if ($chronology->level_pegtugas_id) {
+          $details['Level Pegtugas'] = "Level {$chronology->level_pegtugas_id}";
+        }
+
+        // Add processed by information
+        if ($chronology->fromUser) {
+          $details['Diproses oleh'] = $chronology->fromUser->nama;
+        }
+
+        // For "Aduan Baru" status, add ticket creation details
+        if ($statusName === 'Aduan Baru') {
+          $details['Kategori'] = $ticket->category ? $ticket->category->cat_name : '-';
+          $details['Sub Kategori'] = $ticket->subCategory ? $ticket->subCategory->subcat_name : '-';
+          $details['Jenis Tiket'] = $ticket->ticket_type == 1 ? 'Diri Sendiri' : 'Bagi Pihak';
+        }
+
+        $history->push([
+          'action' => $statusName,
+          'status' => $statusName,
+          'description' => $chronology->getTimelineDescription(),
+          'user' => $chronology->createdBy ? $chronology->createdBy->nama : 'Sistem',
+          'timestamp' => $chronology->created_at,
+          'details' => $details
+        ]);
+      }
+    } else {
+      // If no chronologies exist, show only current ticket status (fallback)
+      $currentStatus = $ticket->status ? $ticket->status->st_name : 'Aduan Baru';
+      $history->push([
+        'action' => $currentStatus,
+        'status' => $currentStatus,
+        'description' => $ticket->status ? $ticket->status->st_desc : 'Tiket telah dicipta dalam sistem.',
+        'user' => $ticket->createdBy ? $ticket->createdBy->nama : ($ticket->user ? $ticket->user->nama : 'Sistem'),
         'timestamp' => $ticket->created_at,
         'details' => [
           'Kategori' => $ticket->category ? $ticket->category->cat_name : '-',
           'Sub Kategori' => $ticket->subCategory ? $ticket->subCategory->subcat_name : '-',
           'Jenis Tiket' => $ticket->ticket_type == 1 ? 'Diri Sendiri' : 'Bagi Pihak'
         ]
-      ]
-    ]);
-
-    // Add update history if ticket was updated
-    if ($ticket->updated_at && $ticket->updated_at != $ticket->created_at) {
-      $history->push([
-        'action' => 'Tiket Dikemaskini',
-        'description' => 'Maklumat tiket telah dikemaskini',
-        'user' => $ticket->updatedBy ? $ticket->updatedBy->nama : 'Sistem',
-        'timestamp' => $ticket->updated_at,
-        'details' => []
       ]);
     }
 
+    // Sort chronologically by timestamp
     return $history->sortBy('timestamp');
+  }
+
+  /**
+   * Add chronology entry when ticket status changes
+   * Also updates the ticket's current status to reflect the latest status
+   */
+  public function addChronologyEntry($ticketId, $newStatusId, $escalateTo = null, $slaDueDate = null, $levelPegtugasId = null)
+  {
+    // Create chronology entry
+    $chronology = TicketChronology::create([
+      'ticket_id' => $ticketId,
+      'frm_user_id' => Auth::id(),
+      'level_pegtugas_id' => $levelPegtugasId,
+      'tick_status' => $newStatusId,
+      'escalate_to' => $escalateTo,
+      'sla_duedate' => $slaDueDate,
+      'created_by' => Auth::id(),
+    ]);
+
+    // Update ticket's current status to reflect the latest status change
+    $ticket = Ticket::find($ticketId);
+    if ($ticket) {
+      $ticket->update([
+        'tick_status' => $newStatusId,
+        'updated_by' => Auth::id()
+      ]);
+    }
+
+    return $chronology;
+  }
+
+  /**
+   * Update ticket status and create chronology entry
+   */
+  public function updateTicketStatus(Request $request, Ticket $ticket)
+  {
+    $request->validate([
+      'tick_status' => 'required|exists:ref_ticket_statuses,id',
+      'escalate_to' => 'nullable|exists:users,id',
+      'sla_duedate' => 'nullable|date',
+      'level_pegtugas_id' => 'nullable|integer|min:1|max:5'
+    ]);
+
+    try {
+      // Add chronology entry and update ticket status
+      $chronology = $this->addChronologyEntry(
+        $ticket->id,
+        $request->tick_status,
+        $request->escalate_to,
+        $request->sla_duedate ? \Carbon\Carbon::parse($request->sla_duedate) : null,
+        $request->level_pegtugas_id
+      );
+
+      // Reload ticket with latest data
+      $ticket->refresh();
+      $ticket->load(['status', 'chronologies.status', 'chronologies.createdBy', 'chronologies.fromUser', 'chronologies.escalatedTo']);
+
+      return response()->json([
+        'success' => true,
+        'message' => 'Status tiket berjaya dikemaskini!',
+        'ticket' => $ticket,
+        'chronology' => $chronology
+      ]);
+    } catch (\Exception $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Ralat semasa mengemaskini status tiket: ' . $e->getMessage()
+      ], 500);
+    }
   }
 }
