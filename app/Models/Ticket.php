@@ -8,6 +8,7 @@ use League\CommonMark\Node\Block\Document;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class Ticket extends Model
 {
@@ -117,5 +118,37 @@ class Ticket extends Model
   public function updatedBy()
   {
     return $this->belongsTo(User::class, 'updated_by');
+  }
+
+  public function chronologies()
+  {
+    return $this->hasMany(TicketChronology::class, 'ticket_id')->orderBy('created_at', 'asc');
+  }
+
+  /**
+   * Create a chronology entry when status changes
+   */
+  public function addChronologyEntry($newStatusId, $escalateTo = null, $slaDueDate = null, $userId = null, $levelPegtugasId = null)
+  {
+    $currentUserId = $userId ?? (Auth::check() ? Auth::id() : null) ?? $this->created_by;
+
+    // Create chronology entry
+    $chronology = TicketChronology::create([
+      'ticket_id' => $this->id,
+      'frm_user_id' => $currentUserId,
+      'level_pegtugas_id' => $levelPegtugasId,
+      'tick_status' => $newStatusId,
+      'escalate_to' => $escalateTo,
+      'sla_duedate' => $slaDueDate,
+      'created_by' => $currentUserId,
+    ]);
+
+    // Update this ticket's current status to reflect the latest status
+    $this->update([
+      'tick_status' => $newStatusId,
+      'updated_by' => $currentUserId
+    ]);
+
+    return $chronology;
   }
 }

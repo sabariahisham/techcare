@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
     // Finally run data seeders that depend on users and reference data
     // $this->call([
     //   TicketSeeder::class,
+    //   TicketChronologySeeder::class,
     // ]);
 
     // $this->call([

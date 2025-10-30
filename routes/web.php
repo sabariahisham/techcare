@@ -271,6 +271,7 @@ Route::middleware(['auth', 'verified'])->prefix('tickets')->group(function () {
   Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
   Route::put('/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
   Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
+  Route::post('/{ticket}/update-status', [TicketController::class, 'updateTicketStatus'])->name('tickets.update-status');
 });
 
 // Route for searching user by email - for ticket forms

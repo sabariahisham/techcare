@@ -1283,6 +1283,14 @@ $(function () {
     console.log('Ticket data loaded successfully');
   };
 
+  // Handle view button click
+  $(document).on('click', '.view-record', function () {
+    var ticketId = $(this).data('id');
+
+    // Navigate to the detailed view page
+    window.location.href = '/tickets/' + ticketId;
+  });
+
   // Handle edit button click - TAMBAH INI
   $(document).on('click', '.edit-record', function () {
     var ticketId = $(this).data('id');

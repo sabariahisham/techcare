@@ -14,8 +14,8 @@
         }
 
         /* .offcanvas-60 {
-          width: 60% !important;
-          } */
+              width: 60% !important;
+              } */
 
         /* Responsive breakpoints for offcanvas */
 
@@ -311,6 +311,12 @@
             font-size: 0.8125rem !important;
             /* 13px */
         }
+
+        /* Custom purple badge for status */
+        /* .badge.bg-purple {
+            background-color: #7b68ee !important;
+            color: #fff !important;
+        } */
     </style>
 @endsection
 
@@ -490,38 +496,38 @@
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Nama Pengadu</label>
-                                        <input type="text" class="form-control" id="other_name"
-                                            name="other_name" readonly>
+                                        <input type="text" class="form-control" id="other_name" name="other_name"
+                                            readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Jawatan</label>
-                                        <input type="text" class="form-control" id="other_jawatan" name="other_jawatan"
-                                            readonly>
+                                        <input type="text" class="form-control" id="other_jawatan"
+                                            name="other_jawatan" readonly>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">Skim Perkhidmatan</label>
-                                        <input type="text" class="form-control" id="other_skim"
-                                            name="other_skim" readonly>
+                                        <input type="text" class="form-control" id="other_skim" name="other_skim"
+                                            readonly>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">Gred</label>
-                                        <input type="text" class="form-control" id="other_gred"
-                                            name="other_gred" readonly>
+                                        <input type="text" class="form-control" id="other_gred" name="other_gred"
+                                            readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Emel</label>
-                                        <input type="email" class="form-control" id="other_email"
-                                            name="other_email" readonly>
+                                        <input type="email" class="form-control" id="other_email" name="other_email"
+                                            readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Sektor</label>
-                                        <input type="text" class="form-control" id="other_sektor"
-                                            name="other_sektor" readonly>
+                                        <input type="text" class="form-control" id="other_sektor" name="other_sektor"
+                                            readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Bahagian</label>
-                                        <input type="text" class="form-control" id="other_agency"
-                                            name="other_agency" readonly>
+                                        <input type="text" class="form-control" id="other_agency" name="other_agency"
+                                            readonly>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Seksyen</label>
@@ -530,18 +536,18 @@
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Unit</label>
-                                        <input type="text" class="form-control" id="other_unit"
-                                            name="other_unit" readonly>
+                                        <input type="text" class="form-control" id="other_unit" name="other_unit"
+                                            readonly>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">Telefon Pejabat</label>
-                                        <input type="text" class="form-control" id="other_p"
-                                            name="telefon_pejabat" readonly>
+                                        <input type="text" class="form-control" id="other_p" name="telefon_pejabat"
+                                            readonly>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">Telefon Bimbit</label>
-                                        <input type="text" class="form-control" id="other_hp"
-                                            name="telefon_bimbit" readonly>
+                                        <input type="text" class="form-control" id="other_hp" name="telefon_bimbit"
+                                            readonly>
                                     </div>
                                     <!-- Button to clear and search again -->
                                     {{-- <div class="col-12 mt-3">
