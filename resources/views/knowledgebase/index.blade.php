@@ -29,11 +29,11 @@
 
 @section('page-script')
 @vite([
-  'resources/assets/js/app-knowledge-base-list.js',
-  'resources/assets/js/app-knowledge-base-modal-add.js',
-  'resources/assets/js/app-knowledge-base-modal-edit.js',
-  'resources/assets/js/app-knowledge-base-modal-show.js',
-  'resources/assets/js/app-knowledge-base-delete.js',
+  'resources/assets/js/knowledgebase/app-knowledge-base-list.js',
+  'resources/assets/js/knowledgebase/app-knowledgebase-modal-add.js',
+  'resources/assets/js/knowledgebase/app-knowledgebase-modal-edit.js',
+  'resources/assets/js/knowledgebase/app-knowledgebase-modal-show.js',
+  'resources/assets/js/knowledgebase/app-knowledgebase-delete.js',
 ])
 @endsection
 
@@ -45,11 +45,11 @@
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
           <div class="content-left">
-            <span class="text-heading">Total Articles</span>
+            <span class="text-heading">Jumlah Artikel</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ \App\Models\KnowledgeBase::count() }}</h4>
             </div>
-            <small class="mb-0">Knowledge Base Articles</small>
+            <small class="mb-0">Artikel</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-primary">
@@ -65,11 +65,11 @@
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
           <div class="content-left">
-            <span class="text-heading">Active Articles</span>
+            <span class="text-heading">Artikel Aktif</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ \App\Models\KnowledgeBase::where('kb_status', 'aktif')->count() }}</h4>
             </div>
-            <small class="mb-0">Published Articles</small>
+            <small class="mb-0">Artikel Diterbitkan</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-success">
@@ -85,11 +85,11 @@
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
           <div class="content-left">
-            <span class="text-heading">Categories</span>
+            <span class="text-heading">Kategori</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ \App\Models\RefCategory::count() }}</h4>
             </div>
-            <small class="mb-0">Available Categories</small>
+            <small class="mb-0">Kategori Tersedia</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-info">
@@ -105,11 +105,11 @@
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
           <div class="content-left">
-            <span class="text-heading">Inactive Articles</span>
+            <span class="text-heading">Artikel Tidak Aktif</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ \App\Models\KnowledgeBase::where('kb_status', 'tidak aktif')->count() }}</h4>
             </div>
-            <small class="mb-0">Draft Articles</small>
+            <small class="mb-0">Artikel Draf</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-warning">
@@ -138,7 +138,6 @@
           <th>Kategori</th>
           <th>Sub Kategori</th>
           <th>Deskripsi</th>
-          {{-- <th>Tag</th> --}}
           <th>Status</th>
           <th>Ditulis oleh</th>
           <th>Tindakan</th>

@@ -16,10 +16,10 @@
 
     // Clear subcategory options
     subcategorySelect.html('<option value="">Pilih Sub Kategori</option>');
-    
+
     // Clear subcategory value and reset validation state
     subcategorySelect.val('');
-    
+
     // Reset subcategory validation state
     if (fv) {
       // Remove existing validation state
@@ -33,8 +33,11 @@
     if (categoryId) {
       // Fetch subcategories for the selected category
       $.ajax({
-        url: `/categories/${categoryId}/subcategories`,
+        url: `/ref-subcategory-management/by-category/${categoryId}`,
         type: 'GET',
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
         success: function(response) {
           if (response.success && response.data && response.data.length > 0) {
             response.data.forEach(function(subcategory) {
@@ -127,6 +130,17 @@
       const submitButton = $(form).find('button[type="submit"]');
       const originalText = submitButton.text();
 
+      // Remove any existing pdf_files from FormData (in case the input field has old data)
+      formData.delete('pdf_files[]');
+
+      // Get selected files from the global window object (set by the file upload script)
+      if (typeof window.selectedFiles !== 'undefined' && window.selectedFiles.length > 0) {
+        window.selectedFiles.forEach(file => {
+          formData.append('pdf_files[]', file);
+        });
+        console.log(`Adding ${window.selectedFiles.length} files to FormData`);
+      }
+
       // Disable submit button and show loading state
       submitButton.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-2"></i>Menyimpan...');
 
@@ -171,17 +185,17 @@
 
               // Find the field element
               const fieldElement = $(`[name="${fieldName}"]`);
-              
+
               if (fieldElement.length > 0) {
                 // Add Bootstrap invalid class
                 fieldElement.addClass('is-invalid');
-                
+
                 // Remove existing validation message
                 fieldElement.closest('.mb-4').find('.invalid-feedback').remove();
-                
+
                 // Add new validation message
                 fieldElement.after(`<div class="invalid-feedback">${errorMessage}</div>`);
-                
+
                 // Update FormValidation status if available
                 if (fv) {
                   fv.updateFieldStatus(fieldName, 'Invalid', 'callback');
@@ -219,7 +233,7 @@
     // Remove any validation error classes and messages
     $(this).find('.is-invalid, .is-valid').removeClass('is-invalid is-valid');
     $(this).find('.invalid-feedback').remove();
-    
+
     // Reset all form fields validation state
     $(this).find('input, select, textarea').each(function() {
       $(this).removeClass('is-invalid is-valid');
@@ -242,7 +256,7 @@
     // Clear any existing validation messages
     $(this).removeClass('is-invalid is-valid');
     $(this).closest('.mb-4').find('.invalid-feedback').remove();
-    
+
     if (fv) {
       fv.revalidateField('subcat_id');
     }
@@ -252,13 +266,13 @@
   $(document).on('input change blur', '#addNewKnowledgeBaseForm input, #addNewKnowledgeBaseForm select, #addNewKnowledgeBaseForm textarea', function() {
     const $field = $(this);
     const fieldName = $field.attr('name');
-    
+
     // Clear previous validation state on change
     if ($(this).is(':input')) {
       $field.removeClass('is-invalid is-valid');
       $field.closest('.mb-4').find('.invalid-feedback').text('');
     }
-    
+
     if (fv && fieldName) {
       // Revalidate field after a short delay for better UX
       setTimeout(function() {

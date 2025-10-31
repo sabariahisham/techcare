@@ -43,6 +43,11 @@ class KnowledgeBase extends Model
     {
         return $this->belongsTo(User::class, 'updated_by')->withTrashed();
     }
+
+    public function documents()
+    {
+        return $this->hasMany(Document::class, 'doc_id', 'id');
+    }
 }
 
 
