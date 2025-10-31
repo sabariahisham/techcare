@@ -130,4 +130,140 @@ if (typeof window.config === 'undefined') {
   } else {
     console.log('Status chart canvas not found on this page');
   }
+
+  // Category Chart (Doughnut Chart with Legend)
+  // --------------------------------------------------------------------
+  const categoryChart = document.getElementById('categoryChart');
+  if (categoryChart) {
+    console.log('Category chart canvas found, initializing...');
+
+    // Category colors using lighter/softer Sneat template colors
+    const categoryColors = [
+      '#a5abff',  // Soft Purple (Primary)
+      '#ffc947',  // Soft Orange (Warning)
+      '#26d0f0',  // Soft Cyan (Info)
+      '#98e85d',  // Soft Green (Success)
+      '#ff6b47',  // Soft Red (Danger)
+      '#a8b1ba',  // Soft Gray (Secondary)
+      '#d4a5ff'   // Soft Lavender (Additional)
+    ];
+
+    // Fetch data from the backend
+    fetch('/dashboard/category-tickets')
+      .then(response => {
+        console.log('Category response received:', response);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Category chart data received:', data);
+
+        if (data.success) {
+          const labels = data.data.map(item => item.cat_name);
+          const counts = data.data.map(item => item.count);
+          const colors = data.data.map((item, index) => categoryColors[index % categoryColors.length]);
+
+          console.log('Category labels:', labels);
+          console.log('Category counts:', counts);
+          console.log('Category colors:', colors);
+
+          // Create the category doughnut chart (different style from status chart)
+          const categoryChartVar = new Chart(categoryChart, {
+            type: 'doughnut',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  data: counts,
+                  backgroundColor: colors,
+                  borderWidth: 2,
+                  borderColor: cardColor,
+                  hoverBorderWidth: 3,
+                  hoverBorderColor: '#fff',
+                  pointStyle: 'rectRounded'
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: {
+                duration: 1000,
+                animateRotate: true,
+                animateScale: false
+              },
+              cutout: '60%', // Different cutout from status chart (75%)
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'right',
+                  align: 'center',
+                  labels: {
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    padding: 15,
+                    boxWidth: 10,
+                    boxHeight: 10,
+                    color: headingColor,
+                    font: {
+                      size: 11,
+                      weight: '500'
+                    },
+                    generateLabels: function (chart) {
+                      const data = chart.data;
+                      if (data.labels.length && data.datasets.length) {
+                        return data.labels.map((label, index) => {
+                          const dataset = data.datasets[0];
+                          const value = dataset.data[index];
+                          return {
+                            text: `${label}: ${value}`,
+                            fillStyle: dataset.backgroundColor[index],
+                            strokeStyle: dataset.borderColor,
+                            lineWidth: dataset.borderWidth,
+                            hidden: isNaN(value) || value === 0,
+                            index: index
+                          };
+                        });
+                      }
+                      return [];
+                    }
+                  }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      const label = context.label || '';
+                      const value = context.parsed;
+                      const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                      const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                      return ` ${label}: ${value} tiket (${percentage}%)`;
+                    }
+                  },
+                  backgroundColor: cardColor,
+                  titleColor: headingColor,
+                  bodyColor: bodyColor,
+                  borderWidth: 1,
+                  borderColor: borderColor,
+                  titleFont: {
+                    size: 12,
+                    weight: '600'
+                  },
+                  bodyFont: {
+                    size: 11
+                  }
+                }
+              }
+            }
+          });
+
+          console.log('Category chart created successfully');
+        } else {
+          console.error('Category API returned success: false');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching category data:', error);
+      });
+  } else {
+    console.log('Category chart canvas not found on this page');
+  }
 })();

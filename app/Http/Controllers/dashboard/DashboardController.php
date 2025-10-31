@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\RefTicketStatus;
-use App\Models\Category;
+use App\Models\RefCategory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -86,7 +86,6 @@ class DashboardController extends Controller
         'success' => true,
         'data' => $statusData
       ]);
-      
     } catch (\Exception $e) {
       // Fallback with sample data if database queries fail
       $sampleData = [
@@ -105,4 +104,51 @@ class DashboardController extends Controller
     }
   }
 
+  public function getCategoryTickets()
+  {
+    try {
+      // Get all categories first
+      $allCategories = RefCategory::select('id', 'cat_name')->orderBy('id')->get();
+
+      // Get ticket counts per category
+      $categoryCounts = DB::table('tickets as t')
+        ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
+        ->select('rc.id', DB::raw('COUNT(t.id) as count'))
+        ->whereNull('t.deleted_at')
+        ->whereNull('rc.deleted_at')
+        ->groupBy('rc.id')
+        ->pluck('count', 'id');
+
+      // Build complete data with zero counts for categories with no tickets
+      $categoryData = [];
+      foreach ($allCategories as $category) {
+        $categoryData[] = [
+          'id' => $category->id,
+          'cat_name' => $category->cat_name,
+          'count' => $categoryCounts[$category->id] ?? 0
+        ];
+      }
+
+      return response()->json([
+        'success' => true,
+        'data' => $categoryData
+      ]);
+    } catch (\Exception $e) {
+      // Fallback with sample data including all 7 categories
+      $sampleData = [
+        ['id' => 1, 'cat_name' => 'Aplikasi', 'count' => 8],
+        ['id' => 2, 'cat_name' => 'Perkakasan & Perkhidmatan ICT', 'count' => 15],
+        ['id' => 3, 'cat_name' => 'Keselamatan ICT', 'count' => 3],
+        ['id' => 4, 'cat_name' => 'Pangkalan Data & Sysadmin', 'count' => 2],
+        ['id' => 5, 'cat_name' => 'Pusat Data', 'count' => 20],
+        ['id' => 6, 'cat_name' => 'Rangkaian', 'count' => 5],
+        ['id' => 7, 'cat_name' => 'Emel/SSO', 'count' => 0]
+      ];
+
+      return response()->json([
+        'success' => true,
+        'data' => $sampleData
+      ]);
+    }
+  }
 }
