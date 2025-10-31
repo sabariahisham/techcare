@@ -299,4 +299,177 @@ if (typeof window.config === 'undefined') {
   } else {
     console.log('Category chart canvas not found on this page');
   }
+
+  // Total Tickets Chart (Doughnut with center text)
+  // --------------------------------------------------------------------
+  const totalChart = document.getElementById('totalChart');
+  if (totalChart) {
+    console.log('Total chart canvas found, initializing...');
+
+    // Total tickets colors using Sneat template colors
+    const totalColors = [
+      '#a5abff',  // Soft Purple (Tiket Sendiri)
+      '#26d0f0'   // Soft Cyan (Tiket Bagi Pihak)
+    ];
+
+    // Fetch data from the backend
+    fetch('/dashboard/total-tickets')
+      .then(response => {
+        console.log('Total tickets response received:', response);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Total tickets chart data received:', data);
+
+        if (data.success) {
+          const labels = data.data.map(item => item.type_name);
+          const counts = data.data.map(item => item.count);
+          const colors = data.data.map((item, index) => totalColors[index % totalColors.length]);
+          const totalCount = data.total || counts.reduce((sum, count) => sum + count, 0);
+
+          console.log('Total labels:', labels);
+          console.log('Total counts:', counts);
+          console.log('Total colors:', colors);
+          console.log('Total count:', totalCount);
+
+          // Update the total count display
+          const totalCountElement = document.getElementById('totalCount');
+          if (totalCountElement) {
+            totalCountElement.textContent = totalCount;
+          }
+
+          // Create the total tickets polar area chart
+          const totalChartVar = new Chart(totalChart, {
+            type: 'polarArea',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  data: counts,
+                  backgroundColor: [
+                    'rgba(165, 171, 255, 0.7)', // Soft purple with transparency
+                    'rgba(38, 208, 240, 0.7)'   // Soft cyan with transparency
+                  ],
+                  borderColor: [
+                    '#a5abff', // Solid purple
+                    '#26d0f0'  // Solid cyan
+                  ],
+                  borderWidth: 2,
+                  hoverBorderWidth: 3,
+                  hoverBorderColor: '#fff'
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: {
+                duration: 1000,
+                animateRotate: true,
+                animateScale: true
+              },
+              scales: {
+                r: {
+                  beginAtZero: true,
+                  grid: {
+                    color: borderColor,
+                    lineWidth: 1
+                  },
+                  angleLines: {
+                    color: borderColor,
+                    lineWidth: 1
+                  },
+                  pointLabels: {
+                    color: headingColor,
+                    font: {
+                      size: 11,
+                      weight: '500'
+                    }
+                  },
+                  ticks: {
+                    display: false // Hide radial ticks for cleaner look
+                  }
+                }
+              },
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'bottom',
+                  align: 'center',
+                  labels: {
+                    usePointStyle: true,
+                    pointStyle: 'rectRounded',
+                    padding: 15,
+                    boxWidth: 12,
+                    boxHeight: 12,
+                    color: headingColor,
+                    font: {
+                      size: 11,
+                      weight: '500'
+                    },
+                    generateLabels: function (chart) {
+                      const data = chart.data;
+                      if (data.labels.length && data.datasets.length) {
+                        return data.labels.map((label, index) => {
+                          const dataset = data.datasets[0];
+                          const value = dataset.data[index];
+                          const total = dataset.data.reduce((sum, val) => sum + val, 0);
+                          const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                          return {
+                            text: `${label}: ${value} (${percentage}%)`,
+                            fillStyle: dataset.backgroundColor[index],
+                            strokeStyle: dataset.borderColor[index],
+                            lineWidth: dataset.borderWidth,
+                            hidden: isNaN(value) || value === 0,
+                            index: index
+                          };
+                        });
+                      }
+                      return [];
+                    }
+                  }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      const label = context.label || '';
+                      const value = context.parsed.r;
+                      const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                      const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                      return ` ${label}: ${value} tiket (${percentage}%)`;
+                    }
+                  },
+                  backgroundColor: cardColor,
+                  titleColor: headingColor,
+                  bodyColor: bodyColor,
+                  borderWidth: 1,
+                  borderColor: borderColor,
+                  titleFont: {
+                    size: 12,
+                    weight: '600'
+                  },
+                  bodyFont: {
+                    size: 11
+                  }
+                }
+              }
+            }
+          });
+
+          console.log('Total tickets chart created successfully');
+        } else {
+          console.error('Total tickets API returned success: false');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching total tickets data:', error);
+        // Set fallback total count
+        const totalCountElement = document.getElementById('totalCount');
+        if (totalCountElement) {
+          totalCountElement.textContent = '0';
+        }
+      });
+  } else {
+    console.log('Total chart canvas not found on this page');
+  }
 })();
