@@ -676,4 +676,237 @@ if (typeof window.config === 'undefined') {
   } else {
     console.log('Trend chart canvas not found on this page');
   }
+
+  // Assigned Tickets Chart (Bar Chart with Monthly Dropdown)
+  // --------------------------------------------------------------------
+  const assignedChart = document.getElementById('assignedChart');
+  if (assignedChart) {
+    console.log('Assigned chart canvas found, initializing...');
+
+    let currentMonth = new Date().getMonth() + 1; // 1-based month
+    let currentYear = new Date().getFullYear();
+    let assignedChartInstance = null;
+
+    // Function to load assigned data for specific month/year
+    function loadAssignedData(month, year) {
+      fetch(`/dashboard/total-assigned?month=${month}&year=${year}`)
+        .then(response => {
+          console.log('Assigned tickets response received:', response);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Assigned tickets chart data received:', data);
+
+          if (data.success) {
+            const labels = data.data.map(item => item.officer_name);
+            const counts = data.data.map(item => item.total_tickets);
+            const roles = data.data.map(item => item.role_name);
+            const totalTickets = data.total || 0;
+
+            console.log('Assigned labels:', labels);
+            console.log('Assigned counts:', counts);
+            console.log('Assigned roles:', roles);
+            console.log('Total assigned tickets:', totalTickets);
+
+            // Generate colors for each bar (using different shades of success color)
+            const colors = labels.map((label, index) => {
+              const baseColors = [
+                '#98e85d', '#71dd37', '#5cb85c', '#4cae4c',
+                '#449d44', '#398439', '#2e7d32', '#1b5e20'
+              ];
+              return baseColors[index % baseColors.length];
+            });
+
+            // Update subtitle with total
+            const subtitleElement = document.getElementById('assignedSubtitle');
+            if (subtitleElement) {
+              const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+              ];
+              subtitleElement.textContent = `Total ${totalTickets} tiket pada ${monthNames[month - 1]} ${year}`;
+            }
+
+            // Update month dropdown
+            if (data.available_months && data.available_months.length > 0) {
+              updateMonthDropdown(data.available_months, month, year);
+            }
+
+            // Destroy existing chart if it exists
+            if (assignedChartInstance) {
+              assignedChartInstance.destroy();
+            }
+
+            // Create the assigned tickets radar chart (perfect for team comparison)
+            assignedChartInstance = new Chart(assignedChart, {
+              type: 'radar',
+              data: {
+                labels: labels.map(name => name.length > 10 ? name.substring(0, 10) + '...' : name),
+                datasets: [
+                  {
+                    label: 'Tiket Ditugaskan',
+                    data: counts,
+                    backgroundColor: 'rgba(152, 232, 93, 0.2)', // Soft green with transparency
+                    borderColor: '#98e85d',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#71dd37',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointHoverBackgroundColor: '#5cb85c',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 3,
+                    fill: true
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                  duration: 1000,
+                  easing: 'easeInOutQuart'
+                },
+                scales: {
+                  r: {
+                    beginAtZero: true,
+                    max: Math.max(...counts) + Math.ceil(Math.max(...counts) * 0.3), // Add 30% padding
+                    grid: {
+                      color: borderColor,
+                      lineWidth: 1
+                    },
+                    angleLines: {
+                      color: borderColor,
+                      lineWidth: 1
+                    },
+                    pointLabels: {
+                      color: headingColor,
+                      font: {
+                        size: 11,
+                        weight: '500'
+                      },
+                      callback: function (label) {
+                        return label; // Names are already truncated above
+                      }
+                    },
+                    ticks: {
+                      color: labelColor,
+                      font: {
+                        size: 9
+                      },
+                      stepSize: Math.max(1, Math.ceil(Math.max(...counts) / 5)),
+                      callback: function (value) {
+                        return Number.isInteger(value) ? value : '';
+                      }
+                    }
+                  }
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'center',
+                    labels: {
+                      usePointStyle: true,
+                      pointStyle: 'circle',
+                      padding: 15,
+                      boxWidth: 8,
+                      boxHeight: 8,
+                      color: headingColor,
+                      font: {
+                        size: 12,
+                        weight: '500'
+                      }
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: cardColor,
+                    titleColor: headingColor,
+                    bodyColor: bodyColor,
+                    borderWidth: 1,
+                    borderColor: borderColor,
+                    titleFont: {
+                      size: 13,
+                      weight: '600'
+                    },
+                    bodyFont: {
+                      size: 12
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                      title: function (context) {
+                        const index = context[0].dataIndex;
+                        return labels[index]; // Full name in tooltip
+                      },
+                      label: function (context) {
+                        const index = context.dataIndex;
+                        const value = context.parsed.r;
+                        return [
+                          `Tiket: ${value}`,
+                          `Jawatan: ${roles[index]}`
+                        ];
+                      }
+                    }
+                  }
+                },
+                interaction: {
+                  intersect: false,
+                  mode: 'point'
+                }
+              }
+            });
+
+            console.log('Assigned tickets chart created successfully');
+          } else {
+            console.error('Assigned tickets API returned success: false');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching assigned tickets data:', error);
+        });
+    }
+
+    // Function to update month dropdown
+    function updateMonthDropdown(availableMonths, selectedMonth, selectedYear) {
+      const monthDropdown = document.getElementById('monthDropdown');
+      const selectedMonthBtn = document.getElementById('selectedMonth');
+
+      if (monthDropdown && selectedMonthBtn) {
+        // Clear existing items
+        monthDropdown.innerHTML = '';
+
+        // Add month options
+        availableMonths.forEach(monthData => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.className = 'dropdown-item';
+          a.href = 'javascript:void(0);';
+          a.textContent = monthData.display_name;
+          a.addEventListener('click', function () {
+            currentMonth = monthData.month;
+            currentYear = monthData.year;
+            selectedMonthBtn.textContent = monthData.display_name;
+            loadAssignedData(monthData.month, monthData.year);
+          });
+          li.appendChild(a);
+          monthDropdown.appendChild(li);
+        });
+
+        // Update selected month button
+        const monthNames = [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        selectedMonthBtn.textContent = `${monthNames[selectedMonth - 1]} ${selectedYear}`;
+      }
+    }
+
+    // Initial load
+    loadAssignedData(currentMonth, currentYear);
+
+  } else {
+    console.log('Assigned chart canvas not found on this page');
+  }
 })();
