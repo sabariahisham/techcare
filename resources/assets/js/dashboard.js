@@ -65,55 +65,88 @@ if (typeof window.config === 'undefined') {
           console.log('Chart counts:', counts);
           console.log('Chart colors:', colors);
 
-          // Create the donut chart
+          // Create the horizontal bar chart
           const statusChartVar = new Chart(statusChart, {
-            type: 'doughnut',
+            type: 'bar',
             data: {
               labels: labels,
               datasets: [
                 {
                   data: counts,
                   backgroundColor: colors,
-                  borderWidth: 0,
-                  pointStyle: 'rectRounded'
+                  borderWidth: 1,
+                  borderColor: colors.map(color => color.replace('0.8)', '1)')), // Slightly darker border
+                  borderRadius: 4,
+                  borderSkipped: false
                 }
               ]
             },
             options: {
+              indexAxis: 'y', // Makes it horizontal
               responsive: true,
               maintainAspectRatio: false,
               animation: {
                 duration: 800
               },
-              cutout: '75%',
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'bottom',
-                  labels: {
-                    usePointStyle: true,
-                    padding: 20,
-                    boxWidth: 8,
-                    boxHeight: 8,
-                    color: headingColor,
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  grid: {
+                    color: borderColor,
+                    drawBorder: false
+                  },
+                  ticks: {
+                    color: labelColor,
                     font: {
-                      size: 13
+                      size: 11
+                    },
+                    stepSize: 1,
+                    callback: function (value) {
+                      return Number.isInteger(value) ? value : '';
                     }
                   }
+                },
+                y: {
+                  grid: {
+                    display: false
+                  },
+                  ticks: {
+                    color: headingColor,
+                    font: {
+                      size: 11,
+                      weight: '500'
+                    },
+                    callback: function (value, index) {
+                      const label = this.getLabelForValue(value);
+                      return label.length > 15 ? label.substring(0, 15) + '...' : label;
+                    }
+                  }
+                }
+              },
+              plugins: {
+                legend: {
+                  display: false // Hide legend for horizontal bar chart
                 },
                 tooltip: {
                   callbacks: {
                     label: function (context) {
                       const label = context.label || '';
-                      const value = context.parsed;
-                      return ' ' + label + ': ' + value + ' tiket';
+                      const value = context.parsed.x;
+                      return ` ${label}: ${value} tiket`;
                     }
                   },
                   backgroundColor: cardColor,
                   titleColor: headingColor,
                   bodyColor: bodyColor,
                   borderWidth: 1,
-                  borderColor: borderColor
+                  borderColor: borderColor,
+                  titleFont: {
+                    size: 12,
+                    weight: '600'
+                  },
+                  bodyFont: {
+                    size: 11
+                  }
                 }
               }
             }
