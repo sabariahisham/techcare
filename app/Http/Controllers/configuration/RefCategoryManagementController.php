@@ -14,7 +14,7 @@ class RefCategoryManagementController extends Controller
     {
       // Get total categories count
         $totalCategories = RefCategory::count();
-        
+
         return view('ref-category-management.index', compact('totalCategories'));
     }
 
@@ -128,9 +128,12 @@ class RefCategoryManagementController extends Controller
     {
         try {
             $category = RefCategory::findOrFail($id);
-            $subcategories = $category->subCategories()->select('id', 'subcat_name as name')->get();
+            $subcategories = $category->subCategories()->select('id', 'subcat_name')->get();
 
-            return response()->json($subcategories);
+            return response()->json([
+                'success' => true,
+                'data' => $subcategories
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
