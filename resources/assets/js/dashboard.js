@@ -472,4 +472,208 @@ if (typeof window.config === 'undefined') {
   } else {
     console.log('Total chart canvas not found on this page');
   }
+
+  // Monthly Trend Chart (Line Chart with Year Dropdown)
+  // --------------------------------------------------------------------
+  const trendChart = document.getElementById('trendChart');
+  if (trendChart) {
+    console.log('Trend chart canvas found, initializing...');
+
+    let currentYear = new Date().getFullYear();
+    let trendChartInstance = null;
+
+    // Function to load trend data for specific year
+    function loadTrendData(year) {
+      fetch(`/dashboard/monthly-trend?year=${year}`)
+        .then(response => {
+          console.log('Monthly trend response received:', response);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Monthly trend chart data received:', data);
+
+          if (data.success) {
+            const labels = data.data.map(item => item.month_name);
+            const counts = data.data.map(item => item.count);
+            const totalTickets = data.total || 0;
+
+            console.log('Trend labels:', labels);
+            console.log('Trend counts:', counts);
+            console.log('Total tickets for year:', totalTickets);
+
+            // Update subtitle with total
+            const subtitleElement = document.getElementById('trendSubtitle');
+            if (subtitleElement) {
+              subtitleElement.textContent = `Total ${totalTickets} tiket pada tahun ${year}`;
+            }
+
+            // Update year dropdown
+            if (data.available_years && data.available_years.length > 0) {
+              updateYearDropdown(data.available_years, year);
+            }
+
+            // Destroy existing chart if it exists
+            if (trendChartInstance) {
+              trendChartInstance.destroy();
+            }
+
+            // Create the monthly trend line chart
+            trendChartInstance = new Chart(trendChart, {
+              type: 'line',
+              data: {
+                labels: labels,
+                datasets: [
+                  {
+                    label: 'Jumlah Tiket',
+                    data: counts,
+                    borderColor: '#ffc947', // Soft orange (warning color)
+                    backgroundColor: 'rgba(255, 201, 71, 0.1)', // Very light orange fill
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4, // Smooth curves
+                    pointBackgroundColor: '#ffc947',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointHoverBackgroundColor: '#ffab00', // Darker orange on hover (original warning)
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 3
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                  duration: 1000,
+                  easing: 'easeInOutQuart'
+                },
+                interaction: {
+                  intersect: false,
+                  mode: 'index'
+                },
+                scales: {
+                  x: {
+                    grid: {
+                      display: false
+                    },
+                    ticks: {
+                      color: headingColor,
+                      font: {
+                        size: 12,
+                        weight: '500'
+                      }
+                    }
+                  },
+                  y: {
+                    beginAtZero: true,
+                    grid: {
+                      display: false,  // Disable Y-axis grid lines
+                      drawBorder: false
+                    },
+                    ticks: {
+                      color: labelColor,
+                      font: {
+                        size: 11
+                      },
+                      stepSize: 1,
+                      callback: function (value) {
+                        return Number.isInteger(value) ? value : '';
+                      }
+                    }
+                  }
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                      usePointStyle: true,
+                      pointStyle: 'line',
+                      padding: 20,
+                      boxWidth: 20,
+                      boxHeight: 3,
+                      color: headingColor,
+                      font: {
+                        size: 12,
+                        weight: '500'
+                      }
+                    }
+                  },
+                  tooltip: {
+                    backgroundColor: cardColor,
+                    titleColor: headingColor,
+                    bodyColor: bodyColor,
+                    borderWidth: 1,
+                    borderColor: borderColor,
+                    titleFont: {
+                      size: 13,
+                      weight: '600'
+                    },
+                    bodyFont: {
+                      size: 12
+                    },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                      title: function (context) {
+                        return `${context[0].label} ${year}`;
+                      },
+                      label: function (context) {
+                        return ` Jumlah tiket: ${context.parsed.y}`;
+                      }
+                    }
+                  }
+                }
+              }
+            });
+
+            console.log('Monthly trend chart created successfully');
+          } else {
+            console.error('Monthly trend API returned success: false');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching monthly trend data:', error);
+        });
+    }
+
+    // Function to update year dropdown
+    function updateYearDropdown(availableYears, selectedYear) {
+      const yearDropdown = document.getElementById('yearDropdown');
+      const selectedYearBtn = document.getElementById('selectedYear');
+
+      if (yearDropdown && selectedYearBtn) {
+        // Clear existing items
+        yearDropdown.innerHTML = '';
+
+        // Add year options
+        availableYears.forEach(year => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.className = 'dropdown-item';
+          a.href = 'javascript:void(0);';
+          a.textContent = year;
+          a.addEventListener('click', function () {
+            currentYear = year;
+            selectedYearBtn.textContent = year;
+            loadTrendData(year);
+          });
+          li.appendChild(a);
+          yearDropdown.appendChild(li);
+        });
+
+        // Update selected year button
+        selectedYearBtn.textContent = selectedYear;
+      }
+    }
+
+    // Initial load
+    loadTrendData(currentYear);
+
+  } else {
+    console.log('Trend chart canvas not found on this page');
+  }
 })();
