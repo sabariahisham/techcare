@@ -9,6 +9,8 @@
       <div class="modal-body">
         <form class="edit-knowledgebase" id="editKnowledgeBaseForm">
           <input type="hidden" id="edit-kb-id" name="id" />
+          <!-- Hidden field for kb_jenis -->
+          <input type="hidden" name="kb_jenis" value="doc_kb">
           <div class="row">
             <div class="col-12 mb-4">
               <label class="form-label" for="edit-kb-title">Article Title <span class="text-danger">*</span></label>
