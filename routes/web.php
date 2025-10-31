@@ -171,7 +171,7 @@ use App\Http\Controllers\dashboard\DashboardController;
 
 Route::get('/', function () {
   if (Auth::check()) {
-    return redirect()->route('index'); // Redirect to dashboard if authenticated
+    return redirect()->route('dashboard.index'); // Redirect to dashboard if authenticated
   } else {
     return view('auth.login');
   }
@@ -185,13 +185,32 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
   ->middleware(['auth'])
   ->name('two-factor.login.store');
 
+// Dashboard Routes Group
 Route::middleware([
   'auth',
   config('jetstream.auth_session'),
   'verified',
-])->group(function () {
-  Route::get('/home', [DashboardController::class, 'index'])->name('index');
+])->prefix('dashboard')->name('dashboard.')->group(function () {
+  // Main dashboard page
+  Route::get('/', [DashboardController::class, 'index'])->name('index');
+  // Dashboard API endpoints
+  Route::get('/current-status', [DashboardController::class, 'getCurrentStatus'])->name('current-status');
+  Route::get('/status-tickets', [DashboardController::class, 'getStatusTickets'])->name('status-tickets');
+  Route::get('/category-tickets', [DashboardController::class, 'getCategoryTickets'])->name('category-tickets');
+  Route::get('/total-tickets', [DashboardController::class, 'getTotalTickets'])->name('total-tickets');
+  Route::get('/monthly-trend', [DashboardController::class, 'getMonthlyTrends'])->name('monthly-trend');
+  Route::get('/total-assigned', [DashboardController::class, 'getTotalAssigned'])->name('total-assigned');
+  Route::get('/list-overdue', [DashboardController::class, 'getListOverdue'])->name('list-overdue');
 });
+
+// Legacy dashboard route (redirect to new grouped route)
+Route::middleware([
+  'auth',
+  config('jetstream.auth_session'),
+  'verified',
+])->get('/home', function () {
+  return redirect()->route('dashboard.index');
+})->name('index');
 
 // ACL (Access Control List) Routes - Modules only (Users, Roles, Permissions use /admin/* routes below)
 Route::middleware(['auth', 'verified'])->group(function () {

@@ -212,7 +212,7 @@
                                             $statusClass = 'bg-warning'; // Orange
                                             break;
                                         case 'Serahan Kepada':
-                                            $statusClass = 'bg-purple'; // Purple
+                                            $statusClass = 'bg-info'; // Info
                                             break;
                                         case 'Aduan Dirujuk':
                                             $statusClass = 'bg-danger'; // Merah
@@ -365,7 +365,7 @@
                                                 break;
                                             case 'Serahan Kepada':
                                                 $iconClass = 'bx-user-plus';
-                                                $colorClass = 'bg-purple'; // Purple
+                                                $colorClass = 'bg-info'; // Info
                                                 break;
                                             case 'Aduan Dirujuk':
                                                 $iconClass = 'bx-share-alt';
@@ -516,11 +516,11 @@
             background: linear-gradient(135deg, #17a2b8, #138496);
         }
 
-        /* Badge colors to match timeline markers */
+        /* Badge colors to match timeline markers
         .badge.bg-purple {
             background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
             color: white;
-        }
+        } */
 
         .badge.badge-sm {
             font-size: 0.7rem;

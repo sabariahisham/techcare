@@ -6,8 +6,14 @@
                 <p class="card-subtitle">Sehingga kini {{ date('d-m-Y') }}</p>
             </div>
         </div>
-        <div class="card-body">
-            <!-- Add content/chart here -->
+        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <div class="chart-container" style="position: relative; width: 200px; height: 200px;">
+                <canvas id="totalChart"></canvas>
+            </div>
+            <div class="text-center mt-3">
+                <h4 class="mb-0" id="totalCount">-</h4>
+                <small class="text-muted">Total Tiket</small>
+            </div>
         </div>
     </div>
 </div>

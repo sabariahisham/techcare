@@ -6,6 +6,7 @@
 @endsection
 
 @section('vendor-script')
+    @vite(['resources/assets/vendor/libs/chartjs/chartjs.js'])
 @endsection
 
 @section('page-script')
