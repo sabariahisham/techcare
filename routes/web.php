@@ -289,6 +289,7 @@ Route::middleware(['auth', 'verified'])->prefix('knowledgebase')->group(function
   Route::get('/{article}/edit', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'edit'])->name('knowledgebase.edit');
   Route::put('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'update'])->name('knowledgebase.update');
   Route::delete('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'destroy'])->name('knowledgebase.destroy');
+  Route::get('/document/{document}/download', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'downloadDocument'])->name('knowledgebase.document.download');
 });
 
 // Main Admin Management Routes (Users, Roles, Permissions)
