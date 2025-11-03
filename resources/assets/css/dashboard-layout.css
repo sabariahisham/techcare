@@ -1,0 +1,164 @@
+/* Dashboard Layout Fixes */
+
+/* Ensure consistent row height for dashboard cards and charts */
+.dashboard-row-consistent {
+  display: flex;
+  align-items: stretch;
+}
+
+/* Force consistent height for all cards in the main dashboard row */
+.dashboard-main-cards {
+  min-height: 320px;
+  /* Fixed minimum height */
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-main-cards .card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.dashboard-main-cards .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Status cards specific styling */
+.status-cards-container {
+  min-height: 320px;
+  /* Match chart height */
+}
+
+.status-cards-container .row {
+  height: 100%;
+}
+
+.status-cards-container .col {
+  display: flex;
+  align-items: stretch;
+  min-height: 150px;
+  /* Minimum height for each card */
+}
+
+.status-cards-container .card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.status-cards-container .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chart cards specific styling */
+.chart-card {
+  min-height: 320px;
+  /* Fixed height to match status cards */
+}
+
+.chart-card .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+}
+
+.chart-card canvas {
+  flex: 1;
+  max-height: 220px;
+  /* Leave space for header */
+}
+
+/* Enhanced styling for 'Selesai Minggu Ini' card */
+.weekly-completed-card {
+  min-height: 180px;
+  /* Increased height for better chart visibility */
+}
+
+.weekly-completed-card .card-body {
+  padding: 1.25rem;
+}
+
+.weekly-completed-card .weekly-chart-container {
+  height: 60px;
+  /* Increased height for better chart visibility */
+  margin-top: 0.75rem;
+}
+
+.weekly-completed-card .weekly-chart-container canvas {
+  height: 60px !important;
+}
+
+/* Pending tickets card with semi-pie chart */
+.pending-tickets-card {
+  min-height: 180px;
+}
+
+.pending-tickets-card .pending-chart-container {
+  height: 80px;
+  /* More space for the semi-pie chart */
+  margin-top: 0.5rem;
+}
+
+.pending-tickets-card .pending-chart-container canvas {
+  height: 80px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+
+  .dashboard-main-cards,
+  .status-cards-container,
+  .chart-card {
+    min-height: auto;
+    /* Remove fixed height on mobile */
+  }
+
+  .status-cards-container .col {
+    min-height: 120px;
+    /* Reduced minimum height on mobile */
+  }
+
+  .weekly-completed-card,
+  .pending-tickets-card {
+    min-height: 140px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .status-cards-container .col {
+    min-height: 100px;
+  }
+
+  .weekly-completed-card .weekly-chart-container,
+  .pending-tickets-card .pending-chart-container {
+    height: 50px;
+  }
+}
+
+/* Loading placeholder styling to maintain height */
+.placeholder-glow .placeholder {
+  animation: placeholder-glow 2s ease-in-out infinite alternate;
+  background-image: linear-gradient(90deg, currentColor 0%, transparent 50%, currentColor 100%);
+  opacity: 0.5;
+}
+
+/* Ensure charts maintain aspect ratio during loading */
+.chart-loading {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
