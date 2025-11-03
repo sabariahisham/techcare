@@ -8,7 +8,7 @@
                         <div class="avatar flex-shrink-0 w-px-40 h-px-40">
                             <span
                                 class="avatar-initial rounded bg-label-info d-flex align-items-center justify-content-center w-100 h-100">
-                                <i class="bx bx-clipboard bx-lg text-info"></i>
+                                <i class="bx bx-lock-open bx-lg text-info"></i>
                             </span>
                         </div>
                     </div>
