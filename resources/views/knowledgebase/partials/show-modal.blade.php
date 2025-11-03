@@ -1,4 +1,21 @@
 <!-- Knowledge Base Show Modal -->
+<style>
+.attachment-item {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6 !important;
+  transition: background-color 0.2s ease;
+}
+
+.attachment-item:hover {
+  background-color: #e9ecef;
+}
+
+.attachment-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+</style>
+
 <div class="modal fade" id="showKnowledgeBaseModal" tabindex="-1" aria-labelledby="showKnowledgeBaseModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
@@ -23,13 +40,21 @@
           <div class="col-md-3"><strong>Deskripsi:</strong></div>
           <div class="col-md-9" id="show-kb-description">-</div>
         </div>
-        {{-- <div class="row mb-3">
+        <div class="row mb-3">
           <div class="col-md-3"><strong>Tags:</strong></div>
           <div class="col-md-9" id="show-kb-tags">-</div>
-        </div> --}}
+        </div>
         <div class="row mb-3">
           <div class="col-md-3"><strong>Status:</strong></div>
           <div class="col-md-9" id="show-kb-status">-</div>
+        </div>
+         <div class="row mb-3">
+          <div class="col-md-3"><strong>Lampiran:</strong></div>
+          <div class="col-md-9" id="show-kb-attachments">
+            <div class="attachment-list">
+              <!-- Files will be dynamically populated here -->
+            </div>
+          </div>
         </div>
         <div class="row mb-3">
           <div class="col-md-3"><strong>Ditulis oleh:</strong></div>

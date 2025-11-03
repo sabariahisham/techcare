@@ -55,9 +55,10 @@ $(function () {
         { data: 'category_name', name: 'category_name' },
         { data: 'subcategory_name', name: 'subcategory_name' },
         { data: 'kb_desc', name: 'kb_desc' },
+        { data: 'kb_tag_formatted', name: 'kb_tag', orderable: false },
+        { data: 'action', name: 'action', orderable: false, searchable: false },
         { data: 'kb_status', name: 'kb_status' },
-        { data: 'created_by', name: 'created_by' },
-        { data: 'action', name: 'action', orderable: false, searchable: false }
+        { data: 'created_by', name: 'created_by' }
       ],
       columnDefs: [
         {
@@ -70,6 +71,12 @@ $(function () {
             }
             return data;
           }
+        },
+        {
+          targets: 6, // kb_tag_formatted column (0-indexed)
+          width: '200px',
+          className: 'text-wrap',
+          orderable: false
         }
       ],
       autoWidth: false,
@@ -129,7 +136,7 @@ $(function () {
       initComplete: function () {
         // Adding status filter once table initialized
         this.api()
-          .columns(6)
+          .columns(8)
           .every(function () {
             var column = this;
             var select = $(
@@ -180,6 +187,16 @@ $(function () {
           min-width: 300px !important;
           max-width: 350px !important;
           word-wrap: break-word !important;
+        }
+        .datatables-knowledgebase th:nth-child(7),
+        .datatables-knowledgebase td:nth-child(7) {
+          min-width: 200px !important;
+          max-width: 250px !important;
+          word-wrap: break-word !important;
+        }
+        .datatables-knowledgebase td:nth-child(7) .badge {
+          white-space: nowrap;
+          font-size: 0.75rem;
         }
       `)
       .appendTo('head');

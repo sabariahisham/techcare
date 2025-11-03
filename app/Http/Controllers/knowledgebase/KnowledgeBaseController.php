@@ -54,7 +54,25 @@ class KnowledgeBaseController extends Controller
                 ->editColumn('kb_desc', function($row) {
                     return strlen($row->kb_desc) > 100 ? substr($row->kb_desc, 0, 100) . '...' : $row->kb_desc;
                 })
-                ->rawColumns(['action', 'kb_status'])
+                ->addColumn('kb_tag_formatted', function($row) {
+                    if (empty($row->kb_tag)) {
+                        return '<span class="badge bg-label-secondary">Tiada Tag</span>';
+                    }
+
+                    // Split tags by comma and create badges
+                    $tags = explode(',', $row->kb_tag);
+                    $tagBadges = '';
+
+                    foreach ($tags as $tag) {
+                        $tag = trim($tag);
+                        if (!empty($tag)) {
+                            $tagBadges .= '<span class="badge bg-label-primary me-1 mb-1">' . htmlspecialchars($tag) . '</span>';
+                        }
+                    }
+
+                    return $tagBadges ?: '<span class="badge bg-label-secondary">Tiada Tag</span>';
+                })
+                ->rawColumns(['action', 'kb_status', 'kb_tag_formatted'])
                 ->make(true);
         }
     }

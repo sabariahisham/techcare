@@ -138,9 +138,10 @@
           <th>Kategori</th>
           <th>Sub Kategori</th>
           <th>Deskripsi</th>
+          <th>Tag</th>
+          <th>Tindakan</th>
           <th>Status</th>
           <th>Ditulis oleh</th>
-          <th>Tindakan</th>
         </tr>
       </thead>
     </table>
