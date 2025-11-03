@@ -1,5 +1,5 @@
-<div class="col-lg-9 col-md-12">
-    <div class="card h-100">
+<div class="col-lg-9 col-md-12 d-flex align-items-stretch">
+    <div class="card flex-fill">
         <div class="card-header d-flex align-items-center justify-content-between">
             <div class="card-title mb-0">
                 <h5 class="mb-1">Trend Bulanan Tiket</h5>

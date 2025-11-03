@@ -3,6 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('vendor-style')
+    @vite(['resources/assets/css/dashboard-layout.css'])
 @endsection
 
 @section('vendor-script')
@@ -47,7 +48,7 @@
     </div>
 
     @if (Auth::user()->hasRole('Administrator'))
-        <div class="row g-4 mb-6">
+        <div class="row g-4 mb-6 dashboard-row-consistent">
             @include('dashboard/partials/cards-status') <!-- Card Status -->
             @include('dashboard/partials/chart-status') <!-- Ticket Status -->
             @include('dashboard/partials/chart-category') <!-- Ticket Category -->
@@ -59,7 +60,7 @@
             @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
         </div>
     @elseif(Auth::user()->hasRole('Pengurusan MOF'))
-        <div class="row g-4 mb-6">
+        <div class="row g-4 mb-6 dashboard-row-consistent">
             @include('dashboard/partials/cards-status')
             @include('dashboard/partials/chart-status')
             @include('dashboard/partials/chart-category')
@@ -67,7 +68,7 @@
             @include('dashboard/partials/chart-total')
         </div>
     @elseif(Auth::user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
-        <div class="row g-4 mb-6">
+        <div class="row g-4 mb-6 dashboard-row-consistent">
             @include('dashboard/partials/cards-status')
             @include('dashboard/partials/chart-status')
             @include('dashboard/partials/chart-category')
@@ -76,7 +77,7 @@
             @include('dashboard/partials/chart-assigned')
         </div>
     @elseif(Auth::user()->hasRole('Pegawai Tugasan'))
-        <div class="row">
+        <div class="row dashboard-row-consistent">
             @include('dashboard/partials/cards-status')
             @include('dashboard/partials/chart-status')
             @include('dashboard/partials/chart-category')

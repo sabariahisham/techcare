@@ -909,4 +909,237 @@ if (typeof window.config === 'undefined') {
   } else {
     console.log('Assigned chart canvas not found on this page');
   }
+
+  // Dashboard Cards Functionality
+  // --------------------------------------------------------------------
+
+  // Load Today's Logs Count
+  function loadTodayLogsCount() {
+    fetch('/dashboard/today-logs-count')
+      .then(response => response.json())
+      .then(data => {
+        const element = document.getElementById('today-logs-count');
+        if (element && data.success) {
+          element.innerHTML = data.count;
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching today logs count:', error);
+        const element = document.getElementById('today-logs-count');
+        if (element) {
+          element.innerHTML = '0';
+        }
+      });
+  }
+
+  // Load Weekly Completed Tickets with Bar Chart
+  function loadWeeklyCompletedTickets() {
+    fetch('/dashboard/weekly-completed')
+      .then(response => response.json())
+      .then(data => {
+        const countElement = document.getElementById('weekly-completed-count');
+        if (countElement && data.success) {
+          countElement.innerHTML = data.total;
+        }
+
+        // Create weekly bar chart
+        const chartCanvas = document.getElementById('weeklyCompletedChart');
+        if (chartCanvas && data.success) {
+          const ctx = chartCanvas.getContext('2d');
+
+          // Ensure canvas has proper height
+          chartCanvas.style.height = '60px';
+          chartCanvas.height = 60;
+
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: data.daily_data.map(item => item.day),
+              datasets: [{
+                data: data.daily_data.map(item => item.count),
+                backgroundColor: data.daily_data.map(item => item.count > 0 ? '#98e85d' : '#e4e6e8'),
+                borderColor: data.daily_data.map(item => item.count > 0 ? '#71dd37' : '#e4e6e8'),
+                borderWidth: 1,
+                borderRadius: 3,
+                borderSkipped: false
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `${context.label}: ${context.parsed.y} tiket`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  display: true,
+                  grid: { display: false },
+                  ticks: {
+                    font: { size: 9 },
+                    color: '#a7acb2'
+                  }
+                },
+                y: {
+                  display: false,
+                  beginAtZero: true
+                }
+              },
+              elements: {
+                bar: {
+                  borderRadius: 3
+                }
+              }
+            }
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching weekly completed tickets:', error);
+        const element = document.getElementById('weekly-completed-count');
+        if (element) {
+          element.innerHTML = '0';
+        }
+      });
+  }
+
+  // Load Pending Tickets Stats with Semi Pie Chart
+  function loadPendingTicketsStats() {
+    fetch('/dashboard/pending-stats')
+      .then(response => response.json())
+      .then(data => {
+        const countElement = document.getElementById('pending-tickets-count');
+        const percentageElement = document.getElementById('pending-percentage');
+
+        if (countElement && data.success) {
+          countElement.innerHTML = `${data.pending_count}/${data.total_count}`;
+        }
+
+        if (percentageElement && data.success) {
+          percentageElement.innerHTML = `${data.percentage}%`;
+        }
+
+        // Create semi pie chart
+        const chartCanvas = document.getElementById('pendingTicketsChart');
+        if (chartCanvas && data.success) {
+          const ctx = chartCanvas.getContext('2d');
+
+          // Ensure canvas has proper height
+          chartCanvas.style.height = '80px';
+          chartCanvas.height = 80;
+
+          new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+              datasets: [{
+                data: [data.percentage, 100 - data.percentage],
+                backgroundColor: [
+                  '#ffab00',  // Warning color for pending
+                  '#f0f2f4'   // Very light gray for completed
+                ],
+                borderWidth: 0,
+                cutout: '75%'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              rotation: -90,  // Start from top
+              circumference: 180,  // Semi circle
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  enabled: true,
+                  callbacks: {
+                    label: function (context) {
+                      if (context.dataIndex === 0) {
+                        return `Belum Selesai: ${data.pending_count} tiket (${data.percentage}%)`;
+                      } else {
+                        return `Selesai: ${data.total_count - data.pending_count} tiket (${(100 - data.percentage).toFixed(1)}%)`;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching pending tickets stats:', error);
+        const countElement = document.getElementById('pending-tickets-count');
+        const percentageElement = document.getElementById('pending-percentage');
+        if (countElement) countElement.innerHTML = '0/0';
+        if (percentageElement) percentageElement.innerHTML = '0%';
+      });
+  }
+
+  // Load Overdue SLA Count
+  function loadOverdueSLACount() {
+    fetch('/dashboard/overdue-sla-count')
+      .then(response => response.json())
+      .then(data => {
+        const element = document.getElementById('overdue-sla-count');
+        if (element && data.success) {
+          element.innerHTML = data.count;
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching overdue SLA count:', error);
+        const element = document.getElementById('overdue-sla-count');
+        if (element) {
+          element.innerHTML = '0';
+        }
+      });
+  }
+
+  // Function to ensure consistent heights during loading
+  function ensureConsistentHeights() {
+    // Set minimum heights for all canvas elements to prevent layout shift
+    const statusCanvas = document.getElementById('statusChart');
+    const categoryCanvas = document.getElementById('categoryChart');
+    const weeklyCanvas = document.getElementById('weeklyCompletedChart');
+    const pendingCanvas = document.getElementById('pendingTicketsChart');
+
+    if (statusCanvas) {
+      statusCanvas.style.minHeight = '220px';
+    }
+
+    if (categoryCanvas) {
+      categoryCanvas.style.minHeight = '220px';
+    }
+
+    if (weeklyCanvas) {
+      weeklyCanvas.style.height = '60px';
+      weeklyCanvas.height = 60;
+    }
+
+    if (pendingCanvas) {
+      pendingCanvas.style.height = '80px';
+      pendingCanvas.height = 80;
+    }
+  }
+
+  // Initialize all dashboard cards
+  function initializeDashboardCards() {
+    ensureConsistentHeights();
+    loadTodayLogsCount();
+    loadWeeklyCompletedTickets();
+    loadPendingTicketsStats();
+    loadOverdueSLACount();
+  }
+
+  // Load cards on page ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeDashboardCards);
+  } else {
+    initializeDashboardCards();
+  }
+
 })();

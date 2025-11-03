@@ -201,6 +201,12 @@ Route::middleware([
   Route::get('/monthly-trend', [DashboardController::class, 'getMonthlyTrends'])->name('monthly-trend');
   Route::get('/total-assigned', [DashboardController::class, 'getTotalAssigned'])->name('total-assigned');
   Route::get('/list-overdue', [DashboardController::class, 'getListOverdue'])->name('list-overdue');
+
+  // New dashboard cards API endpoints
+  Route::get('/today-logs-count', [DashboardController::class, 'getTodayLogsCount'])->name('today-logs-count');
+  Route::get('/weekly-completed', [DashboardController::class, 'getWeeklyCompletedTickets'])->name('weekly-completed');
+  Route::get('/pending-stats', [DashboardController::class, 'getPendingTicketsStats'])->name('pending-stats');
+  Route::get('/overdue-sla-count', [DashboardController::class, 'getOverdueSLACount'])->name('overdue-sla-count');
 });
 
 // Legacy dashboard route (redirect to new grouped route)
