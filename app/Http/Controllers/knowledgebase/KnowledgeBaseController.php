@@ -85,7 +85,7 @@ class KnowledgeBaseController extends Controller
             'subcat_id' => 'required|exists:ref_sub_categories,id',
             'kb_desc' => 'required|string',
             'kb_status' => 'required|in:aktif,tidak aktif',
-            'kb_jenis' => 'required|in:doc_kb,doc_ticket',
+            // 'kb_jenis' => 'required|in:doc_kb,doc_ticket',
             'kb_tag' => 'nullable|string',
             'pdf_files' => 'nullable|array|max:5', // Allow up to 5 files
             'pdf_files.*' => 'nullable|file|mimes:pdf|max:10240' // 10MB max per file
@@ -101,7 +101,7 @@ class KnowledgeBaseController extends Controller
             'kb_desc' => $request->kb_desc,
             'kb_tag' => $request->kb_tag,
             'kb_status' => $request->kb_status,
-            'kb_jenis' => $request->kb_jenis,
+            // 'kb_jenis' => $request->kb_jenis,
             'created_by' => Auth::id(),
         ]);
 
@@ -109,14 +109,14 @@ class KnowledgeBaseController extends Controller
         if ($request->hasFile('pdf_files')) {
             $files = $request->file('pdf_files');
 
-
-
             // Process each uploaded file
             foreach ($files as $index => $file) {
                 if ($file->isValid()) {
                     // Generate unique storage name using knowledge base UUID and file index
                     $fileExtension = $file->getClientOriginalExtension();
-                    $storageFileName = $knowledgeBaseUuid . '_' . ($index + 1) . '.' . $fileExtension;
+
+                    // Ensure unique filename by checking existing documents (including soft-deleted ones)
+                    $storageFileName = $this->generateUniqueStorageFileName($knowledgeBaseUuid, $index + 1, $fileExtension);
 
                     // Store file in storage/app/public/documents/knowledgebase directory
                     $filePath = $file->storeAs('public/documents/knowledgebase', $storageFileName);
@@ -170,7 +170,7 @@ class KnowledgeBaseController extends Controller
 
     public function edit($id)
     {
-        $knowledgeBase = KnowledgeBase::with(['category', 'subCategory'])->findOrFail($id);
+        $knowledgeBase = KnowledgeBase::with(['category', 'subCategory', 'documents'])->findOrFail($id);
 
         $data = [
             'id' => $knowledgeBase->id,
@@ -180,6 +180,15 @@ class KnowledgeBaseController extends Controller
             'kb_status' => $knowledgeBase->kb_status,
             'cat_id' => $knowledgeBase->cat_id,
             'subcat_id' => $knowledgeBase->subcat_id,
+            'documents' => $knowledgeBase->documents->map(function($doc) {
+                return [
+                    'id' => $doc->id,
+                    'uuid' => $doc->uuid,
+                    'doc_name' => $doc->doc_name,
+                    'doc_mime' => $doc->doc_mime,
+                    'created_at' => $doc->created_at,
+                ];
+            }),
         ];
 
         return response()->json(['success' => true, 'data' => $data]);
@@ -195,7 +204,7 @@ class KnowledgeBaseController extends Controller
             'kb_status' => 'required|in:aktif,tidak aktif',
             'kb_tag' => 'nullable|string',
             'pdf_files' => 'nullable|array|max:5', // Allow up to 5 files
-            'pdf_files.*' => 'nullable|file|mimes:pdf|max:10240' // 10MB max per file
+            'pdf_files.*' => 'file|mimes:pdf|max:10240' // 10MB max per file
         ]);
 
         $knowledgeBase = KnowledgeBase::findOrFail($id);
@@ -206,7 +215,6 @@ class KnowledgeBaseController extends Controller
             'kb_desc' => $request->kb_desc,
             'kb_tag' => $request->kb_tag,
             'kb_status' => $request->kb_status,
-            'kb_jenis' => $request->kb_jenis,
             'updated_by' => Auth::id(),
         ]);
 
@@ -232,7 +240,9 @@ class KnowledgeBaseController extends Controller
                 if ($file->isValid()) {
                     // Generate unique storage name using knowledge base UUID and file index
                     $fileExtension = $file->getClientOriginalExtension();
-                    $storageFileName = $knowledgeBase->uuid . '_' . ($index + 1) . '.' . $fileExtension;
+
+                    // Ensure unique filename by checking existing documents (including soft-deleted ones)
+                    $storageFileName = $this->generateUniqueStorageFileName($knowledgeBase->uuid, $index + 1, $fileExtension);
 
                     // Store file in storage/app/public/documents/knowledgebase directory
                     $filePath = $file->storeAs('public/documents/knowledgebase', $storageFileName);
@@ -277,7 +287,12 @@ class KnowledgeBaseController extends Controller
 
     public function deleteDocument($documentId)
     {
-        $document = Document::findOrFail($documentId);
+        $document = Document::where('id', $documentId)
+                          ->where('doc_jenis', 'doc_kb')
+                          ->firstOrFail();
+
+        // Optional: Add authorization check here if needed
+        // $this->authorize('update', $document->knowledgeBase);
 
         // Delete file from storage
         if (Storage::exists('public/documents/knowledgebase/' . $document->doc_storage_nm)) {
@@ -301,5 +316,36 @@ class KnowledgeBaseController extends Controller
         }
 
         return response()->download($filePath, $document->doc_name);
+    }
+
+    /**
+     * Generate a unique storage filename by checking existing documents
+     * (including soft-deleted ones) to avoid constraint violations
+     */
+    private function generateUniqueStorageFileName($uuid, $initialIndex, $extension)
+    {
+        $index = $initialIndex;
+        $maxAttempts = 100; // Prevent infinite loops
+        $attempts = 0;
+
+        do {
+            $storageFileName = $uuid . '_' . $index . '.' . $extension;
+
+            // Check if this filename already exists (including soft-deleted records)
+            $exists = Document::withTrashed()
+                ->where('doc_storage_nm', $storageFileName)
+                ->exists();
+
+            if (!$exists) {
+                return $storageFileName;
+            }
+
+            $index++;
+            $attempts++;
+
+        } while ($attempts < $maxAttempts);
+
+        // Fallback: use timestamp if we can't find a unique name
+        return $uuid . '_' . time() . '_' . $initialIndex . '.' . $extension;
     }
 }

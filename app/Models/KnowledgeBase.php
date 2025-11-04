@@ -20,6 +20,7 @@ class KnowledgeBase extends Model
         'kb_desc',
         'kb_tag',
         'kb_status',
+        'kb_jenis',
         'created_by',
         'updated_by',
     ];
