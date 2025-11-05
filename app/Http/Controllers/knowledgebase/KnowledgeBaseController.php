@@ -30,7 +30,7 @@ class KnowledgeBaseController extends Controller
                     $btn = '<div class="d-flex align-items-center">';
                     $btn .= '<a href="javascript:void(0);" class="text-body show-record" data-id="'.$row->id.'" title="View Details"><i class="bx bx-show mx-1"></i></a>';
                     $btn .= '<a href="javascript:void(0);" class="text-body edit-record" data-id="'.$row->id.'" title="Edit"><i class="bx bx-edit mx-1"></i></a>';
-                    $btn .= '<a href="javascript:void(0);" class="text-body delete-record" data-id="'.$row->id.'" title="Delete"><i class="bx bx-trash mx-1"></i></a>';
+                    $btn .= '<a href="javascript:void(0);" class="text-body delete-record" data-id="'.$row->id.'" data-title="'.htmlspecialchars($row->kb_title, ENT_QUOTES, 'UTF-8').'" title="Delete"><i class="bx bx-trash mx-1"></i></a>';
                     $btn .= '</div>';
                     return $btn;
                 })
@@ -269,20 +269,85 @@ class KnowledgeBaseController extends Controller
     {
         $knowledgeBase = KnowledgeBase::with('documents')->findOrFail($id);
 
-        // Delete associated files from storage and document records
+        // Delete associated files from storage only (keep database records)
         foreach ($knowledgeBase->documents as $document) {
             // Delete file from storage
             if (Storage::exists('public/documents/knowledgebase/' . $document->doc_storage_nm)) {
                 Storage::delete('public/documents/knowledgebase/' . $document->doc_storage_nm);
             }
-            // Delete document record
-            $document->delete();
+            // Note: Document record is kept in database
         }
 
-        // Delete knowledge base record
+        // Note: Knowledge base record is kept in database
+
+        return response()->json(['success' => true, 'message' => 'Files deleted from storage successfully. Database records preserved.']);
+    }
+
+    /**
+     * Get article details for confirmation dialog
+     */
+    public function getDetails($id)
+    {
+        $knowledgeBase = KnowledgeBase::with('documents')->findOrFail($id);
+
+        $documents = $knowledgeBase->documents->map(function($doc) {
+            return [
+                'id' => $doc->id,
+                'doc_name' => $doc->doc_name,
+                'name' => $doc->doc_name, // alias for frontend compatibility
+                'doc_mime' => $doc->doc_mime,
+                'doc_storage_nm' => $doc->doc_storage_nm,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'kb_title' => $knowledgeBase->kb_title,
+            'documents' => $documents,
+        ]);
+    }
+
+    /**
+     * Soft delete knowledge base with option to permanently delete documents from storage
+     */
+    public function softDelete(Request $request, $id)
+    {
+        $knowledgeBase = KnowledgeBase::with('documents')->findOrFail($id);
+
+        $unlinkFiles = $request->boolean('unlink_files', false);
+        $deletedDocuments = 0;
+        $unlinkedFiles = 0;
+
+        // Handle documents
+        foreach ($knowledgeBase->documents as $document) {
+            if ($unlinkFiles) {
+                // Permanently delete files from storage
+                if (Storage::exists('public/documents/knowledgebase/' . $document->doc_storage_nm)) {
+                    Storage::delete('public/documents/knowledgebase/' . $document->doc_storage_nm);
+                    $unlinkedFiles++;
+                }
+                // Force delete document record (permanent delete)
+                $document->delete();
+            } else {
+                // Soft delete document record (files remain in storage)
+                $document->delete();
+            }
+            $deletedDocuments++;
+        }
+
+        // Soft delete knowledge base record
         $knowledgeBase->delete();
 
-        return response()->json(['success' => true, 'message' => 'Knowledge Base deleted successfully']);
+        $message = $unlinkFiles
+            ? 'Artikel Knowledge Base telah berjaya dipadam (soft delete). Fail dokumen telah dibuang kekal dari storage.'
+            : 'Artikel Knowledge Base telah berjaya dipadam (soft delete).';
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'deleted_documents' => $deletedDocuments,
+            'unlinked_files' => $unlinkedFiles
+        ]);
     }
 
     public function deleteDocument($documentId)
