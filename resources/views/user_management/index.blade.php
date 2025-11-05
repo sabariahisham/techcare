@@ -32,10 +32,10 @@
 
 @section('page-script')
 @vite([
-  'resources/assets/js/app-user-list.js',
-  'resources/assets/js/app-user-add.js',
-  'resources/assets/js/app-user-edit.js',
-  'resources/assets/js/app-user-delete.js',
+  'resources/assets/js/user/app-user-list.js',
+  'resources/assets/js/user/app-user-add.js',
+  'resources/assets/js/user/app-user-edit.js',
+  'resources/assets/js/user/app-user-delete.js',
   'resources/assets/js/ui-toasts.js',
   'resources/assets/js/extended-ui-sweetalert2.js',
 ])
@@ -140,17 +140,17 @@
     </div>
   </div> --}}
   <div class="card-datatable table-responsive">
-    <table class="datatables-users table border-top table-sm" style="width: 100%; min-width: 1200px; table-layout: fixed; font-size: 0.775rem;">
+    <table class="datatables-users table border-top table-sm" style="width: 100%; min-width: 1400px; font-size: 0.775rem;">
       <thead>
         <tr>
-          {{-- <th style="width: 40px; white-space: nowrap; font-size: 0.75rem;"></th> --}}
-          {{-- <th style="width: 40px; white-space: nowrap; font-size: 0.75rem;">Bil</th> --}}
+          <th style="width: 10px; white-space: nowrap; font-size: 0.75rem;"></th>
+          <th style="width: 10px; white-space: nowrap; font-size: 0.75rem;">Bil</th>
           <th style="width: 120px; white-space: nowrap; font-size: 0.75rem;">Nama</th>
           {{-- <th>LDAP</th> --}}
-          <th style="width: 80px; white-space: nowrap; font-size: 0.75rem;">Emel</th>
-          <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">No.KP</th>
-          <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">No.Tel(O)</th>
-          <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">No.Tel(M)</th>
+          <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">Emel</th>
+          <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">No.KP</th>
+          <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">No.Tel(O)</th>
+          <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">No.Tel(M)</th>
           {{-- <th>Sektor</th> --}}
           <th style="width: 120px; white-space: nowrap; font-size: 0.75rem;">Bahagian</th>
           <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">Seksyen</th>
@@ -161,7 +161,7 @@
           {{-- <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">Kod Jawatan</th> --}}
           {{-- <th>Gelaran Jawatan</th> --}}
           <th style="width: 70px; white-space: nowrap; font-size: 0.75rem;">Status</th>
-          {{-- <th>Tindakan</th> --}}
+          <th style="width: 150px; white-space: nowrap; font-size: 0.75rem;">Tindakan</th>
         </tr>
       </thead>
     </table>

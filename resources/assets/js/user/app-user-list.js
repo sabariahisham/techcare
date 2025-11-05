@@ -43,20 +43,20 @@ $(function () {
       serverSide: true,
       ajax: '/user-management/data',
       columns: [
-        // {
-        //   // For Responsive
-        //   data: null,
-        //   defaultContent: '',
-        //   orderable: false,
-        //   searchable: true
-        // },
-        //  {
-        //   // Index column
-        //   data: null,
-        //   render: function (data, type, row, meta) {
-        //     return meta.row + meta.settings._iDisplayStart + 1;
-        //   }
-        // },
+        {
+          // For Responsive
+          data: null,
+          defaultContent: '',
+          orderable: false,
+          searchable: true
+        },
+         {
+          // Index column
+          data: null,
+          render: function (data, type, row, meta) {
+            return meta.row + meta.settings._iDisplayStart + 1;
+          }
+        },
         { data: 'nama', name: 'nama' },
         // { data: 'id_pgn_ldap', name: 'id_pgn_ldap' },
         { data: 'email', name: 'email' },
@@ -82,7 +82,14 @@ $(function () {
             return data;
           }
         },
-        // { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        {
+          data: 'action',
+          name: 'action',
+          orderable: false,
+          searchable: false,
+          width: '150px',
+          className: 'text-center'
+        }
 
       ],
       dom:
@@ -157,15 +164,22 @@ $(function () {
       language: {
         search: '',
         searchPlaceholder: 'Carian'
+      },
+      // Add debugging
+      drawCallback: function(settings) {
+        console.log('DataTable draw completed');
+        console.log('Table data:', settings.json);
+        // Initialize tooltips for action buttons
+        $('[data-bs-toggle="tooltip"]').tooltip();
+
+        // Check if action buttons exist
+        const actionButtons = $('.datatables-users tbody .impersonate-user');
+        console.log('Found impersonate buttons:', actionButtons.length);
       }
     });
   }
 
-  // Delete Record
-  $('.datatables-users tbody').on('click', '.delete-record', function () {
-    var id = $(this).data('id');
-    // Add your delete logic here
-  });
+  // Delete Record functionality removed - only impersonate actions are enabled
 
   // Filter form control to default size
   // ? setTimeout used for multilingual table initialization
@@ -225,5 +239,43 @@ $(function () {
       // defaultSubmit: new FormValidation.plugins.DefaultSubmit(),
       autoFocus: new FormValidation.plugins.AutoFocus()
     }
+  });
+
+  // Handle impersonate button clicks with confirmation
+  $(document).on('click', '.impersonate-user', function(e) {
+    e.preventDefault();
+
+    const impersonateUrl = $(this).attr('href');
+    const userName = $(this).data('user-name') || 'this user';
+
+    // Show confirmation dialog using SweetAlert2
+    Swal.fire({
+      title: 'Ambil Alih Pengguna',
+      html: `Adakah anda pasti untuk mengambil alih sebagai Pengguna <strong>${userName}</strong>?<br><small class="text-muted">Semua tindakan akan dilakukan sebagai pengguna ini.</small>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#696cff',
+      cancelButtonColor: '#8592a3',
+      confirmButtonText: '<i class="bx bx-user-check me-1"></i>Ya!',
+      cancelButtonText: '<i class="bx bx-x me-1"></i>Batal',
+      showDenyButton: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Show loading state
+        Swal.fire({
+          title: 'Mengambil Alih...',
+          text: 'Sila tunggu semasa kami menukar ke akaun pengguna.',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        // Redirect to impersonate URL
+        window.location.href = impersonateUrl;
+      }
+    });
   });
 })();

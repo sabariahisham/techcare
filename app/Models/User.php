@@ -14,6 +14,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Lab404\Impersonate\Models\Impersonate;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -27,6 +28,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasRoles;
     use HasPermissions;
     use SoftDeletes;
+    use Impersonate;
 
     /**
      * The attributes that are mass assignable.
@@ -503,5 +505,41 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(RefSkim::class, 'kod_skim', 'kod_skim');
     }
 
+    /**
+     * Impersonation Feature Implementation
+     * ====================================
+     *
+     * This feature allows authorized users to login as other users for support and testing purposes.
+     *
+     * Rules:
+     * 1. Only Administrator and Pentadbir Sistem can impersonate others
+     * 2. Administrator and Pentadbir Sistem roles cannot be impersonated
+     * 3. When impersonating, a notification card is shown on the dashboard
+     * 4. Users can easily revert back to their original account
+     */
+
+    /**
+     * Determine if the user can impersonate another user.
+     * Only users with certain roles can impersonate others.
+     *
+     * @return bool
+     */
+    public function canImpersonate()
+    {
+        // Only Administrator and Pentadbir Sistem can impersonate others
+        return $this->hasAnyRole(['Administrator', 'Pentadbir Sistem']);
+    }
+
+    /**
+     * Determine if this user can be impersonated by another user.
+     * Administrator and Pentadbir Sistem cannot be impersonated.
+     *
+     * @return bool
+     */
+    public function canBeImpersonated()
+    {
+        // Users with Administrator or Pentadbir Sistem roles cannot be impersonated
+        return !$this->hasAnyRole(['Administrator', 'Pentadbir Sistem']);
+    }
 
 }

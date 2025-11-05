@@ -353,3 +353,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/{permission}', [App\Http\Controllers\PermissionController::class, 'destroy'])->name('destroy');
   });
 });
+
+// Impersonation Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+  Route::get('/impersonate/user/{user}', function ($user) {
+    $userToImpersonate = App\Models\User::findOrFail($user);
+    $currentUser = Auth::user();
+
+    if (!$currentUser->canImpersonate() || !$userToImpersonate->canBeImpersonated()) {
+      abort(403, 'Unauthorized action.');
+    }
+
+    $currentUser->impersonate($userToImpersonate);
+
+    return redirect('/dashboard')->with('impersonate_success', 'You are now impersonating ' . $userToImpersonate->nama);
+  })->name('impersonate');
+
+  Route::get('/impersonate/leave', function () {
+    $currentUser = Auth::user();
+
+    if ($currentUser->isImpersonated()) {
+      $currentUser->leaveImpersonation();
+    }
+
+    return redirect('/dashboard')->with('impersonate_leave', 'You have stopped impersonating.');
+  })->name('impersonate.leave');
+});
