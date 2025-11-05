@@ -8,6 +8,7 @@ use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 
 class UserManagementController extends Controller
@@ -56,15 +57,18 @@ class UserManagementController extends Controller
                 return $user->unit ? $user->unit->nama_unit : '-';
             })
             ->addColumn('action', function ($user) {
-                $editBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-record" data-id="'.e($user->id).'" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
-                    <i class="bx bx-edit"></i>
-                </button>';
+                // Only show impersonate button - exclude edit and delete buttons
+                $impersonateBtn = '';
+                $currentUser = Auth::user();
 
-                $deleteBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm delete-record" data-id="'.e($user->id).'" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
-                    <i class="bx bx-trash"></i>
-                </button>';
+                if ($currentUser && $currentUser->canImpersonate() && $user->canBeImpersonated()) {
+                    $impersonateUrl = route('impersonate', ['user' => $user->id]);
+                    $impersonateBtn = '<a href="'.e($impersonateUrl).'" class="btn btn-icon btn-text-warning rounded-pill btn-sm impersonate-user" data-bs-toggle="tooltip" data-bs-placement="top" title="Impersonate User" data-user-name="'.e($user->nama).'">
+                        <i class="bx bx-user-check"></i>
+                    </a>';
+                }
 
-                return '<div class="d-inline-block text-nowrap">' . $editBtn . $deleteBtn . '</div>';
+                return '<div class="d-inline-block text-nowrap">' . $impersonateBtn . '</div>';
             })
             ->filterColumn('role', function($query, $keyword) {
                 $query->whereHas('roles', function($q) use ($keyword) {

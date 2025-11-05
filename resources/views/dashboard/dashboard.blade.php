@@ -19,6 +19,9 @@
         use Illuminate\Support\Facades\Auth;
     @endphp
 
+    <!-- Impersonation Card -->
+    @include('dashboard/partials/impersonate-card')
+
     <!-- Dashboard Content -->
     <div class="card mb-6">
         <div class="card-body">
@@ -26,6 +29,23 @@
             <p>Paparan ini memaparkan rumusan aktiviti, statistik dan prestasi semasa sistem untuk rujukan pantas anda.</p>
         </div>
     </div>
+
+    <!-- Flash Messages for Impersonation -->
+    @if(session('impersonate_success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bx bx-check-circle me-2"></i>
+            {{ session('impersonate_success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('impersonate_leave'))
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="bx bx-info-circle me-2"></i>
+            {{ session('impersonate_leave') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
     <!-- Debug Role Information - Remove after role assignment is complete -->
     @if (config('app.debug', false))
