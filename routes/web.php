@@ -310,6 +310,8 @@ Route::middleware(['auth', 'verified'])->prefix('knowledgebase')->group(function
   Route::get('/', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'index'])->name('knowledgebase.index');
   Route::get('/data', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'getData'])->name('knowledgebase.data');
   Route::post('/', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'store'])->name('knowledgebase.store');
+  Route::get('/{article}/details', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'getDetails'])->name('knowledgebase.details');
+  Route::post('/{article}/soft-delete', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'softDelete'])->name('knowledgebase.soft-delete');
   Route::get('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'show'])->name('knowledgebase.show');
   Route::get('/{article}/edit', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'edit'])->name('knowledgebase.edit');
   Route::put('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'update'])->name('knowledgebase.update');

@@ -28,84 +28,170 @@ $(function () {
   }
 
   /**
-   * Show confirmation dialog for article deletion
-   * @param {number} articleId - The ID of the article to delete
-   * @param {string} articleTitle - The title of the article (optional)
-   * @returns {Promise<boolean>} - Returns true if user confirms deletion
+   * Fetch article details including title and documents
+   * @param {number} articleId - The ID of the article
+   * @returns {Promise<Object>} - Returns article details
    */
-  function showDeleteConfirmation(articleId, articleTitle = 'this article') {
-    return new Promise((resolve) => {
-      Swal.fire({
-        title: 'Are you sure?',
-        html: `You are about to delete <strong>${articleTitle}</strong>.<br><br>You won't be able to revert this!`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'Cancel',
-        customClass: {
-          confirmButton: 'btn btn-primary me-3',
-          cancelButton: 'btn btn-label-secondary'
-        },
-        buttonsStyling: false,
-        reverseButtons: true
-      }).then((result) => {
-        resolve(result.isConfirmed);
-      });
-    });
-  }
-
-  /**
-   * Perform the actual article deletion
-   * @param {number} articleId - The ID of the article to delete
-   * @returns {Promise<Object>} - Returns the response data
-   */
-  async function performArticleDeletion(articleId) {
+  async function fetchArticleDetails(articleId) {
     try {
       const response = await $.ajax({
-        type: 'DELETE',
-        url: `/knowledgebase/${articleId}`,
+        type: 'GET',
+        url: `/knowledgebase/${articleId}/details`,
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
       });
 
       return {
+        title: response.kb_title || 'Unknown Article',
+        documents: response.documents || [],
+        hasDocuments: response.documents && response.documents.length > 0
+      };
+    } catch (error) {
+      console.warn('Could not fetch article details:', error);
+      // Return basic info if we can't fetch details
+      return {
+        title: 'this article',
+        documents: [],
+        hasDocuments: false
+      };
+    }
+  }
+
+  /**
+   * Show confirmation dialog for article deletion
+   * @param {number} articleId - The ID of the article to delete
+   * @param {Object} articleDetails - Article details including title and documents
+   * @param {boolean} allowFileOptions - Whether to show file handling options (default: true)
+   * @returns {Promise<Object>} - Returns {confirmed: boolean, unlinkFiles: boolean}
+   */
+  function showDeleteConfirmation(articleId, articleDetails, allowFileOptions = true) {
+    return new Promise((resolve) => {
+      let confirmationMessage = `Anda akan memadam artikel <strong>"${articleDetails.title}"</strong>.`;
+
+      if (articleDetails.hasDocuments) {
+        const docCount = articleDetails.documents.length;
+        const docText = docCount === 1 ? 'dokumen' : 'dokumen';
+
+        // Show document names
+        let documentList = '<ul class="text-start mt-2 mb-0">';
+        articleDetails.documents.forEach(doc => {
+          documentList += `<li><i class="bx bx-file me-1"></i>${doc.doc_name || doc.name || 'Unnamed Document'}</li>`;
+        });
+        documentList += '</ul>';
+
+        confirmationMessage += `<br><br><span class="text-warning"><i class="bx bx-files me-1"></i>Artikel ini mempunyai <strong>${docCount} ${docText}</strong> yang akan turut dipadam (soft delete):</span>${documentList}`;
+        confirmationMessage += `<div class="alert alert-warning mt-3">
+          <i class="bx bx-exclamation-triangle me-2"></i>Artikel dan dokumen akan dipadam (soft delete) dari database. Fail dokumen akan dibuang <strong>kekal dari storage</strong>.
+        </div>`;
+      } else {
+        // No documents case - show soft delete info for article only
+        confirmationMessage += `<br><br><div class="alert alert-info mt-3">
+          <i class="bx bx-info-circle me-2"></i>Artikel ini akan dipadam (soft delete) dari database.
+        </div>`;
+      }
+
+      Swal.fire({
+        title: 'Adakah anda pasti?',
+        html: confirmationMessage,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, padamkan!',
+        cancelButtonText: 'Batal',
+        customClass: {
+          confirmButton: 'btn btn-primary me-3',
+          cancelButton: 'btn btn-label-secondary'
+        },
+        buttonsStyling: false,
+        reverseButtons: true,
+        width: '600px',
+        preConfirm: () => {
+          // For soft delete, soft delete records and permanently delete files from storage
+          return {
+            confirmed: true
+          };
+        }
+      }).then((result) => {
+        if (result.isConfirmed && result.value) {
+          resolve(result.value);
+        } else {
+          resolve({confirmed: false, unlinkFiles: false});
+        }
+      });
+    });
+  }  /**
+   * Perform the actual article soft deletion
+   * @param {number} articleId - The ID of the article to delete
+   * @returns {Promise<Object>} - Returns the response data
+   */
+  async function performArticleDeletion(articleId) {
+    try {
+      const response = await $.ajax({
+        type: 'POST', // Using POST for soft delete
+        url: `/knowledgebase/${articleId}/soft-delete`,
+        headers: {
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: {
+          'soft_delete': true,
+          'include_documents': true, // Include documents in soft delete
+          'unlink_files': true, // Always remove files from storage during soft delete
+          'preserve_files': false // Do not preserve physical files when soft deleting
+        }
+      });
+
+      let message = response.message;
+      if (!message) {
+        message = 'Artikel Knowledge Base telah berjaya dipadam (soft delete). Fail dokumen telah dibuang kekal dari storage.';
+      }
+
+      return {
         success: true,
-        message: 'Knowledge Base article has been deleted successfully.'
+        message: message,
+        deletedDocuments: response.deleted_documents || 0,
+        unlinkedFiles: response.unlinked_files || 0
       };
     } catch (error) {
       console.error('Article deletion error:', error);
-      
-      let errorMessage = 'An error occurred while deleting the knowledge base article.';
+
+      let errorMessage = 'Ralat berlaku semasa memadam artikel knowledge base.';
       if (error.responseJSON && error.responseJSON.message) {
         errorMessage = error.responseJSON.message;
+      } else if (error.status === 404) {
+        errorMessage = 'Artikel tidak dijumpai atau telah dipadam.';
+      } else if (error.status === 403) {
+        errorMessage = 'Anda tidak mempunyai kebenaran untuk memadam artikel ini.';
       } else if (error.statusText) {
-        errorMessage = `Error: ${error.statusText}`;
+        errorMessage = `Ralat: ${error.statusText}`;
       }
-      
+
       throw new Error(errorMessage);
     }
   }
 
+
+
   /**
    * Show success notification
    * @param {string} message - Success message to display
+   * @param {number} deletedDocuments - Number of documents deleted
+   * @param {number} unlinkedFiles - Number of files removed from storage
    */
-  function showSuccessNotification(message) {
-    toastr.success(message || 'Knowledge Base article has been deleted successfully.');
-    
+  function showSuccessNotification(message, deletedDocuments = 0, unlinkedFiles = 0) {
+    let successMessage = message || 'Artikel Knowledge Base telah berjaya dipadam.';
+
+    toastr.success(successMessage);
+
     // Refresh the DataTable after successful deletion
     if (window.dt_knowledgebase && typeof window.dt_knowledgebase.ajax === 'object') {
       window.dt_knowledgebase.ajax.reload();
     }
-  }
-
-  /**
+  }  /**
    * Show error notification
    * @param {string} message - Error message to display
    */
   function showErrorNotification(message) {
-    toastr.error(message || 'An error occurred while deleting the knowledge base article.');
+    toastr.error(message || 'Ralat berlaku semasa memadam artikel knowledge base.');
   }
 
   /**
@@ -113,22 +199,45 @@ $(function () {
    * @param {number} articleId - The ID of the article to delete
    * @param {string} articleTitle - The title of the article (optional, for display purposes)
    */
-  async function deleteArticle(articleId, articleTitle = 'Unknown Article') {
+  async function deleteArticle(articleId, articleTitle = null) {
     try {
       // Step 1: Validate the deletion
       await validateArticleDeletion(articleId);
 
-      // Step 2: Show confirmation dialog
-      const confirmed = await showDeleteConfirmation(articleId, articleTitle);
+      // Step 2: Fetch article details including title and documents
+      let articleDetails;
+      if (articleTitle) {
+        // If title is provided from button data, use it
+        articleDetails = {
+          title: articleTitle,
+          documents: [],
+          hasDocuments: false
+        };
 
-      if (!confirmed) {
+        // Still try to fetch documents info
+        try {
+          const fetchedDetails = await fetchArticleDetails(articleId);
+          articleDetails.documents = fetchedDetails.documents;
+          articleDetails.hasDocuments = fetchedDetails.hasDocuments;
+        } catch (error) {
+          console.warn('Could not fetch documents info:', error);
+        }
+      } else {
+        // Fetch full article details
+        articleDetails = await fetchArticleDetails(articleId);
+      }
+
+      // Step 3: Show confirmation dialog
+      const confirmResult = await showDeleteConfirmation(articleId, articleDetails);
+
+      if (!confirmResult.confirmed) {
         return; // User cancelled
       }
 
-      // Step 3: Show loading state
+      // Step 4: Show loading state
       Swal.fire({
-        title: 'Deleting...',
-        text: 'Please wait while we delete the article.',
+        title: 'Memadam artikel...',
+        text: 'Sila tunggu semasa kami memadam artikel dan dokumen berkaitan.',
         icon: 'info',
         allowOutsideClick: false,
         showConfirmButton: false,
@@ -137,12 +246,12 @@ $(function () {
         }
       });
 
-      // Step 4: Perform the deletion
+      // Step 5: Perform the deletion
       const result = await performArticleDeletion(articleId);
 
-      // Step 5: Close loading dialog and show success notification
+      // Step 6: Close loading dialog and show success notification
       Swal.close();
-      showSuccessNotification(result.message);
+      showSuccessNotification(result.message, result.deletedDocuments, result.unlinkedFiles);
 
     } catch (error) {
       // Close any open Swal dialogs and show error notification
@@ -158,12 +267,26 @@ $(function () {
   $(document).on('click', '.delete-record, .delete-article', function(e) {
     e.preventDefault();
 
-    const articleId = $(this).data('id');
-    const articleTitle = $(this).data('title') || $(this).data('name') || 'this article';
+    const $button = $(this);
+    const articleId = $button.data('id');
+    let articleTitle = $button.data('title') || $button.data('name');
+
+    // Try to get title from the same row in DataTable
+    if (!articleTitle && window.dt_knowledgebase) {
+      try {
+        const $row = $button.closest('tr');
+        const rowData = window.dt_knowledgebase.row($row).data();
+        if (rowData && rowData.kb_title) {
+          articleTitle = rowData.kb_title;
+        }
+      } catch (error) {
+        console.warn('Could not get title from DataTable row:', error);
+      }
+    }
 
     // Validate that we have the required data
     if (!articleId) {
-      showErrorNotification('Article ID is required for deletion.');
+      showErrorNotification('ID artikel diperlukan untuk pemadaman.');
       return;
     }
 
@@ -171,108 +294,17 @@ $(function () {
     deleteArticle(articleId, articleTitle);
   });
 
-  /**
-   * Bulk delete functionality
-   * Handles deletion of multiple articles at once
-   */
-  function bulkDeleteArticles(articleIds) {
-    if (!Array.isArray(articleIds) || articleIds.length === 0) {
-      showErrorNotification('No articles selected for deletion.');
-      return;
-    }
 
-    Swal.fire({
-      title: 'Bulk Delete Confirmation',
-      html: `You are about to delete <strong>${articleIds.length}</strong> articles.<br><br>This action cannot be undone!`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: `Yes, delete ${articleIds.length} articles!`,
-      cancelButtonText: 'Cancel',
-      customClass: {
-        confirmButton: 'btn btn-danger me-3',
-        cancelButton: 'btn btn-secondary'
-      },
-      buttonsStyling: false
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          Swal.fire({
-            title: 'Deleting articles...',
-            text: 'Please wait while we delete the selected articles.',
-            icon: 'info',
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            didOpen: () => {
-              Swal.showLoading();
-            }
-          });
 
-          // Process deletions sequentially to avoid overwhelming the server
-          let successCount = 0;
-          let errorCount = 0;
-          const errors = [];
 
-          for (const articleId of articleIds) {
-            try {
-              await validateArticleDeletion(articleId);
-              await performArticleDeletion(articleId);
-              successCount++;
-            } catch (error) {
-              console.error(`Failed to delete article ${articleId}:`, error);
-              errorCount++;
-              errors.push(`Article ${articleId}: ${error.message}`);
-            }
-          }
-
-          // Show final result
-          Swal.close();
-          
-          if (errorCount === 0) {
-            showSuccessNotification(`Successfully deleted ${successCount} articles.`);
-          } else if (successCount === 0) {
-            showErrorNotification(`Failed to delete all ${errorCount} articles.`);
-            console.error('Bulk delete errors:', errors);
-          } else {
-            toastr.warning(`Deleted ${successCount} articles successfully. Failed to delete ${errorCount} articles.`);
-            console.warn('Partial bulk delete errors:', errors);
-            
-            // Refresh DataTable on partial success
-            if (window.dt_knowledgebase && typeof window.dt_knowledgebase.ajax === 'object') {
-              window.dt_knowledgebase.ajax.reload();
-            }
-          }
-
-        } catch (error) {
-          Swal.close();
-          showErrorNotification('An error occurred during bulk deletion.');
-        }
-      }
-    });
-  }
-
-  /**
-   * Event handler for bulk delete button
-   */
-  $(document).on('click', '.bulk-delete-articles', function(e) {
-    e.preventDefault();
-
-    const selectedIds = [];
-    $('.article-checkbox:checked').each(function() {
-      const articleId = parseInt($(this).val());
-      if (articleId) {
-        selectedIds.push(articleId);
-      }
-    });
-
-    bulkDeleteArticles(selectedIds);
-  });
 
   // Expose functions globally if needed for external access
   window.KnowledgeBaseDelete = {
     deleteArticle: deleteArticle,
-    bulkDeleteArticles: bulkDeleteArticles,
-    validateArticleDeletion: validateArticleDeletion
+    validateArticleDeletion: validateArticleDeletion,
+    fetchArticleDetails: fetchArticleDetails,
+    performArticleDeletion: performArticleDeletion
   };
 
-  console.log('Knowledge Base article delete functionality initialized');
+  console.log('Knowledge Base article delete functionality initialized with soft delete support and permanent file deletion');
 });
