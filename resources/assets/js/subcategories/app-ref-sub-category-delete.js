@@ -1,22 +1,46 @@
 'use strict';
 
+// All messages centralized here
+const messages = {
+  // Confirmation messages
+  deleteTitle: 'Adakah anda pasti?',
+  deleteText: 'Anda ingin memadam sub-kategori <b>{subcategoryName}</b>?',
+  deleteConfirm: 'Ya, padam!',
+  deleteCancel: 'Tidak, batal!',
+
+  // Success messages
+  deletedTitle: 'Dipadam!',
+  deleteSuccess: 'Sub-kategori berjaya dipadam',
+
+  // Error messages
+  errorTitle: 'Ralat',
+  deleteError: 'Ralat semasa memadam sub-kategori',
+
+  // Button classes
+  btnDanger: 'btn btn-danger me-3',
+  btnSecondary: 'btn btn-secondary',
+  btnSuccess: 'btn btn-success',
+  btnPrimary: 'btn btn-primary'
+};
+
 // Initialize delete functionality when document is ready
 $(function () {
   // Add click handler to delete buttons
   $(document).on('click', '.delete-record', function() {
     const subCategoryId = $(this).data('id');
-    const subCategoryName = $(this).closest('tr').find('td:nth-child(4)').text().trim(); // Get sub-category name from subcat_name column
+    const subCategoryName = $(this).closest('tr').find('td:nth-child(4)').text().trim(); // Get sub-category name from subcat_name column (responsive, index, cat_name[hidden], subcat_name)
+    const deleteText = messages.deleteText.replace('{subcategoryName}', subCategoryName);
 
     Swal.fire({
-      title: 'Adakah anda pasti?',
-      html: `Anda ingin memadam sub-kategori <b>${subCategoryName}</b>?`,
+      title: messages.deleteTitle,
+      html: deleteText,
       icon: 'warning',
       showCancelButton: true,
-      cancelButtonText: 'Tidak, batal!',
-      confirmButtonText: 'Ya, padam!',
+      cancelButtonText: messages.deleteCancel,
+      confirmButtonText: messages.deleteConfirm,
       customClass: {
-        confirmButton: 'btn btn-danger me-3',
-        cancelButton: 'btn btn-secondary'
+        confirmButton: messages.btnDanger,
+        cancelButton: messages.btnSecondary
       },
       buttonsStyling: false
     }).then(function (result) {
@@ -32,12 +56,12 @@ $(function () {
           if(data.success) {
             Swal.fire({
               icon: 'success',
-              title: 'Dipadam!',
-              text: 'Sub-kategori berjaya dipadam',
+              title: messages.deletedTitle,
+              text: messages.deleteSuccess,
               timer: 2000,
               showConfirmButton: false,
               customClass: {
-                confirmButton: 'btn btn-success'
+                confirmButton: messages.btnSuccess
               },
               buttonsStyling: false
             }).then(() => {
@@ -51,10 +75,10 @@ $(function () {
           } else {
             Swal.fire({
               icon: 'error',
-              title: 'Error',
-              text: data.message || 'Ralat semasa memadam sub-kategori',
+              title: messages.errorTitle,
+              text: messages.deleteError,
               customClass: {
-                confirmButton: 'btn btn-primary'
+                confirmButton: messages.btnPrimary
               },
               buttonsStyling: false
             });
@@ -63,10 +87,10 @@ $(function () {
         .catch(error => {
           Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'Ralat semasa memadam sub-kategori',
+            title: messages.errorTitle,
+            text: messages.deleteError,
             customClass: {
-              confirmButton: 'btn btn-primary'
+              confirmButton: messages.btnPrimary
             },
             buttonsStyling: false
           });

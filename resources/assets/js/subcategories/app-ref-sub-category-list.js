@@ -4,48 +4,7 @@
 
 'use strict';
 
-// Add custom CSS for row grouping
-const groupingStyles = `
-  <style>
-    .dataTables_wrapper .group-header td {
-      position: relative;
-      overflow: hidden;
-    }
 
-    .dataTables_wrapper .group-header td::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, #696cff 0%, #8b5fbf 50%, #ff6b9d 100%);
-      opacity: 0.95;
-      z-index: -1;
-    }
-
-    .dataTables_wrapper .group-header:hover td::before {
-      opacity: 1;
-    }
-
-    .dataTables_wrapper .group-header {
-      cursor: default;
-    }
-
-    .dataTables_wrapper .group-header td {
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: all 0.2s ease;
-    }
-  </style>
-`;
-
-// Inject the styles
-if (!document.querySelector('#row-grouping-styles')) {
-  const styleElement = document.createElement('div');
-  styleElement.id = 'row-grouping-styles';
-  styleElement.innerHTML = groupingStyles;
-  document.head.appendChild(styleElement);
-}
 
 // Datatable (jquery)
 $(function () {
@@ -105,15 +64,9 @@ $(function () {
       rowGroup: {
         dataSrc: 'cat_name',
         startRender: function (rows, group) {
-          return $('<tr class="group-header"/>')
-            .append('<td colspan="5" class="table-group-header" style="background: linear-gradient(90deg, #696cff 0%, #8b5fbf 100%); color: white; font-weight: 600; padding: 12px 16px; border: none;">' +
-                    '<i class="bx bx-category me-2" style="font-size: 16px;"></i>' +
-                    '<span style="font-size: 14px;">' + group + '</span>' +
-                    ' <span class="badge bg-white text-primary ms-2" style="font-size: 11px; padding: 4px 8px;">' + rows.count() + ' sub kategori</span>' +
-                    '</td>');
-        },
-        endRender: null,
-        className: 'group-end'
+          return '<strong style="color: ' + headingColor + '; background-color: ' + bodyBg + '; padding: 8px; display: block; border-left: 4px solid #696cff;">' +
+                 'Kategori: ' + group + ' (' + rows.count() + ' sub kategori)</strong>';
+        }
       },
       dom:
         '<"row"' +
@@ -228,10 +181,10 @@ $(function () {
           },
           success: function () {
             window.dt_subcategory.ajax.reload();
-            toastr.success('Sub Category has been deleted successfully.');
+            toastr.success('Sub-kategori berjaya dipadam');
           },
           error: function (error) {
-            toastr.error('An error occurred while deleting the sub category.');
+            toastr.error('Ralat semasa memadam sub-kategori');
             console.error(error);
           }
         });
@@ -259,7 +212,7 @@ $(function () {
         editOffcanvas.show();
       },
       error: function (error) {
-        toastr.error('An error occurred while fetching sub category data.');
+        toastr.error('Ralat semasa memuat data sub-kategori');
         console.error(error);
       }
     });
@@ -316,7 +269,7 @@ $(function () {
           }
           toastr.error(errorMessage);
         } else {
-          toastr.error('An error occurred while updating the sub category.');
+          toastr.error('Ralat semasa mengemaskini sub-kategori');
         }
       }
     });
