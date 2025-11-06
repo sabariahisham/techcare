@@ -44,7 +44,12 @@ $(function () {
         'sla_level': {
           validators: {
             notEmpty: {
-              message: 'Sila masukkan tahap SLA'
+              message: 'Sila pilih level petugas'
+            },
+            choice: {
+              min: 1,
+              max: 1,
+              message: 'Sila pilih level petugas'
             }
           }
         },
@@ -217,11 +222,70 @@ $(function () {
       // Clear any validation errors
       $('.is-invalid').removeClass('is-invalid');
       $('.invalid-feedback').remove();
+      $('.duplicate-error').remove();
 
       // Reset submission flag
       isSubmitting = false;
     }
   });
+
+  // Function to check for duplicate SLA
+  function checkDuplicateSla(catId, subcatId, slaLevel, callback) {
+    if (!catId || !subcatId || !slaLevel) {
+      callback(false);
+      return;
+    }
+
+    $.ajax({
+      url: '/sla-severity/check-duplicate',
+      type: 'POST',
+      data: {
+        cat_id: catId,
+        subcat_id: subcatId,
+        sla_level: slaLevel
+      },
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      },
+      success: function(response) {
+        callback(response.exists || false);
+      },
+      error: function() {
+        callback(false);
+      }
+    });
+  }
+
+  // Check for duplicates when key fields change
+  function validateDuplicateOnChange() {
+    const catId = $('#add-cat-id').val();
+    const subcatId = $('#add-subcat-id').val();
+    const slaLevel = $('#add-sla-level').val();
+
+    if (catId && subcatId && slaLevel) {
+      checkDuplicateSla(catId, subcatId, slaLevel, function(isDuplicate) {
+        const levelField = document.getElementById('add-sla-level');
+        const existingError = levelField.parentNode.querySelector('.duplicate-error');
+
+        if (existingError) {
+          existingError.remove();
+        }
+
+        if (isDuplicate) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'text-danger mt-1 duplicate-error';
+          errorDiv.textContent = 'SLA untuk kombinasi ini sudah wujud.';
+          levelField.parentNode.appendChild(errorDiv);
+          levelField.classList.add('is-invalid');
+        } else {
+          levelField.classList.remove('is-invalid');
+        }
+      });
+    }
+  }
+
+  // Add event listeners for duplicate checking
+  $('#add-cat-id, #add-subcat-id, #add-sla-level').on('change', validateDuplicateOnChange);
 
   // Category change handler to populate subcategories
   $('#add-cat-id').on('change', function() {
@@ -238,9 +302,9 @@ $(function () {
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(data) {
-          if (data && Array.isArray(data)) {
-            $.each(data, function(index, subcategory) {
+        success: function(response) {
+          if (response.success && response.data && Array.isArray(response.data)) {
+            $.each(response.data, function(index, subcategory) {
               subcategorySelect.append(`<option value="${subcategory.id}">${subcategory.subcat_name}</option>`);
             });
           } else {

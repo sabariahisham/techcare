@@ -56,7 +56,12 @@ $(document).ready(function() {
         'sla_level': {
           validators: {
             notEmpty: {
-              message: 'Sila masukkan tahap SLA'
+              message: 'Sila pilih level petugas'
+            },
+            choice: {
+              min: 1,
+              max: 1,
+              message: 'Sila pilih level petugas'
             }
           }
         },
@@ -116,6 +121,7 @@ $(document).ready(function() {
       // Clear any validation errors
       $('.is-invalid').removeClass('is-invalid');
       $('.invalid-feedback').remove();
+      $('.duplicate-error').remove();
 
       // Restore all edit buttons to proper state
       restoreEditButtons();
@@ -309,9 +315,9 @@ $(document).ready(function() {
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(data) {
-          if (data && Array.isArray(data)) {
-            $.each(data, function(index, subcategory) {
+        success: function(response) {
+          if (response.success && response.data && Array.isArray(response.data)) {
+            $.each(response.data, function(index, subcategory) {
               const selected = selectedSubcategoryId == subcategory.id ? 'selected' : '';
               subcategorySelect.append(`<option value="${subcategory.id}" ${selected}>${subcategory.subcat_name}</option>`);
             });
@@ -351,6 +357,66 @@ $(document).ready(function() {
       });
     }
   }
+
+  // Function to check for duplicate SLA in edit form
+  function checkDuplicateSlaForEdit(catId, subcatId, slaLevel, excludeId, callback) {
+    if (!catId || !subcatId || !slaLevel) {
+      callback(false);
+      return;
+    }
+
+    $.ajax({
+      url: '/sla-severity/check-duplicate',
+      type: 'POST',
+      data: {
+        cat_id: catId,
+        subcat_id: subcatId,
+        sla_level: slaLevel,
+        id: excludeId
+      },
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      },
+      success: function(response) {
+        callback(response.exists || false);
+      },
+      error: function() {
+        callback(false);
+      }
+    });
+  }
+
+  // Check for duplicates when key fields change in edit form
+  function validateDuplicateOnChangeEdit() {
+    const catId = $('#edit_cat_id').val();
+    const subcatId = $('#edit_subcat_id').val();
+    const slaLevel = $('#edit_sla_level').val();
+    const excludeId = $('#edit_sla_id').val();
+
+    if (catId && subcatId && slaLevel) {
+      checkDuplicateSlaForEdit(catId, subcatId, slaLevel, excludeId, function(isDuplicate) {
+        const levelField = document.getElementById('edit_sla_level');
+        const existingError = levelField.parentNode.querySelector('.duplicate-error');
+
+        if (existingError) {
+          existingError.remove();
+        }
+
+        if (isDuplicate) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'text-danger mt-1 duplicate-error';
+          errorDiv.textContent = 'SLA untuk kombinasi ini sudah wujud.';
+          levelField.parentNode.appendChild(errorDiv);
+          levelField.classList.add('is-invalid');
+        } else {
+          levelField.classList.remove('is-invalid');
+        }
+      });
+    }
+  }
+
+  // Add event listeners for duplicate checking in edit form
+  $('#edit_cat_id, #edit_subcat_id, #edit_sla_level').on('change', validateDuplicateOnChangeEdit);
 
   // Category change handler for edit form to populate subcategories
   $('#edit_cat_id').on('change', function() {

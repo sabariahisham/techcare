@@ -32,11 +32,10 @@
 
 @section('page-script')
 @vite([
-'resources/assets/js/app-sla-and-severity-list.js',
-'resources/assets/js/app-sla-and-severity-add.js',
-'resources/assets/js/app-sla-and-severity-edit.js',
-// 'resources/assets/js/app-sla-and-severity.js',
-'resources/assets/js/app-sla-and-severity-delete.js',
+'resources/assets/js/sla/app-sla-and-severity-list.js',
+'resources/assets/js/sla/app-sla-and-severity-add.js',
+'resources/assets/js/sla/app-sla-and-severity-edit.js',
+'resources/assets/js/sla/app-sla-and-severity-delete.js',
 
 ])
 @endsection
@@ -154,8 +153,13 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-sla-level">Level Petugas</label>
-          <input type="text" class="form-control" id="add-sla-level" placeholder="Level Petugas" name="sla_level" required />
+          <label class="form-label" for="add-sla-level">Tahap SLA(1-3)</label>
+          <select class="form-select" id="add-sla-level" name="sla_level" required>
+            <option value="">Pilih Tahap SLA</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-sla-priority">Keutamaan</label>
@@ -204,7 +208,12 @@
       </div>
       <div class="mb-6">
         <label class="form-label" for="edit_sla_level">Level Petugas</label>
-        <input type="text" class="form-control" id="edit_sla_level" placeholder="Level Petugas" name="sla_level" required />
+        <select class="form-select" id="edit_sla_level" name="sla_level" required>
+          <option value="">Pilih Level Petugas</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
       </div>
       <div class="mb-6">
         <label class="form-label" for="edit_sla_priority">Keutamaan</label>
