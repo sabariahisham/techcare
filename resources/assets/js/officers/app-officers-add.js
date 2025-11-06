@@ -32,15 +32,7 @@
         level_tugasan: {
           validators: {
             notEmpty: {
-              message: 'Sila masukkan level tugasan'
-            },
-            integer: {
-              message: 'Level tugasan mestilah nombor'
-            },
-            between: {
-              min: 1,
-              max: 3,
-              message: 'Level tugasan mestilah antara 1 hingga 3'
+              message: 'Sila pilih level tugasan'
             }
           }
         }
@@ -66,19 +58,27 @@
       // Disable submit button and show loading
       submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>Menyimpan...');
 
-      // Prepare form data with multiple user IDs
-      var formData = new FormData(addNewOfficerForm);
-      var selectedUserIds = $('#add-officer-user').val();
+      // Prepare form data with single user ID
+      var formData = new FormData();
+      var selectedUserId = $('#add-officer-user').val();
 
-      // Remove existing user_id entries and add the selected array
-      formData.delete('user_id');
-      if (selectedUserIds && selectedUserIds.length > 0) {
-        selectedUserIds.forEach(function(userId) {
-          formData.append('user_id[]', userId);
-        });
+      // Add form fields manually
+      formData.append('_token', $('input[name="_token"]').val());
+      formData.append('cat_id', $('#add-officer-category').val());
+      formData.append('subcat_id', $('#add-officer-subcategory').val());
+      formData.append('level_tugasan', $('#add-officer-level').val());
+
+      // Add single user ID
+      if (selectedUserId && selectedUserId.trim() !== '') {
+        formData.append('user_id', selectedUserId);
+      } else {
+        toastr.error('Sila pilih seorang pegawai', 'Ralat!');
+        submitBtn.prop('disabled', false).html('Simpan');
+        return false;
       }
 
-      // Submit form data
+      // Add validation flag to check for duplicates
+      formData.append('check_duplicates', 'true');      // Submit form data
       $.ajax({
         url: '/officer/store',
         type: 'POST',
@@ -93,12 +93,24 @@
 
           if (response.success) {
             // Show success message for single officer
-            toastr.success('Pegawai tugasan berjaya ditambah', 'Berjaya!', {
-              closeButton: true,
-              tapToDismiss: false,
-              progressBar: true,
-              rtl: false
-            });
+            var successMessage = 'Pegawai tugasan berjaya ditambah';
+
+            if (response.data && response.data.duplicate) {
+              toastr.warning('Pegawai tugasan sudah wujud untuk kategori, sub kategori dan level yang sama', 'Amaran!', {
+                closeButton: true,
+                tapToDismiss: false,
+                progressBar: true,
+                rtl: false,
+                timeOut: 5000
+              });
+            } else {
+              toastr.success(successMessage, 'Berjaya!', {
+                closeButton: true,
+                tapToDismiss: false,
+                progressBar: true,
+                rtl: false
+              });
+            }
 
             // Close offcanvas first
             $('#offcanvasAddOfficer').offcanvas('hide');
@@ -119,6 +131,7 @@
                       addNewOfficerForm.reset();
                       $('#add-officer-category').val('').trigger('change');
                       $('#add-officer-subcategory').val('').trigger('change');
+                      $('#add-officer-level').val('').trigger('change');
                       $('#add-officer-user').val('').trigger('change');
                       console.log('Form reset completed');
                     }, 100);
@@ -130,6 +143,7 @@
                   addNewOfficerForm.reset();
                   $('#add-officer-category').val('').trigger('change');
                   $('#add-officer-subcategory').val('').trigger('change');
+                  $('#add-officer-level').val('').trigger('change');
                   $('#add-officer-user').val('').trigger('change');
                 }
               } catch (error) {
@@ -139,6 +153,7 @@
                 addNewOfficerForm.reset();
                 $('#add-officer-category').val('').trigger('change');
                 $('#add-officer-subcategory').val('').trigger('change');
+                $('#add-officer-level').val('').trigger('change');
                 $('#add-officer-user').val('').trigger('change');
               }
             }, 100);
@@ -156,15 +171,32 @@
           submitBtn.prop('disabled', false).html('Simpan');
 
           var errorMessage = 'Ralat berlaku semasa menambah pegawai tugasan';
-          if (xhr.responseJSON && xhr.responseJSON.message) {
-            errorMessage = xhr.responseJSON.message;
+          var errorTitle = 'Ralat!';
+
+          if (xhr.responseJSON) {
+            if (xhr.responseJSON.message) {
+              errorMessage = xhr.responseJSON.message;
+            }
+
+            // Handle specific duplicate entry errors
+            if (xhr.responseJSON.errors) {
+              if (xhr.responseJSON.errors.duplicate) {
+                errorMessage = 'Terdapat pendaftaran berulang: ' + xhr.responseJSON.errors.duplicate.join(', ');
+                errorTitle = 'Pendaftaran Berulang';
+              } else if (xhr.responseJSON.errors.validation) {
+                errorMessage = 'Ralat pengesahan: ' + Object.values(xhr.responseJSON.errors.validation).flat().join(', ');
+              }
+            }
           }
-          toastr.error(errorMessage, 'Ralat!', {
+
+          toastr.error(errorMessage, errorTitle, {
             closeButton: true,
             tapToDismiss: false,
             progressBar: true,
-            rtl: false
+            rtl: false,
+            timeOut: 5000
           });
+
           console.error('Full error details:', xhr);
         }
       });
@@ -234,28 +266,58 @@
     // You can add logic here if users need to be filtered by subcategory
   });
 
+  // User selection change handler - for single selection
+  $(document).on('change', '#add-officer-user', function() {
+    var selectedValue = $(this).val();
+    console.log('Selected user:', selectedValue);
+  });
+
   // Initialize select2 for add form
   function initializeAddFormSelect2() {
     console.log('Initializing select2 for add form...');
+
+    // Destroy existing select2 instances first
+    if ($('#add-officer-category').hasClass('select2-hidden-accessible')) {
+      $('#add-officer-category').select2('destroy');
+    }
+    if ($('#add-officer-subcategory').hasClass('select2-hidden-accessible')) {
+      $('#add-officer-subcategory').select2('destroy');
+    }
+    if ($('#add-officer-level').hasClass('select2-hidden-accessible')) {
+      $('#add-officer-level').select2('destroy');
+    }
+    if ($('#add-officer-user').hasClass('select2-hidden-accessible')) {
+      $('#add-officer-user').select2('destroy');
+    }
 
     // Initialize select2 for add form dropdowns
     $('#add-officer-category').select2({
       placeholder: 'Pilih Kategori',
       dropdownParent: $('#offcanvasAddOfficer'),
-      width: '100%'
+      width: '100%',
+      allowClear: true
     });
 
     $('#add-officer-subcategory').select2({
       placeholder: 'Pilih Sub Kategori',
       dropdownParent: $('#offcanvasAddOfficer'),
-      width: '100%'
+      width: '100%',
+      allowClear: true
+    });
+
+    $('#add-officer-level').select2({
+      placeholder: 'Pilih Level Tugasan',
+      dropdownParent: $('#offcanvasAddOfficer'),
+      width: '100%',
+      allowClear: true,
+      minimumResultsForSearch: Infinity // Disable search for small dropdown
     });
 
     $('#add-officer-user').select2({
       placeholder: 'Pilih Pegawai',
       dropdownParent: $('#offcanvasAddOfficer'),
       width: '100%',
-      multiple: true
+      allowClear: true
     });
 
     console.log('Select2 initialization completed for add form');
@@ -263,11 +325,11 @@
 
   // Reset form when offcanvas is opened (using document delegation)
   $(document).on('show.bs.offcanvas', '#offcanvasAddOfficer', function() {
+    console.log('Offcanvas opening - initializing form...');
+
     if (addNewOfficerForm) {
-      // Initialize select2 if not already initialized
-      if (!$('#add-officer-category').hasClass('select2-hidden-accessible')) {
-        initializeAddFormSelect2();
-      }
+      // Always initialize select2 to ensure it's working
+      initializeAddFormSelect2();
 
       // Reset form validation state
       if (typeof fv !== 'undefined') {
@@ -277,10 +339,15 @@
       // Clear form
       addNewOfficerForm.reset();
 
-      // Reset select2 elements
-      $('#add-officer-category').val('').trigger('change');
-      $('#add-officer-subcategory').val('').trigger('change');
-      $('#add-officer-user').val('').trigger('change');
+      // Reset select2 elements after a small delay to ensure they're initialized
+      setTimeout(function() {
+        $('#add-officer-category').val(null).trigger('change');
+        $('#add-officer-subcategory').html('<option value="">Pilih Sub Kategori</option>').val(null).trigger('change');
+        $('#add-officer-level').val(null).trigger('change');
+        $('#add-officer-user').val(null).trigger('change');
+
+        console.log('Form and select2 elements reset');
+      }, 100);
 
       // Reset submit button
       var submitBtn = $(addNewOfficerForm).find('button[type="submit"]');
@@ -290,33 +357,70 @@
 
   // Reset form when offcanvas is closed (using document delegation)
   $(document).on('hidden.bs.offcanvas', '#offcanvasAddOfficer', function() {
+    console.log('Offcanvas closing - cleaning up...');
+
     if (addNewOfficerForm) {
       // Reset form validation state
       if (typeof fv !== 'undefined') {
         fv.resetForm(true);
       }
 
-      // Clear form
+      // Clear form completely
       addNewOfficerForm.reset();
 
-      // Reset select2 elements
-      $('#add-officer-category').val('').trigger('change');
-      $('#add-officer-subcategory').val('').trigger('change');
-      $('#add-officer-user').val('').trigger('change');
+      // Reset select2 elements with proper cleanup
+      setTimeout(function() {
+        $('#add-officer-category').val(null).trigger('change');
+        $('#add-officer-subcategory').html('<option value="">Pilih Sub Kategori</option>').val(null).trigger('change');
+        $('#add-officer-level').val(null).trigger('change');
+        $('#add-officer-user').val(null).trigger('change');
+
+        // Clear any validation errors
+        $('#offcanvasAddOfficer .is-invalid').removeClass('is-invalid');
+        $('#offcanvasAddOfficer .invalid-feedback').remove();
+
+        console.log('Complete form reset on offcanvas close');
+      }, 100);
 
       // Reset submit button
       var submitBtn = $(addNewOfficerForm).find('button[type="submit"]');
       submitBtn.prop('disabled', false).html('Simpan');
+    }
+  });
 
-      console.log('Form reset on offcanvas close');
+  // Handle close button click specifically
+  $(document).on('click', '#offcanvasAddOfficer .btn-close, #offcanvasAddOfficer .btn-label-danger', function() {
+    console.log('Close button clicked - refreshing form...');
+
+    if (addNewOfficerForm) {
+      // Force form reset
+      setTimeout(function() {
+        if (typeof fv !== 'undefined') {
+          fv.resetForm(true);
+        }
+        addNewOfficerForm.reset();
+
+        // Refresh all dropdowns
+        $('#add-officer-category').val('').trigger('change');
+        $('#add-officer-subcategory').html('<option value="">Pilih Sub Kategori</option>').val('').trigger('change');
+        $('#add-officer-level').val('').trigger('change');
+        $('#add-officer-user').val('').trigger('change');
+
+        console.log('Manual form refresh completed');
+      }, 50);
     }
   });
 
   // Initialize select2 on document ready
   $(document).ready(function() {
+    console.log('Document ready - checking form elements...');
+
     // Initialize select2 for add form on page load if elements exist
-    if ($('#add-officer-category').length && !$('#add-officer-category').hasClass('select2-hidden-accessible')) {
+    if ($('#add-officer-category').length) {
+      console.log('Form elements found, initializing select2...');
       initializeAddFormSelect2();
+    } else {
+      console.log('Form elements not found on page load');
     }
   });
 

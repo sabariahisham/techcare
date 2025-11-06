@@ -33,10 +33,10 @@
 
 @section('page-script')
 @vite([
-   'resources/assets/js/app-officers-list.js',
-  'resources/assets/js/app-officers-add.js',
-  'resources/assets/js/app-officers-edit.js',
-  'resources/assets/js/app-officers-delete.js',
+   'resources/assets/js/officers/app-officers-list.js',
+  'resources/assets/js/officers/app-officers-add.js',
+  'resources/assets/js/officers/app-officers-edit.js',
+  'resources/assets/js/officers/app-officers-delete.js',
 ])
 @endsection
 
@@ -174,17 +174,21 @@
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-officer-level">Level Tugasan <span class="text-danger">*</span></label>
-          <input type="number" class="form-control" id="add-officer-level" placeholder="Masukkan level tugasan (1-10)" name="level_tugasan" min="1" max="10" required />
+          <select class="form-select" id="add-officer-level" name="level_tugasan" required>
+            <option value="">Pilih Level Tugasan</option>
+            <option value="1">Level 1</option>
+            <option value="2">Level 2</option>
+            <option value="3">Level 3</option>
+          </select>
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-officer-user">Pegawai <span class="text-danger">*</span></label>
-          <select class="form-select" id="add-officer-user" name="user_id[]" multiple required>
+          <select class="form-select" id="add-officer-user" name="user_id" required>
             <option value="">Pilih Pegawai</option>
             @foreach($users as $user)
-              <option value="{{ $user->id }}">{{ $user->name }}</option>
+              <option value="{{ $user->id }}">{{ $user->nama }}</option>
             @endforeach
           </select>
-          <small class="form-text text-muted">Tekan Ctrl (Windows) atau Cmd (Mac) untuk memilih beberapa pegawai</small>
         </div>
         <button type="submit" class="btn btn-primary me-3 data-submit">Simpan</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
@@ -220,14 +224,19 @@
       </div>
       <div class="mb-6">
         <label class="form-label" for="edit-officer-level">Level Tugasan <span class="text-danger">*</span></label>
-        <input type="number" class="form-control" id="edit-officer-level" placeholder="Masukkan level tugasan (1-10)" name="level_tugasan" min="1" max="10" required />
+        <select class="form-select" id="edit-officer-level" name="level_tugasan" required>
+          <option value="">Pilih Level Tugasan</option>
+          <option value="1">Level 1</option>
+          <option value="2">Level 2</option>
+          <option value="3">Level 3</option>
+        </select>
       </div>
       <div class="mb-6">
         <label class="form-label" for="edit-officer-user">Pegawai <span class="text-danger">*</span></label>
         <select class="form-select" id="edit-officer-user" name="user_id" required>
           <option value="">Pilih Pegawai</option>
           @foreach($users as $user)
-            <option value="{{ $user->id }}">{{ $user->name }}</option>
+            <option value="{{ $user->id }}">{{ $user->nama }}</option>
           @endforeach
         </select>
       </div>
