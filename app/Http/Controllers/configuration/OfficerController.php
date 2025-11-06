@@ -46,7 +46,7 @@ class OfficerController extends Controller
                 return $officer->subcategory->subcat_name ?? '-';
             })
             ->addColumn('user_name', function ($officer) {
-                return $officer->user->name ?? '-';
+                return $officer->user->nama ?? '-';
             })
             ->addColumn('action', function ($officer) {
                 return '<div class="d-inline-block text-nowrap">
@@ -96,7 +96,7 @@ class OfficerController extends Controller
 
             if ($existingOfficer) {
                 $user = User::find($userId);
-                $existingAssignments[] = $user->name ?? "User ID: $userId";
+                $existingAssignments[] = $user->nama ?? "User ID: $userId";
                 continue;
             }
 
@@ -144,7 +144,7 @@ class OfficerController extends Controller
                 'level_tugasan' => $officer->level_tugasan,
                 'category_name' => $officer->subcategory->category->cat_name ?? '',
                 'subcategory_name' => $officer->subcategory->subcat_name ?? '',
-                'user_name' => $officer->user->name ?? ''
+                'user_name' => $officer->user->nama ?? ''
             ]
         ]);
     }
