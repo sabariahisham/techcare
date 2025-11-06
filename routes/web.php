@@ -249,10 +249,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // reference category management
 Route::get('/ref-category-management/index', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'index'])->name('ref-category-management-index');
 Route::get('/ref-category-management/data', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'getAllCategories'])->name('ref-category-management.data');
+Route::post('/ref-category-management/check-duplicate', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'checkDuplicate'])->name('ref-category-management.check-duplicate');
 Route::post('/ref-category-management/store', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'store'])->name('ref-category-management.store');
 Route::get('/ref-category-management/{id}/edit', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'edit'])->name('ref-category-management.edit');
 Route::post('/ref-category-management/update/{id}', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'update'])->name('ref-category-management.update');
 Route::delete('/ref-category-management/{id}', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'destroy'])->name('ref-category-management.destroy');
+Route::delete('/ref-category-management/{id}/force', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'forceDestroy'])->name('ref-category-management.force-destroy');
 Route::get('/categories/{id}/subcategories', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'getSubcategories'])->name('categories.subcategories');
 
 

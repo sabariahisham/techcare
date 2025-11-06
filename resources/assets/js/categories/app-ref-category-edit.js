@@ -10,6 +10,18 @@ $(function () {
         validators: {
           notEmpty: {
             message: 'Sila masukkan nama kategori'
+          },
+          remote: {
+            message: 'Nama kategori telah wujud. Sila pilih nama yang lain.',
+            method: 'POST',
+            url: '/ref-category-management/check-duplicate',
+            data: function() {
+              return {
+                name: editCategoryForm.querySelector('[name="name"]').value,
+                id: $('#edit-category-id').val(),
+                _token: $('meta[name="csrf-token"]').attr('content')
+              };
+            }
           }
         }
       },
@@ -47,32 +59,46 @@ $(function () {
         if (response.success) {
           $('#offcanvasEditCategory').offcanvas('hide');
           editCategoryForm.reset();
+          fv.resetForm();
 
-          toastr.success(response.message, '', {
+          toastr.success('Kategori berjaya dikemaskini', 'Berjaya!', {
             closeButton: true,
-            timeOut: 3000,
+            tapToDismiss: false,
             progressBar: true,
-            positionClass: 'toast-top-right',
-            showClass: "animate__animated animate__bounceInRight",
-            hideClass: "animate__animated animate__fadeOut",
-            "toastClass": "toast ngx-toastr bg-success text-white",
-            "closeClass": "toast-close-button",
-            "titleClass": "toast-title",
-            "messageClass": "toast-message",
-            "progressClass": "toast-progress"
-        });
+            rtl: false
+          });
 
           $('.datatables-refcategory').DataTable().ajax.reload();
+        } else {
+          toastr.error(response.message || 'Ralat berlaku semasa mengemaskini kategori', 'Ralat!', {
+            closeButton: true,
+            tapToDismiss: false,
+            progressBar: true,
+            rtl: false
+          });
         }
       },
-      error: function(xhr) {
-        const errorMessage = xhr.responseJSON?.message || 'Error updating category';
-        toastr.error(errorMessage, 'Error!', {
+      error: function(xhr, status, error) {
+        let errorMessage = 'Ralat berlaku semasa mengemaskini kategori';
+
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        } else if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+          // Handle validation errors
+          const errors = xhr.responseJSON.errors;
+          const firstError = Object.values(errors)[0];
+          if (firstError && firstError.length > 0) {
+            errorMessage = firstError[0];
+          }
+        }
+
+        toastr.error(errorMessage, 'Ralat!', {
           closeButton: true,
           tapToDismiss: false,
           progressBar: true,
           rtl: false
         });
+        console.error(error);
       }
     });
   });
@@ -92,7 +118,7 @@ $(function () {
         $('#offcanvasEditCategory').offcanvas('show');
       },
       error: function(xhr) {
-        toastr.error('Error loading category data', 'Error!', {
+        toastr.error('Ralat memuat data kategori', 'Ralat!', {
           closeButton: true,
           tapToDismiss: false,
           progressBar: true,

@@ -46,8 +46,7 @@ class RefCategoryManagementController extends Controller
             return response()->json($category);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'message' => 'Error loading category: ' . $e->getMessage()
+                'success' => false
             ], 500);
         }
     }
@@ -56,7 +55,7 @@ class RefCategoryManagementController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:255|unique:ref_categories,cat_name',
                 'description' => 'required|string'
             ]);
 
@@ -68,22 +67,39 @@ class RefCategoryManagementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Kategori berjaya ditambah',
                 'data' => $category
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'message' => 'Error creating category: ' . $e->getMessage()
+                'success' => false
             ], 500);
         }
+    }
+
+    public function checkDuplicate(Request $request)
+    {
+        $name = $request->input('name');
+        $id = $request->input('id'); // For edit mode
+
+        $query = RefCategory::where('cat_name', $name);
+
+        // Exclude current record when editing
+        if ($id) {
+            $query->where('id', '!=', $id);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'valid' => !$exists
+        ]);
     }
 
     public function update(Request $request, $id)
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:255|unique:ref_categories,cat_name,' . $id,
                 'description' => 'required|string'
             ]);
 
@@ -95,13 +111,11 @@ class RefCategoryManagementController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Kategori berjaya dikemaskini',
                 'data' => $category
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'message' => 'Error updating category: ' . $e->getMessage()
+                'success' => false
             ], 500);
         }
     }
@@ -110,16 +124,26 @@ class RefCategoryManagementController extends Controller
     {
         try {
             $category = RefCategory::findOrFail($id);
+
+            // Check if category has sub-categories
+            $subcategories = $category->subCategories;
+            if ($subcategories->count() > 0) {
+                $subcategoryNames = $subcategories->pluck('subcat_name')->toArray();
+                return response()->json([
+                    'success' => false,
+                    'has_subcategories' => true,
+                    'subcategories' => $subcategoryNames
+                ], 400);
+            }
+
             $category->delete();
 
             return response()->json([
-                'success' => true,
-                'message' => 'Kategori berjaya dipadam'
+                'success' => true
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'message' => 'Error deleting category: ' . $e->getMessage()
+                'success' => false
             ], 500);
         }
     }
@@ -136,8 +160,28 @@ class RefCategoryManagementController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
-                'message' => 'Error loading subcategories: ' . $e->getMessage()
+                'success' => false
+            ], 500);
+        }
+    }
+
+    public function forceDestroy($id)
+    {
+        try {
+            $category = RefCategory::findOrFail($id);
+
+            // Delete all sub-categories first
+            $category->subCategories()->delete();
+
+            // Then delete the category
+            $category->delete();
+
+            return response()->json([
+                'success' => true
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false
             ], 500);
         }
     }
