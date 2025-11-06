@@ -32,10 +32,10 @@
 
 @section('page-script')
 @vite([
-  'resources/assets/js/app-ref-category-list.js',
-  'resources/assets/js/app-ref-category-add.js',
-  'resources/assets/js/app-ref-category-edit.js',
-  'resources/assets/js/app-ref-category-delete.js',
+  'resources/assets/js/categories/app-ref-category-list.js',
+  'resources/assets/js/categories/app-ref-category-add.js',
+  'resources/assets/js/categories/app-ref-category-edit.js',
+  'resources/assets/js/categories/app-ref-category-delete.js',
 ])
 @endsection
 

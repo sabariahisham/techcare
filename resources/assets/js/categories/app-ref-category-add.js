@@ -12,6 +12,17 @@
           validators: {
             notEmpty: {
               message: 'Sila masukkan nama kategori'
+            },
+            remote: {
+              message: 'Nama kategori telah wujud. Sila pilih nama yang lain.',
+              method: 'POST',
+              url: '/ref-category-management/check-duplicate',
+              data: function() {
+                return {
+                  name: addNewCategoryForm.querySelector('[name="name"]').value,
+                  _token: $('meta[name="csrf-token"]').attr('content')
+                };
+              }
             }
           }
         },
@@ -49,6 +60,8 @@
             $('#offcanvasAddCategory').offcanvas('hide');
             // Clear form
             addNewCategoryForm.reset();
+            // Reset form validation
+            fv.resetForm();
             // Show success message
             toastr.success('Kategori berjaya ditambah', 'Berjaya!', {
               closeButton: true,
@@ -58,13 +71,44 @@
             });
             // Refresh the datatable
             $('.datatables-refcategory').DataTable().ajax.reload();
+          } else {
+            toastr.error(response.message || 'Ralat berlaku semasa menambah kategori', 'Ralat!', {
+              closeButton: true,
+              tapToDismiss: false,
+              progressBar: true,
+              rtl: false
+            });
           }
         },
-        error: function(error) {
-          toastr.error('An error occurred while creating the category');
+        error: function(xhr, status, error) {
+          let errorMessage = 'Ralat berlaku semasa menambah kategori';
+
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMessage = xhr.responseJSON.message;
+          } else if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+            // Handle validation errors
+            const errors = xhr.responseJSON.errors;
+            const firstError = Object.values(errors)[0];
+            if (firstError && firstError.length > 0) {
+              errorMessage = firstError[0];
+            }
+          }
+
+          toastr.error(errorMessage, 'Ralat!', {
+            closeButton: true,
+            tapToDismiss: false,
+            progressBar: true,
+            rtl: false
+          });
           console.error(error);
         }
       });
+    });
+
+    // Reset form when offcanvas is hidden
+    $('#offcanvasAddCategory').on('hidden.bs.offcanvas', function () {
+      fv.resetForm();
+      addNewCategoryForm.reset();
     });
   }
 })();
