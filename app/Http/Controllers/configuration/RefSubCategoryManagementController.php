@@ -64,6 +64,18 @@ class RefSubCategoryManagementController extends Controller
             'subcat_desc' => 'nullable|string|max:1000',
         ]);
 
+        // Check for duplicate within same category
+        $exists = RefSubCategory::where('cat_id', $request->cat_id)
+                               ->where('subcat_name', $request->subcat_name)
+                               ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'duplicate' => true
+            ], 422);
+        }
+
         try {
             RefSubCategory::create([
                 'cat_id' => $request->cat_id,
@@ -110,6 +122,19 @@ class RefSubCategoryManagementController extends Controller
             'subcat_desc' => 'nullable|string|max:1000',
         ]);
 
+        // Check for duplicate within same category (excluding current record)
+        $exists = RefSubCategory::where('cat_id', $request->cat_id)
+                               ->where('subcat_name', $request->subcat_name)
+                               ->where('id', '!=', $id)
+                               ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'duplicate' => true
+            ], 422);
+        }
+
         try {
             $subCategory = RefSubCategory::findOrFail($id);
 
@@ -135,9 +160,9 @@ class RefSubCategoryManagementController extends Controller
             $subCategory = RefSubCategory::findOrFail($id);
             $subCategory->delete();
 
-            return response()->json(['success' => true, 'message' => 'Sub-kategori berjaya dipadam']);
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Ralat semasa memadam sub-kategori']);
+            return response()->json(['success' => false]);
         }
     }
 
@@ -150,6 +175,27 @@ class RefSubCategoryManagementController extends Controller
         return response()->json([
             'success' => true,
             'data' => $subcategories
+        ]);
+    }
+
+    public function checkDuplicate(Request $request)
+    {
+        $catId = $request->input('cat_id');
+        $subcatName = $request->input('subcat_name');
+        $id = $request->input('id'); // For edit mode
+
+        $query = RefSubCategory::where('cat_id', $catId)
+                              ->where('subcat_name', $subcatName);
+
+        // Exclude current record when editing
+        if ($id) {
+            $query->where('id', '!=', $id);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json([
+            'exists' => $exists
         ]);
     }
 }
