@@ -265,6 +265,7 @@ Route::resource('ref-sub-category-management', App\Http\Controllers\Configuratio
 // reference sla and severity management
 Route::get('/sla-severity/index', [App\Http\Controllers\Configuration\SlaController::class, 'index'])->name('sla-severity-index');
 Route::get('/sla-severity/data', [App\Http\Controllers\Configuration\SlaController::class, 'data'])->name('sla-severity-data');
+Route::post('/sla-severity/check-duplicate', [App\Http\Controllers\Configuration\SlaController::class, 'checkDuplicate'])->name('sla-severity-check-duplicate');
 Route::post('/sla-severity', [App\Http\Controllers\Configuration\SlaController::class, 'store'])->name('sla-severity-store');
 Route::get('/sla-severity/{id}/edit', [App\Http\Controllers\Configuration\SlaController::class, 'edit'])->name('sla-severity-edit');
 Route::put('/sla-severity/{id}', [App\Http\Controllers\Configuration\SlaController::class, 'update'])->name('sla-severity-update');

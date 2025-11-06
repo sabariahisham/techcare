@@ -58,7 +58,20 @@ class SlaController extends Controller
         $request->validate([
             'cat_id' => 'required|exists:ref_categories,id',
             'subcat_id' => 'required|exists:ref_sub_categories,id',
-            'sla_level' => 'required|string|max:255',
+            'sla_level' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) use ($request) {
+                    $exists = Sla::where('cat_id', $request->cat_id)
+                                 ->where('subcat_id', $request->subcat_id)
+                                 ->where('sla_level', $value)
+                                 ->exists();
+                    if ($exists) {
+                        $fail('SLA untuk kombinasi kategori, sub-kategori, dan level petugas ini sudah wujud.');
+                    }
+                },
+            ],
             'sla_priority' => 'required|string|max:255',
             'sla_days' => 'required|integer|min:1',
         ]);
@@ -94,7 +107,21 @@ class SlaController extends Controller
         $request->validate([
             'cat_id' => 'required|exists:ref_categories,id',
             'subcat_id' => 'required|exists:ref_sub_categories,id',
-            'sla_level' => 'required|string|max:255',
+            'sla_level' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) use ($request, $id) {
+                    $exists = Sla::where('cat_id', $request->cat_id)
+                                 ->where('subcat_id', $request->subcat_id)
+                                 ->where('sla_level', $value)
+                                 ->where('id', '!=', $id)
+                                 ->exists();
+                    if ($exists) {
+                        $fail('SLA untuk kombinasi kategori, sub-kategori, dan level petugas ini sudah wujud.');
+                    }
+                },
+            ],
             'sla_priority' => 'required|string|max:255',
             'sla_days' => 'required|integer|min:1',
         ]);
@@ -127,5 +154,24 @@ class SlaController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false]);
         }
+    }
+
+    public function checkDuplicate(Request $request)
+    {
+        $request->validate([
+            'cat_id' => 'required|integer',
+            'subcat_id' => 'required|integer',
+            'sla_level' => 'required|string',
+        ]);
+
+        $exists = Sla::where('cat_id', $request->cat_id)
+                     ->where('subcat_id', $request->subcat_id)
+                     ->where('sla_level', $request->sla_level)
+                     ->when($request->id, function ($query) use ($request) {
+                         return $query->where('id', '!=', $request->id);
+                     })
+                     ->exists();
+
+        return response()->json(['exists' => $exists]);
     }
 }
