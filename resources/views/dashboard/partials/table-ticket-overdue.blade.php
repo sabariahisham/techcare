@@ -4,10 +4,10 @@
             <div class="card-title mb-0">
                 <h5 class="m-0 me-2">
                     <i class="ti ti-clock-exclamation me-2 text-warning"></i>
-                    SENARAI TIKET OVERDUE
+                    SENARAI TIKET MELEBIHI TEMPOH SLA
                 </h5>
             </div>
-            <small class="text-muted">Senarai tiket yang telah melepasi tarikh due</small>
+            <small class="text-muted">Tiket ini telah melebihi tempoh SLA yang ditetapkan</small>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -101,122 +101,3 @@
         color: white;
     }
 </style>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize DataTable for overdue tickets
-        if ($.fn.DataTable.isDataTable('#table-overdue')) {
-            $('#table-overdue').DataTable().destroy();
-        }
-
-        const overdueTable = $('#table-overdue').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: '{{ route('dashboard.list-overdue') }}',
-                type: 'GET',
-                error: function(xhr, error, thrown) {
-                    console.error('DataTable error:', error);
-                    toastr.error('Gagal memuat data tiket overdue');
-                }
-            },
-            columns: [{
-                    data: 'bil',
-                    name: 'bil',
-                    width: '5%',
-                    className: 'text-center'
-                },
-                {
-                    data: 'ticket_nolog',
-                    name: 'ticket_nolog',
-                    width: '15%'
-                },
-                {
-                    data: 'kategori',
-                    name: 'kategori',
-                    width: '15%'
-                },
-                {
-                    data: 'tajuk',
-                    name: 'tajuk',
-                    width: '25%'
-                },
-                {
-                    data: 'status',
-                    name: 'status',
-                    width: '10%',
-                    className: 'text-center'
-                },
-                {
-                    data: 'assigned_to',
-                    name: 'assigned_to',
-                    width: '10%'
-                },
-                {
-                    data: 'sla_duedate',
-                    name: 'sla_duedate',
-                    width: '10%',
-                    className: 'text-center'
-                },
-                {
-                    data: 'days_overdue',
-                    name: 'days_overdue',
-                    width: '8%',
-                    className: 'text-center'
-                },
-                {
-                    data: 'action',
-                    name: 'action',
-                    width: '7%',
-                    orderable: false,
-                    searchable: false,
-                    className: 'text-center'
-                }
-            ],
-            pageLength: 10,
-            lengthMenu: [
-                [5, 10, 25, 50],
-                [5, 10, 25, 50]
-            ],
-            order: [
-                [7, 'desc']
-            ], // Sort by days_overdue descending
-            language: {
-                processing: "Memproses...",
-                lengthMenu: "Papar _MENU_ rekod",
-                zeroRecords: "Tiada tiket overdue dijumpai",
-                info: "Memapar _START_ hingga _END_ daripada _TOTAL_ rekod",
-                infoEmpty: "Memapar 0 hingga 0 daripada 0 rekod",
-                infoFiltered: "(ditapis daripada _MAX_ jumlah rekod)",
-                search: "Cari:",
-                paginate: {
-                    first: "Pertama",
-                    last: "Terakhir",
-                    next: "Seterusnya",
-                    previous: "Sebelumnya"
-                }
-            },
-            responsive: true,
-            autoWidth: false,
-            dom: '<"row"<"col-sm-6"l><"col-sm-6"f>><"row"<"col-sm-12"tr>><"row"<"col-sm-5"i><"col-sm-7"p>>',
-            drawCallback: function(settings) {
-                // Re-initialize tooltips after table redraw
-                $('[title]').tooltip();
-
-                // Add click handler for view ticket buttons
-                $('.view-ticket').off('click').on('click', function() {
-                    const ticketNo = $(this).data('id');
-                    // You can implement view ticket modal or redirect here
-                    toastr.info('Fungsi lihat tiket: ' + ticketNo);
-                });
-            }
-        });
-
-        // Refresh table every 5 minutes for real-time updates
-        setInterval(function() {
-            if (overdueTable) {
-                overdueTable.ajax.reload(null, false);
-            }
-        }, 300000); // 5 minutes
-    });
-</script>

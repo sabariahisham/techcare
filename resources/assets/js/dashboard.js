@@ -4,7 +4,7 @@
 
 'use strict';
 
-// Ensure config is available
+// Ensure config is available (colour using Sneat template colors)
 if (typeof window.config === 'undefined') {
   window.config = {
     colors: {
@@ -41,7 +41,9 @@ if (typeof window.config === 'undefined') {
     'Aduan Dirujuk': '#ff6b47',   // Lighter Danger - Soft Red
     'Aduan DiBatal': '#a8b1ba',   // Lighter Secondary - Soft Gray
     'Aduan Selesai': '#98e85d'    // Lighter Success - Soft Green
-  };  // Status Chart
+  };
+
+  // Status Tiket Chart (horizontal bar chart)
   // --------------------------------------------------------------------
   const statusChart = document.getElementById('statusChart');
   if (statusChart) {
@@ -164,7 +166,7 @@ if (typeof window.config === 'undefined') {
     console.log('Status chart canvas not found on this page');
   }
 
-  // Category Chart (Doughnut Chart with Legend)
+  // Kategori Tiket Chart (Doughnut Chart with Legend)
   // --------------------------------------------------------------------
   const categoryChart = document.getElementById('categoryChart');
   if (categoryChart) {
@@ -300,180 +302,7 @@ if (typeof window.config === 'undefined') {
     console.log('Category chart canvas not found on this page');
   }
 
-  // Total Tickets Chart (Doughnut with center text)
-  // --------------------------------------------------------------------
-  const totalChart = document.getElementById('totalChart');
-  if (totalChart) {
-    console.log('Total chart canvas found, initializing...');
-
-    // Total tickets colors using Sneat template colors
-    const totalColors = [
-      '#a5abff',  // Soft Purple (Tiket Sendiri)
-      '#26d0f0'   // Soft Cyan (Tiket Bagi Pihak)
-    ];
-
-    // Fetch data from the backend
-    fetch('/dashboard/total-tickets')
-      .then(response => {
-        console.log('Total tickets response received:', response);
-        return response.json();
-      })
-      .then(data => {
-        console.log('Total tickets chart data received:', data);
-
-        if (data.success) {
-          const labels = data.data.map(item => item.type_name);
-          const counts = data.data.map(item => item.count);
-          const colors = data.data.map((item, index) => totalColors[index % totalColors.length]);
-          const totalCount = data.total || counts.reduce((sum, count) => sum + count, 0);
-
-          console.log('Total labels:', labels);
-          console.log('Total counts:', counts);
-          console.log('Total colors:', colors);
-          console.log('Total count:', totalCount);
-
-          // Update the total count display
-          const totalCountElement = document.getElementById('totalCount');
-          if (totalCountElement) {
-            totalCountElement.textContent = totalCount;
-          }
-
-          // Create the total tickets polar area chart
-          const totalChartVar = new Chart(totalChart, {
-            type: 'polarArea',
-            data: {
-              labels: labels,
-              datasets: [
-                {
-                  data: counts,
-                  backgroundColor: [
-                    'rgba(165, 171, 255, 0.7)', // Soft purple with transparency
-                    'rgba(38, 208, 240, 0.7)'   // Soft cyan with transparency
-                  ],
-                  borderColor: [
-                    '#a5abff', // Solid purple
-                    '#26d0f0'  // Solid cyan
-                  ],
-                  borderWidth: 2,
-                  hoverBorderWidth: 3,
-                  hoverBorderColor: '#fff'
-                }
-              ]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              animation: {
-                duration: 1000,
-                animateRotate: true,
-                animateScale: true
-              },
-              scales: {
-                r: {
-                  beginAtZero: true,
-                  grid: {
-                    color: borderColor,
-                    lineWidth: 1
-                  },
-                  angleLines: {
-                    color: borderColor,
-                    lineWidth: 1
-                  },
-                  pointLabels: {
-                    color: headingColor,
-                    font: {
-                      size: 11,
-                      weight: '500'
-                    }
-                  },
-                  ticks: {
-                    display: false // Hide radial ticks for cleaner look
-                  }
-                }
-              },
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'bottom',
-                  align: 'center',
-                  labels: {
-                    usePointStyle: true,
-                    pointStyle: 'rectRounded',
-                    padding: 15,
-                    boxWidth: 12,
-                    boxHeight: 12,
-                    color: headingColor,
-                    font: {
-                      size: 11,
-                      weight: '500'
-                    },
-                    generateLabels: function (chart) {
-                      const data = chart.data;
-                      if (data.labels.length && data.datasets.length) {
-                        return data.labels.map((label, index) => {
-                          const dataset = data.datasets[0];
-                          const value = dataset.data[index];
-                          const total = dataset.data.reduce((sum, val) => sum + val, 0);
-                          const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                          return {
-                            text: `${label}: ${value} (${percentage}%)`,
-                            fillStyle: dataset.backgroundColor[index],
-                            strokeStyle: dataset.borderColor[index],
-                            lineWidth: dataset.borderWidth,
-                            hidden: isNaN(value) || value === 0,
-                            index: index
-                          };
-                        });
-                      }
-                      return [];
-                    }
-                  }
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      const label = context.label || '';
-                      const value = context.parsed.r;
-                      const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                      const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                      return ` ${label}: ${value} tiket (${percentage}%)`;
-                    }
-                  },
-                  backgroundColor: cardColor,
-                  titleColor: headingColor,
-                  bodyColor: bodyColor,
-                  borderWidth: 1,
-                  borderColor: borderColor,
-                  titleFont: {
-                    size: 12,
-                    weight: '600'
-                  },
-                  bodyFont: {
-                    size: 11
-                  }
-                }
-              }
-            }
-          });
-
-          console.log('Total tickets chart created successfully');
-        } else {
-          console.error('Total tickets API returned success: false');
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching total tickets data:', error);
-        // Set fallback total count
-        const totalCountElement = document.getElementById('totalCount');
-        if (totalCountElement) {
-          totalCountElement.textContent = '0';
-        }
-      });
-  } else {
-    console.log('Total chart canvas not found on this page');
-  }
-
-  // Monthly Trend Chart (Line Chart with Year Dropdown)
+  // Trend Bulanan Tiket (Line Chart with Year Dropdown)
   // --------------------------------------------------------------------
   const trendChart = document.getElementById('trendChart');
   if (trendChart) {
@@ -504,7 +333,7 @@ if (typeof window.config === 'undefined') {
             // Update subtitle with total
             const subtitleElement = document.getElementById('trendSubtitle');
             if (subtitleElement) {
-              subtitleElement.textContent = `Total ${totalTickets} tiket pada tahun ${year}`;
+              subtitleElement.textContent = `Jumlah ${totalTickets} tiket pada tahun ${year}`;
             }
 
             // Update year dropdown
@@ -677,7 +506,180 @@ if (typeof window.config === 'undefined') {
     console.log('Trend chart canvas not found on this page');
   }
 
-  // Assigned Tickets Chart (Bar Chart with Monthly Dropdown)
+  // Tiket Aduan: Total Tickets Chart (Doughnut with center text)
+  // --------------------------------------------------------------------
+  const totalChart = document.getElementById('totalChart');
+  if (totalChart) {
+    console.log('Total chart canvas found, initializing...');
+
+    // Total tickets colors using Sneat template colors
+    const totalColors = [
+      '#a5abff',  // Soft Purple (Tiket Sendiri)
+      '#26d0f0'   // Soft Cyan (Tiket Bagi Pihak)
+    ];
+
+    // Fetch data from the backend
+    fetch('/dashboard/total-tickets')
+      .then(response => {
+        console.log('Total tickets response received:', response);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Total tickets chart data received:', data);
+
+        if (data.success) {
+          const labels = data.data.map(item => item.type_name);
+          const counts = data.data.map(item => item.count);
+          const colors = data.data.map((item, index) => totalColors[index % totalColors.length]);
+          const totalCount = data.total || counts.reduce((sum, count) => sum + count, 0);
+
+          console.log('Total labels:', labels);
+          console.log('Total counts:', counts);
+          console.log('Total colors:', colors);
+          console.log('Total count:', totalCount);
+
+          // Update the total count display
+          const totalCountElement = document.getElementById('totalCount');
+          if (totalCountElement) {
+            totalCountElement.textContent = totalCount;
+          }
+
+          // Create the total tickets polar area chart
+          const totalChartVar = new Chart(totalChart, {
+            type: 'polarArea',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  data: counts,
+                  backgroundColor: [
+                    'rgba(165, 171, 255, 0.7)', // Soft purple with transparency
+                    'rgba(38, 208, 240, 0.7)'   // Soft cyan with transparency
+                  ],
+                  borderColor: [
+                    '#a5abff', // Solid purple
+                    '#26d0f0'  // Solid cyan
+                  ],
+                  borderWidth: 2,
+                  hoverBorderWidth: 3,
+                  hoverBorderColor: '#fff'
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: {
+                duration: 1000,
+                animateRotate: true,
+                animateScale: true
+              },
+              scales: {
+                r: {
+                  beginAtZero: true,
+                  grid: {
+                    color: borderColor,
+                    lineWidth: 1
+                  },
+                  angleLines: {
+                    color: borderColor,
+                    lineWidth: 1
+                  },
+                  pointLabels: {
+                    color: headingColor,
+                    font: {
+                      size: 11,
+                      weight: '500'
+                    }
+                  },
+                  ticks: {
+                    display: false // Hide radial ticks for cleaner look
+                  }
+                }
+              },
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'bottom',
+                  align: 'center',
+                  labels: {
+                    usePointStyle: true,
+                    pointStyle: 'rectRounded',
+                    padding: 15,
+                    boxWidth: 12,
+                    boxHeight: 12,
+                    color: headingColor,
+                    font: {
+                      size: 11,
+                      weight: '500'
+                    },
+                    generateLabels: function (chart) {
+                      const data = chart.data;
+                      if (data.labels.length && data.datasets.length) {
+                        return data.labels.map((label, index) => {
+                          const dataset = data.datasets[0];
+                          const value = dataset.data[index];
+                          const total = dataset.data.reduce((sum, val) => sum + val, 0);
+                          const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                          return {
+                            text: `${label}: ${value} (${percentage}%)`,
+                            fillStyle: dataset.backgroundColor[index],
+                            strokeStyle: dataset.borderColor[index],
+                            lineWidth: dataset.borderWidth,
+                            hidden: isNaN(value) || value === 0,
+                            index: index
+                          };
+                        });
+                      }
+                      return [];
+                    }
+                  }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      const label = context.label || '';
+                      const value = context.parsed.r;
+                      const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                      const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                      return ` ${label}: ${value} tiket (${percentage}%)`;
+                    }
+                  },
+                  backgroundColor: cardColor,
+                  titleColor: headingColor,
+                  bodyColor: bodyColor,
+                  borderWidth: 1,
+                  borderColor: borderColor,
+                  titleFont: {
+                    size: 12,
+                    weight: '600'
+                  },
+                  bodyFont: {
+                    size: 11
+                  }
+                }
+              }
+            }
+          });
+
+          console.log('Total tickets chart created successfully');
+        } else {
+          console.error('Total tickets API returned success: false');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching total tickets data:', error);
+        // Set fallback total count
+        const totalCountElement = document.getElementById('totalCount');
+        if (totalCountElement) {
+          totalCountElement.textContent = '0';
+        }
+      });
+  } else {
+    console.log('Total chart canvas not found on this page');
+  }
+
+  // Jumlah Tiket Mengikut Pegawai Tugasan Chart (Bar Chart with Monthly Dropdown)
   // --------------------------------------------------------------------
   const assignedChart = document.getElementById('assignedChart');
   if (assignedChart) {
@@ -696,35 +698,37 @@ if (typeof window.config === 'undefined') {
         })
         .then(data => {
           console.log('Assigned tickets chart data received:', data);
+          console.log('Debug mode enabled:', data.debug_mode);
+          if (data.data && data.data.length > 0) {
+            console.log('First officer data:', data.data[0]);
+            if (data.data[0].debug) {
+              console.log('First officer debug info:', data.data[0].debug);
+            }
+          }
 
           if (data.success) {
             const labels = data.data.map(item => item.officer_name);
-            const counts = data.data.map(item => item.total_tickets);
+            const completedTickets = data.data.map(item => item.completed_tickets || 0);
+            const pendingTickets = data.data.map(item => item.pending_tickets || 0);
             const roles = data.data.map(item => item.role_name);
             const totalTickets = data.total || 0;
+            const totalCompleted = data.total_completed || 0;
+            const totalPending = data.total_pending || 0;
 
             console.log('Assigned labels:', labels);
-            console.log('Assigned counts:', counts);
+            console.log('Completed tickets:', completedTickets);
+            console.log('Pending tickets:', pendingTickets);
             console.log('Assigned roles:', roles);
             console.log('Total assigned tickets:', totalTickets);
 
-            // Generate colors for each bar (using different shades of success color)
-            const colors = labels.map((label, index) => {
-              const baseColors = [
-                '#98e85d', '#71dd37', '#5cb85c', '#4cae4c',
-                '#449d44', '#398439', '#2e7d32', '#1b5e20'
-              ];
-              return baseColors[index % baseColors.length];
-            });
-
-            // Update subtitle with total
+            // Update subtitle with detailed totals
             const subtitleElement = document.getElementById('assignedSubtitle');
             if (subtitleElement) {
               const monthNames = [
                 'January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'
               ];
-              subtitleElement.textContent = `Total ${totalTickets} tiket pada ${monthNames[month - 1]} ${year}`;
+              subtitleElement.textContent = `Jumlah ${totalTickets} tiket (${totalCompleted} selesai, ${totalPending} belum selesai) pada ${monthNames[month - 1]} ${year}`;
             }
 
             // Update month dropdown
@@ -737,27 +741,37 @@ if (typeof window.config === 'undefined') {
               assignedChartInstance.destroy();
             }
 
-            // Create the assigned tickets radar chart (perfect for team comparison)
+            // Store data for tooltip callbacks
+            const chartData = data;
+            const chartLabels = labels;
+            const chartCompletedTickets = completedTickets;
+            const chartPendingTickets = pendingTickets;
+
+            // Create the assigned tickets grouped vertical bar chart (Pegawai Tugasan only)
             assignedChartInstance = new Chart(assignedChart, {
-              type: 'radar',
+              type: 'bar',
               data: {
-                labels: labels.map(name => name.length > 10 ? name.substring(0, 10) + '...' : name),
+                labels: labels,
                 datasets: [
                   {
-                    label: 'Tiket Ditugaskan',
-                    data: counts,
-                    backgroundColor: 'rgba(152, 232, 93, 0.2)', // Soft green with transparency
-                    borderColor: '#98e85d',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#71dd37',
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    pointHoverBackgroundColor: '#5cb85c',
-                    pointHoverBorderColor: '#fff',
-                    pointHoverBorderWidth: 3,
-                    fill: true
+                    label: 'Aduan Selesai',
+                    data: completedTickets,
+                    backgroundColor: '#98e85d', // Green for completed
+                    borderColor: '#71dd37',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
+                  },
+                  {
+                    label: 'Belum Selesai',
+                    data: pendingTickets,
+                    backgroundColor: '#ffeecc', // Light orange for pending
+                    //backgroundColor: '#fddf94ff', // Light orange for pending
+                    borderColor: '#fddf94ff',
+                    //borderColor: '#ffc947',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
                   }
                 ]
               },
@@ -768,34 +782,44 @@ if (typeof window.config === 'undefined') {
                   duration: 1000,
                   easing: 'easeInOutQuart'
                 },
+                interaction: {
+                  intersect: false,
+                  mode: 'index'
+                },
                 scales: {
-                  r: {
-                    beginAtZero: true,
-                    max: Math.max(...counts) + Math.ceil(Math.max(...counts) * 0.3), // Add 30% padding
+                  x: {
+                    stacked: true, // Enable stacked bars on x-axis
                     grid: {
-                      color: borderColor,
-                      lineWidth: 1
+                      display: false
                     },
-                    angleLines: {
-                      color: borderColor,
-                      lineWidth: 1
-                    },
-                    pointLabels: {
+                    ticks: {
                       color: headingColor,
                       font: {
                         size: 11,
                         weight: '500'
                       },
-                      callback: function (label) {
-                        return label; // Names are already truncated above
+                      maxRotation: 45,
+                      minRotation: 0,
+                      callback: function (value, index) {
+                        // Truncate long names for display
+                        const label = chartLabels[index];
+                        return label && label.length > 12 ? label.substring(0, 12) + '...' : label;
                       }
+                    }
+                  },
+                  y: {
+                    stacked: true, // Enable stacked bars on y-axis
+                    beginAtZero: true,
+                    grid: {
+                      color: borderColor,
+                      drawBorder: false
                     },
                     ticks: {
                       color: labelColor,
                       font: {
-                        size: 9
+                        size: 11
                       },
-                      stepSize: Math.max(1, Math.ceil(Math.max(...counts) / 5)),
+                      stepSize: 1,
                       callback: function (value) {
                         return Number.isInteger(value) ? value : '';
                       }
@@ -806,12 +830,12 @@ if (typeof window.config === 'undefined') {
                   legend: {
                     display: true,
                     position: 'top',
-                    align: 'center',
+                    align: 'end',
                     labels: {
                       usePointStyle: true,
-                      pointStyle: 'circle',
+                      pointStyle: 'rectRounded',
                       padding: 15,
-                      boxWidth: 8,
+                      boxWidth: 12,
                       boxHeight: 8,
                       color: headingColor,
                       font: {
@@ -821,6 +845,9 @@ if (typeof window.config === 'undefined') {
                     }
                   },
                   tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    usePointStyle: true,
                     backgroundColor: cardColor,
                     titleColor: headingColor,
                     bodyColor: bodyColor,
@@ -838,22 +865,101 @@ if (typeof window.config === 'undefined') {
                     callbacks: {
                       title: function (context) {
                         const index = context[0].dataIndex;
-                        return labels[index]; // Full name in tooltip
+                        const officerData = chartData.data[index];
+                        let title = chartLabels[index] || 'Unknown Officer';
+
+                        // Add user ID for development
+                        if (chartData.debug_mode && officerData && officerData.debug) {
+                          title += ` (User ID: ${officerData.debug.user_id})`;
+                        }
+
+                        return title;
+                      },
+                      beforeBody: function (context) {
+                        const index = context[0].dataIndex;
+                        const completed = chartCompletedTickets[index] || 0;
+                        const pending = chartPendingTickets[index] || 0;
+                        const total = completed + pending;
+                        return `Jumlah Aduan: ${total} tiket`;
                       },
                       label: function (context) {
                         const index = context.dataIndex;
-                        const value = context.parsed.r;
-                        return [
-                          `Tiket: ${value}`,
-                          `Jawatan: ${roles[index]}`
-                        ];
+                        const datasetLabel = context.dataset.label;
+                        const value = context.parsed.y;
+                        const officerData = chartData.data[index];
+
+                        let label = '';
+                        if (datasetLabel === 'Aduan Selesai') {
+                          label = ` Aduan Selesai: ${value} tiket`;
+
+                          // Add debug info for completed tickets
+                          if (chartData.debug_mode && officerData && officerData.debug &&
+                            officerData.debug.completed_ticket_ids &&
+                            officerData.debug.completed_ticket_ids.length > 0) {
+                            label += ` (Ticket IDs: ${officerData.debug.completed_ticket_ids.join(', ')})`;
+                          }
+                        } else if (datasetLabel === 'Belum Selesai') {
+                          label = ` Belum Selesai: ${value} tiket`;
+
+                          // Add debug info for pending tickets
+                          if (chartData.debug_mode && officerData && officerData.debug &&
+                            officerData.debug.pending_ticket_ids &&
+                            officerData.debug.pending_ticket_ids.length > 0) {
+                            label += ` (Ticket IDs: ${officerData.debug.pending_ticket_ids.join(', ')})`;
+                          }
+                        } else {
+                          label = `${datasetLabel}: ${value} tiket`;
+                        }
+
+                        return label;
+                      },
+                      afterBody: function (context) {
+                        if (!chartData.debug_mode) return [];
+
+                        const index = context[0].dataIndex;
+                        const officerData = chartData.data[index];
+
+                        if (officerData && officerData.debug) {
+                          const debugLines = [];
+                          debugLines.push(''); // Empty line separator
+                          debugLines.push('--- DEBUG INFO ---');
+                          debugLines.push(`Officer ID: ${officerData.debug.user_id}`);
+
+                          if (officerData.debug.all_ticket_ids && officerData.debug.all_ticket_ids.length > 0) {
+                            debugLines.push(`All Ticket IDs: ${officerData.debug.all_ticket_ids.join(', ')}`);
+                          }
+
+                          if (officerData.debug.chronology_ids && officerData.debug.chronology_ids.length > 0) {
+                            debugLines.push(`Chronology IDs: ${officerData.debug.chronology_ids.join(', ')}`);
+                          }
+
+                          // Show detailed ticket information
+                          if (officerData.debug.completed_tickets_detail &&
+                            officerData.debug.completed_tickets_detail.length > 0) {
+                            debugLines.push('');
+                            debugLines.push('Completed Tickets:');
+                            officerData.debug.completed_tickets_detail.forEach(ticket => {
+                              debugLines.push(`  • ${ticket.ticket_nolog} (ID: ${ticket.ticket_id}, Status: ${ticket.status})`);
+                            });
+                          }
+
+                          if (officerData.debug.pending_tickets_detail &&
+                            officerData.debug.pending_tickets_detail.length > 0) {
+                            debugLines.push('');
+                            debugLines.push('Pending Tickets:');
+                            officerData.debug.pending_tickets_detail.forEach(ticket => {
+                              debugLines.push(`  • ${ticket.ticket_nolog} (ID: ${ticket.ticket_id}, Status: ${ticket.status})`);
+                            });
+                          }
+
+                          return debugLines;
+                        }
+
+                        return [];
                       }
                     }
                   }
-                },
-                interaction: {
-                  intersect: false,
-                  mode: 'point'
+
                 }
               }
             });
@@ -911,6 +1017,10 @@ if (typeof window.config === 'undefined') {
   }
 
   // Dashboard Cards Functionality
+  // Log Hari Ini
+  // Selesai Minggu Ini
+  // Belum Selesai
+  // Lewat SLA
   // --------------------------------------------------------------------
 
   // Load Today's Logs Count
@@ -1135,11 +1245,156 @@ if (typeof window.config === 'undefined') {
     loadOverdueSLACount();
   }
 
-  // Load cards on page ready
+  // Initialize Overdue Tickets DataTable
+  // --------------------------------------------------------------------
+  function initializeOverdueTable() {
+    const tableElement = document.getElementById('table-overdue');
+    if (!tableElement) {
+      console.log('Overdue table element not found on this page');
+      return;
+    }
+
+    console.log('Initializing overdue tickets DataTable...');
+
+    // Check if DataTables is available
+    if (typeof $ === 'undefined' || !$.fn || !$.fn.DataTable) {
+      console.error('jQuery or DataTables not available for overdue table initialization');
+      return;
+    }
+
+    // Destroy existing DataTable if it exists
+    if ($.fn.DataTable.isDataTable('#table-overdue')) {
+      $('#table-overdue').DataTable().destroy();
+    }
+
+    const overdueTable = $('#table-overdue').DataTable({
+      processing: true,
+      serverSide: true,
+      ajax: {
+        url: '/dashboard/list-overdue',
+        type: 'GET',
+        error: function (xhr, error, thrown) {
+          console.error('DataTable error:', error);
+          if (typeof toastr !== 'undefined') {
+            toastr.error('Gagal memuat data tiket overdue');
+          }
+        }
+      },
+      columns: [{
+        data: 'DT_RowIndex',
+        name: 'DT_RowIndex',
+        width: '5%',
+        className: 'text-center',
+        orderable: false,
+        searchable: false
+      },
+      {
+        data: 'ticket_nolog',
+        name: 'ticket_nolog',
+        width: '15%'
+      },
+      {
+        data: 'kategori',
+        name: 'kategori',
+        width: '15%'
+      },
+      {
+        data: 'tajuk',
+        name: 'tajuk',
+        width: '25%'
+      },
+      {
+        data: 'status',
+        name: 'status',
+        width: '10%',
+        className: 'text-center'
+      },
+      {
+        data: 'assigned_to',
+        name: 'assigned_to',
+        width: '10%'
+      },
+      {
+        data: 'sla_duedate',
+        name: 'sla_duedate',
+        width: '10%',
+        className: 'text-center'
+      },
+      {
+        data: 'days_overdue',
+        name: 'days_overdue',
+        width: '8%',
+        className: 'text-center'
+      },
+      {
+        data: 'action',
+        name: 'action',
+        width: '7%',
+        orderable: false,
+        searchable: false,
+        className: 'text-center'
+      }
+      ],
+      pageLength: 10,
+      lengthMenu: [
+        [5, 10, 25, 50],
+        [5, 10, 25, 50]
+      ],
+      order: [
+        [7, 'desc']
+      ], // Sort by days_overdue descending
+      language: {
+        processing: "Memproses...",
+        lengthMenu: "Papar _MENU_ rekod",
+        zeroRecords: "Tiada tiket overdue dijumpai",
+        info: "Memapar _START_ hingga _END_ daripada _TOTAL_ rekod",
+        infoEmpty: "Memapar 0 hingga 0 daripada 0 rekod",
+        infoFiltered: "(ditapis daripada _MAX_ jumlah rekod)",
+        search: "Cari:",
+        paginate: {
+          first: "Pertama",
+          last: "Terakhir",
+          next: "Seterusnya",
+          previous: "Sebelumnya"
+        }
+      },
+      responsive: true,
+      autoWidth: false,
+      dom: '<"row"<"col-sm-6"l><"col-sm-6"f>><"row"<"col-sm-12"tr>><"row"<"col-sm-5"i><"col-sm-7"p>>',
+      drawCallback: function (settings) {
+        // Re-initialize tooltips after table redraw
+        if (typeof $ !== 'undefined' && $.fn.tooltip) {
+          $('[title]').tooltip();
+        }
+
+        // Add click handler for view ticket buttons
+        $('.view-record').off('click').on('click', function () {
+          const ticketId = $(this).data('id');
+          // Navigate to the detailed view page
+          window.location.href = '/tickets/' + ticketId;
+        });
+      }
+    });
+
+    // Refresh table every 5 minutes for real-time updates
+    setInterval(function () {
+      if (overdueTable) {
+        overdueTable.ajax.reload(null, false);
+      }
+    }, 300000); // 5 minutes
+
+    console.log('Overdue tickets DataTable initialized successfully');
+  }
+
+  // Load cards and initialize overdue table on page ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeDashboardCards);
+    document.addEventListener('DOMContentLoaded', function () {
+      initializeDashboardCards();
+      initializeOverdueTable();
+    });
   } else {
     initializeDashboardCards();
+    initializeOverdueTable();
   }
 
 })();
