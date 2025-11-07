@@ -2,7 +2,7 @@
     <div class="card flex-fill">
         <div class="card-header">
             <h5 class="card-title mb-1">Tiket Aduan</h5>
-            <p class="card-subtitle">Sehingga kini {{ date('d-m-Y') }}</p>
+            <p class="card-subtitle">Sehingga kini {{ \Carbon\Carbon::now()->format('d M Y') }}</p>
         </div>
         <div class="card-body d-flex flex-column justify-content-center align-items-center">
             <div class="chart-container" style="position: relative; width: 200px; height: 200px;">

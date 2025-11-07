@@ -3,11 +3,11 @@
 @section('title', 'Dashboard')
 
 @section('vendor-style')
-    @vite(['resources/assets/css/dashboard-layout.css'])
+    @vite(['resources/assets/css/dashboard-layout.css', 'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss'])
 @endsection
 
 @section('vendor-script')
-    @vite(['resources/assets/vendor/libs/chartjs/chartjs.js'])
+    @vite(['resources/assets/vendor/libs/chartjs/chartjs.js', 'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js'])
 @endsection
 
 @section('page-script')
