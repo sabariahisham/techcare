@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\configuration;
 
+use App\Models\Module;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -426,7 +427,8 @@ class PermissionController extends Controller
             'inactive_permissions' => Permission::excludeModules()->inactive()->count(),
             'assigned_permissions' => Permission::excludeModules()->has('roles')->count(),
             'unassigned_permissions' => Permission::excludeModules()->doesntHave('roles')->count(),
-            'total_modules' => Permission::excludeModules()->distinct('module')->count('module'),
+            'total_modules' => Module::count(),
+            'active_modules' => Module::whereNull('deleted_at')->count(),
         ];
     }
 

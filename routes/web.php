@@ -223,9 +223,6 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/modules', [ModuleController::class, 'getModules'])->name('modules.data');
   Route::post('/modules', [ModuleController::class, 'store'])->name('modules.store');
   Route::get('/modules/{id}/edit', [ModuleController::class, 'edit'])->name('modules.edit');
-  Route::get('/modules/{id}/details', [ModuleController::class, 'getModuleDetails'])->name('modules.details');
-  Route::get('/modules/{id}/activity', [ModuleController::class, 'getModuleActivityLog'])->name('modules.activity');
-  Route::get('/modules/test-tracking', [ModuleController::class, 'testUserTracking'])->name('modules.test-tracking');
   Route::post('/modules/update/{id}', [ModuleController::class, 'update'])->name('modules.update');
   Route::delete('/modules/{id}', [ModuleController::class, 'destroy'])->name('modules.destroy');
 
@@ -338,6 +335,7 @@ Route::middleware(['auth'])->group(function () {
   Route::prefix('admin/roles')->name('admin.roles.')->group(function () {
     Route::get('/', [App\Http\Controllers\configuration\RoleController::class, 'index'])->name('index');
     Route::get('/data', [App\Http\Controllers\configuration\RoleController::class, 'getData'])->name('data');
+    Route::get('/statistics', [App\Http\Controllers\configuration\RoleController::class, 'getStatistics'])->name('statistics');
     Route::post('/', [App\Http\Controllers\configuration\RoleController::class, 'store'])->name('store');
     Route::get('/{role}/edit', [App\Http\Controllers\configuration\RoleController::class, 'edit'])->name('edit');
     Route::put('/{role}', [App\Http\Controllers\configuration\RoleController::class, 'update'])->name('update');
