@@ -14,7 +14,7 @@ use App\Http\Controllers\layouts\Blank;
 use App\Http\Controllers\layouts\Fluid;
 use App\Http\Controllers\charts\ChartJs;
 use App\Http\Controllers\icons\Boxicons;
-use App\Http\Controllers\RoleController;
+use App\Http\Controllers\configuration\RoleController;
 use App\Http\Controllers\apps\InvoiceAdd;
 use App\Http\Controllers\cards\CardBasic;
 use App\Http\Controllers\pages\MiscError;
@@ -53,9 +53,9 @@ use App\Http\Controllers\extended_ui\Treeview;
 use App\Http\Controllers\form_elements\Extras;
 use App\Http\Controllers\form_elements\Picker;
 use App\Http\Controllers\front_pages\Checkout;
-use App\Http\Controllers\ModuleListController;
+use App\Http\Controllers\configuration\ModuleController;
 use App\Http\Controllers\pages\MiscComingSoon;
-use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\configuration\PermissionController;
 use App\Http\Controllers\apps\AccessPermission;
 use App\Http\Controllers\apps\UserViewSecurity;
 use App\Http\Controllers\form_elements\Editors;
@@ -175,7 +175,7 @@ Route::get('/', function () {
   } else {
     return view('auth.login');
   }
-})->middleware(['auth', 'verified']);
+})->middleware(['auth']);
 
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
   ->middleware(['auth'])
@@ -189,7 +189,6 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
 Route::middleware([
   'auth',
   config('jetstream.auth_session'),
-  'verified',
 ])->prefix('dashboard')->name('dashboard.')->group(function () {
   // Main dashboard page
   Route::get('/', [DashboardController::class, 'index'])->name('index');
@@ -213,20 +212,22 @@ Route::middleware([
 Route::middleware([
   'auth',
   config('jetstream.auth_session'),
-  'verified',
 ])->get('/home', function () {
   return redirect()->route('dashboard.index');
 })->name('index');
 
 // ACL (Access Control List) Routes - Modules only (Users, Roles, Permissions use /admin/* routes below)
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
   // modules (actively used by JavaScript)
-  Route::get('/acl/module-list/index', [ModuleListController::class, 'index'])->name('acl-module-list-index');
-  Route::get('/modules', [ModuleListController::class, 'getModules'])->name('modules.data');
-  Route::post('/modules', [ModuleListController::class, 'store'])->name('modules.store');
-  Route::get('/modules/{id}/edit', [ModuleListController::class, 'edit'])->name('modules.edit');
-  Route::post('/modules/update/{id}', [ModuleListController::class, 'update'])->name('modules.update');
-  Route::delete('/modules/{id}', [ModuleListController::class, 'destroy'])->name('modules.destroy');
+  Route::get('/acl/module-list/index', [ModuleController::class, 'index'])->name('acl-module-list-index');
+  Route::get('/modules', [ModuleController::class, 'getModules'])->name('modules.data');
+  Route::post('/modules', [ModuleController::class, 'store'])->name('modules.store');
+  Route::get('/modules/{id}/edit', [ModuleController::class, 'edit'])->name('modules.edit');
+  Route::get('/modules/{id}/details', [ModuleController::class, 'getModuleDetails'])->name('modules.details');
+  Route::get('/modules/{id}/activity', [ModuleController::class, 'getModuleActivityLog'])->name('modules.activity');
+  Route::get('/modules/test-tracking', [ModuleController::class, 'testUserTracking'])->name('modules.test-tracking');
+  Route::post('/modules/update/{id}', [ModuleController::class, 'update'])->name('modules.update');
+  Route::delete('/modules/{id}', [ModuleController::class, 'destroy'])->name('modules.destroy');
 
   // Legacy user management (for menu compatibility)
   Route::get('/user-management/index', [UserManagementController::class, 'index'])->name('user-management-index');
@@ -292,7 +293,7 @@ Route::get('/app/user/list', [UserList::class, 'index'])->name('app-user-list');
 
 // tickets
 //Route::resource('tickets', TicketController::class);
-Route::middleware(['auth', 'verified'])->prefix('tickets')->group(function () {
+Route::middleware(['auth'])->prefix('tickets')->group(function () {
   Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
   Route::get('/data', [TicketController::class, 'getData'])->name('tickets.data');
   Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
@@ -304,13 +305,13 @@ Route::middleware(['auth', 'verified'])->prefix('tickets')->group(function () {
 });
 
 // Route for searching user by email - for ticket forms
-Route::middleware(['auth', 'verified'])->post('/search-user-by-email', [TicketController::class, 'searchUserByEmail'])->name('search.user.by.email');
+Route::middleware(['auth'])->post('/search-user-by-email', [TicketController::class, 'searchUserByEmail'])->name('search.user.by.email');
 
 // Route for getting subcategories by category - for ticket forms
 Route::get('/get-subcategory/{categoryId}', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'getSubcategories'])->name('get.subcategory');
 
 // knowledgebase
-Route::middleware(['auth', 'verified'])->prefix('knowledgebase')->group(function () {
+Route::middleware(['auth'])->prefix('knowledgebase')->group(function () {
   Route::get('/', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'index'])->name('knowledgebase.index');
   Route::get('/data', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'getData'])->name('knowledgebase.data');
   Route::post('/', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'store'])->name('knowledgebase.store');
@@ -325,41 +326,41 @@ Route::middleware(['auth', 'verified'])->prefix('knowledgebase')->group(function
 });
 
 // Main Admin Management Routes (Users, Roles, Permissions)
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 
   // User Management Routes (used by JavaScript)
   Route::prefix('admin/users')->name('admin.users.')->group(function () {
-    Route::get('/search', [App\Http\Controllers\UserController::class, 'search'])->name('search');
+    Route::get('/search', [UserManagementController::class, 'search'])->name('search');
     // Add other user routes as needed when implemented
   });
 
   // Role Management Routes (actively used)
   Route::prefix('admin/roles')->name('admin.roles.')->group(function () {
-    Route::get('/', [App\Http\Controllers\RoleController::class, 'index'])->name('index');
-    Route::get('/data', [App\Http\Controllers\RoleController::class, 'getData'])->name('data');
-    Route::post('/', [App\Http\Controllers\RoleController::class, 'store'])->name('store');
-    Route::get('/{role}/edit', [App\Http\Controllers\RoleController::class, 'edit'])->name('edit');
-    Route::put('/{role}', [App\Http\Controllers\RoleController::class, 'update'])->name('update');
-    Route::delete('/{role}', [App\Http\Controllers\RoleController::class, 'destroy'])->name('destroy');
-    Route::post('/bulk-delete', [App\Http\Controllers\RoleController::class, 'bulkDelete'])->name('bulk-delete');
-    Route::get('/{role}/permissions', [App\Http\Controllers\RoleController::class, 'getRolePermissions'])->name('permissions');
-    Route::delete('/{role}/users/{user}', [App\Http\Controllers\RoleController::class, 'removeUserFromRole'])->name('remove-user');
-    Route::post('/{role}/users', [App\Http\Controllers\RoleController::class, 'addUserToRole'])->name('add-user');
+    Route::get('/', [App\Http\Controllers\configuration\RoleController::class, 'index'])->name('index');
+    Route::get('/data', [App\Http\Controllers\configuration\RoleController::class, 'getData'])->name('data');
+    Route::post('/', [App\Http\Controllers\configuration\RoleController::class, 'store'])->name('store');
+    Route::get('/{role}/edit', [App\Http\Controllers\configuration\RoleController::class, 'edit'])->name('edit');
+    Route::put('/{role}', [App\Http\Controllers\configuration\RoleController::class, 'update'])->name('update');
+    Route::delete('/{role}', [App\Http\Controllers\configuration\RoleController::class, 'destroy'])->name('destroy');
+    Route::post('/bulk-delete', [App\Http\Controllers\configuration\RoleController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::get('/{role}/permissions', [App\Http\Controllers\configuration\RoleController::class, 'getRolePermissions'])->name('permissions');
+    Route::delete('/{role}/users/{user}', [App\Http\Controllers\configuration\RoleController::class, 'removeUserFromRole'])->name('remove-user');
+    Route::post('/{role}/users', [App\Http\Controllers\configuration\RoleController::class, 'addUserToRole'])->name('add-user');
   });
 
   // Permission Management Routes (actively used)
   Route::prefix('admin/permissions')->name('admin.permissions.')->group(function () {
-    Route::get('/', [App\Http\Controllers\PermissionController::class, 'index'])->name('index');
-    Route::get('/data', [App\Http\Controllers\PermissionController::class, 'getData'])->name('data');
-    Route::post('/', [App\Http\Controllers\PermissionController::class, 'store'])->name('store');
-    Route::get('/{permission}/edit', [App\Http\Controllers\PermissionController::class, 'edit'])->name('edit');
-    Route::put('/{permission}', [App\Http\Controllers\PermissionController::class, 'update'])->name('update');
-    Route::delete('/{permission}', [App\Http\Controllers\PermissionController::class, 'destroy'])->name('destroy');
+    Route::get('/', [App\Http\Controllers\configuration\PermissionController::class, 'index'])->name('index');
+    Route::get('/data', [App\Http\Controllers\configuration\PermissionController::class, 'getData'])->name('data');
+    Route::post('/', [App\Http\Controllers\configuration\PermissionController::class, 'store'])->name('store');
+    Route::get('/{permission}/edit', [App\Http\Controllers\configuration\PermissionController::class, 'edit'])->name('edit');
+    Route::put('/{permission}', [App\Http\Controllers\configuration\PermissionController::class, 'update'])->name('update');
+    Route::delete('/{permission}', [App\Http\Controllers\configuration\PermissionController::class, 'destroy'])->name('destroy');
   });
 });
 
 // Impersonation Routes
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
   Route::get('/impersonate/user/{user}', function ($user) {
     $userToImpersonate = App\Models\User::findOrFail($user);
     $currentUser = Auth::user();

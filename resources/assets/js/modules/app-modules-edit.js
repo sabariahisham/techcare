@@ -6,7 +6,7 @@ $(function () {
   // Form Validation for Edit Module
   const fv = FormValidation.formValidation(editModuleForm, {
     fields: {
-      editModuleName: {
+      name: {
         validators: {
           notEmpty: {
             message: 'Sila masukkan nama modul'
@@ -39,7 +39,7 @@ $(function () {
 
     // Prepare data for AJAX request
     const requestData = {
-      editModuleName: formData.get('editModuleName'),
+      name: formData.get('name'),
       _token: $('meta[name="csrf-token"]').attr('content')
     };
 
@@ -72,7 +72,11 @@ $(function () {
           });
 
           // Reload the DataTable
-          $('.datatables-modules').DataTable().ajax.reload();
+          if ($('.datatables-permissions').length && $.fn.DataTable.isDataTable('.datatables-permissions')) {
+            $('.datatables-permissions').DataTable().ajax.reload();
+          } else if ($('.datatables-modules').length && $.fn.DataTable.isDataTable('.datatables-modules')) {
+            $('.datatables-modules').DataTable().ajax.reload();
+          }
         }
       },
       error: function(xhr) {
@@ -85,7 +89,7 @@ $(function () {
             const errorMessages = [];
 
             Object.keys(errors).forEach(function(key) {
-              if (key === 'editModuleName') {
+              if (key === 'name') {
                 const fieldErrors = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
                 fieldErrors.forEach(function(error) {
                   if (error.includes('required')) {
@@ -106,6 +110,36 @@ $(function () {
                 // Highlight the field with error
                 $('#edit-module-name').addClass('is-invalid');
                 $('#edit-module-name').on('input', function() {
+                  $(this).removeClass('is-invalid');
+                });
+              } else if (key === 'description') {
+                const fieldErrors = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
+                fieldErrors.forEach(function(error) {
+                  if (error.includes('required')) {
+                    errorMessages.push('Sila pilih deskripsi modul');
+                  } else {
+                    errorMessages.push(error);
+                  }
+                });
+
+                // Highlight the field with error
+                $('#edit-module-description').addClass('is-invalid');
+                $('#edit-module-description').on('change', function() {
+                  $(this).removeClass('is-invalid');
+                });
+              } else if (key === 'status') {
+                const fieldErrors = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
+                fieldErrors.forEach(function(error) {
+                  if (error.includes('required')) {
+                    errorMessages.push('Sila pilih status modul');
+                  } else {
+                    errorMessages.push(error);
+                  }
+                });
+
+                // Highlight the field with error
+                $('#edit-module-status').addClass('is-invalid');
+                $('#edit-module-status').on('change', function() {
                   $(this).removeClass('is-invalid');
                 });
               }

@@ -1,6 +1,6 @@
 @extends('layouts/layoutMaster')
 
-@section('title', 'Senarai Permission')
+@section('title', 'Senarai Modul & Capaian')
 
 @section('vendor-style')
 @vite([
@@ -31,6 +31,9 @@
   'resources/assets/js/permissions/app-permission-add.js',
   'resources/assets/js/permissions/app-permission-edit.js',
   'resources/assets/js/permissions/app-permission-delete.js',
+  'resources/assets/js/modules/app-modules-add.js',
+  'resources/assets/js/modules/app-modules-edit.js',
+  'resources/assets/js/modules/app-modules-delete.js',
   ])
 @endsection
 
@@ -84,7 +87,7 @@
 <!-- Permission Table -->
 <div class="card">
   <div class="card-header border-bottom">
-    <h5 class="card-title mb-0">SENARAI CAPAIAN</h5>
+    <h5 class="card-title mb-0">SENARAI MODUL & CAPAIAN</h5>
   </div>
   <div class="card-datatable table-responsive">
     <table class="datatables-permissions table">
@@ -95,6 +98,7 @@
           <th>Nama Capaian</th>
           <th>Nama Module</th>
           <th>Deskripsi</th>
+          <th>Kategori</th>
           <th>Ditugaskan Kepada</th>
           {{-- <th>Created Date</th> --}}
           <th>Tindakan</th>
@@ -105,17 +109,56 @@
 </div>
 <!--/ Permission Table -->
 
+<!-- Offcanvas to add new module -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddModule" aria-labelledby="offcanvasAddModuleLabel">
+  <div class="offcanvas-header border-bottom">
+    <h5 id="offcanvasAddModuleLabel" class="offcanvas-title">Tambah Modul</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
+    <form class="add-new-module pt-0" id="addNewModuleForm" onsubmit="return false">
+      @csrf
+      <div class="mb-6">
+        <label class="form-label" for="add-module-name">Nama Modul</label>
+        <input type="text" class="form-control" id="add-module-name" placeholder="Nama Modul" name="name" required />
+      </div>
+      <div class="mb-6">
+        <label class="form-label" for="add-module-description">Kategori Modul</label>
+        <select id="add-module-description" name="description" class="form-select" required>
+          <option value="">-- Sila pilih kategori --</option>
+           <option value="Module">Module</option>
+            <option value="System">System</option>
+            <option value="Admin">Admin</option>
+            <option value="User">User</option>
+            <option value="Content">Content</option>
+            <option value="Report">Report</option>
+        </select>
+      </div>
+      <div class="mb-6">
+        <label class="form-label" for="add-module-status">Status</label>
+        <select id="add-module-status" name="status" class="form-select" required>
+          <option value="">-- Sila pilih status --</option>
+          <option value="1" selected>Aktif</option>
+          <option value="0">Tidak Aktif</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-success me-3">Simpan</button>
+      <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
+    </form>
+  </div>
+</div>
+
 <!-- Offcanvas to add new permission -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAddPermission" aria-labelledby="offcanvasAddPermissionLabel">
     <div class="offcanvas-header border-bottom">
-      <h5 id="offcanvasAddPermissionLabel" class="offcanvas-title">Tambah Permission</h5>
+      <h5 id="offcanvasAddPermissionLabel" class="offcanvas-title">Tambah Capaian</h5>
       <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
       <form class="add-new-permission pt-0" id="addNewPermissionForm" onsubmit="return false">
         @csrf
         <div class="mb-6">
-          <label class="form-label" for="add-permission-name">Nama Permission</label>
+          <label class="form-label" for="add-permission-name">Nama Capaian</label>
           <input type="text" class="form-control" id="add-permission-name" placeholder="Nama Permission" name="name" required />
         </div>
         <div class="mb-6">
@@ -134,8 +177,20 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-permission-description">Deskripsi Permission</label>
-          <input type="text" class="form-control" id="add-permission-description" placeholder="Deskripsi Permission" name="description" required />
+          <label class="form-label" for="add-permission-description">Deskripsi Capaian</label>
+          <input type="text" class="form-control" id="add-permission-description" placeholder="Deskripsi Capaian" name="description" required />
+        </div>
+        <div class="mb-6">
+          <label class="form-label" for="add-permission-category">Kategori Capaian</label>
+          <select id="add-permission-category" name="category" class="form-select" required>
+            <option value="">-- Sila pilih kategori --</option>
+            <option value="Module">Module</option>
+            <option value="System">System</option>
+            <option value="Admin">Admin</option>
+            <option value="User">User</option>
+            <option value="Content">Content</option>
+            <option value="Report">Report</option>
+          </select>
         </div>
         <button type="submit" class="btn btn-primary me-3">Simpan</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
@@ -146,15 +201,15 @@
   <!-- Offcanvas to edit permission -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditPermission" aria-labelledby="offcanvasEditPermissionLabel">
     <div class="offcanvas-header border-bottom">
-      <h5 id="offcanvasEditPermissionLabel" class="offcanvas-title">Edit Permission</h5>
+      <h5 id="offcanvasEditPermissionLabel" class="offcanvas-title">Edit Capaian</h5>
       <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
       <form class="add-new-permission pt-0" id="editPermissionForm" onsubmit="return false">
         @csrf
         <div class="mb-6">
-          <label class="form-label" for="edit-permission-name">Nama Permission</label>
-          <input type="text" class="form-control" id="edit-permission-name" placeholder="Nama Permission" name="name" required />
+          <label class="form-label" for="edit-permission-name">Nama Capaian</label>
+          <input type="text" class="form-control" id="edit-permission-name" placeholder="Nama Capaian" name="name" required />
         </div>
         <div class="mb-6">
           <label class="form-label" for="edit-permission-module">Pilih Modul</label>
@@ -172,10 +227,42 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="edit-permission-description">Deskripsi Permission</label>
-          <input type="text" class="form-control" id="edit-permission-description" placeholder="Deskripsi Permission" name="description" required />
+          <label class="form-label" for="edit-permission-description">Deskripsi Capaian</label>
+          <input type="text" class="form-control" id="edit-permission-description" placeholder="Deskripsi Capaian" name="description" required />
+        </div>
+        <div class="mb-6">
+          <label class="form-label" for="edit-permission-category">Kategori Capaian</label>
+          <select id="edit-permission-category" name="category" class="form-select" required>
+            <option value="">-- Sila pilih kategori --</option>
+            <option value="Module">Module</option>
+            <option value="System">System</option>
+            <option value="Admin">Admin</option>
+            <option value="User">User</option>
+            <option value="Content">Content</option>
+            <option value="Report">Report</option>
+          </select>
         </div>
         <button type="submit" class="btn btn-primary me-3">Simpan</button>
+        <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Offcanvas to edit module -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditModule" aria-labelledby="offcanvasEditModuleLabel">
+    <div class="offcanvas-header border-bottom">
+      <h5 id="offcanvasEditModuleLabel" class="offcanvas-title">Edit Modul</h5>
+      <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
+      <form class="edit-module pt-0" id="editModuleForm" onsubmit="return false">
+        @csrf
+        <input type="hidden" id="edit-module-id" name="id" />
+        <div class="mb-6">
+          <label class="form-label" for="edit-module-name">Nama Modul</label>
+          <input type="text" class="form-control" id="edit-module-name" placeholder="Nama Modul" name="name" required />
+        </div>
+        <button type="submit" class="btn btn-success me-3">Simpan</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
       </form>
     </div>

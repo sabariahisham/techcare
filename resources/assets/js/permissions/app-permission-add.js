@@ -31,7 +31,14 @@ $(document).ready(function () {
         description: {
           validators: {
             notEmpty: {
-              message: 'Sila masukkan deskripsi capaian`'
+              message: 'Sila masukkan deskripsi capaian'
+            }
+          }
+        },
+        category: {
+          validators: {
+            notEmpty: {
+              message: 'Sila pilih kategori capaian'
             }
           }
         }

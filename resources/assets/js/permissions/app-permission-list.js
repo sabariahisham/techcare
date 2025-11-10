@@ -21,7 +21,36 @@ $(function () {
       rowGroup: {
         dataSrc: 'module', // Group by module column
         startRender: function (rows, group) {
-          return '<strong>' + group + ' (' + rows.count() + ' capaian)</strong>';
+          // Get module data from first row in group for buttons
+          var firstRowData = rows.data()[0];
+          var moduleId = firstRowData.module_id || null;
+
+          var moduleActions = '';
+          if (moduleId) {
+            moduleActions = '<div class="float-end">' +
+              '<button type="button" class="btn btn-icon btn-text-primary rounded-pill btn-sm edit-module me-1"' +
+              ' data-id="' + moduleId + '"' +
+              ' data-name="' + group + '"' +
+              ' data-bs-toggle="tooltip"' +
+              ' data-bs-placement="top"' +
+              ' title="Edit Module">' +
+              '<i class="bx bx-edit"></i>' +
+              '</button>' +
+              '<button type="button" class="btn btn-icon btn-text-danger rounded-pill btn-sm delete-module"' +
+              ' data-id="' + moduleId + '"' +
+              ' data-name="' + group + '"' +
+              ' data-bs-toggle="tooltip"' +
+              ' data-bs-placement="top"' +
+              ' title="Delete Module">' +
+              '<i class="bx bx-trash"></i>' +
+              '</button>' +
+              '</div>';
+          }
+
+          return '<div class="d-flex justify-content-between align-items-center">' +
+            '<strong>' + group + ' (' + rows.count() + ' capaian)</strong>' +
+            moduleActions +
+            '</div>';
         }
       },
       columns: [
@@ -30,6 +59,7 @@ $(function () {
         { data: 'name' },
         { data: 'module' },
         { data: 'description' },
+        { data: 'category' },
         { data: 'assigned_to' },
         // { data: 'created_date' },
         { data: 'action' }
@@ -65,8 +95,34 @@ $(function () {
           visible: false // Hide this column since we're using it for grouping
         },
         {
-          // Assigned To (Roles) - server already renders HTML
+          // Description
           targets: 4,
+          render: function (data, type, full, meta) {
+            return '<span class="text-nowrap">' + (data || '-') + '</span>';
+          }
+        },
+        {
+          // Category
+          targets: 5,
+          render: function (data, type, full, meta) {
+            if (!data) return '<span class="badge bg-label-secondary">-</span>';
+
+            var badgeClass = 'bg-label-primary';
+            switch(data) {
+              case 'Module': badgeClass = 'bg-label-primary'; break;
+              case 'System': badgeClass = 'bg-label-info'; break;
+              case 'Admin': badgeClass = 'bg-label-danger'; break;
+              case 'User': badgeClass = 'bg-label-success'; break;
+              case 'Content': badgeClass = 'bg-label-warning'; break;
+              case 'Report': badgeClass = 'bg-label-dark'; break;
+            }
+
+            return '<span class="badge ' + badgeClass + '">' + data + '</span>';
+          }
+        },
+        {
+          // Assigned To (Roles) - server already renders HTML
+          targets: 6,
           orderable: false
         },
         // {
@@ -120,6 +176,17 @@ $(function () {
       },
       // Buttons with Dropdown
       buttons: [
+        {
+          text: '<i class="bx bx-cube bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Modul</span>',
+          className: 'add-module btn btn-success mb-6 mb-md-0 me-3',
+          attr: {
+            'data-bs-toggle': 'offcanvas',
+            'data-bs-target': '#offcanvasAddModule'
+          },
+          init: function (api, node, config) {
+            $(node).removeClass('btn-secondary');
+          }
+        },
         {
           text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Capaian</span>',
           className: 'add-new btn btn-primary mb-6 mb-md-0',
@@ -222,4 +289,125 @@ $(function () {
     $('.dataTables_filter .form-control').removeClass('form-control-sm');
     $('.dataTables_length .form-select').removeClass('form-select-sm');
   }, 300);
+
+  // Event delegation for module edit buttons
+  $(document).on('click', '.edit-module', function(e) {
+    e.preventDefault();
+    console.log('Edit module button clicked');
+
+    var moduleId = $(this).data('id');
+    var moduleName = $(this).data('name');
+
+    console.log('Module ID:', moduleId, 'Module Name:', moduleName);
+
+    if (!moduleId) {
+      console.error('Module ID not found');
+      return;
+    }
+
+    // Fetch module data and populate form
+    $.ajax({
+      url: '/modules/' + moduleId + '/edit',
+      type: 'GET',
+      success: function(response) {
+        console.log('Edit response:', response);
+
+        if (response.success && response.data) {
+          // Populate edit form
+          $('#edit-module-id').val(moduleId);
+          $('#edit-module-name').val(response.data.module_name);
+
+          // Show edit module offcanvas
+          $('#offcanvasEditModule').offcanvas('show');
+        } else {
+          toastr.error('Gagal mengambil data modul', 'Ralat!');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Edit fetch error:', xhr.responseJSON);
+        toastr.error('Gagal mengambil data modul', 'Ralat!');
+      }
+    });
+  });
+
+  // Event delegation for module delete buttons
+  $(document).on('click', '.delete-module', function(e) {
+    e.preventDefault();
+    console.log('Delete module button clicked');
+
+    var moduleId = $(this).data('id');
+    var moduleName = $(this).data('name');
+
+    console.log('Module ID:', moduleId, 'Module Name:', moduleName);
+
+    if (!moduleId) {
+      console.error('Module ID not found');
+      return;
+    }
+
+    // Show confirmation dialog
+    Swal.fire({
+      title: 'Adakah anda pasti?',
+      text: 'Anda akan memadamkan modul "' + moduleName + '" dan semua capaian yang berkaitan!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, padam!',
+      cancelButtonText: 'Batal'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteModule(moduleId);
+      }
+    });
+  });
+
+  // Function to delete module
+  function deleteModule(moduleId) {
+    console.log('Deleting module:', moduleId);
+
+    $.ajax({
+      url: '/modules/' + moduleId,
+      type: 'DELETE',
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      },
+      success: function(response) {
+        console.log('Delete response:', response);
+
+        if (response.status === 'success' || response.success) {
+          Swal.fire(
+            'Berjaya!',
+            'Modul telah berjaya dipadamkan.',
+            'success'
+          );
+
+          // Refresh DataTable
+          if ($.fn.DataTable.isDataTable('.datatables-permissions')) {
+            $('.datatables-permissions').DataTable().ajax.reload();
+          }
+        } else {
+          Swal.fire(
+            'Ralat!',
+            'Terdapat masalah semasa memadamkan modul.',
+            'error'
+          );
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Delete error:', xhr.responseJSON);
+
+        var errorMessage = 'Terdapat masalah semasa memadamkan modul.';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        }
+
+        Swal.fire(
+          'Ralat!',
+          errorMessage,
+          'error'
+        );
+      }
+    });
+  }
 });

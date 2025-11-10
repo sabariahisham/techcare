@@ -16,7 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Lab404\Impersonate\Models\Impersonate;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable // Removed MustVerifyEmail interface
 {
     use HasApiTokens;
 

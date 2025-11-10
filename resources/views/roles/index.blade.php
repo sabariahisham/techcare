@@ -4,7 +4,7 @@
 
 @extends('layouts/layoutMaster')
 
-@section('title', 'Senarai Roles ')
+@section('title', 'Senarai Peranan')
 
 @section('vendor-style')
 @vite([
