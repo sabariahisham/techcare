@@ -3,13 +3,15 @@
 // Form Validation for Add Module
 $(document).ready(function() {
   console.log('Document ready - initializing module add functionality');
+  console.log('jQuery version:', $.fn.jquery);
+  console.log('FormValidation available:', typeof FormValidation !== 'undefined');
 
   // Add New Module form
   const addNewModuleForm = document.getElementById('addNewModuleForm');
   let fv; // Declare fv outside to make it accessible
 
   if (addNewModuleForm) {
-    console.log('Add module form found');
+    console.log('Add module form found:', addNewModuleForm);
 
     // Check if FormValidation is available
     if (typeof FormValidation !== 'undefined') {
@@ -19,7 +21,7 @@ $(document).ready(function() {
         // Initialize FormValidation
         fv = FormValidation.formValidation(addNewModuleForm, {
           fields: {
-            modalModuleName: {
+            name: {
               validators: {
                 notEmpty: {
                   message: 'Sila masukkan nama modul'
@@ -32,6 +34,20 @@ $(document).ready(function() {
                 regexp: {
                   regexp: /^[a-zA-Z0-9\s\-\_]+$/,
                   message: 'Nama modul hanya boleh mengandungi huruf(a-z), nombor(0-9), ruang kosong( ), tanda sempang(-) dan garis bawah(_)'
+                }
+              }
+            },
+            description: {
+              validators: {
+                notEmpty: {
+                  message: 'Sila pilih kategori modul'
+                }
+              }
+            },
+            status: {
+              validators: {
+                notEmpty: {
+                  message: 'Sila pilih status modul'
                 }
               }
             }
@@ -54,6 +70,15 @@ $(document).ready(function() {
           console.log('Form validation passed, submitting...');
           submitModuleForm();
         });
+
+        // Handle validation events for debugging
+        fv.on('core.element.validated', function(e) {
+          console.log('Field validated:', e.field, 'Valid:', e.valid);
+        });
+
+        fv.on('core.form.invalid', function() {
+          console.log('Form validation failed');
+        });
       } catch (error) {
         console.error('Error initializing FormValidation:', error);
       }
@@ -70,7 +95,9 @@ $(document).ready(function() {
       var moduleNameInput = document.getElementById('add-module-name');
       var moduleName = moduleNameInput ? moduleNameInput.value.trim() : '';
 
-      console.log('Module name entered:', moduleName);
+      console.log('Form values:', {
+        name: moduleName
+      });
 
       // Basic validation
       if (!moduleName) {
@@ -85,8 +112,19 @@ $(document).ready(function() {
         return false;
       }
 
-      // If FormValidation is not available or not working, proceed directly
-      if (!fv || typeof FormValidation === 'undefined') {
+      // If FormValidation is available and initialized, validate through it
+      if (fv && typeof FormValidation !== 'undefined') {
+        console.log('Revalidating form through FormValidation');
+        fv.validate().then(function(status) {
+          console.log('FormValidation status:', status);
+          if (status === 'Valid') {
+            submitModuleForm();
+          } else {
+            console.log('FormValidation failed');
+          }
+        });
+      } else {
+        // If FormValidation is not available, proceed directly
         console.log('Submitting without FormValidation');
         submitModuleForm();
       }
@@ -103,18 +141,32 @@ $(document).ready(function() {
 
   // Function to handle module submission
   function submitModuleForm() {
+    console.log('submitModuleForm called');
     var submitBtn = $(addNewModuleForm).find('button[type="submit"]');
 
     // Prevent multiple submissions
     if (submitBtn.prop('disabled')) {
+      console.log('Submit button already disabled, preventing double submission');
       return false;
     }
+
+    console.log('Preparing to submit form...');
 
     // Disable submit button and show loading
     submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>Menyimpan...');
 
     // Prepare form data
     var formData = new FormData(addNewModuleForm);
+
+    // Debug: Log form data
+    console.log('Form data being submitted:');
+    for (var pair of formData.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
+
+    // Get CSRF token
+    var csrfToken = $('meta[name="csrf-token"]').attr('content');
+    console.log('CSRF Token:', csrfToken);
 
     // Submit form data
     $.ajax({
@@ -124,7 +176,10 @@ $(document).ready(function() {
       processData: false,
       contentType: false,
       headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        'X-CSRF-TOKEN': csrfToken
+      },
+      beforeSend: function() {
+        console.log('AJAX request starting...');
       },
       success: function(response) {
         console.log('AJAX Success Response:', response);
@@ -144,7 +199,7 @@ $(document).ready(function() {
           // Refresh the datatable
           setTimeout(function() {
             try {
-              var table = $('.datatables-modules');
+              var table = $('.datatables-permissions');
               if (table.length && $.fn.DataTable.isDataTable(table)) {
                 console.log('Reloading DataTable after module creation...');
                 table.DataTable().ajax.reload(function() {
@@ -158,11 +213,26 @@ $(document).ready(function() {
                   }, 100);
                 }, false);
               } else {
-                console.log('DataTable not found or not initialized');
-                if (fv) {
-                  fv.resetForm(true);
+                console.log('DataTable not found or not initialized, trying modules table...');
+                var modulesTable = $('.datatables-modules');
+                if (modulesTable.length && $.fn.DataTable.isDataTable(modulesTable)) {
+                  console.log('Reloading modules DataTable...');
+                  modulesTable.DataTable().ajax.reload(function() {
+                    console.log('Modules DataTable reload completed');
+                    setTimeout(function() {
+                      if (fv) {
+                        fv.resetForm(true);
+                      }
+                      addNewModuleForm.reset();
+                    }, 100);
+                  }, false);
+                } else {
+                  console.log('No DataTable found');
+                  if (fv) {
+                    fv.resetForm(true);
+                  }
+                  addNewModuleForm.reset();
                 }
-                addNewModuleForm.reset();
               }
             } catch (error) {
               console.error('Error reloading DataTable:', error);
@@ -194,7 +264,7 @@ $(document).ready(function() {
             var errorMessages = [];
 
             Object.keys(errors).forEach(function(key) {
-              if (key === 'modalModuleName') {
+              if (key === 'module_name') {
                 var fieldErrors = Array.isArray(errors[key]) ? errors[key] : [errors[key]];
                 fieldErrors.forEach(function(error) {
                   if (error.includes('required')) {

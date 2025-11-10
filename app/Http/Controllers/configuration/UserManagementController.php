@@ -5,6 +5,7 @@ namespace App\Http\Controllers\configuration;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
@@ -100,14 +101,6 @@ class UserManagementController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -143,14 +136,6 @@ class UserManagementController extends Controller
                 'message' => 'Error creating user: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
     }
 
     /**
@@ -224,6 +209,82 @@ class UserManagementController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting user: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Search users for role assignment
+     */
+    public function search(Request $request)
+    {
+        try {
+            $query = $request->get('q', '');
+            $excludeRole = $request->get('exclude_role');
+            $format = $request->get('format', 'default'); // Support different formats
+
+            // For Select2, we can return all users if no query, or filter by query
+            if ($format === 'select2' && empty($query)) {
+                $usersQuery = User::where('kodaktif', true);
+            } else {
+                if (strlen($query) < 2 && $format !== 'select2') {
+                    return response()->json([
+                        'success' => true,
+                        'users' => []
+                    ]);
+                }
+
+                $usersQuery = User::where('kodaktif', true);
+
+                if (!empty($query)) {
+                    $usersQuery->where(function($q) use ($query) {
+                        $q->where('nama', 'LIKE', "%{$query}%")
+                          ->orWhere('email', 'LIKE', "%{$query}%");
+                    });
+                }
+            }
+
+            // Exclude users who already have a specific role
+            if ($excludeRole) {
+                $usersQuery->whereDoesntHave('roles', function($roleQuery) use ($excludeRole) {
+                    $roleQuery->where('roles.id', $excludeRole);
+                });
+            }
+
+            $limit = $format === 'select2' ? 50 : 10;
+            $users = $usersQuery->select('id', 'nama', 'email')
+                               ->orderBy('nama')
+                               ->limit($limit)
+                               ->get();
+
+            // Format for Select2 if requested
+            if ($format === 'select2') {
+                $results = $users->map(function($user) {
+                    return [
+                        'id' => $user->id,
+                        'text' => $user->nama . ' (' . $user->email . ')',
+                        'email' => $user->email
+                    ];
+                });
+
+                return response()->json([
+                    'results' => $results,
+                    'pagination' => ['more' => false]
+                ]);
+            }
+
+            // Default format
+            return response()->json([
+                'success' => true,
+                'users' => $users
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('User search failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error searching users'
             ], 500);
         }
     }

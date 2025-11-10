@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\configuration;
 
 use App\Models\Permission;
 use Illuminate\Http\Request;
@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Permission\StorePermissionRequest;
 use App\Http\Requests\Permission\UpdatePermissionRequest;
 
@@ -47,6 +48,14 @@ class PermissionController extends Controller
             ->addIndexColumn()
             ->addColumn('module', function ($permission) {
                 return $permission->formatted_module;
+            })
+            ->addColumn('module_id', function ($permission) {
+                // Get module ID from module_list table
+                $module = \App\Models\Module::where('module_name', $permission->module)->first();
+                return $module ? $module->id : null;
+            })
+            ->addColumn('category', function ($permission) {
+                return $permission->category ?? '-';
             })
             ->addColumn('assigned_to', function ($permission) {
                 $roles = $permission->roles;
@@ -122,6 +131,7 @@ class PermissionController extends Controller
                 'guard_name' => 'web',
                 'module' => $validatedData['module'],
                 'description' => $validatedData['description'] ?? null,
+                'category' => $validatedData['category'],
                 'is_active' => $validatedData['is_active'] ?? true,
             ]);
 
@@ -203,6 +213,7 @@ class PermissionController extends Controller
                 'name' => $validatedData['name'],
                 'module' => $validatedData['module'],
                 'description' => $validatedData['description'] ?? null,
+                'category' => $validatedData['category'],
                 'is_active' => $validatedData['is_active'] ?? true,
             ]);
 

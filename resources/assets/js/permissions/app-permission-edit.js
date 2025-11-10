@@ -46,6 +46,13 @@ $(document).ready(function () {
                 message: 'Sila masukkan deskripsi capaian'
               }
             }
+          },
+          category: {
+            validators: {
+              notEmpty: {
+                message: 'Sila pilih kategori capaian'
+              }
+            }
           }
         },
         plugins: {
@@ -106,6 +113,7 @@ $(document).ready(function () {
     $('#edit-permission-name').val(permission.name || '');
     $('#edit-permission-module').val(permission.module || '');
     $('#edit-permission-description').val(permission.description || '');
+    $('#edit-permission-category').val(permission.category || '');
 
     // Handle role assignments if role selection exists
     if (assignedRoles && assignedRoles.length > 0) {

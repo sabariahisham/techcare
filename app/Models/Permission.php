@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Models\Permission as SpatiePermission;
 
 class Permission extends SpatiePermission
 {
+    use SoftDeletes;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -16,8 +19,12 @@ class Permission extends SpatiePermission
         'guard_name',
         'module',
         'description',
+        'category',
         'is_active',
         'sort_order',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     /**
@@ -69,6 +76,26 @@ class Permission extends SpatiePermission
             // Auto-set sort order
             if (!$model->sort_order) {
                 $model->sort_order = static::max('sort_order') + 10;
+            }
+
+            // Automatically set created_by when creating a new permission
+            if (\Illuminate\Support\Facades\Auth::check() && !$model->created_by) {
+                $model->created_by = \Illuminate\Support\Facades\Auth::id();
+            }
+        });
+
+        static::updating(function ($model) {
+            // Automatically set updated_by when updating a permission
+            if (\Illuminate\Support\Facades\Auth::check()) {
+                $model->updated_by = \Illuminate\Support\Facades\Auth::id();
+            }
+        });
+
+        static::deleting(function ($model) {
+            // Automatically set deleted_by when soft deleting a permission
+            if (\Illuminate\Support\Facades\Auth::check()) {
+                $model->deleted_by = \Illuminate\Support\Facades\Auth::id();
+                $model->save();
             }
         });
     }
@@ -381,5 +408,29 @@ class Permission extends SpatiePermission
             'import' => 'Import Data',
             'approve' => 'Approve/Authorize',
         ];
+    }
+
+    /**
+     * Get the user who created this permission.
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the user who last updated this permission.
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the user who deleted this permission.
+     */
+    public function deleter()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 }

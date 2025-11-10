@@ -24,7 +24,7 @@ class StorePermissionRequest extends FormRequest
         $validated = parent::validated($key, $default);
 
         if (is_array($validated)) {
-            foreach (['name', 'description', 'module'] as $field) {
+            foreach (['name', 'description', 'module', 'category'] as $field) {
                 if (isset($validated[$field])) {
                     $validated[$field] = $this->sanitizeInput($validated[$field]);
                 }
@@ -68,6 +68,11 @@ class StorePermissionRequest extends FormRequest
                 'exists:permissions,module' // Ensure module exists from existing permissions
             ],
             'description' => ['nullable', 'string', 'max:500'],
+            'category' => [
+                'required',
+                'string',
+                'in:Module,System,Admin,User,Content,Report'
+            ],
             'is_active' => ['boolean'],
             'roles' => ['array'],
             'roles.*' => ['exists:roles,name'],
@@ -99,6 +104,8 @@ class StorePermissionRequest extends FormRequest
             'name.unique' => 'Nama permission ini sudah wujud. Sila gunakan nama lain.',
             'name.regex' => 'Nama permission hanya boleh mengandungi huruf, nombor, ruang, tanda tolak, garis bawah dan titik.',
             'module.required' => 'Sila pilih modul.',
+            'category.required' => 'Sila pilih kategori.',
+            'category.in' => 'Kategori yang dipilih tidak sah.',
             'module.exists' => 'Modul yang dipilih tidak wujud. Sila pilih modul yang sah.',
             'roles.*.exists' => 'Satu atau lebih peranan yang dipilih tidak sah.',
         ];

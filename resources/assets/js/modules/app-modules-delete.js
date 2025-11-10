@@ -2,46 +2,104 @@
 
 /**
  * Module Delete Functionality
- * Handles module deletion with comprehensive validation and error handling
+ * Handles module deletion with comprehensive validation, permissions display, and error handling
+ * Features:
+ * - Fetches and displays module details including associated permissions
+ * - Shows confirmation dialog with module name and permissions list
+ * - Automatically deletes associated permissions when deleting a module
+ * - Supports both single and bulk deletion operations
  */
 
 $(function () {
 
   /**
-   * Validate module deletion prerequisites
+   * Validate module deletion prerequisites and fetch module details
    * @param {number} moduleId - The ID of the module to validate
-   * @returns {Promise<boolean>} - Returns true if validation passes
+   * @returns {Promise<Object>} - Returns module details if validation passes
    */
   async function validateModuleDeletion(moduleId) {
     try {
       // Basic validation
       if (!moduleId || isNaN(moduleId) || moduleId <= 0) {
-        throw new Error('Invalid module ID provided');
+        throw new Error('ID modul tidak sah');
       }
 
-      // Since we don't have a GET endpoint for individual modules,
-      // we'll rely on the server-side validation in the destroy method
-      // The controller will handle checking if the module exists and
-      // will also delete associated permissions automatically
+      // Fetch module details including permissions
+      const response = await fetch(`/modules/${moduleId}/details`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
 
-      return true;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Ralat HTTP! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || 'Gagal mendapatkan maklumat modul');
+      }
+
+      return result.data;
     } catch (error) {
-      console.error('Module validation error:', error);
+      console.error('Ralat validasi modul:', error);
       throw error;
     }
   }
 
   /**
    * Show confirmation dialog for module deletion
-   * @param {number} moduleId - The ID of the module to delete
-   * @param {string} moduleName - The name of the module
+   * @param {Object} moduleData - The module data including permissions
    * @returns {Promise<boolean>} - Returns true if user confirms deletion
    */
-  function showDeleteConfirmation(moduleId, moduleName) {
+  function showDeleteConfirmation(moduleData) {
     return new Promise((resolve) => {
+      // Build permissions list HTML
+      let permissionsHtml = '';
+      if (moduleData.permissions && moduleData.permissions.length > 0) {
+        permissionsHtml = `
+          <div class="mt-3">
+            <strong>Capaian yang akan dipadam (${moduleData.permissions_count}):</strong>
+            <div class="mt-2" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
+              <ul class="mb-0" style="padding-left: 20px;">
+                ${moduleData.permissions.map(permission => `
+                  <li style="margin-bottom: 5px;">
+                    <code>${permission.name}</code>
+                    ${permission.guard_name ? ` <small class="text-muted">(${permission.guard_name})</small>` : ''}
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          </div>
+        `;
+      } else {
+        permissionsHtml = `
+          <div class="mt-3">
+            <span class="text-muted">Tiada capaian yang berkaitan dengan modul ini.</span>
+          </div>
+        `;
+      }
+
+      const html = `
+        <div style="text-align: left;">
+          <p>Anda pasti untuk memadam modul <strong>${moduleData.module_name}</strong>?</p>
+          ${permissionsHtml}
+          <div class="mt-3 p-2" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+            <small class="text-warning">
+              <i class="ti ti-alert-triangle"></i>
+              <strong>Amaran:</strong> Tindakan ini tidak boleh dibatalkan!
+            </small>
+          </div>
+        </div>
+      `;
+
       Swal.fire({
         title: 'Adakah anda pasti?',
-        html: `Anda pasti untuk memadam <strong>${moduleName}</strong>.<br><br>Tindakan ini tidak boleh dibatalkan!`,
+        html: html,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Ya, padam!',
@@ -51,7 +109,8 @@ $(function () {
           cancelButton: 'btn btn-secondary'
         },
         buttonsStyling: false,
-        reverseButtons: true
+        reverseButtons: true,
+        width: '600px'
       }).then((result) => {
         resolve(result.isConfirmed);
       });
@@ -76,12 +135,12 @@ $(function () {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.message || `Ralat HTTP! status: ${response.status}`);
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Module deletion error:', error);
+      console.error('Ralat pemadaman modul:', error);
       throw error;
     }
   }
@@ -93,9 +152,9 @@ $(function () {
   function showSuccessNotification(message) {
     Swal.fire({
       icon: 'success',
-      title: 'Successfully Deleted!',
-      text: message || 'Module has been deleted successfully.',
-      timer: 2000,
+      title: 'Berjaya Dipadam!',
+      text: message || 'Modul dan capaian berkaitan telah berjaya dipadam.',
+      timer: 3000,
       showConfirmButton: false,
       customClass: {
         confirmButton: 'btn btn-success'
@@ -103,7 +162,9 @@ $(function () {
       buttonsStyling: false
     }).then(() => {
       // Refresh the DataTable after successful deletion
-      if ($.fn.DataTable && $('.datatables-modules').length) {
+      if ($.fn.DataTable && $('.datatables-permissions').length) {
+        $('.datatables-permissions').DataTable().ajax.reload();
+      } else if ($.fn.DataTable && $('.datatables-modules').length) {
         $('.datatables-modules').DataTable().ajax.reload();
       }
     });
@@ -116,8 +177,8 @@ $(function () {
   function showErrorNotification(message) {
     Swal.fire({
       icon: 'error',
-      title: 'Deletion Failed',
-      text: message || 'An error occurred while deleting the module.',
+      title: 'Pemadaman Gagal',
+      text: message || 'Ralat berlaku semasa memadam modul.',
       customClass: {
         confirmButton: 'btn btn-primary'
       },
@@ -128,24 +189,24 @@ $(function () {
   /**
    * Main delete module function
    * @param {number} moduleId - The ID of the module to delete
-   * @param {string} moduleName - The name of the module (optional, for display purposes)
+   * @param {string} moduleName - The name of the module (optional, for display purposes - will be overridden by fetched data)
    */
-  async function deleteModule(moduleId, moduleName = 'Unknown Module') {
+  async function deleteModule(moduleId, moduleName = 'Modul Tidak Dikenali') {
     try {
-      // Step 1: Validate the deletion
-      await validateModuleDeletion(moduleId);
+      // Step 1: Validate the deletion and fetch module details
+      const moduleData = await validateModuleDeletion(moduleId);
 
-      // Step 2: Show confirmation dialog
-      const confirmed = await showDeleteConfirmation(moduleId, moduleName);
+      // Step 2: Show confirmation dialog with module details and permissions
+      const confirmed = await showDeleteConfirmation(moduleData);
 
       if (!confirmed) {
-        return; // User cancelled
+        return; // Pengguna membatalkan
       }
 
       // Step 3: Show loading state
       Swal.fire({
-        title: 'Deleting...',
-        text: 'Please wait while we delete the module.',
+        title: 'Memadam Modul...',
+        html: `Sedang memadam <strong>${moduleData.module_name}</strong> dan ${moduleData.permissions_count} capaian...`,
         icon: 'info',
         allowOutsideClick: false,
         showConfirmButton: false,
@@ -161,7 +222,7 @@ $(function () {
       if (result.success) {
         showSuccessNotification(result.message);
       } else {
-        showErrorNotification(result.message || 'Unknown error occurred');
+        showErrorNotification(result.message || 'Ralat tidak dikenali berlaku');
       }
 
     } catch (error) {
@@ -177,11 +238,11 @@ $(function () {
     e.preventDefault();
 
     const moduleId = $(this).data('id');
-    const moduleName = $(this).data('name') || 'Unknown Module';
+    const moduleName = $(this).data('name') || 'Modul Tidak Dikenali';
 
     // Validate that we have the required data
     if (!moduleId) {
-      showErrorNotification('Module ID is required for deletion.');
+      showErrorNotification('ID Modul diperlukan untuk pemadaman.');
       return;
     }
 
@@ -195,17 +256,17 @@ $(function () {
    */
   function bulkDeleteModules(moduleIds) {
     if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
-      showErrorNotification('No modules selected for deletion.');
+      showErrorNotification('Tiada modul dipilih untuk pemadaman.');
       return;
     }
 
     Swal.fire({
-      title: 'Bulk Delete Confirmation',
-      html: `You are about to delete <strong>${moduleIds.length}</strong> modules.<br><br>This action cannot be undone!`,
+      title: 'Pengesahan Pemadaman Beramai-ramai',
+      html: `Anda akan memadam <strong>${moduleIds.length}</strong> modul.<br><br>Tindakan ini tidak boleh dibatalkan!`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: `Yes, delete ${moduleIds.length} modules!`,
-      cancelButtonText: 'Cancel',
+      confirmButtonText: `Ya, padam ${moduleIds.length} modul!`,
+      cancelButtonText: 'Batalkan',
       customClass: {
         confirmButton: 'btn btn-danger me-3',
         cancelButton: 'btn btn-secondary'
@@ -215,8 +276,8 @@ $(function () {
       if (result.isConfirmed) {
         try {
           Swal.fire({
-            title: 'Deleting modules...',
-            text: 'Please wait while we delete the selected modules.',
+            title: 'Memadam modul...',
+            text: 'Sila tunggu semasa kami memadam modul yang dipilih.',
             icon: 'info',
             allowOutsideClick: false,
             showConfirmButton: false,
@@ -231,38 +292,40 @@ $(function () {
 
           for (const moduleId of moduleIds) {
             try {
-              await validateModuleDeletion(moduleId);
+              const moduleData = await validateModuleDeletion(moduleId);
               await performModuleDeletion(moduleId);
               successCount++;
             } catch (error) {
-              console.error(`Failed to delete module ${moduleId}:`, error);
+              console.error(`Gagal memadam modul ${moduleId}:`, error);
               errorCount++;
             }
           }
 
           // Show final result
           if (errorCount === 0) {
-            showSuccessNotification(`Successfully deleted ${successCount} modules.`);
+            showSuccessNotification(`Berjaya memadam ${successCount} modul.`);
           } else if (successCount === 0) {
-            showErrorNotification(`Failed to delete all ${errorCount} modules.`);
+            showErrorNotification(`Gagal memadam semua ${errorCount} modul.`);
           } else {
             Swal.fire({
               icon: 'warning',
-              title: 'Partial Success',
-              text: `Deleted ${successCount} modules successfully. Failed to delete ${errorCount} modules.`,
+              title: 'Sebahagian Berjaya',
+              text: `Berjaya memadam ${successCount} modul. Gagal memadam ${errorCount} modul.`,
               customClass: {
                 confirmButton: 'btn btn-primary'
               },
               buttonsStyling: false
             }).then(() => {
-              if ($.fn.DataTable && $('.datatables-modules').length) {
+              if ($.fn.DataTable && $('.datatables-permissions').length) {
+                $('.datatables-permissions').DataTable().ajax.reload();
+              } else if ($.fn.DataTable && $('.datatables-modules').length) {
                 $('.datatables-modules').DataTable().ajax.reload();
               }
             });
           }
 
         } catch (error) {
-          showErrorNotification('An error occurred during bulk deletion.');
+          showErrorNotification('Ralat berlaku semasa pemadaman beramai-ramai.');
         }
       }
     });
@@ -292,5 +355,5 @@ $(function () {
     validateModuleDeletion: validateModuleDeletion
   };
 
-  console.log('Module delete functionality initialized');
+  console.log('Fungsi pemadaman modul telah diinisialisasi');
 });

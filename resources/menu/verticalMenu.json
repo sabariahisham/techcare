@@ -52,7 +52,7 @@
 
             {
               "url": "acl/permissions/index",
-              "name": "Capaian",
+              "name": "Modul & Capaian",
               "slug": "acl-permissions-index",
               "permission": "capaian.view"
             },
