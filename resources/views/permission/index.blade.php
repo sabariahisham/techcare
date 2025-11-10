@@ -48,7 +48,7 @@
             <span class="text-heading">Jumlah Modul</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ $stats['total_modules'] ?? 0 }}</h4>
-              <p class="text-success mb-0">(100%)</p>
+              <p class="text-success mb-0">({{ $stats['active_modules'] ?? 0 }} aktif)</p>
             </div>
             <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
           </div>

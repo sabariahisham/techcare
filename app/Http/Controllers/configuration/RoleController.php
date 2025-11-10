@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\configuration;
 
 use App\Models\Role;
+use App\Models\User;
+use App\Models\Module;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,8 +21,9 @@ class RoleController extends Controller
      */
     public function index()
     {
-        // Get permissions grouped by module for role assignment
+        // Get permissions grouped by module for role assignment (exclude soft-deleted permissions)
         $permissions = Permission::select('name', 'module')
+                                ->whereNull('deleted_at')  // Exclude soft-deleted permissions
                                 ->orderBy('module')
                                 ->orderBy('name')
                                 ->get()
@@ -566,6 +569,16 @@ class RoleController extends Controller
             'system_roles' => Role::whereIn('name', ['Super Admin', 'Administrator'])->count(),
             'roles_with_users' => Role::has('users')->count(),
             'roles_without_users' => Role::doesntHave('users')->count(),
+            // User statistics
+            'total_users_with_roles' => User::has('roles')->count(),
+            'active_users_with_roles' => User::has('roles')->where('kodaktif', true)->count(),
+            'total_permissions' => Permission::count(),
+            'active_permissions' => Permission::whereNull('deleted_at')->count(),
+            // Module statistics
+            'total_modules' => Module::count(),
+            'active_modules' => Module::whereNull('deleted_at')->count(),
+            // 'modules_with_permissions' => Module::has('permissions')->count(),
+            'unique_permission_modules' => Permission::whereNull('deleted_at')->distinct('module')->count('module'),
         ];
     }
 

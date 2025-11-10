@@ -14,15 +14,45 @@
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
       success: function(response) {
-        if (response.success && response.stats) {
+        if (response.success && response.statistics) {
           // Update total roles count
-          if (response.stats.total_roles !== undefined) {
-            $('#total-roles').text(response.stats.total_roles);
+          if (response.statistics.total_roles !== undefined) {
+            $('#total-roles').text(response.statistics.total_roles);
           }
 
           // Update active roles count
-          if (response.stats.active_roles !== undefined) {
-            $('#active-roles').text(`(${response.stats.active_roles} aktif)`);
+          if (response.statistics.active_roles !== undefined) {
+            $('#active-roles').text(`(${response.statistics.active_roles} aktif)`);
+          }
+
+          // Update total users with roles count
+          if (response.statistics.total_users_with_roles !== undefined) {
+            $('#total-users-with-roles').text(response.statistics.total_users_with_roles);
+          }
+
+          // Update active users with roles count
+          if (response.statistics.active_users_with_roles !== undefined) {
+            $('#active-users-with-roles').text(`(${response.statistics.active_users_with_roles} aktif)`);
+          }
+
+          // Update total permissions count
+          if (response.statistics.total_permissions !== undefined) {
+            $('#total-permissions').text(response.statistics.total_permissions);
+          }
+
+          // Update active permissions count
+          if (response.statistics.active_permissions !== undefined) {
+            $('#active-permissions').text(`(${response.statistics.active_permissions} aktif)`);
+          }
+
+          // Update total modules count
+          if (response.statistics.total_modules !== undefined) {
+            $('#total-modules').text(response.statistics.total_modules);
+          }
+
+          // Update active modules count
+          if (response.statistics.active_modules !== undefined) {
+            $('#active-modules').text(`(${response.statistics.active_modules} aktif)`);
           }
 
           console.log('Role statistics refreshed successfully');
