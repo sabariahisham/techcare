@@ -14,8 +14,8 @@
         }
 
         /* .offcanvas-60 {
-                              width: 60% !important;
-                              } */
+                                  width: 60% !important;
+                                  } */
 
         /* Responsive breakpoints for offcanvas */
 
@@ -314,9 +314,9 @@
 
         /* Custom purple badge for status */
         /* .badge.bg-purple {
-                            background-color: #7b68ee !important;
-                            color: #fff !important;
-                        } */
+                                background-color: #7b68ee !important;
+                                color: #fff !important;
+                            } */
     </style>
 @endsection
 
@@ -342,23 +342,10 @@
 
     <!-- My Tickets Table -->
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header">
             <div>
                 <h5 class="card-title mb-0">Tiket Saya</h5>
                 <p class="text-muted small mb-0">Senarai tiket yang berkaitan dengan {{ auth()->user()->nama }}</p>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <!-- Ticket Filter Dropdown -->
-                <div class="d-flex align-items-center gap-2">
-                    <label for="ticketFilterSelect" class="form-label mb-0 text-nowrap" style="font-size: 0.875rem;">Tapis
-                        Tiket:</label>
-                    <select id="ticketFilterSelect" class="form-select form-select-sm" style="min-width: 200px;">
-                        <option value="all">Semua Tiket</option>
-                        <option value="diri_sendiri">Diri Sendiri</option>
-                        <option value="bagi_pihak">Bagi Pihak (Pengadu)</option>
-                        <option value="bagi_pihak_sendiri">Bagi Pihak (Sendiri)</option>
-                    </select>
-                </div>
             </div>
         </div>
         <div class="card-datatable table-responsive">

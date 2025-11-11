@@ -58,7 +58,7 @@ $(function () {
       dom:
         '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +
-        '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"fB>>' +
+        '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"f<"ticket-filter-container">B>>' +
         '>t' +
         '<"row"' +
         '<"col-sm-12 col-md-6"i>' +
@@ -92,6 +92,21 @@ $(function () {
         searchPlaceholder: 'Carian Tiket Saya'
       }
     });
+
+    // Add the filter dropdown to the ticket-filter-container
+    if (dt_my_tickets) {
+      $('.ticket-filter-container').html(`
+        <div class="d-flex align-items-center gap-2 me-3">
+          <label for="ticketFilterSelect" class="form-label mb-0 text-nowrap" style="font-size: 0.875rem;">Tapis Tiket:</label>
+          <select id="ticketFilterSelect" class="form-select form-select-sm" style="min-width: 200px;">
+            <option value="all">Semua Tiket</option>
+            <option value="diri_sendiri">Diri Sendiri</option>
+            <option value="bagi_pihak">Bagi Pihak (Pengadu)</option>
+            <option value="bagi_pihak_sendiri">Bagi Pihak (Sendiri)</option>
+          </select>
+        </div>
+      `);
+    }
   }
 
   // Tickets to Manage DataTable
