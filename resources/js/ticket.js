@@ -7,6 +7,24 @@ if (typeof $ === 'undefined') {
   console.log('jQuery is loaded successfully');
 }
 
+// Function to reload all DataTables - defined globally so both files can use it
+window.reloadAllTables = function () {
+  // Reload My Tickets DataTable
+  if ($.fn.DataTable.isDataTable('.datatables-my-tickets')) {
+    $('.datatables-my-tickets').DataTable().ajax.reload();
+  }
+
+  // Reload Manage Tickets DataTable
+  if ($.fn.DataTable.isDataTable('.datatables-manage-tickets')) {
+    $('.datatables-manage-tickets').DataTable().ajax.reload();
+  }
+
+  // Keep backward compatibility for old single table
+  if ($.fn.DataTable.isDataTable('.datatables-tickets')) {
+    $('.datatables-tickets').DataTable().ajax.reload();
+  }
+};
+
 // Ticket form functionality
 $(function () {
   console.log('Document ready - ticket.js loaded');
@@ -974,10 +992,8 @@ $(function () {
         // Restore normal Select2 behavior
         $('#cat_id, #subcat_id').next('.select2-container').removeClass('select2-normal-state');
 
-        // Reload datatable
-        if ($.fn.DataTable.isDataTable('.datatables-tickets')) {
-          $('.datatables-tickets').DataTable().ajax.reload();
-        }
+        // Reload both DataTables
+        reloadAllTables();
 
         // Show success message
         if (typeof toastr !== 'undefined') {
@@ -1120,10 +1136,8 @@ $(function () {
         // Close offcanvas
         $('#offcanvasEditTicket').offcanvas('hide');
 
-        // Reload datatable
-        if ($.fn.DataTable.isDataTable('.datatables-tickets')) {
-          $('.datatables-tickets').DataTable().ajax.reload();
-        }
+        // Reload both DataTables
+        reloadAllTables();
 
         // Show success message
         if (typeof toastr !== 'undefined') {
@@ -1171,7 +1185,7 @@ $(function () {
             "_token": $('meta[name="csrf-token"]').attr('content'),
           },
           success: function (response) {
-            $('.datatables-tickets').DataTable().ajax.reload();
+            reloadAllTables();
             Swal.fire('Dipadam!', 'Tiket telah dipadam.', 'success');
           },
           error: function () {
