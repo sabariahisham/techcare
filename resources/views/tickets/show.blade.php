@@ -3,205 +3,202 @@
 @section('title', 'Lihat Tiket - ' . $ticket->ticket_nolog)
 
 @section('content')
-    <div class="container-xxl flex-grow-1 container-p-y">
-        <!-- Header -->
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h4 class="mb-1">Maklumat Penuh Tiket</h4>
-                        <p class="mb-0 text-muted">{{ $ticket->ticket_nolog }}</p>
-                    </div>
-                    <div>
-                        <a href="{{ route('tickets.index') }}" class="btn btn-outline-secondary">
-                            <i class="bx bx-arrow-back me-1"></i>Kembali ke Senarai
-                        </a>
-                        <button type="button" class="btn btn-primary" onclick="window.print()">
-                            <i class="bx bx-printer me-1"></i>Cetak
-                        </button>
-                    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="mb-1">Maklumat Penuh Tiket</h4>
+                    <p class="mb-0 text-muted">{{ $ticket->ticket_nolog }}</p>
+                </div>
+                <div>
+                    <a href="{{ route('tickets.index') }}" class="btn btn-outline-secondary">
+                        <i class="bx bx-arrow-back me-1"></i>Kembali ke Senarai
+                    </a>
+                    <button type="button" class="btn btn-primary" onclick="window.print()">
+                        <i class="bx bx-printer me-1"></i>Cetak
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="row">
-            <!-- Main Header -->
-            <div class="col-12">
-                <!-- Maklumat Pengadu -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bx bx-user me-2"></i>
-                            @if ($ticket->ticket_type == 1)
-                                Maklumat Pengadu
-                            @else
-                                Maklumat Bagi Pihak
-                            @endif
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        @if ($ticket->user)
-                            <div class="row">
-                                <!-- Maklumat Peribadi -->
-                                <div class="col-12 col-md-4 col-lg-4 mb-3 mb-md-0">
-                                    <div class="d-flex align-items-center mb-3">
-                                        <div class="avatar avatar-lg me-3">
-                                            <span class="avatar-initial rounded-circle bg-label-primary">
-                                                {{ strtoupper(substr($ticket->user->nama ?? 'U', 0, 2)) }}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0">{{ $ticket->user->nama ?? 'Tidak Diketahui' }}</h6>
-                                            <h6 class="mb-0">{{ $ticket->user->kod_jwtn ?? '-' }}</h6>
-                                            <small class="text-muted">{{ $ticket->user->email ?? '-' }}</small>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Pemisah Vertikal - Hidden on mobile -->
-                                <div class="col-1 d-none d-md-flex justify-content-center">
-                                    <div class="vr h-100"></div>
-                                </div>
-
-                                <!-- Maklumat Organisasi -->
-                                <div class="col-12 col-md-7 col-lg-7">
-                                    <div class="row mb-3">
-                                        @if ($ticket->user->sektor || $ticket->user->kod_sektor)
-                                            <div class="col-12 col-sm-6 mb-2 mb-sm-0">
-                                                <h6 class="text-primary mb-1">
-                                                    <i class="bx bx-buildings me-1"></i>Sektor
-                                                </h6>
-                                                <p class="mb-0 small">
-                                                    {{ $ticket->user->sektor->nama_sektor ?? ($ticket->user->kod_sektor ?? '-') }}
-                                                </p>
-                                            </div>
-                                        @endif
-                                        @if ($ticket->user->bahagian || $ticket->user->kod_bah)
-                                            <div class="col-12 col-sm-6 mb-2 mb-sm-0">
-                                                <h6 class="text-primary mb-1">
-                                                    <i class="bx bx-sitemap me-1"></i>Bahagian
-                                                </h6>
-                                                <p class="mb-0 small">
-                                                    {{ $ticket->user->bahagian->nama_bah ?? ($ticket->user->kod_bah ?? '-') }}
-                                                </p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    <div class="row">
-                                        @if ($ticket->user->seksyen || $ticket->user->kod_sec)
-                                            <div class="col-12 col-sm-6 mb-2 mb-sm-0">
-                                                <h6 class="text-primary mb-1">
-                                                    <i class="bx bx-git-branch me-1"></i>Seksyen
-                                                </h6>
-                                                <p class="mb-0 small">
-                                                    {{ $ticket->user->seksyen->nama_sec ?? ($ticket->user->kod_sec ?? '-') }}
-                                                </p>
-                                            </div>
-                                        @endif
-                                        @if ($ticket->user->unit || $ticket->user->kod_unit)
-                                            <div class="col-12 col-sm-6 mb-2 mb-sm-0">
-                                                <h6 class="text-primary mb-1">
-                                                    <i class="bx bx-group me-1"></i>Unit
-                                                </h6>
-                                                <p class="mb-0 small">
-                                                    {{ $ticket->user->unit->nama_unit ?? ($ticket->user->kod_unit ?? '-') }}
-                                                </p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
+    <div class="row">
+        <div class="col-12">
+            <!-- Maklumat Pengadu -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bx bx-user me-2"></i>
+                        @if ($ticket->ticket_type == 1)
+                            Maklumat Pengadu
+                        @else
+                            Maklumat Bagi Pihak
                         @endif
-                    </div>
+                    </h5>
                 </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <!-- Left Column - Main Content -->
-            <div class="col-xl-8 col-lg-7 col-md-7">
-                <!-- Maklumat Aduan Tiket -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bx bx-file-blank me-2"></i>Maklumat Aduan Tiket
-                        </h5>
-                    </div>
-                    <div class="card-body">
+                <div class="card-body">
+                    @if ($ticket->user)
                         <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">No. Log Tiket</h6>
+                            <!-- Maklumat Peribadi -->
+                            <div class="col-12 col-md-4 col-lg-4 mb-3 mb-md-0">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar avatar-lg me-3">
+                                        <span class="avatar-initial rounded-circle bg-label-primary">
+                                            {{ strtoupper(substr($ticket->user->nama ?? 'U', 0, 2)) }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ $ticket->user->nama ?? 'Tidak Diketahui' }}</h6>
+                                        <h6 class="mb-0">{{ $ticket->user->kod_jwtn ?? '-' }}</h6>
+                                        <small class="text-muted">{{ $ticket->user->email ?? '-' }}</small>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-sm-9 text-secondary">
-                                <span class="badge bg-primary fs-6">{{ $ticket->ticket_nolog }}</span>
-                            </div>
-                        </div>
-                        <hr>
 
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Tajuk Aduan</h6>
+                            <!-- Pemisah Vertikal - Hidden on mobile -->
+                            <div class="col-1 d-none d-md-flex justify-content-center">
+                                <div class="vr h-100"></div>
                             </div>
-                            <div class="col-sm-9 text-secondary">
-                                {{ $ticket->ticket_title }}
-                            </div>
-                        </div>
-                        <hr>
 
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Penerangan Aduan</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                <div class="bg-light p-3 rounded">
-                                    {!! nl2br(e($ticket->ticket_desc)) !!}
+                            <!-- Maklumat Organisasi -->
+                            <div class="col-12 col-md-7 col-lg-7">
+                                <div class="row mb-3">
+                                    @if ($ticket->user->sektor || $ticket->user->kod_sektor)
+                                        <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                                            <h6 class="text-primary mb-1">
+                                                <i class="bx bx-buildings me-1"></i>Sektor
+                                            </h6>
+                                            <p class="mb-0 small">
+                                                {{ $ticket->user->sektor->nama_sektor ?? ($ticket->user->kod_sektor ?? '-') }}
+                                            </p>
+                                        </div>
+                                    @endif
+                                    @if ($ticket->user->bahagian || $ticket->user->kod_bah)
+                                        <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                                            <h6 class="text-primary mb-1">
+                                                <i class="bx bx-sitemap me-1"></i>Bahagian
+                                            </h6>
+                                            <p class="mb-0 small">
+                                                {{ $ticket->user->bahagian->nama_bah ?? ($ticket->user->kod_bah ?? '-') }}
+                                            </p>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="row">
+                                    @if ($ticket->user->seksyen || $ticket->user->kod_sec)
+                                        <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                                            <h6 class="text-primary mb-1">
+                                                <i class="bx bx-git-branch me-1"></i>Seksyen
+                                            </h6>
+                                            <p class="mb-0 small">
+                                                {{ $ticket->user->seksyen->nama_sec ?? ($ticket->user->kod_sec ?? '-') }}
+                                            </p>
+                                        </div>
+                                    @endif
+                                    @if ($ticket->user->unit || $ticket->user->kod_unit)
+                                        <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                                            <h6 class="text-primary mb-1">
+                                                <i class="bx bx-group me-1"></i>Unit
+                                            </h6>
+                                            <p class="mb-0 small">
+                                                {{ $ticket->user->unit->nama_unit ?? ($ticket->user->kod_unit ?? '-') }}
+                                            </p>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-                        <hr>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Kategori</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                {{ $ticket->category->cat_name ?? '-' }}
+    <div class="row">
+        <!-- Left Column - Main Content -->
+        <div class="col-xl-8 col-lg-7 col-md-7">
+            <!-- Maklumat Aduan Tiket -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bx bx-file-blank me-2"></i>Maklumat Aduan Tiket
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">No. Log Tiket</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            <span class="badge bg-primary fs-6">{{ $ticket->ticket_nolog }}</span>
+                        </div>
+                    </div>
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Tajuk Aduan</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            {{ $ticket->ticket_title }}
+                        </div>
+                    </div>
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Penerangan Aduan</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            <div class="bg-light p-3 rounded">
+                                {!! nl2br(e($ticket->ticket_desc)) !!}
                             </div>
                         </div>
-                        <hr>
+                    </div>
+                    <hr>
 
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Sub Kategori</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                {{ $ticket->subCategory->subcat_name ?? '-' }}
-                            </div>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Kategori</h6>
                         </div>
-                        <hr>
-
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Jenis Tiket</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                @if ($ticket->ticket_type == 1)
-                                    <span class="badge bg-info">Diri Sendiri</span>
-                                @else
-                                    <span class="badge bg-warning">Bagi Pihak</span>
-                                @endif
-                            </div>
+                        <div class="col-sm-9 text-secondary">
+                            {{ $ticket->category->cat_name ?? '-' }}
                         </div>
-                        <hr>
+                    </div>
+                    <hr>
 
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Status</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                @php
-                                    $statusClass = 'bg-secondary';
-                                    $statusName = $ticket->status->st_name ?? 'Tidak Diketahui';
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Sub Kategori</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            {{ $ticket->subCategory->subcat_name ?? '-' }}
+                        </div>
+                    </div>
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Jenis Tiket</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            @if ($ticket->ticket_type == 1)
+                                <span class="badge bg-info">Diri Sendiri</span>
+                            @else
+                                <span class="badge bg-warning">Bagi Pihak</span>
+                            @endif
+                        </div>
+                    </div>
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Status</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            @php
+                                $statusClass = 'bg-secondary';
+                                $statusName = $ticket->status->st_name ?? 'Tidak Diketahui';
 
                                     // Status color mapping to match timeline system
                                     switch ($statusName) {
@@ -257,101 +254,100 @@
                         </div>
                         <hr>
 
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Tarikh Dicipta</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            {{ $ticket->created_at ? $ticket->created_at->format('d/m/Y H:i:s') : '-' }}
+                        </div>
+                    </div>
+
+                    @if ($ticket->tick_duedate)
+                        <hr>
                         <div class="row">
                             <div class="col-sm-3">
-                                <h6 class="mb-0">Tarikh Dicipta</h6>
+                                <h6 class="mb-0">Tarikh Due</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                {{ $ticket->created_at ? $ticket->created_at->format('d/m/Y H:i:s') : '-' }}
+                                {{ $ticket->tick_duedate->format('d/m/Y H:i:s') }}
                             </div>
                         </div>
-
-                        @if ($ticket->tick_duedate)
-                            <hr>
-                            <div class="row">
-                                <div class="col-sm-3">
-                                    <h6 class="mb-0">Tarikh Due</h6>
-                                </div>
-                                <div class="col-sm-9 text-secondary">
-                                    {{ $ticket->tick_duedate->format('d/m/Y H:i:s') }}
-                                </div>
-                            </div>
-                        @endif
-                    </div>
+                    @endif
                 </div>
-
-                <!-- Maklumat Tindakan Pegawai (View for Administrator|Pentadbir Sistem|Penyelia Helpdesk|Helpdesk On Duty|Pegawai Tugasan) -->
-                @can('log-tiket.edit')
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="bx bx-cog me-2"></i>Maklumat Tindakan Pegawai
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row mb-3">
-                                <div class="col-sm-3">
-                                    <h6 class="mb-0">Status Tiket</h6>
-                                </div>
-                                <div class="col-sm-9 text-secondary">
-                                    <select class="form-select">
-                                        <option selected>{{ $ticket->status->st_name ?? 'Tidak Diketahui' }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-sm-3">
-                                    <h6 class="mb-0">Kategori</h6>
-                                </div>
-                                <div class="col-sm-9 text-secondary">
-                                    <select class="form-select">
-                                        <option selected>{{ $ticket->category->cat_name ?? '-' }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-sm-3">
-                                    <h6 class="mb-0">Sub Kategori</h6>
-                                </div>
-                                <div class="col-sm-9 text-secondary">
-                                    <select class="form-select">
-                                        <option selected>{{ $ticket->subCategory->subcat_name ?? '-' }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-sm-3">
-                                    <h6 class="mb-0">Severity Level</h6>
-                                </div>
-                                <div class="col-sm-9 text-secondary">
-                                    <select class="form-select">
-                                        <option selected></option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endcan
             </div>
 
-            <!-- Right Column - Sidebar -->
-            <div class="col-xl-4 col-lg-5 col-md-5">
-                <!-- Kronologi Tiket -->
-                <div class="card">
+            @if (auth()->user()->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty', 'Pegawai Tugasan']))
+                <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="bx bx-time me-2"></i>Kronologi Tiket
+                            <i class="bx bx-cog me-2"></i>Maklumat Tindakan Pegawai
                         </h5>
                     </div>
                     <div class="card-body">
-                        @if ($ticketHistory && $ticketHistory->count() > 0)
-                            <div class="timeline">
-                                @foreach ($ticketHistory as $index => $history)
-                                    @php
-                                        // Determine icon and color based on exact status names
-                                        $statusName = $history['status'] ?? ($history['action'] ?? '');
-                                        $iconClass = 'bx-edit';
-                                        $colorClass = 'bg-secondary';
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Status Tiket</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <select class="form-select">
+                                    <option selected>{{ $ticket->status->st_name ?? 'Tidak Diketahui' }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Kategori</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <select class="form-select">
+                                    <option selected>{{ $ticket->category->cat_name ?? '-' }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Sub Kategori</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <select class="form-select">
+                                    <option selected>{{ $ticket->subCategory->subcat_name ?? '-' }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Severity Level</h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                <select class="form-select">
+                                    <option selected></option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        <!-- Right Column - Sidebar -->
+        <div class="col-xl-4 col-lg-5 col-md-5">
+            <!-- Kronologi Tiket -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bx bx-time me-2"></i>Kronologi Tiket
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if ($ticketHistory && $ticketHistory->count() > 0)
+                        <div class="timeline">
+                            @foreach ($ticketHistory as $index => $history)
+                                @php
+                                    // Determine icon and color based on exact status names
+                                    $statusName = $history['status'] ?? ($history['action'] ?? '');
+                                    $iconClass = 'bx-edit';
+                                    $colorClass = 'bg-secondary';
 
                                         // Status color mapping based on your requirements
                                         switch ($statusName) {
@@ -382,49 +378,46 @@
                                         }
                                     @endphp
 
-                                    <div class="timeline-item">
-                                        <div class="timeline-marker">
-                                            <div class="timeline-marker-icon {{ $colorClass }}">
-                                                <i class="bx {{ $iconClass }}"></i>
-                                            </div>
-                                        </div>
-                                        <div class="timeline-content">
-                                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                                <h6 class="timeline-title mb-0">
-                                                    {{-- {{ $history['action'] ?? 'Tindakan Tiket' }} --}}</h6>
-                                                <span
-                                                    class="badge {{ $colorClass }} badge-sm">{{ $statusName }}</span>
-                                            </div>
-                                            <p class="timeline-text">
-                                                {{ $history['description'] ?? 'Tiada penerangan tersedia.' }}</p>
-                                            <small class="timeline-time">
-                                                <i class="bx bx-user"></i>
-                                                Oleh: {{ $history['user'] ?? 'Sistem' }}<br>
-                                            </small>
-                                            <small class="timeline-time">
-                                                <i class="bx bx-time"></i>
-                                                Tarikh:
-                                                {{ isset($history['timestamp']) ? $history['timestamp']->format('d/m/Y, H:i a') : now()->format('d/m/Y, H:i a') }}
-                                            </small>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker">
+                                        <div class="timeline-marker-icon {{ $colorClass }}">
+                                            <i class="bx {{ $iconClass }}"></i>
                                         </div>
                                     </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-center py-5">
-                                <div class="timeline-empty-state">
-                                    <i class="bx bx-history display-1 text-muted mb-3"></i>
-                                    <h6 class="text-muted mb-2">Tiada Kronologi Tersedia</h6>
-                                    <p class="text-muted small mb-0">Kronologi tiket akan dipaparkan di sini apabila
-                                        terdapat aktiviti.</p>
+                                    <div class="timeline-content">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <h6 class="timeline-title mb-0">
+                                                {{-- {{ $history['action'] ?? 'Tindakan Tiket' }} --}}</h6>
+                                            <span class="badge {{ $colorClass }} badge-sm">{{ $statusName }}</span>
+                                        </div>
+                                        <p class="timeline-text">
+                                            {{ $history['description'] ?? 'Tiada penerangan tersedia.' }}</p>
+                                        <small class="timeline-time">
+                                            <i class="bx bx-user"></i>
+                                            Oleh: {{ $history['user'] }}<br>
+                                        </small>
+                                        <small class="timeline-time">
+                                            <i class="bx bx-time"></i>
+                                            Tarikh:
+                                            {{ isset($history['timestamp']) ? $history['timestamp']->format('d/m/Y, H:i a') : now()->format('d/m/Y, H:i a') }}
+                                        </small>
+                                    </div>
                                 </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-5">
+                            <div class="timeline-empty-state">
+                                <i class="bx bx-history display-1 text-muted mb-3"></i>
+                                <h6 class="text-muted mb-2">Tiada Kronologi Tersedia</h6>
+                                <p class="text-muted small mb-0">Kronologi tiket akan dipaparkan di sini apabila
+                                    terdapat aktiviti.</p>
                             </div>
-                        @endif
-                    </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
-
     </div>
 
     <style>
