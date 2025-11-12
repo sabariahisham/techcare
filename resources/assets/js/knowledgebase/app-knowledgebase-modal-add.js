@@ -135,6 +135,40 @@
 
       // Get selected files from the global window object (set by the file upload script)
       if (typeof window.selectedFiles !== 'undefined' && window.selectedFiles.length > 0) {
+        // Validate files before submission
+        let validationErrors = [];
+        const maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
+        const maxFiles = 5;
+
+        // Check file count
+        if (window.selectedFiles.length > maxFiles) {
+          validationErrors.push(`Maksimum ${maxFiles} fail dibenarkan. Anda telah memilih ${window.selectedFiles.length} fail.`);
+        }
+
+        // Check each file
+        window.selectedFiles.forEach((file, index) => {
+          // Check file type
+          const isValidPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+          if (!isValidPDF) {
+            validationErrors.push(`Fail "${file.name}" bukanlah fail PDF yang sah. Sila pilih fail PDF sahaja.`);
+          }
+
+          // Check file size (2MB limit)
+          if (file.size > maxFileSize) {
+            const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+            validationErrors.push(`Fail "${file.name}" (${fileSize}MB) melebihi had saiz maksimum 2MB. Sila pilih fail yang lebih kecil.`);
+          }
+        });
+
+        // If there are validation errors, stop submission
+        if (validationErrors.length > 0) {
+          validationErrors.forEach(error => {
+            toastr.error(error);
+          });
+          return;
+        }
+
+        // Add valid files to FormData
         window.selectedFiles.forEach(file => {
           formData.append('pdf_files[]', file);
         });

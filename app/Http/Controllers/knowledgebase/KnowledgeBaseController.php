@@ -88,7 +88,7 @@ class KnowledgeBaseController extends Controller
             // 'kb_jenis' => 'required|in:doc_kb,doc_ticket',
             'kb_tag' => 'nullable|string',
             'pdf_files' => 'nullable|array|max:5', // Allow up to 5 files
-            'pdf_files.*' => 'nullable|file|mimes:pdf|max:10240' // 10MB max per file
+            'pdf_files.*' => 'nullable|file|mimes:pdf|max:2048' // 2MB max per file
         ]);
 
         // Create knowledge base entry
@@ -128,7 +128,7 @@ class KnowledgeBaseController extends Controller
                         'doc_mime' => $file->getMimeType(),
                         'doc_name' => $file->getClientOriginalName(),
                         'doc_storage_nm' => $storageFileName,
-                        'doc_jenis' => 'doc_kb',
+                        'doc_jenis' => 'KB',
                         'created_by' => Auth::id(),
                         'updated_by' => Auth::id(),
                     ]);
@@ -204,7 +204,7 @@ class KnowledgeBaseController extends Controller
             'kb_status' => 'required|in:aktif,tidak aktif',
             'kb_tag' => 'nullable|string',
             'pdf_files' => 'nullable|array|max:5', // Allow up to 5 files
-            'pdf_files.*' => 'file|mimes:pdf|max:10240' // 10MB max per file
+            'pdf_files.*' => 'file|mimes:pdf|max:2048' // 2MB max per file
         ]);
 
         $knowledgeBase = KnowledgeBase::findOrFail($id);
@@ -222,7 +222,7 @@ class KnowledgeBaseController extends Controller
         if ($request->hasFile('pdf_files')) {
             // Delete all existing documents first
             $existingDocuments = Document::where('doc_id', $knowledgeBase->id)
-                                       ->where('doc_jenis', 'doc_kb')
+                                       ->where('doc_jenis', 'KB')
                                        ->get();
 
             foreach ($existingDocuments as $existingDocument) {
@@ -254,7 +254,7 @@ class KnowledgeBaseController extends Controller
                         'doc_mime' => $file->getMimeType(),
                         'doc_name' => $file->getClientOriginalName(),
                         'doc_storage_nm' => $storageFileName,
-                        'doc_jenis' => 'doc_kb',
+                        'doc_jenis' => 'KB',
                         'created_by' => Auth::id(),
                         'updated_by' => Auth::id(),
                     ]);
@@ -353,7 +353,7 @@ class KnowledgeBaseController extends Controller
     public function deleteDocument($documentId)
     {
         $document = Document::where('id', $documentId)
-                          ->where('doc_jenis', 'doc_kb')
+                          ->where('doc_jenis', 'KB')
                           ->firstOrFail();
 
         // Optional: Add authorization check here if needed

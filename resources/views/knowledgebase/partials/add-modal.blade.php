@@ -57,7 +57,7 @@
                     <i class="bx bx-file-find display-4 text-muted mb-3"></i>
                     <h6 class="text-muted mb-2">Seret & Letak fail PDF di sini</h6>
                     <p class="text-muted mb-2">atau <span class="text-primary fw-semibold" style="cursor: pointer;">telusuri (browse) fail</span></p>
-                    <small class="text-muted">Hanya fail PDF dibenarkan (Maks: 10MB setiap fail, maksimum 5 fail)</small>
+                    <small class="text-muted">Hanya fail PDF dibenarkan (Maks: 2MB setiap fail, maksimum 5 fail)</small>
                   </div>
                 </div>
                 <div id="files-preview" class="files-preview mt-3"></div>
@@ -145,8 +145,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const filesPreview = document.getElementById('files-preview');
   const dropZoneContent = dropZone.querySelector('.drop-zone-content');
 
-  // Maximum file size (10MB) and maximum number of files (5)
-  const maxFileSize = 10 * 1024 * 1024;
+  // Maximum file size (2MB) and maximum number of files (5)
+  const maxFileSize = 2 * 1024 * 1024;
   const maxFiles = 5;
   let selectedFiles = [];
 
@@ -278,11 +278,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
 
-      // Validate file size (10MB = 10 * 1024 * 1024 bytes)
+      // Validate file size (2MB = 2 * 1024 * 1024 bytes)
       if (file.size > maxFileSize) {
         const fileSize = formatFileSize(file.size);
-        errors.push(`"${file.name}" (${fileSize}) melebihi saiz maksimum 10MB`);
-        showToastr.error(`"${file.name}" (${fileSize}) melebihi saiz maksimum 10MB. Sila pilih fail yang lebih kecil.`);
+        errors.push(`"${file.name}" (${fileSize}) melebihi saiz maksimum 2MB`);
+        showToastr.error(`"${file.name}" (${fileSize}) melebihi saiz maksimum 2MB. Sila pilih fail yang lebih kecil.`);
         hasErrors = true;
         return;
       }
