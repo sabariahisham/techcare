@@ -82,7 +82,7 @@
                     <i class="bx bx-file-find display-4 text-muted mb-3"></i>
                     <h6 class="text-muted mb-2">Seret & Letak fail PDF di sini</h6>
                     <p class="text-muted mb-2">atau <span class="text-primary fw-semibold" style="cursor: pointer;">telusuri (browse) fail</span></p>
-                    <small class="text-muted">Hanya fail PDF dibenarkan (Maks: 10MB setiap fail, maksimum 5 fail)</small>
+                    <small class="text-muted">Hanya fail PDF dibenarkan (Maks: 2MB setiap fail, maksimum 5 fail)</small>
                     <br><small class="text-warning">Nota: Fail baru akan menggantikan semua fail sedia ada</small>
                   </div>
                 </div>

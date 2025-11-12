@@ -75,6 +75,45 @@
 
     // Add new files if any are selected
     if (typeof window.editSelectedFiles !== 'undefined' && window.editSelectedFiles.length > 0) {
+      // Validate files before submission
+      let validationErrors = [];
+      const maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
+      const maxFiles = 5;
+
+      // Check file count
+      if (window.editSelectedFiles.length > maxFiles) {
+        validationErrors.push(`Maksimum ${maxFiles} fail dibenarkan. Anda telah memilih ${window.editSelectedFiles.length} fail.`);
+      }
+
+      // Check each file
+      window.editSelectedFiles.forEach((file, index) => {
+        // Check file type
+        const isValidPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+        if (!isValidPDF) {
+          validationErrors.push(`Fail "${file.name}" bukanlah fail PDF yang sah. Sila pilih fail PDF sahaja.`);
+        }
+
+        // Check file size (2MB limit)
+        if (file.size > maxFileSize) {
+          const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+          validationErrors.push(`Fail "${file.name}" (${fileSize}MB) melebihi had saiz maksimum 2MB. Sila pilih fail yang lebih kecil.`);
+        }
+      });
+
+      // If there are validation errors, stop submission
+      if (validationErrors.length > 0) {
+        validationErrors.forEach(error => {
+          toastr.error(error, 'Ralat Validasi!', {
+            closeButton: true,
+            timeOut: 5000,
+            progressBar: true,
+            positionClass: 'toast-top-right'
+          });
+        });
+        return false;
+      }
+
+      // Add valid files to FormData
       window.editSelectedFiles.forEach(file => {
         formData.append('pdf_files[]', file);
       });
@@ -462,8 +501,8 @@
       return;
     }
 
-    // Maximum file size (10MB) and maximum number of files (5)
-    const maxFileSize = 10 * 1024 * 1024;
+    // Maximum file size (2MB) and maximum number of files (5)
+    const maxFileSize = 2 * 1024 * 1024;
     const maxFiles = 5;
     let selectedFiles = [];
 
@@ -559,14 +598,12 @@
       let hasErrors = false;
 
       // Check if adding these files would exceed the limit
-      if (selectedFiles.length + files.length > maxFiles) {
-        const message = `Maksimum ${maxFiles} fail dibenarkan. Anda sudah mempunyai ${selectedFiles.length} fail dipilih.`;
+        if (selectedFiles.length + files.length > maxFiles) {
+        const message = `Maksimum ${maxFiles} fail dibenarkan. Anda sudah mempunyai ${selectedFiles.length} fail dipilih. Sila buang beberapa fail sebelum menambah fail baru.`;
         showError(message);
         showToastr.error(message);
         return;
-      }
-
-      // Validate each file
+      }      // Validate each file
       files.forEach(file => {
         // Check if file is already selected
         const isDuplicate = selectedFiles.some(selectedFile =>
@@ -576,8 +613,8 @@
         );
 
         if (isDuplicate) {
-          errors.push(`Fail "${file.name}" sudah dipilih`);
-          showToastr.warning(`Fail "${file.name}" sudah dipilih`);
+          errors.push(`Fail "${file.name}" sudah dipilih sebelum ini`);
+          showToastr.warning(`Fail "${file.name}" sudah dipilih sebelum ini. Sila pilih fail yang berbeza.`);
           hasErrors = true;
           return;
         }
@@ -585,17 +622,17 @@
         // Validate file type (check both MIME type and file extension)
         const isValidPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
         if (!isValidPDF) {
-          errors.push(`"${file.name}" bukan fail PDF`);
-          showToastr.error(`"${file.name}" bukan fail PDF. Hanya fail PDF dibenarkan.`);
+          errors.push(`"${file.name}" bukanlah fail PDF yang sah`);
+          showToastr.error(`"${file.name}" bukanlah fail PDF yang sah. Hanya fail PDF dibenarkan untuk dimuat naik.`);
           hasErrors = true;
           return;
         }
 
-        // Validate file size (10MB = 10 * 1024 * 1024 bytes)
+        // Validate file size (2MB = 2 * 1024 * 1024 bytes)
         if (file.size > maxFileSize) {
           const fileSize = formatFileSize(file.size);
-          errors.push(`"${file.name}" (${fileSize}) melebihi saiz maksimum 10MB`);
-          showToastr.error(`"${file.name}" (${fileSize}) melebihi saiz maksimum 10MB`);
+          errors.push(`"${file.name}" (${fileSize}) melebihi saiz maksimum 2MB`);
+          showToastr.error(`"${file.name}" (${fileSize}) melebihi saiz maksimum 2MB. Sila pilih fail yang lebih kecil.`);
           hasErrors = true;
           return;
         }
