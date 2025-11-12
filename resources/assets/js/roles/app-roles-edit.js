@@ -5,6 +5,94 @@
 'use strict';
 
 (function () {
+  // Utility function to reload DataTable
+  function reloadRoleDataTable() {
+    console.log('Attempting to reload role DataTable...');
+
+    // Try multiple approaches in sequence
+    let reloadAttempted = false;
+
+    try {
+      // Method 1: Try global dt_role first
+      if (typeof window.dt_role !== 'undefined' && window.dt_role && typeof window.dt_role.ajax !== 'undefined') {
+        console.log('Reloading via window.dt_role');
+        window.dt_role.ajax.reload(null, false);
+        reloadAttempted = true;
+      }
+
+      // Method 2: Try to find DataTable instance by class
+      if (!reloadAttempted) {
+        const $table = $('.datatables-roles');
+        if ($table.length && $.fn.DataTable && $.fn.DataTable.isDataTable($table[0])) {
+          console.log('Reloading via .datatables-roles selector');
+          $table.DataTable().ajax.reload(null, false);
+          reloadAttempted = true;
+        }
+      }
+
+      // Method 3: Try alternative selectors
+      if (!reloadAttempted) {
+        const selectors = ['#roleTable', '.roles-datatable', '.dt-role', 'table[id*="role"]', 'table[class*="role"]'];
+        for (const selector of selectors) {
+          const $roleTable = $(selector);
+          if ($roleTable.length && $.fn.DataTable && $.fn.DataTable.isDataTable($roleTable[0])) {
+            console.log(`Reloading via ${selector} selector`);
+            $roleTable.DataTable().ajax.reload(null, false);
+            reloadAttempted = true;
+            break;
+          }
+        }
+      }
+
+      // Method 4: Find any DataTable with role-related data
+      if (!reloadAttempted) {
+        $('table').each(function() {
+          if ($.fn.DataTable.isDataTable(this)) {
+            const table = $(this).DataTable();
+            if (table.ajax && table.ajax.url && table.ajax.url().includes('role')) {
+              console.log('Reloading via role-related DataTable detection');
+              table.ajax.reload(null, false);
+              reloadAttempted = true;
+              return false; // Break the loop
+            }
+          }
+        });
+      }
+
+    } catch (error) {
+      console.error('Error in DataTable reload attempt:', error);
+    }
+
+    // Final fallback with multiple timing attempts
+    if (!reloadAttempted) {
+      console.warn('DataTable instance not found - using fallback methods');
+
+      // Try delayed reload with different intervals
+      const delays = [200, 500, 1000];
+      delays.forEach(delay => {
+        setTimeout(function() {
+          try {
+            if (typeof window.dt_role !== 'undefined' && window.dt_role && window.dt_role.ajax) {
+              window.dt_role.ajax.reload(null, false);
+              console.log(`Delayed reload successful after ${delay}ms`);
+            } else {
+              // Try to find and reload any roles DataTable
+              const $rolesTable = $('.datatables-roles, #roleTable, .roles-datatable');
+              if ($rolesTable.length && $.fn.DataTable.isDataTable($rolesTable[0])) {
+                $rolesTable.DataTable().ajax.reload(null, false);
+                console.log(`Delayed selector reload successful after ${delay}ms`);
+              }
+            }
+          } catch (delayedError) {
+            console.warn(`Delayed reload failed after ${delay}ms:`, delayedError);
+          }
+        }, delay);
+      });
+    }
+
+    return reloadAttempted;
+  }
+
   // Initialize select all permissions functionality
   initializeSelectAllPermissions();
 
@@ -60,8 +148,7 @@
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-danger text-white"
+            positionClass: 'toast-top-right'
           });
         }
       },
@@ -75,8 +162,7 @@
           timeOut: 5000,
           closeButton: true,
           progressBar: true,
-          positionClass: 'toast-top-right',
-          "toastClass": "toast ngx-toastr bg-danger text-white"
+          positionClass: 'toast-top-right'
         });
       }
     });
@@ -232,16 +318,11 @@
             timeOut: 3000,
             closeButton: true,
             progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-success text-white"
+            positionClass: 'toast-top-right'
           });
 
           // Reload DataTable if it exists
-          if (typeof window.dt_role !== 'undefined' && window.dt_role) {
-            window.dt_role.ajax.reload(null, false);
-          } else if ($('.datatables-roles').length) {
-            $('.datatables-roles').DataTable().ajax.reload(null, false);
-          }
+          reloadRoleDataTable();
 
           // Trigger statistics refresh
           $(document).trigger('roleUpdated');
@@ -250,8 +331,7 @@
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-danger text-white"
+            positionClass: 'toast-top-right'
           });
         }
       },
@@ -265,8 +345,7 @@
           timeOut: 5000,
           closeButton: true,
           progressBar: true,
-          positionClass: 'toast-top-right',
-          "toastClass": "toast ngx-toastr bg-danger text-white"
+          positionClass: 'toast-top-right'
         });
       }
     });
@@ -366,52 +445,49 @@
           }
 
           function completeRoleUpdate() {
-            // Hide modal
-            var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditRole'));
-            editModal.hide();
-
-            // Reset form
-            editRoleForm.reset();
-
-            // Reset FormValidation
-            if (fvEdit) {
-              fvEdit.resetForm(true);
-            }
-
-            // Clear the select2 selection
-            $('#edit-role-users').val(null).trigger('change');
-
-            // Reload DataTable if it exists on the page
-            if (typeof window.dt_role !== 'undefined' && window.dt_role) {
-              window.dt_role.ajax.reload(null, false);
-            } else if ($('.datatables-roles').length) {
-              $('.datatables-roles').DataTable().ajax.reload(null, false);
-            }
-
-            // Show success message
+            // Show success message first (before hiding modal)
             const successMessage = selectedUsers && selectedUsers.length > 0 ?
               `Peranan berjaya dikemaskini dan ${selectedUsers.length} pengguna ditambah` :
               'Peranan berjaya dikemaskini';
 
+            // Show success toastr immediately
             toastr.success(successMessage, '', {
-              timeOut: 3000,
+              timeOut: 4000,
               closeButton: true,
               progressBar: true,
-              positionClass: 'toast-top-right',
-              showClass: "animate__animated animate__bounceInRight",
-              hideClass: "animate__animated animate__fadeOut",
-              "toastClass": "toast ngx-toastr bg-success text-white",
-              "closeClass": "toast-close-button",
-              "titleClass": "toast-title",
-              "messageClass": "toast-message",
-              "progressClass": "toast-progress"
+              positionClass: 'toast-top-right'
             });
 
-            // Trigger custom event to refresh statistics
-            $(document).trigger('roleUpdated');
+            // Small delay to ensure toastr is displayed before modal manipulation
+            setTimeout(function() {
+              // Hide modal
+              var editModal = bootstrap.Modal.getInstance(document.getElementById('modalEditRole'));
+              if (editModal) {
+                editModal.hide();
+              } else {
+                $('#modalEditRole').modal('hide');
+              }
 
-            // Reset submission flag
-            isEditSubmitting = false;
+              // Reset form
+              editRoleForm.reset();
+
+              // Reset FormValidation
+              if (typeof fvEdit !== 'undefined' && fvEdit) {
+                fvEdit.resetForm(true);
+              }
+
+              // Clear the select2 selection
+              $('#edit-role-users').val(null).trigger('change');
+
+              // Reload DataTable with enhanced method
+              reloadRoleDataTable();
+
+              // Trigger custom event to refresh statistics
+              $(document).trigger('roleUpdated');
+
+              // Reset submission flag
+              isEditSubmitting = false;
+            }, 100);
           }
         } else {
           // Show error message
@@ -419,11 +495,11 @@
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
-            positionClass: 'toast-top-right',
-            showClass: "animate__animated animate__bounceInRight",
-            hideClass: "animate__animated animate__fadeOut",
-            "toastClass": "toast ngx-toastr bg-danger text-white"
+            positionClass: 'toast-top-right'
           });
+
+          // Reload DataTable even on error to ensure consistency
+          reloadRoleDataTable();
         }
 
         // Reset submission flag
@@ -444,9 +520,11 @@
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-danger text-white"
+            positionClass: 'toast-top-right'
           });
+
+          // Reload DataTable even on error to ensure consistency
+          reloadRoleDataTable();
         }
 
         isEditSubmitting = false;
@@ -480,6 +558,12 @@
 
       // Reset submission flag
       isEditSubmitting = false;
+
+      // Ensure DataTable is reloaded when modal closes
+      // This provides an additional safety net
+      setTimeout(function() {
+        reloadRoleDataTable();
+      }, 200);
     }
   });
 
@@ -608,16 +692,11 @@
             timeOut: 3000,
             closeButton: true,
             progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-success text-white"
+            positionClass: 'toast-top-right'
           });
 
           // Reload DataTable if it exists
-          if (typeof window.dt_role !== 'undefined' && window.dt_role) {
-            window.dt_role.ajax.reload(null, false);
-          } else if ($('.datatables-roles').length) {
-            $('.datatables-roles').DataTable().ajax.reload(null, false);
-          }
+          reloadRoleDataTable();
 
           // Trigger statistics refresh
           $(document).trigger('roleUpdated');
@@ -626,8 +705,7 @@
             timeOut: 5000,
             closeButton: true,
             progressBar: true,
-            positionClass: 'toast-top-right',
-            "toastClass": "toast ngx-toastr bg-danger text-white"
+            positionClass: 'toast-top-right'
           });
         }
       },
@@ -641,8 +719,7 @@
           timeOut: 5000,
           closeButton: true,
           progressBar: true,
-          positionClass: 'toast-top-right',
-          "toastClass": "toast ngx-toastr bg-danger text-white"
+          positionClass: 'toast-top-right'
         });
       }
     });
