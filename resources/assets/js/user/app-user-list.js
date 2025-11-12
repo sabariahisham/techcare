@@ -41,7 +41,22 @@ $(function () {
     var dt_user = dt_user_table.DataTable({
       processing: true,
       serverSide: true,
-      ajax: '/user-management/data',
+      ajax: {
+        url: '/user-management/data',
+        error: function(xhr, error, code) {
+          console.error('DataTables Ajax Error:', error);
+          console.error('Status Code:', code);
+          console.error('Response:', xhr.responseText);
+
+          // Show user-friendly error message
+          Swal.fire({
+            title: 'Error Loading Data',
+            html: `Failed to load user data. Please check the console for details.<br><small>Error: ${error}</small>`,
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        }
+      },
       columns: [
         {
           // For Responsive
@@ -58,6 +73,7 @@ $(function () {
           }
         },
         { data: 'nama', name: 'nama' },
+        { data: 'role', name: 'role' },
         // { data: 'id_pgn_ldap', name: 'id_pgn_ldap' },
         { data: 'email', name: 'email' },
         { data: 'no_kp', name: 'no_kp' },
@@ -139,7 +155,7 @@ $(function () {
       initComplete: function () {
         // Adding role filter once table initialized
         this.api()
-          .columns(4)
+          .columns(3)
           .every(function () {
             var column = this;
             var select = $(
@@ -248,15 +264,32 @@ $(function () {
     const impersonateUrl = $(this).attr('href');
     const userName = $(this).data('user-name') || 'this user';
 
+    // Get the row data to check user role
+    const $row = $(this).closest('tr');
+    const rowData = dt_user.row($row).data();
+    const userRole = rowData ? rowData.role : null;
+
+    // Additional client-side validation for Administrator roles
+    if (userRole === 'Administrator') {
+      Swal.fire({
+        title: 'Tindakan Tidak Dibenarkan',
+        html: `Pengguna dengan peranan <strong>Administrator</strong> tidak boleh diambil alih.<br><small class="text-muted">Hanya Administrator boleh mengambil alih pengguna lain, tetapi tidak boleh mengambil alih sesama Administrator.</small>`,
+        icon: 'error',
+        confirmButtonColor: '#696cff',
+        confirmButtonText: '<i class="bx bx-check me-1"></i>Faham'
+      });
+      return;
+    }
+
     // Show confirmation dialog using SweetAlert2
     Swal.fire({
       title: 'Ambil Alih Pengguna',
-      html: `Adakah anda pasti untuk mengambil alih sebagai Pengguna <strong>${userName}</strong>?<br><small class="text-muted">Semua tindakan akan dilakukan sebagai pengguna ini.</small>`,
+      html: `Adakah anda pasti untuk mengambil alih sebagai Pengguna <strong>${userName}</strong>?<br><small class="text-muted">Semua tindakan akan dilakukan sebagai pengguna ini. Peranan: <span class="badge bg-primary">${userRole || 'Tidak diketahui'}</span></small>`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#696cff',
       cancelButtonColor: '#8592a3',
-      confirmButtonText: '<i class="bx bx-user-check me-1"></i>Ya!',
+      confirmButtonText: '<i class="bx bx-user-check me-1"></i>Ya, Ambil Alih!',
       cancelButtonText: '<i class="bx bx-x me-1"></i>Batal',
       showDenyButton: false
     }).then((result) => {
