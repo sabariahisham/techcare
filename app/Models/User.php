@@ -512,34 +512,34 @@ class User extends Authenticatable // Removed MustVerifyEmail interface
      * This feature allows authorized users to login as other users for support and testing purposes.
      *
      * Rules:
-     * 1. Only Administrator and Pentadbir Sistem can impersonate others
-     * 2. Administrator and Pentadbir Sistem roles cannot be impersonated
+     * 1. Only Administrator roles can impersonate others
+     * 2. Administrator roles cannot be impersonated by anyone
      * 3. When impersonating, a notification card is shown on the dashboard
      * 4. Users can easily revert back to their original account
      */
 
     /**
      * Determine if the user can impersonate another user.
-     * Only users with certain roles can impersonate others.
+     * Only Administrator roles can impersonate others.
      *
      * @return bool
      */
     public function canImpersonate()
     {
-        // Only Administrator and Pentadbir Sistem can impersonate others
-        return $this->hasAnyRole(['Administrator', 'Pentadbir Sistem']);
+        // Only Administrator can impersonate others
+        return $this->hasRole('Administrator');
     }
 
     /**
      * Determine if this user can be impersonated by another user.
-     * Administrator and Pentadbir Sistem cannot be impersonated.
+     * Only Administrator roles cannot be impersonated.
      *
      * @return bool
      */
     public function canBeImpersonated()
     {
-        // Users with Administrator or Pentadbir Sistem roles cannot be impersonated
-        return !$this->hasAnyRole(['Administrator', 'Pentadbir Sistem']);
+        // Users with Administrator role cannot be impersonated
+        return !$this->hasRole('Administrator');
     }
 
 }

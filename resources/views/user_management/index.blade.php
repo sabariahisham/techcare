@@ -146,6 +146,7 @@
           <th style="width: 10px; white-space: nowrap; font-size: 0.75rem;"></th>
           <th style="width: 10px; white-space: nowrap; font-size: 0.75rem;">Bil</th>
           <th style="width: 120px; white-space: nowrap; font-size: 0.75rem;">Nama</th>
+          <th style="width: 80px; white-space: nowrap; font-size: 0.75rem;">Peranan</th>
           {{-- <th>LDAP</th> --}}
           <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">Emel</th>
           <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">No.KP</th>
