@@ -40,7 +40,7 @@ class RefSubCategoryManagementController extends Controller
                     <i class="bx bx-edit"></i>
                 </button>';
 
-                $deleteBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm delete-record" data-id="'.e($subCategory->id).'" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                $deleteBtn = '<button type="button" class="btn btn-icon text-danger rounded-pill btn-sm delete-record" data-id="'.e($subCategory->id).'" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
                     <i class="bx bx-trash"></i>
                 </button>';
 
