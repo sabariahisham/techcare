@@ -223,6 +223,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/modules', [ModuleController::class, 'getModules'])->name('modules.data');
   Route::post('/modules', [ModuleController::class, 'store'])->name('modules.store');
   Route::get('/modules/{id}/edit', [ModuleController::class, 'edit'])->name('modules.edit');
+  Route::get('/modules/{id}/details', [ModuleController::class, 'getModuleDetails'])->name('modules.details');
   Route::post('/modules/update/{id}', [ModuleController::class, 'update'])->name('modules.update');
   Route::delete('/modules/{id}', [ModuleController::class, 'destroy'])->name('modules.destroy');
 

@@ -24,7 +24,7 @@ class StorePermissionRequest extends FormRequest
         $validated = parent::validated($key, $default);
 
         if (is_array($validated)) {
-            foreach (['name', 'description', 'module', 'category'] as $field) {
+            foreach (['name', 'description', 'module'] as $field) {
                 if (isset($validated[$field])) {
                     $validated[$field] = $this->sanitizeInput($validated[$field]);
                 }
@@ -68,11 +68,6 @@ class StorePermissionRequest extends FormRequest
                 'exists:permissions,module' // Ensure module exists from existing permissions
             ],
             'description' => ['nullable', 'string', 'max:500'],
-            'category' => [
-                'required',
-                'string',
-                'in:Module,System,Admin,User,Content,Report'
-            ],
             'is_active' => ['boolean'],
             'roles' => ['array'],
             'roles.*' => ['exists:roles,name'],

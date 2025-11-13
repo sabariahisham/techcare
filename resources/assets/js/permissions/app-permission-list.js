@@ -59,7 +59,6 @@ $(function () {
         { data: 'name' },
         { data: 'module' },
         { data: 'description' },
-        { data: 'category' },
         { data: 'assigned_to' },
         // { data: 'created_date' },
         { data: 'action' }
@@ -102,27 +101,8 @@ $(function () {
           }
         },
         {
-          // Category
-          targets: 5,
-          render: function (data, type, full, meta) {
-            if (!data) return '<span class="badge bg-label-secondary">-</span>';
-
-            var badgeClass = 'bg-label-primary';
-            switch(data) {
-              case 'Module': badgeClass = 'bg-label-primary'; break;
-              case 'System': badgeClass = 'bg-label-info'; break;
-              case 'Admin': badgeClass = 'bg-label-danger'; break;
-              case 'User': badgeClass = 'bg-label-success'; break;
-              case 'Content': badgeClass = 'bg-label-warning'; break;
-              case 'Report': badgeClass = 'bg-label-dark'; break;
-            }
-
-            return '<span class="badge ' + badgeClass + '">' + data + '</span>';
-          }
-        },
-        {
           // Assigned To (Roles) - server already renders HTML
-          targets: 6,
+          targets: 5,
           orderable: false
         },
         // {

@@ -33,24 +33,12 @@ $(document).ready(function () {
               }
             }
           },
-          module: {
-            validators: {
-              notEmpty: {
-                message: 'Sila pilih modul'
-              }
-            }
-          },
+          // Module field validation is completely skipped for edit form
+          // since module should not be changed for existing permissions
           description: {
             validators: {
               notEmpty: {
                 message: 'Sila masukkan deskripsi capaian'
-              }
-            }
-          },
-          category: {
-            validators: {
-              notEmpty: {
-                message: 'Sila pilih kategori capaian'
               }
             }
           }
@@ -113,7 +101,29 @@ $(document).ready(function () {
     $('#edit-permission-name').val(permission.name || '');
     $('#edit-permission-module').val(permission.module || '');
     $('#edit-permission-description').val(permission.description || '');
-    $('#edit-permission-category').val(permission.category || '');
+
+    // Disable the module dropdown since the permission is already assigned to this module
+    // and show it as read-only to prevent accidental changes
+    if (permission.module) {
+      $('#edit-permission-module').prop('disabled', true);
+
+      // Add visual indicators that the field is disabled and read-only
+      $('#edit-permission-module').addClass('bg-light text-muted');
+
+      // Update the label to indicate it's read-only
+      $('label[for="edit-permission-module"]').html('Modul <small class="text-muted">(Read-only)</small>');
+
+      // Add a note under the select to explain why it's disabled
+      const moduleSelectContainer = $('#edit-permission-module').closest('.mb-6');
+      if (!moduleSelectContainer.find('.module-disabled-note').length) {
+        moduleSelectContainer.append(
+          '<small class="form-text text-muted module-disabled-note">' +
+          '<i class="bx bx-lock-alt me-1"></i>' +
+          'Modul tidak boleh ditukar kerana capaian sudah ditetapkan kepada modul ini.' +
+          '</small>'
+        );
+      }
+    }
 
     // Handle role assignments if role selection exists
     if (assignedRoles && assignedRoles.length > 0) {
@@ -139,9 +149,13 @@ $(document).ready(function () {
 
     console.log('Updating capaian ID:', currentPermissionId);
 
-    // Prepare form data with method spoofing
-    var formData = $(editPermissionForm).serialize();
+    // Prepare form data - exclude disabled module field to prevent validation errors
+    var formElements = $(editPermissionForm).find('input, select, textarea').not(':disabled');
+    var formData = formElements.serialize();
     formData += '&_method=PUT';
+
+    // Explicitly exclude module field since it should not be updated for existing permissions
+    console.log('Form data being sent (module excluded):', formData);
 
     $.ajax({
       url: `/admin/permissions/${currentPermissionId}`,
@@ -281,9 +295,22 @@ $(document).ready(function () {
     $(editPermissionForm).find('.invalid-feedback').remove();
     $(editPermissionForm).find('.fv-plugins-message-container').empty();
 
+    // Reset module select field - remove disabled state and styling
+    resetModuleFieldState();
+
     // Reset current permission ID
     currentPermissionId = null;
   });
+
+  // Helper function to reset module field state
+  function resetModuleFieldState() {
+    $('#edit-permission-module').prop('disabled', false);
+    $('#edit-permission-module').removeClass('bg-light text-muted');
+    $('.module-disabled-note').remove();
+
+    // Restore original label text
+    $('label[for="edit-permission-module"]').html('Pilih Modul');
+  }
 
   // Utility functions
   function showSuccess(message, title = 'Berjaya!') {

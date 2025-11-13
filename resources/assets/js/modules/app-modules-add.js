@@ -37,13 +37,6 @@ $(document).ready(function() {
                 }
               }
             },
-            description: {
-              validators: {
-                notEmpty: {
-                  message: 'Sila pilih kategori modul'
-                }
-              }
-            },
             status: {
               validators: {
                 notEmpty: {

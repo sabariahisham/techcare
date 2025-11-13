@@ -19,7 +19,6 @@ class Permission extends SpatiePermission
         'guard_name',
         'module',
         'description',
-        'category',
         'is_active',
         'sort_order',
         'created_by',
@@ -289,11 +288,13 @@ class Permission extends SpatiePermission
         $errors = [];
 
         if ($this->roles()->count() > 0) {
-            $errors[] = 'Permission is assigned to ' . $this->roles()->count() . ' role(s)';
+            $roleCount = $this->roles()->count();
+            $errors[] = 'Capaian ini telah ditugaskan kepada ' . $roleCount . ' peranan' . ($roleCount > 1 ? '' : '');
         }
 
         if ($this->users()->count() > 0) {
-            $errors[] = 'Permission is directly assigned to ' . $this->users()->count() . ' user(s)';
+            $userCount = $this->users()->count();
+            $errors[] = 'Capaian ini telah ditugaskan terus kepada ' . $userCount . ' pengguna' . ($userCount > 1 ? '' : '');
         }
 
         return [
@@ -378,20 +379,7 @@ class Permission extends SpatiePermission
         return $permissions;
     }
 
-    /**
-     * Get permission categories.
-     */
-    public static function getCategories(): array
-    {
-        return [
-            'Module' => 'Module Permissions',
-            'System' => 'System Permissions',
-            'Admin' => 'Administration Permissions',
-            'User' => 'User Permissions',
-            'Content' => 'Content Management',
-            'Report' => 'Reporting Permissions',
-        ];
-    }
+
 
     /**
      * Get common permission actions.

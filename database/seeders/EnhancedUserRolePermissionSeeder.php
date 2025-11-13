@@ -104,7 +104,6 @@ class EnhancedUserRolePermissionSeeder extends Seeder
                     'guard_name' => 'web',
                     'module' => $permission['module'],
                     'description' => $permission['description'],
-                    'category' => $this->getPermissionCategory($permission['module']),
                     'is_active' => true,
                 ]
             );
@@ -305,22 +304,5 @@ class EnhancedUserRolePermissionSeeder extends Seeder
         }
     }
 
-    /**
-     * Get permission category based on module.
-     */
-    private function getPermissionCategory(string $module): string
-    {
-        $categoryMap = [
-            'User Management' => 'Admin',
-            'Role Management' => 'Admin',
-            'Permission Management' => 'Admin',
-            'Admin Management' => 'System',
-            'Dashboard' => 'System',
-            'Ticket Management' => 'Module',
-            'Configuration' => 'System',
-            'Report Management' => 'Report',
-        ];
 
-        return $categoryMap[$module] ?? 'Module';
-    }
 }

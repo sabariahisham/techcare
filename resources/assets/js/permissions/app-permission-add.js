@@ -34,13 +34,6 @@ $(document).ready(function () {
               message: 'Sila masukkan deskripsi capaian'
             }
           }
-        },
-        category: {
-          validators: {
-            notEmpty: {
-              message: 'Sila pilih kategori capaian'
-            }
-          }
         }
       },
       plugins: {

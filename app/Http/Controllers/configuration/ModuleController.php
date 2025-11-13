@@ -71,7 +71,6 @@ class ModuleController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:module_list,module_name',
-            'description' => 'required|string',
             'status' => 'required'
         ]);
 
@@ -98,7 +97,6 @@ class ModuleController extends Controller
                     'guard_name' => 'web',
                     'module' => $request->name,
                     'description' => 'Create ' . $request->name,
-                    'category' => $request->description,
                     'is_active' => (bool)$request->status,
                     'sort_order' => 1,
                 ],
@@ -107,7 +105,6 @@ class ModuleController extends Controller
                     'guard_name' => 'web',
                     'module' => $request->name,
                     'description' => 'Edit ' . $request->name,
-                    'category' => $request->description,
                     'is_active' => (bool)$request->status,
                     'sort_order' => 2,
                 ],
@@ -116,7 +113,6 @@ class ModuleController extends Controller
                     'guard_name' => 'web',
                     'module' => $request->name,
                     'description' => 'View ' . $request->name,
-                    'category' => $request->description,
                     'is_active' => (bool)$request->status,
                     'sort_order' => 3,
                 ],
@@ -125,7 +121,6 @@ class ModuleController extends Controller
                     'guard_name' => 'web',
                     'module' => $request->name,
                     'description' => 'Manage ' . $request->name,
-                    'category' => $request->description,
                     'is_active' => (bool)$request->status,
                     'sort_order' => 4,
                 ],
