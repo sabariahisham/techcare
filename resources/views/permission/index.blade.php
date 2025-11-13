@@ -98,7 +98,6 @@
           <th>Nama Capaian</th>
           <th>Nama Module</th>
           <th>Deskripsi</th>
-          <th>Kategori</th>
           <th>Ditugaskan Kepada</th>
           {{-- <th>Created Date</th> --}}
           <th>Tindakan</th>
@@ -121,18 +120,6 @@
       <div class="mb-6">
         <label class="form-label" for="add-module-name">Nama Modul</label>
         <input type="text" class="form-control" id="add-module-name" placeholder="Nama Modul" name="name" required />
-      </div>
-      <div class="mb-6">
-        <label class="form-label" for="add-module-description">Kategori Modul</label>
-        <select id="add-module-description" name="description" class="form-select" required>
-          <option value="">-- Sila pilih kategori --</option>
-           <option value="Module">Module</option>
-            <option value="System">System</option>
-            <option value="Admin">Admin</option>
-            <option value="User">User</option>
-            <option value="Content">Content</option>
-            <option value="Report">Report</option>
-        </select>
       </div>
       <div class="mb-6">
         <label class="form-label" for="add-module-status">Status</label>
@@ -180,18 +167,6 @@
           <label class="form-label" for="add-permission-description">Deskripsi Capaian</label>
           <input type="text" class="form-control" id="add-permission-description" placeholder="Deskripsi Capaian" name="description" required />
         </div>
-        <div class="mb-6">
-          <label class="form-label" for="add-permission-category">Kategori Capaian</label>
-          <select id="add-permission-category" name="category" class="form-select" required>
-            <option value="">-- Sila pilih kategori --</option>
-            <option value="Module">Module</option>
-            <option value="System">System</option>
-            <option value="Admin">Admin</option>
-            <option value="User">User</option>
-            <option value="Content">Content</option>
-            <option value="Report">Report</option>
-          </select>
-        </div>
         <button type="submit" class="btn btn-primary me-3">Simpan</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
       </form>
@@ -229,18 +204,6 @@
         <div class="mb-6">
           <label class="form-label" for="edit-permission-description">Deskripsi Capaian</label>
           <input type="text" class="form-control" id="edit-permission-description" placeholder="Deskripsi Capaian" name="description" required />
-        </div>
-        <div class="mb-6">
-          <label class="form-label" for="edit-permission-category">Kategori Capaian</label>
-          <select id="edit-permission-category" name="category" class="form-select" required>
-            <option value="">-- Sila pilih kategori --</option>
-            <option value="Module">Module</option>
-            <option value="System">System</option>
-            <option value="Admin">Admin</option>
-            <option value="User">User</option>
-            <option value="Content">Content</option>
-            <option value="Report">Report</option>
-          </select>
         </div>
         <button type="submit" class="btn btn-primary me-3">Simpan</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>

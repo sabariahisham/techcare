@@ -44,24 +44,30 @@ $(document).ready(function () {
     }
 
     // Get permission name from DataTable row data
-    let permissionName = 'this permission'; // fallback
+    let permissionName = 'capaian ini'; // fallback in Malay
 
-    // Find the DataTable row and get the permission name
-    if ($.fn.DataTable.isDataTable('.datatables-permissions')) {
-      const table = $('.datatables-permissions').DataTable();
-      const row = $(this).closest('tr');
+    try {
+      // Find the DataTable row and get the permission name
+      if ($.fn.DataTable.isDataTable('.datatables-permissions')) {
+        const table = $('.datatables-permissions').DataTable();
+        const row = $(this).closest('tr');
 
-      if (row.length) {
-        const rowData = table.row(row).data();
-        if (rowData && rowData.name) {
-          permissionName = rowData.name;
+        if (row.length) {
+          const rowData = table.row(row).data();
+          console.log('Row data:', rowData);
+          if (rowData && rowData.name) {
+            permissionName = rowData.name;
+          }
         }
       }
-    }
 
-    // Fallback: try to get from data attributes if DataTable method fails
-    if (permissionName === 'this permission') {
-      permissionName = $(this).data('name') || $(this).data('permission-name') || $(this).attr('data-name') || $(this).attr('title') || 'this permission';
+      // Fallback: try to get from data attributes if DataTable method fails
+      if (permissionName === 'capaian ini') {
+        permissionName = $(this).data('name') || $(this).data('permission-name') || $(this).attr('data-name') || $(this).attr('title') || 'capaian ini';
+      }
+    } catch (error) {
+      console.log('Error getting permission name:', error);
+      permissionName = 'capaian ini';
     }
 
     console.log('Proceeding with delete for permission ID:', permissionId);
@@ -130,20 +136,56 @@ $(document).ready(function () {
         'X-Requested-With': 'XMLHttpRequest'
       }
     })
-    .then(response => {
+    .then(async response => {
       console.log('Response status:', response.status);
       console.log('Response headers:', response.headers);
+      console.log('Response URL:', response.url);
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error details from response
+        let errorData = null;
+        try {
+          const errorResponse = await response.text();
+          console.log('Error response body:', errorResponse);
+          errorData = JSON.parse(errorResponse);
+        } catch (e) {
+          console.log('Could not parse error response');
+        }
+
+        // Handle 403 Forbidden specifically (permission validation errors)
+        if (response.status === 403 && errorData && errorData.errors) {
+          const errorMessage = errorData.message + ':\n\n' + errorData.errors.join('\n');
+
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Tidak Dapat Dipadam',
+              html: errorMessage.replace(/\n/g, '<br>'),
+              customClass: {
+                confirmButton: 'btn btn-primary'
+              },
+              buttonsStyling: false
+            });
+          } else {
+            alert(errorMessage);
+          }
+          return null; // Return null to indicate handled error
+        }
+
+        throw new Error(`HTTP error! status: ${response.status} - ${errorData ? JSON.stringify(errorData) : 'Unknown error'}`);
       }
 
       return response.json();
     })
     .then(data => {
+      // Check if data is null (handled error case)
+      if (data === null) {
+        return; // Exit early, error was already handled
+      }
+
       console.log('Response data:', data);
 
-      if(data.success) {
+      if(data && data.success) {
         if (typeof Swal !== 'undefined') {
           Swal.fire({
             icon: 'success',
@@ -162,7 +204,7 @@ $(document).ready(function () {
           alert(data.message || 'Permission successfully deleted!');
           refreshDataTable();
         }
-      } else {
+      } else if (data) {
         console.error('Delete failed:', data);
         const errorMsg = data.message || 'Ralat semasa memadam permission';
         if (typeof Swal !== 'undefined') {
@@ -241,6 +283,52 @@ $(document).ready(function () {
         'class': button.attr('class'),
         'events': Object.keys(events)
       });
+    });
+  };
+
+  // Global test function for testing permission deletion endpoint
+  window.testPermissionRoute = function(permissionId) {
+    if (!permissionId) {
+      console.log('Usage: testPermissionRoute(permissionId)');
+      console.log('Available delete buttons:');
+      $('.delete-permission').each(function(index) {
+        console.log(`Button ${index + 1}: data-id=${$(this).data('id')}`);
+      });
+      return;
+    }
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    console.log('Testing DELETE /admin/permissions/' + permissionId);
+    console.log('CSRF Token:', csrfToken ? 'Present' : 'Missing');
+
+    fetch(`/admin/permissions/${permissionId}`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRF-TOKEN': csrfToken,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(async response => {
+      console.log('Test response status:', response.status);
+      const text = await response.text();
+      console.log('Test response body:', text);
+
+      if (response.ok) {
+        try {
+          const data = JSON.parse(text);
+          console.log('Test parsed response:', data);
+        } catch (e) {
+          console.log('Response is not JSON');
+        }
+      }
+
+      return response;
+    })
+    .catch(error => {
+      console.error('Test request error:', error);
     });
   };
 });

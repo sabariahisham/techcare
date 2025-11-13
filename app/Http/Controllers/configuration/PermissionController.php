@@ -55,9 +55,7 @@ class PermissionController extends Controller
                 $module = \App\Models\Module::where('module_name', $permission->module)->first();
                 return $module ? $module->id : null;
             })
-            ->addColumn('category', function ($permission) {
-                return $permission->category ?? '-';
-            })
+
             ->addColumn('assigned_to', function ($permission) {
                 $roles = $permission->roles;
                 $totalRoles = $roles->count();
@@ -132,7 +130,6 @@ class PermissionController extends Controller
                 'guard_name' => 'web',
                 'module' => $validatedData['module'],
                 'description' => $validatedData['description'] ?? null,
-                'category' => $validatedData['category'],
                 'is_active' => $validatedData['is_active'] ?? true,
             ]);
 
@@ -209,14 +206,19 @@ class PermissionController extends Controller
             // Get validated and sanitized data
             $validatedData = $request->validated();
 
-            // Update permission data
-            $permission->update([
+            // Update permission data (exclude module if not provided to prevent changes)
+            $updateData = [
                 'name' => $validatedData['name'],
-                'module' => $validatedData['module'],
                 'description' => $validatedData['description'] ?? null,
-                'category' => $validatedData['category'],
                 'is_active' => $validatedData['is_active'] ?? true,
-            ]);
+            ];
+
+            // Only update module if it's explicitly provided (for new permissions or special cases)
+            if (isset($validatedData['module'])) {
+                $updateData['module'] = $validatedData['module'];
+            }
+
+            $permission->update($updateData);
 
             // Update role assignments if provided
             if (array_key_exists('roles', $validatedData)) {
@@ -302,7 +304,7 @@ class PermissionController extends Controller
             if (!$canDelete['can_delete']) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete permission',
+                    'message' => 'Tidak dapat memadam capaian ini',
                     'errors' => $canDelete['errors']
                 ], 403);
             }
@@ -311,7 +313,7 @@ class PermissionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Permission deleted successfully'
+                'message' => 'Capaian berjaya dipadam'
             ]);
 
         } catch (\Exception $e) {
@@ -319,7 +321,7 @@ class PermissionController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting permission: ' . $e->getMessage()
+                'message' => 'Ralat berlaku semasa memadam capaian: ' . $e->getMessage()
             ], 500);
         }
     }
