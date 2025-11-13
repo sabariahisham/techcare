@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Configuration;
 use App\Http\Controllers\Controller;
 use App\Models\RefCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use LDAP\Result;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -55,7 +56,7 @@ class RefCategoryManagementController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255|unique:ref_categories,cat_name',
+                'name' => 'required|string|max:255|unique:ref_categories,cat_name,NULL,id,deleted_at,NULL',
                 'description' => 'required|string'
             ]);
 
@@ -81,7 +82,7 @@ class RefCategoryManagementController extends Controller
         $name = $request->input('name');
         $id = $request->input('id'); // For edit mode
 
-        $query = RefCategory::where('cat_name', $name);
+        $query = RefCategory::where('cat_name', $name)->whereNull('deleted_at');
 
         // Exclude current record when editing
         if ($id) {
@@ -99,7 +100,7 @@ class RefCategoryManagementController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255|unique:ref_categories,cat_name,' . $id,
+                'name' => 'required|string|max:255|unique:ref_categories,cat_name,' . $id . ',id,deleted_at,NULL',
                 'description' => 'required|string'
             ]);
 
@@ -120,22 +121,25 @@ class RefCategoryManagementController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         try {
             $category = RefCategory::findOrFail($id);
 
             // Check if category has sub-categories
-            $subcategories = $category->subCategories;
-            if ($subcategories->count() > 0) {
-                $subcategoryNames = $subcategories->pluck('subcat_name')->toArray();
+            if ($category->subCategories->count() > 0) {
+                $subcategoryNames = $category->subCategories->pluck('subcat_name')->toArray();
+
                 return response()->json([
                     'success' => false,
                     'has_subcategories' => true,
                     'subcategories' => $subcategoryNames
-                ], 400);
+                ]);
             }
 
+            // Set deleted_by before soft deleting the category
+            $category->deleted_by = Auth::id();
+            $category->save();
             $category->delete();
 
             return response()->json([
@@ -143,7 +147,8 @@ class RefCategoryManagementController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false
+                'success' => false,
+                'message' => 'Error occurred while deleting category'
             ], 500);
         }
     }
@@ -165,15 +170,18 @@ class RefCategoryManagementController extends Controller
         }
     }
 
-    public function forceDestroy($id)
+    public function forceDestroy(Request $request, $id)
     {
         try {
             $category = RefCategory::findOrFail($id);
 
-            // Delete all sub-categories first
+            // Set deleted_by for subcategories before deleting them
+            $category->subCategories()->update(['deleted_by' => Auth::id()]);
             $category->subCategories()->delete();
 
-            // Then delete the category
+            // Set deleted_by before deleting the category
+            $category->deleted_by = Auth::id();
+            $category->save();
             $category->delete();
 
             return response()->json([
@@ -181,7 +189,8 @@ class RefCategoryManagementController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false
+                'success' => false,
+                'message' => 'Error occurred while force deleting category'
             ], 500);
         }
     }

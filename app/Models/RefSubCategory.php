@@ -18,6 +18,7 @@ class RefSubCategory extends Model
         'subcat_desc',
         'created_by',
         'updated_by',
+        'deleted_by',
     ];
 
     public function category()

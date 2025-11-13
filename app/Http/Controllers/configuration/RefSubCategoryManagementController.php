@@ -158,11 +158,18 @@ class RefSubCategoryManagementController extends Controller
     {
         try {
             $subCategory = RefSubCategory::findOrFail($id);
+
+            // Set deleted_by before soft deleting the sub-category
+            $subCategory->deleted_by = Auth::id();
+            $subCategory->save();
             $subCategory->delete();
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error occurred while deleting sub-category'
+            ], 500);
         }
     }
 
