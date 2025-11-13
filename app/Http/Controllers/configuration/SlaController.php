@@ -36,21 +36,62 @@ class SlaController extends Controller
             ->addColumn('subcat_name', function ($sla) {
                 return $sla->subCategory ? $sla->subCategory->subcat_name : '-';
             })
+            ->editColumn('sla_level', function ($sla) {
+                $level = $sla->sla_level;
+                $badgeClass = '';
+                $badgeText = 'Level ' . $level;
+
+                switch($level) {
+                    case '1':
+                        $badgeClass = 'bg-primary';
+                        break;
+                    case '2':
+                        $badgeClass = 'bg-info';
+                        break;
+                    default:
+                        $badgeClass = 'bg-secondary';
+                        break;
+                }
+
+                return '<span class="badge ' . $badgeClass . '">' . $badgeText . '</span>';
+            })
             ->editColumn('sla_severity', function ($sla) {
-                return ucfirst($sla->sla_severity);
+                $severity = strtolower($sla->sla_severity);
+                $badgeClass = '';
+                $badgeText = ucfirst($sla->sla_severity);
+
+                switch($severity) {
+                    case 'high':
+                        $badgeClass = 'bg-danger';
+                        break;
+                    case 'medium':
+                        $badgeClass = 'bg-warning';
+                        break;
+                    case 'low':
+                        $badgeClass = 'bg-success';
+                        break;
+                    default:
+                        $badgeClass = 'bg-secondary';
+                        break;
+                }
+
+                return '<span class="badge ' . $badgeClass . '">' . $badgeText . '</span>';
+            })
+            ->editColumn('sla_days', function ($sla) {
+                return $sla->sla_days . ' hari';
             })
             ->addColumn('action', function ($sla) {
                 $editBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-record" data-id="'.e($sla->id).'" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
                     <i class="bx bx-edit"></i>
                 </button>';
 
-                $deleteBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm delete-record" data-id="'.e($sla->id).'" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                $deleteBtn = '<button type="button" class="btn btn-icon text-danger rounded-pill btn-sm delete-record" data-id="'.e($sla->id).'" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
                     <i class="bx bx-trash"></i>
                 </button>';
 
                 return '<div class="d-inline-block text-nowrap">' . $editBtn . $deleteBtn . '</div>';
             })
-            ->rawColumns(['action'])
+            ->rawColumns(['action', 'sla_level', 'sla_severity'])
             ->make(true);
     }
 
