@@ -8,6 +8,7 @@ use App\Models\Sla;
 use App\Models\RefCategory;
 use App\Models\RefSubCategory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 class SlaController extends Controller
@@ -35,8 +36,8 @@ class SlaController extends Controller
             ->addColumn('subcat_name', function ($sla) {
                 return $sla->subCategory ? $sla->subCategory->subcat_name : '-';
             })
-            ->editColumn('sla_priority', function ($sla) {
-                return ucfirst($sla->sla_priority);
+            ->editColumn('sla_severity', function ($sla) {
+                return ucfirst($sla->sla_severity);
             })
             ->addColumn('action', function ($sla) {
                 $editBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-record" data-id="'.e($sla->id).'" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
@@ -72,7 +73,7 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'sla_priority' => 'required|string|max:255',
+            'sla_severity' => 'required|string|max:255',
             'sla_days' => 'required|integer|min:1',
         ]);
 
@@ -81,7 +82,7 @@ class SlaController extends Controller
                 'cat_id' => $request->cat_id,
                 'subcat_id' => $request->subcat_id,
                 'sla_level' => $request->sla_level,
-                'sla_priority' => $request->sla_priority,
+                'sla_severity' => $request->sla_severity,
                 'sla_days' => $request->sla_days,
                 'created_by' => Auth::id(),
             ]);
@@ -122,7 +123,7 @@ class SlaController extends Controller
                     }
                 },
             ],
-            'sla_priority' => 'required|string|max:255',
+            'sla_severity' => 'required|string|max:255',
             'sla_days' => 'required|integer|min:1',
         ]);
 
@@ -133,7 +134,7 @@ class SlaController extends Controller
                 'cat_id' => $request->cat_id,
                 'subcat_id' => $request->subcat_id,
                 'sla_level' => $request->sla_level,
-                'sla_priority' => $request->sla_priority,
+                'sla_severity' => $request->sla_severity,
                 'sla_days' => $request->sla_days,
                 'updated_by' => Auth::id(),
             ]);
@@ -148,11 +149,42 @@ class SlaController extends Controller
     {
         try {
             $sla = Sla::findOrFail($id);
+
+            // Ensure user is authenticated
+            if (!Auth::check()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            // Set deleted_by before soft delete
+            $sla->deleted_by = Auth::id();
+            $sla->save();
+
+            // Perform soft delete
             $sla->delete();
 
-            return response()->json(['success' => true]);
+            Log::info('SLA deleted successfully', [
+                'sla_id' => $id,
+                'deleted_by' => Auth::id(),
+                'user_id' => Auth::user()->id ?? null,
+                'user_name' => Auth::user()->name ?? 'Unknown'
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'SLA berjaya dipadam']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false]);
+            Log::error('Error deleting SLA', [
+                'sla_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ralat semasa memadam SLA: ' . $e->getMessage()
+            ], 500);
         }
     }
 

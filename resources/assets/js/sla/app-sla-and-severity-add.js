@@ -53,7 +53,7 @@ $(function () {
             }
           }
         },
-        'sla_priority': {
+        'sla_severity': {
           validators: {
             notEmpty: {
               message: 'Sila pilih keutamaan SLA'
@@ -223,15 +223,23 @@ $(function () {
       $('.is-invalid').removeClass('is-invalid');
       $('.invalid-feedback').remove();
       $('.duplicate-error').remove();
+      $('.days-validation-error').remove();
+      
+      // Clear duplicate error container
+      const errorDiv = document.getElementById('duplicate-error-container');
+      if (errorDiv) {
+        errorDiv.style.display = 'none';
+        errorDiv.innerHTML = '';
+      }
 
       // Reset submission flag
       isSubmitting = false;
     }
   });
 
-  // Function to check for duplicate SLA
-  function checkDuplicateSla(catId, subcatId, slaLevel, callback) {
-    if (!catId || !subcatId || !slaLevel) {
+  // Function to check for duplicate SLA (all 5 fields: cat_id, subcat_id, sla_level, sla_severity, sla_days)
+  function checkDuplicateSla(catId, subcatId, slaLevel, slaSeverity, slaDays, callback) {
+    if (!catId || !subcatId || !slaLevel || !slaSeverity || !slaDays || parseInt(slaDays) <= 0) {
       callback(false);
       return;
     }
@@ -242,7 +250,9 @@ $(function () {
       data: {
         cat_id: catId,
         subcat_id: subcatId,
-        sla_level: slaLevel
+        sla_level: slaLevel,
+        sla_severity: slaSeverity,
+        sla_days: slaDays
       },
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -256,36 +266,82 @@ $(function () {
     });
   }
 
-  // Check for duplicates when key fields change
+  // Debounce timer for duplicate validation
+  let duplicateValidationTimer;
+
+  // Check for duplicates when key fields change (all 5 fields: cat_id, subcat_id, sla_level, sla_severity, sla_days)
   function validateDuplicateOnChange() {
-    const catId = $('#add-cat-id').val();
-    const subcatId = $('#add-subcat-id').val();
-    const slaLevel = $('#add-sla-level').val();
-
-    if (catId && subcatId && slaLevel) {
-      checkDuplicateSla(catId, subcatId, slaLevel, function(isDuplicate) {
-        const levelField = document.getElementById('add-sla-level');
-        const existingError = levelField.parentNode.querySelector('.duplicate-error');
-
-        if (existingError) {
-          existingError.remove();
-        }
-
-        if (isDuplicate) {
-          const errorDiv = document.createElement('div');
-          errorDiv.className = 'text-danger mt-1 duplicate-error';
-          errorDiv.textContent = 'SLA untuk kombinasi ini sudah wujud.';
-          levelField.parentNode.appendChild(errorDiv);
-          levelField.classList.add('is-invalid');
-        } else {
-          levelField.classList.remove('is-invalid');
-        }
-      });
+    // Clear previous timer
+    if (duplicateValidationTimer) {
+      clearTimeout(duplicateValidationTimer);
     }
+
+    // Set a small delay to avoid checking on every keystroke
+    duplicateValidationTimer = setTimeout(function() {
+      const catId = $('#add-cat-id').val();
+      const subcatId = $('#add-subcat-id').val();
+      const slaLevel = $('#add-sla-level').val();
+      const slaSeverity = $('#add-sla-severity').val();
+      const slaDays = $('#add-sla-days').val();
+
+      // Only check for duplicates if ALL 5 fields have values and sla_days is a valid positive number
+      if (catId && subcatId && slaLevel && slaSeverity && slaDays && parseInt(slaDays) > 0) {
+        checkDuplicateSla(catId, subcatId, slaLevel, slaSeverity, slaDays, function(isDuplicate) {
+          // Show error in a separate div (create if doesn't exist)
+          let errorDiv = document.getElementById('duplicate-error-container');
+          if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.id = 'duplicate-error-container';
+            errorDiv.className = 'mt-3';
+            // Insert after the form or at the end of the offcanvas body
+            const formContainer = document.getElementById('addNewSlaForm').parentNode;
+            formContainer.appendChild(errorDiv);
+          }
+
+          if (isDuplicate) {
+            errorDiv.innerHTML = '<div class="alert alert-warning"><i class="bx bx-info-circle me-2"></i>SLA dengan kombinasi semua data ini sudah wujud.</div>';
+            errorDiv.style.display = 'block';
+          } else {
+            errorDiv.style.display = 'none';
+            errorDiv.innerHTML = '';
+          }
+        });
+      } else {
+        // Clear any existing duplicate errors when not all 5 fields are filled
+        const errorDiv = document.getElementById('duplicate-error-container');
+        if (errorDiv) {
+          errorDiv.style.display = 'none';
+          errorDiv.innerHTML = '';
+        }
+      }
+    }, 500); // 500ms delay
   }
 
-  // Add event listeners for duplicate checking
-  $('#add-cat-id, #add-subcat-id, #add-sla-level').on('change', validateDuplicateOnChange);
+  // Add event listeners for duplicate checking (all 5 fields)
+  $('#add-cat-id, #add-subcat-id, #add-sla-level, #add-sla-severity, #add-sla-days').on('change input', validateDuplicateOnChange);
+
+  // Additional validation specifically for sla_days field
+  $('#add-sla-days').on('input blur', function() {
+    const slaDays = $(this).val();
+    const daysField = this;
+    const existingDaysError = daysField.parentNode.querySelector('.days-validation-error');
+
+    // Remove existing validation error
+    if (existingDaysError) {
+      existingDaysError.remove();
+    }
+
+    // Validate that days is a positive number for duplicate checking
+    if (slaDays && (isNaN(slaDays) || parseInt(slaDays) <= 0)) {
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'text-warning mt-1 days-validation-error';
+      errorDiv.textContent = 'Bilangan hari mesti lebih daripada 0 untuk pemeriksaan pendua.';
+      daysField.parentNode.appendChild(errorDiv);
+    }
+
+    // Note: Duplicate validation will be triggered automatically by the main event listener
+    // No need to manually trigger it here to avoid false positives
+  });
 
   // Category change handler to populate subcategories
   $('#add-cat-id').on('change', function() {

@@ -118,8 +118,8 @@
           <th>Bil.</th>
           {{-- <th>Kategori</th> --}}
           <th>Sub Kategori</th>
-          <th>Level Petugas</th>
-          <th>Keutamaan</th>
+          <th>Tahap Pegawai Tugasan</th>
+          <th>Tahap Keterukan</th>
           <th>Hari</th>
           <th>Tindakan</th>
         </tr>
@@ -153,18 +153,17 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-sla-level">Tahap SLA(1-3)</label>
+          <label class="form-label" for="add-sla-level">Tahap Pegawai Tugasan</label>
           <select class="form-select" id="add-sla-level" name="sla_level" required>
-            <option value="">Pilih Tahap SLA</option>
+            <option value="">Pilih Tahap Pegawai Tugasan</option>
             <option value="1">1</option>
             <option value="2">2</option>
-            <option value="3">3</option>
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-sla-priority">Keutamaan</label>
-          <select class="form-select" id="add-sla-priority" name="sla_priority" required>
-            <option value="">Pilih Keutamaan</option>
+          <label class="form-label" for="add-sla-severity">Tahap Keterukan</label>
+          <select class="form-select" id="add-sla-severity" name="sla_severity" required>
+            <option value="">Pilih Tahap Keterukan</option>
             <option value="High">High</option>
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
@@ -207,18 +206,17 @@
         </select>
       </div>
       <div class="mb-6">
-        <label class="form-label" for="edit_sla_level">Level Petugas</label>
+        <label class="form-label" for="edit_sla_level">Tahap Pegawai Tugasan</label>
         <select class="form-select" id="edit_sla_level" name="sla_level" required>
-          <option value="">Pilih Level Petugas</option>
+          <option value="">Pilih Tahap Pegawai Tugasan</option>
           <option value="1">1</option>
           <option value="2">2</option>
-          <option value="3">3</option>
         </select>
       </div>
       <div class="mb-6">
-        <label class="form-label" for="edit_sla_priority">Keutamaan</label>
-        <select class="form-select" id="edit_sla_priority" name="sla_priority" required>
-          <option value="">Pilih Keutamaan</option>
+        <label class="form-label" for="edit_sla_severity">Tahap Keterukan</label>
+        <select class="form-select" id="edit_sla_severity" name="sla_severity" required>
+          <option value="">Pilih Tahap Keterukan</option>
           <option value="High">High</option>
           <option value="Medium">Medium</option>
           <option value="Low">Low</option>

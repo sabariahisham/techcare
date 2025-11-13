@@ -74,7 +74,7 @@ $(function () {
         // { data: 'cat_name', name: 'cat_name' },
         { data: 'subcat_name', name: 'subcat_name' },
         { data: 'sla_level', name: 'sla_level' },
-        { data: 'sla_priority', name: 'sla_priority' },
+        { data: 'sla_severity', name: 'sla_severity' },
         { data: 'sla_days', name: 'sla_days' },
 
         { data: 'action', name: 'action', orderable: false, searchable: false }

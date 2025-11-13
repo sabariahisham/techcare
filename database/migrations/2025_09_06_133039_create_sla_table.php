@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('subcat_id')->constrained('ref_sub_categories')->cascadeOnDelete();
             $table->integer('sla_level'); // 1, 2
-            $table->enum('sla_priority', ['High', 'Medium', 'Low']);
+            $table->enum('sla_severity', ['High', 'Medium', 'Low']);
             $table->integer('sla_days');
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();

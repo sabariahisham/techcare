@@ -16,10 +16,11 @@ class Sla extends Model
         'cat_id',
         'subcat_id',
         'sla_level',
-        'sla_priority',
+        'sla_severity',
         'sla_days',
         'created_by',
         'updated_by',
+        'deleted_by',
     ];
 
     public function category()
