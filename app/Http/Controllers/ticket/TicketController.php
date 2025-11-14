@@ -38,7 +38,7 @@ class TicketController extends Controller
     $user = Auth::user();
     $ticketFilter = $request->get('ticket_filter', 'all'); // 'all', 'diri_sendiri', 'bagi_pihak', 'bagi_pihak_sendiri'
 
-    $query = Ticket::with(['user', 'category', 'subCategory', 'status']);
+    $query = Ticket::with(['user', 'category', 'subCategory', 'status', 'createdBy']);
 
     // Apply filters based on ticket_filter parameter
     switch ($ticketFilter) {
@@ -121,6 +121,19 @@ class TicketController extends Controller
       })
       ->addColumn('action', function ($ticket) {
         return $this->getActionButtons($ticket, 'my');
+      })
+      ->filterColumn('no_log_tiket', function ($query, $keyword) {
+        $query->where('ticket_nolog', 'like', "%$keyword%");
+      })
+      ->filterColumn('kategori', function ($query, $keyword) {
+        $query->whereHas('category', function ($q) use ($keyword) {
+          $q->where('cat_name', 'like', "%$keyword%");
+        });
+      })
+      ->filterColumn('sub_kategori', function ($query, $keyword) {
+        $query->whereHas('subCategory', function ($q) use ($keyword) {
+          $q->where('subcat_name', 'like', "%$keyword%");
+        });
       })
       ->rawColumns(['action', 'status', 'jenis_tiket'])
       ->make(true);
@@ -245,17 +258,18 @@ class TicketController extends Controller
     $buttons = [];
 
     // View button - always available
-    $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></button>';
+    //$buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></button>';
 
-    if ($context !== 'my') {
-      //if ($context === 'my') {
+    //if ($context !== 'my') {
+      if ($context === 'my') {
       // For user's own tickets
+      $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></button>';
       // Edit button - only if ticket is not closed or cancelled
       // if ($ticket->status && $ticket->status->st_name === 'Aduan Baru') {
       //   $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Edit"><i class="bx bx-edit"></i></button>';
       //   $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Delete"><i class="bx bx-trash"></i></button>';
       // }
-      //} else {
+      } else {
       // For tickets to manage
       if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
         // Admin and helpdesk roles can edit and manage tickets
