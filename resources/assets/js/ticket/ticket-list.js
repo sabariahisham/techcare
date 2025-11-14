@@ -42,6 +42,10 @@ $(function () {
         data: function (d) {
           d.type = 'my';
           d.ticket_filter = $('#ticketFilterSelect').val(); // Add filter parameter
+          // Ensure search parameter is passed correctly
+          if (d.search && d.search.value) {
+            d.search_value = d.search.value;
+          }
         }
       },
       columns: [
@@ -87,9 +91,10 @@ $(function () {
         }
       ],
       responsive: true,
+      searching: true,  // Ensure search is enabled
       language: {
         search: '',
-        searchPlaceholder: 'Carian Tiket Saya'
+        searchPlaceholder: 'Carian Tiket'
       }
     });
 
@@ -106,6 +111,12 @@ $(function () {
           </select>
         </div>
       `);
+
+      // Ensure search input styling is applied
+      setTimeout(function () {
+        $('.dataTables_filter input').addClass('form-control');
+        $('.dataTables_filter input').attr('placeholder', 'Carian Tiket');
+      }, 100);
     }
   }
 
