@@ -687,11 +687,20 @@ if (typeof window.config === 'undefined') {
 
     let currentMonth = new Date().getMonth() + 1; // 1-based month
     let currentYear = new Date().getFullYear();
+    let currentCategoryId = '';
+    let currentSubcategoryId = '';
     let assignedChartInstance = null;
 
-    // Function to load assigned data for specific month/year
-    function loadAssignedData(month, year) {
-      fetch(`/dashboard/total-assigned?month=${month}&year=${year}`)
+    // Function to load assigned data for specific month/year/category/subcategory
+    function loadAssignedData(month, year, categoryId = '', subcategoryId = '') {
+      let url = `/dashboard/total-assigned?month=${month}&year=${year}`;
+      if (categoryId) {
+        url += `&category_id=${categoryId}`;
+      }
+      if (subcategoryId) {
+        url += `&subcategory_id=${subcategoryId}`;
+      }
+      fetch(url)
         .then(response => {
           console.log('Assigned tickets response received:', response);
           return response.json();
@@ -994,7 +1003,7 @@ if (typeof window.config === 'undefined') {
             currentMonth = monthData.month;
             currentYear = monthData.year;
             selectedMonthBtn.textContent = monthData.display_name;
-            loadAssignedData(monthData.month, monthData.year);
+            loadAssignedData(monthData.month, monthData.year, currentCategoryId, currentSubcategoryId);
           });
           li.appendChild(a);
           monthDropdown.appendChild(li);
@@ -1009,8 +1018,100 @@ if (typeof window.config === 'undefined') {
       }
     }
 
+    // Category dropdown event handlers
+    function setupCategoryDropdown() {
+      const categoryDropdown = document.getElementById('categoryDropdown');
+      const selectedCategoryBtn = document.getElementById('selectedCategory');
+
+      if (categoryDropdown && selectedCategoryBtn) {
+        categoryDropdown.addEventListener('click', function (e) {
+          if (e.target.matches('.dropdown-item')) {
+            e.preventDefault();
+            const categoryId = e.target.getAttribute('data-category-id');
+            const categoryName = e.target.textContent;
+
+            currentCategoryId = categoryId;
+            currentSubcategoryId = ''; // Reset subcategory when category changes
+            selectedCategoryBtn.textContent = categoryName;
+
+            // Update subcategory dropdown based on selected category
+            updateSubcategoryDropdown(categoryId);
+
+            // Reload chart data
+            loadAssignedData(currentMonth, currentYear, currentCategoryId, currentSubcategoryId);
+          }
+        });
+      }
+    }
+
+    // Subcategory dropdown event handlers
+    function setupSubcategoryDropdown() {
+      const subcategoryDropdown = document.getElementById('subcategoryDropdown');
+      const selectedSubcategoryBtn = document.getElementById('selectedSubcategory');
+
+      if (subcategoryDropdown && selectedSubcategoryBtn) {
+        subcategoryDropdown.addEventListener('click', function (e) {
+          if (e.target.matches('.dropdown-item')) {
+            e.preventDefault();
+            const subcategoryId = e.target.getAttribute('data-subcategory-id');
+            const subcategoryName = e.target.textContent;
+
+            currentSubcategoryId = subcategoryId;
+            selectedSubcategoryBtn.textContent = subcategoryName;
+
+            // Reload chart data
+            loadAssignedData(currentMonth, currentYear, currentCategoryId, currentSubcategoryId);
+          }
+        });
+      }
+    }
+
+    // Function to update subcategory dropdown based on selected category
+    function updateSubcategoryDropdown(categoryId) {
+      const subcategoryDropdown = document.getElementById('subcategoryDropdown');
+      const selectedSubcategoryBtn = document.getElementById('selectedSubcategory');
+
+      if (subcategoryDropdown && selectedSubcategoryBtn) {
+        // Reset to "Semua Subkategori"
+        selectedSubcategoryBtn.textContent = 'Subkategori';
+
+        if (categoryId) {
+          // Fetch subcategories for the selected category
+          fetch(`/api/subcategories/${categoryId}`)
+            .then(response => response.json())
+            .then(data => {
+              subcategoryDropdown.innerHTML = '<li><a class="dropdown-item" href="#" data-subcategory-id="">-- Sila Pilih --</a></li>';
+
+              if (data.success && data.data.length > 0) {
+                data.data.forEach(subcategory => {
+                  const li = document.createElement('li');
+                  const a = document.createElement('a');
+                  a.className = 'dropdown-item';
+                  a.href = '#';
+                  a.setAttribute('data-subcategory-id', subcategory.id);
+                  a.textContent = subcategory.subcat_name;
+                  li.appendChild(a);
+                  subcategoryDropdown.appendChild(li);
+                });
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching subcategories:', error);
+              subcategoryDropdown.innerHTML = '<li><a class="dropdown-item" href="#" data-subcategory-id="">-- Sila Pilih --</a></li>';
+            });
+        } else {
+          // If no category selected, show all subcategories option only
+          subcategoryDropdown.innerHTML = '<li><a class="dropdown-item" href="#" data-subcategory-id="">-- Sila Pilih --</a></li>';
+        }
+      }
+    }
+
+    // Initialize dropdown event handlers
+    setupCategoryDropdown();
+    setupSubcategoryDropdown();
+
     // Initial load
-    loadAssignedData(currentMonth, currentYear);
+    loadAssignedData(currentMonth, currentYear, currentCategoryId, currentSubcategoryId);
 
   } else {
     console.log('Assigned chart canvas not found on this page');

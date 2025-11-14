@@ -8,6 +8,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Models\RefTicketStatus;
 use App\Models\RefCategory;
+use App\Models\RefSubCategory;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -496,12 +497,14 @@ class DashboardController extends Controller
   {
     $month = $request->get('month', Carbon::now()->month);
     $year = $request->get('year', Carbon::now()->year);
+    $categoryId = $request->get('category_id');
+    $subcategoryId = $request->get('subcategory_id');
     $isDebug = config('app.debug', false);
 
     try {
       // Step 1: Get tickets with their latest chronology status
       // This ensures we get the current status for each ticket
-      $ticketsWithLatestStatus = DB::table('tickets as t')
+      $query = DB::table('tickets as t')
         ->join('tickets_chronologies as tc_latest', function ($join) {
           $join->on('t.id', '=', 'tc_latest.ticket_id')
             ->whereRaw('tc_latest.id = (
@@ -517,6 +520,8 @@ class DashboardController extends Controller
         ->select(
           't.id as ticket_id',
           't.ticket_nolog',
+          't.cat_id',
+          't.subcat_id',
           'u.id as user_id',
           'u.nama as officer_name',
           'r.name as role_name',
@@ -531,8 +536,19 @@ class DashboardController extends Controller
         ->whereNotNull('tc_latest.escalate_to')
         ->where('r.name', 'Pegawai Tugasan') // Filter for Pegawai Tugasan role only
         ->whereMonth('tc_latest.created_at', $month)
-        ->whereYear('tc_latest.created_at', $year)
-        ->get();
+        ->whereYear('tc_latest.created_at', $year);
+
+      // Add category filtering if specified
+      if ($categoryId) {
+        $query->where('t.cat_id', $categoryId);
+      }
+
+      // Add subcategory filtering if specified
+      if ($subcategoryId) {
+        $query->where('t.subcat_id', $subcategoryId);
+      }
+
+      $ticketsWithLatestStatus = $query->get();
 
       // Step 2: Group and aggregate data by officer
       $officerGroups = $ticketsWithLatestStatus->groupBy('user_id');
@@ -782,6 +798,29 @@ class DashboardController extends Controller
         'success' => true,
         'data' => [],
         'total' => 0
+      ]);
+    }
+  }
+
+  // Get subcategories for a specific category
+  // ----------------------------------------
+  public function getSubcategories($categoryId)
+  {
+    try {
+      $subcategories = \App\Models\RefSubCategory::where('cat_id', $categoryId)
+        ->whereNull('deleted_at')
+        ->orderBy('subcat_name')
+        ->get(['id', 'subcat_name']);
+
+      return response()->json([
+        'success' => true,
+        'data' => $subcategories
+      ]);
+    } catch (\Exception $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Error retrieving subcategories: ' . $e->getMessage(),
+        'data' => []
       ]);
     }
   }
