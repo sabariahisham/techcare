@@ -108,9 +108,11 @@ class SlaController extends Controller
                     $exists = Sla::where('cat_id', $request->cat_id)
                                  ->where('subcat_id', $request->subcat_id)
                                  ->where('sla_level', $value)
+                                 ->where('sla_severity', $request->sla_severity)
+                                 ->where('sla_days', $request->sla_days)
                                  ->exists();
                     if ($exists) {
-                        $fail('SLA untuk kombinasi kategori, sub-kategori, dan level petugas ini sudah wujud.');
+                        $fail('SLA untuk kombinasi ini sudah wujud.');
                     }
                 },
             ],
@@ -130,7 +132,11 @@ class SlaController extends Controller
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false]);
+            Log::error('Error creating SLA', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            return response()->json(['success' => false], 500);
         }
     }
 
@@ -157,10 +163,12 @@ class SlaController extends Controller
                     $exists = Sla::where('cat_id', $request->cat_id)
                                  ->where('subcat_id', $request->subcat_id)
                                  ->where('sla_level', $value)
+                                 ->where('sla_severity', $request->sla_severity)
+                                 ->where('sla_days', $request->sla_days)
                                  ->where('id', '!=', $id)
                                  ->exists();
                     if ($exists) {
-                        $fail('SLA untuk kombinasi kategori, sub-kategori, dan level petugas ini sudah wujud.');
+                        $fail('SLA untuk kombinasi ini sudah wujud.');
                     }
                 },
             ],
@@ -182,7 +190,12 @@ class SlaController extends Controller
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false]);
+            Log::error('Error updating SLA', [
+                'sla_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id()
+            ]);
+            return response()->json(['success' => false], 500);
         }
     }
 
@@ -193,10 +206,7 @@ class SlaController extends Controller
 
             // Ensure user is authenticated
             if (!Auth::check()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not authenticated'
-                ], 401);
+                return response()->json(['success' => false], 401);
             }
 
             // Set deleted_by before soft delete
@@ -213,7 +223,7 @@ class SlaController extends Controller
                 'user_name' => Auth::user()->name ?? 'Unknown'
             ]);
 
-            return response()->json(['success' => true, 'message' => 'SLA berjaya dipadam']);
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
             Log::error('Error deleting SLA', [
                 'sla_id' => $id,
@@ -222,10 +232,7 @@ class SlaController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Ralat semasa memadam SLA: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false], 500);
         }
     }
 
@@ -235,15 +242,23 @@ class SlaController extends Controller
             'cat_id' => 'required|integer',
             'subcat_id' => 'required|integer',
             'sla_level' => 'required|string',
+            'sla_severity' => 'required|string',
+            'sla_days' => 'required|integer|min:1',
         ]);
 
-        $exists = Sla::where('cat_id', $request->cat_id)
+        // Check for existing SLA with same combination (excluding soft-deleted records)
+        $query = Sla::where('cat_id', $request->cat_id)
                      ->where('subcat_id', $request->subcat_id)
                      ->where('sla_level', $request->sla_level)
-                     ->when($request->id, function ($query) use ($request) {
-                         return $query->where('id', '!=', $request->id);
-                     })
-                     ->exists();
+                     ->where('sla_severity', $request->sla_severity)
+                     ->where('sla_days', $request->sla_days);
+
+        // Exclude current record if updating
+        if ($request->has('id') && $request->id) {
+            $query->where('id', '!=', $request->id);
+        }
+
+        $exists = $query->exists();
 
         return response()->json(['exists' => $exists]);
     }

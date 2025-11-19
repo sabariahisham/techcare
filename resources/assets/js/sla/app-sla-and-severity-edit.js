@@ -248,14 +248,15 @@ $(document).ready(function() {
             }, false); // false = keep current page
           }
 
-          // Show success message
-          toastr.success(response.message || 'SLA berjaya dikemaskini', '', {
+          // Show success message (defined in JS, not from controller)
+          toastr.success('SLA berjaya dikemaskini', '', {
             timeOut: 3000,
             closeButton: true,
             progressBar: true
           });
         } else {
-          toastr.error(response.message || 'Error updating SLA', '', {
+          // Show error message (defined in JS, not from controller)
+          toastr.error('Ralat mengemaskini SLA', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true
@@ -368,7 +369,15 @@ $(document).ready(function() {
 
   // Function to check for duplicate SLA in edit form (all 5 fields: cat_id, subcat_id, sla_level, sla_severity, sla_days)
   function checkDuplicateSlaForEdit(catId, subcatId, slaLevel, slaSeverity, slaDays, excludeId, callback) {
-    if (!catId || !subcatId || !slaLevel || !slaSeverity || !slaDays || parseInt(slaDays) <= 0) {
+    // Validate that all fields are present and valid
+    if (!catId || !subcatId || !slaLevel || !slaSeverity) {
+      callback(false);
+      return;
+    }
+
+    // Validate sla_days is a valid positive integer
+    const days = parseInt(slaDays);
+    if (!slaDays || isNaN(days) || days <= 0) {
       callback(false);
       return;
     }
@@ -381,16 +390,21 @@ $(document).ready(function() {
         subcat_id: subcatId,
         sla_level: slaLevel,
         sla_severity: slaSeverity,
-        sla_days: slaDays,
+        sla_days: days,
         id: excludeId
       },
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
       success: function(response) {
-        callback(response.exists || false);
+        console.log('Edit duplicate check response:', response);
+        callback(response.exists === true);
       },
-      error: function() {
+      error: function(xhr) {
+        console.error('Edit duplicate check error:', xhr);
+        if (xhr.status === 422) {
+          console.error('Validation errors:', xhr.responseJSON);
+        }
         callback(false);
       }
     });
@@ -415,22 +429,31 @@ $(document).ready(function() {
       const slaDays = $('#edit_sla_days').val();
       const excludeId = $('#edit_sla_id').val();
 
-      // Only check for duplicates if ALL 5 fields have values and sla_days is a valid positive number
-      if (catId && subcatId && slaLevel && slaSeverity && slaDays && parseInt(slaDays) > 0) {
-        checkDuplicateSlaForEdit(catId, subcatId, slaLevel, slaSeverity, slaDays, excludeId, function(isDuplicate) {
-          // Show error in a separate div (create if doesn't exist)
-          let errorDiv = document.getElementById('duplicate-error-container-edit');
-          if (!errorDiv) {
-            errorDiv = document.createElement('div');
-            errorDiv.id = 'duplicate-error-container-edit';
-            errorDiv.className = 'mt-3';
-            // Insert after the form or at the end of the offcanvas body
-            const formContainer = document.getElementById('editSlaForm').parentNode;
-            formContainer.appendChild(errorDiv);
-          }
+      // Get error container or create it
+      let errorDiv = document.getElementById('duplicate-error-container-edit');
+      if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'duplicate-error-container-edit';
+        errorDiv.className = 'mt-3';
+        // Insert after the form or at the end of the offcanvas body
+        const formContainer = document.getElementById('editSlaForm').parentNode;
+        formContainer.appendChild(errorDiv);
+      }
 
+      // Only check for duplicates if ALL 5 fields have values
+      if (catId && subcatId && slaLevel && slaSeverity && slaDays) {
+        // Validate that sla_days is a valid positive number
+        const days = parseInt(slaDays);
+        if (isNaN(days) || days <= 0) {
+          errorDiv.innerHTML = '<div class="alert alert-danger"><i class="bx bx-error-circle me-2"></i>Bilangan hari mesti lebih daripada 0.</div>';
+          errorDiv.style.display = 'block';
+          return;
+        }
+
+        // All fields are valid, check for duplicates
+        checkDuplicateSlaForEdit(catId, subcatId, slaLevel, slaSeverity, slaDays, excludeId, function(isDuplicate) {
           if (isDuplicate) {
-            errorDiv.innerHTML = '<div class="alert alert-warning"><i class="bx bx-info-circle me-2"></i>SLA dengan kombinasi semua data ini sudah wujud.</div>';
+            errorDiv.innerHTML = '<div class="alert alert-warning"><i class="bx bx-info-circle me-2"></i>SLA dengan kombinasi Kategori, Sub Kategori, Tahap Pegawai Tugasan, Tahap Keterukan dan Hari ini sudah wujud.</div>';
             errorDiv.style.display = 'block';
           } else {
             errorDiv.style.display = 'none';
@@ -439,11 +462,8 @@ $(document).ready(function() {
         });
       } else {
         // Clear any existing duplicate errors when not all 5 fields are filled
-        const errorDiv = document.getElementById('duplicate-error-container-edit');
-        if (errorDiv) {
-          errorDiv.style.display = 'none';
-          errorDiv.innerHTML = '';
-        }
+        errorDiv.style.display = 'none';
+        errorDiv.innerHTML = '';
       }
     }, 500); // 500ms delay
   }
