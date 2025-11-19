@@ -65,12 +65,19 @@ class DashboardController extends Controller
   {
     try {
       $today = Carbon::today();
+      $userId = Auth::id();
 
       // Count tickets created today from tickets_chronologies
-      $todayCount = DB::table('tickets_chronologies')
-        ->whereNull('deleted_at')
-        ->whereDate('created_at', $today)
-        ->count();
+      $query = DB::table('tickets_chronologies as tc')
+        ->whereNull('tc.deleted_at')
+        ->whereDate('tc.created_at', $today);
+
+      // Filter for Pegawai Tugasan role - only their assigned tickets
+      if (Auth::user()->hasRole('Pegawai Tugasan')) {
+        $query->where('tc.escalate_to', $userId);
+      }
+
+      $todayCount = $query->count();
 
       return response()->json([
         'success' => true,
@@ -90,9 +97,10 @@ class DashboardController extends Controller
     try {
       $startOfWeek = Carbon::now()->startOfWeek(); // Monday
       $endOfWeek = Carbon::now()->endOfWeek()->subDays(2); // Friday (Sunday minus 2 days)
+      $userId = Auth::id();
 
       // Get completed tickets (status = 6) for this week, grouped by day
-      $weeklyData = DB::table('tickets_chronologies as tc')
+      $query = DB::table('tickets_chronologies as tc')
         ->select(
           DB::raw('DAYOFWEEK(tc.updated_at) as day_of_week'),
           DB::raw('DATE(tc.updated_at) as date'),
@@ -100,8 +108,14 @@ class DashboardController extends Controller
         )
         ->whereNull('tc.deleted_at')
         ->where('tc.tick_status', 6) // Completed status
-        ->whereBetween('tc.updated_at', [$startOfWeek, $endOfWeek])
-        ->groupBy(DB::raw('DATE(tc.updated_at)'), DB::raw('DAYOFWEEK(tc.updated_at)'))
+        ->whereBetween('tc.updated_at', [$startOfWeek, $endOfWeek]);
+
+      // Filter for Pegawai Tugasan role - only their assigned tickets
+      if (Auth::user()->hasRole('Pegawai Tugasan')) {
+        $query->where('tc.escalate_to', $userId);
+      }
+
+      $weeklyData = $query->groupBy(DB::raw('DATE(tc.updated_at)'), DB::raw('DAYOFWEEK(tc.updated_at)'))
         ->orderBy(DB::raw('DATE(tc.updated_at)'))
         ->get();
 
@@ -155,13 +169,24 @@ class DashboardController extends Controller
   public function getPendingTicketsStats()
   {
     try {
-      // Get total tickets count
-      $totalTickets = DB::table('tickets')
-        ->whereNull('deleted_at')
-        ->count();
+      $userId = Auth::id();
 
-      // Get pending tickets (not completed, not cancelled)
-      $pendingTickets = DB::table('tickets as t')
+      // Base query for total tickets
+      $totalTicketsQuery = DB::table('tickets as t')
+        ->join('tickets_chronologies as tc', function ($join) {
+          $join->on('t.id', '=', 'tc.ticket_id')
+            ->whereRaw('tc.id = (
+              SELECT MAX(tc2.id)
+              FROM tickets_chronologies tc2
+              WHERE tc2.ticket_id = t.id
+              AND tc2.deleted_at IS NULL
+            )');
+        })
+        ->whereNull('t.deleted_at')
+        ->whereNull('tc.deleted_at');
+
+      // Base query for pending tickets
+      $pendingTicketsQuery = DB::table('tickets as t')
         ->join('tickets_chronologies as tc', function ($join) {
           $join->on('t.id', '=', 'tc.ticket_id')
             ->whereRaw('tc.id = (
@@ -173,8 +198,16 @@ class DashboardController extends Controller
         })
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->whereNotIn('tc.tick_status', [5, 6]) // Not cancelled or completed
-        ->count();
+        ->whereNotIn('tc.tick_status', [5, 6]); // Not cancelled or completed
+
+      // Filter for Pegawai Tugasan role - only their assigned tickets
+      if (Auth::user()->hasRole('Pegawai Tugasan')) {
+        $totalTicketsQuery->where('tc.escalate_to', $userId);
+        $pendingTicketsQuery->where('tc.escalate_to', $userId);
+      }
+
+      $totalTickets = $totalTicketsQuery->count();
+      $pendingTickets = $pendingTicketsQuery->count();
 
       // Calculate percentage
       $percentage = $totalTickets > 0 ? round(($pendingTickets / $totalTickets) * 100, 1) : 0;
@@ -200,9 +233,10 @@ class DashboardController extends Controller
   {
     try {
       $now = Carbon::now();
+      $userId = Auth::id();
 
       // Count tickets that are overdue (past SLA due date and not completed)
-      $overdueCount = DB::table('tickets as t')
+      $overdueQuery = DB::table('tickets as t')
         ->join('tickets_chronologies as tc', function ($join) {
           $join->on('t.id', '=', 'tc.ticket_id')
             ->whereRaw('tc.id = (
@@ -214,10 +248,17 @@ class DashboardController extends Controller
         })
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->whereNotIn('tc.tick_status', [5, 6]) // Not cancelled or completed
+        ->where('tc.tick_status', '!=', 6) // Not completed
+        ->where('tc.tick_status', '!=', 5) // Not cancelled
         ->whereNotNull('tc.sla_duedate')
-        ->where('tc.sla_duedate', '<', $now) // Past due date
-        ->count();
+        ->where('tc.sla_duedate', '<', $now);
+
+      // Filter for Pegawai Tugasan role - only their assigned tickets
+      if (Auth::user()->hasRole('Pegawai Tugasan')) {
+        $overdueQuery->where('tc.escalate_to', $userId);
+      }
+
+      $overdueCount = $overdueQuery->count();
 
       return response()->json([
         'success' => true,
@@ -239,12 +280,18 @@ class DashboardController extends Controller
 
     try {
       // Get status counts from ticket_chronologies table
-      $statusCounts = DB::table('tickets_chronologies as tc')
+      $statusQuery = DB::table('tickets_chronologies as tc')
         ->join('ref_ticket_statuses as rts', 'tc.tick_status', '=', 'rts.id')
         ->select('rts.id', 'rts.st_name', DB::raw('COUNT(tc.id) as count'))
         ->whereNull('tc.deleted_at')
-        ->whereNull('rts.deleted_at')
-        ->groupBy('rts.id', 'rts.st_name')
+        ->whereNull('rts.deleted_at');
+
+      // Filter for Pegawai Tugasan role - only their assigned tickets
+      if (Auth::user()->hasRole('Pegawai Tugasan')) {
+        $statusQuery->where('tc.escalate_to', $userId);
+      }
+
+      $statusCounts = $statusQuery->groupBy('rts.id', 'rts.st_name')
         ->orderBy('rts.id')
         ->get();
 
@@ -288,16 +335,34 @@ class DashboardController extends Controller
   public function getCategoryTickets()
   {
     try {
+      $userId = Auth::id();
+
       // Get all categories first
       $allCategories = RefCategory::select('id', 'cat_name')->orderBy('id')->get();
 
       // Get ticket counts per category
-      $categoryCounts = DB::table('tickets as t')
+      $categoryQuery = DB::table('tickets as t')
         ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
         ->select('rc.id', DB::raw('COUNT(t.id) as count'))
         ->whereNull('t.deleted_at')
-        ->whereNull('rc.deleted_at')
-        ->groupBy('rc.id')
+        ->whereNull('rc.deleted_at');
+
+      // Filter for Pegawai Tugasan role - only their assigned tickets
+      if (Auth::user()->hasRole('Pegawai Tugasan')) {
+        $categoryQuery->join('tickets_chronologies as tc', function ($join) use ($userId) {
+          $join->on('t.id', '=', 'tc.ticket_id')
+            ->where('tc.escalate_to', $userId)
+            ->whereRaw('tc.id = (
+              SELECT MAX(tc2.id)
+              FROM tickets_chronologies tc2
+              WHERE tc2.ticket_id = t.id
+              AND tc2.deleted_at IS NULL
+            )');
+        })
+          ->whereNull('tc.deleted_at');
+      }
+
+      $categoryCounts = $categoryQuery->groupBy('rc.id')
         ->pluck('count', 'id');
 
       // Build complete data with zero counts for categories with no tickets
@@ -703,9 +768,10 @@ class DashboardController extends Controller
       // Define overdue criteria:
       // Tickets that are not completed (status != 6 'Aduan Selesai') and have passed their SLA due date
       $now = Carbon::now();
+      $userId = Auth::id();
 
       // Get overdue tickets from the latest chronology for each ticket
-      $overdueTickets = DB::table('tickets as t')
+      $overdueQuery = DB::table('tickets as t')
         ->join('tickets_chronologies as tc', function ($join) {
           $join->on('t.id', '=', 'tc.ticket_id')
             ->whereRaw('tc.id = (
@@ -735,8 +801,14 @@ class DashboardController extends Controller
         ->where('tc.tick_status', '!=', 6) // Not completed
         ->where('tc.tick_status', '!=', 5) // Not cancelled
         ->whereNotNull('tc.sla_duedate')
-        ->where('tc.sla_duedate', '<', $now) // Past due date
-        ->orderBy('days_overdue', 'desc')
+        ->where('tc.sla_duedate', '<', $now);
+
+      // Filter for Pegawai Tugasan role - only their assigned tickets
+      if (Auth::user()->hasRole('Pegawai Tugasan')) {
+        $overdueQuery->where('tc.escalate_to', $userId);
+      }
+
+      $overdueTickets = $overdueQuery->orderBy('days_overdue', 'desc')
         ->get();
 
       // Process data for DataTable
