@@ -355,7 +355,7 @@ class Permission extends SpatiePermission
     /**
      * Create permissions for a module with standard CRUD operations.
      */
-    public static function createModulePermissions(string $module, array $actions = ['view', 'create', 'edit', 'delete'], string $description = null): array
+    public static function createModulePermissions(string $module, array $actions = ['create', 'edit', 'view', 'delete'], string $description = null): array
     {
         $permissions = [];
         $sortOrder = static::max('sort_order') ?? 0;

@@ -117,14 +117,16 @@ class ModuleController extends Controller
                     'sort_order' => 3,
                 ],
                 [
-                    'name' => $request->name . '.manage',
+                    'name' => $request->name . '.delete',
                     'guard_name' => 'web',
                     'module' => $request->name,
-                    'description' => 'Manage ' . $request->name,
+                    'description' => 'Delete ' . $request->name,
                     'is_active' => (bool)$request->status,
                     'sort_order' => 4,
                 ],
             ];
+
+             // create, edit, view, delete 
 
             foreach ($permissions as $permissionData) {
                 // Add created_by to permission data

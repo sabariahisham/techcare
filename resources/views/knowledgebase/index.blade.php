@@ -28,6 +28,10 @@
 @endsection
 
 @section('page-script')
+<script>
+  // Pass user role information to JavaScript
+  window.userHasRole = {{ $hasRole ? 'true' : 'false' }};
+</script>
 @vite([
   'resources/assets/js/knowledgebase/app-knowledge-base-list.js',
   'resources/assets/js/knowledgebase/app-knowledgebase-modal-add.js',

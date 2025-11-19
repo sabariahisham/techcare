@@ -197,6 +197,61 @@ $(function () {
 
   // Delete Record functionality removed - only impersonate actions are enabled
 
+  // Handle impersonate button clicks with confirmation
+  $(document).on('click', '.impersonate-user', function(e) {
+    e.preventDefault();
+
+    const impersonateUrl = $(this).attr('href');
+    const userName = $(this).data('user-name') || 'this user';
+
+    // Get the row data to check user role
+    const $row = $(this).closest('tr');
+    const rowData = dt_user.row($row).data();
+    const userRole = rowData ? rowData.role : null;
+
+    // Additional client-side validation for Administrator roles
+    if (userRole === 'Administrator') {
+      Swal.fire({
+        title: 'Tindakan Tidak Dibenarkan',
+        html: `Pengguna dengan peranan <strong>Administrator</strong> tidak boleh diambil alih.<br><small class="text-muted">Hanya Administrator boleh mengambil alih pengguna lain, tetapi tidak boleh mengambil alih sesama Administrator.</small>`,
+        icon: 'error',
+        confirmButtonColor: '#696cff',
+        confirmButtonText: '<i class="bx bx-check me-1"></i>Faham'
+      });
+      return;
+    }
+
+    // Show confirmation dialog using SweetAlert2
+    Swal.fire({
+      title: 'Ambil Alih Pengguna',
+      html: `Adakah anda pasti untuk mengambil alih sebagai Pengguna <strong>${userName}</strong>?<br><small class="text-muted">Semua tindakan akan dilakukan sebagai pengguna ini. Peranan: <span class="badge bg-primary">${userRole || 'Tidak diketahui'}</span></small>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#696cff',
+      cancelButtonColor: '#8592a3',
+      confirmButtonText: '<i class="bx bx-user-check me-1"></i>Ya, Ambil Alih!',
+      cancelButtonText: '<i class="bx bx-x me-1"></i>Batal',
+      showDenyButton: false
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Show loading state
+        Swal.fire({
+          title: 'Mengambil Alih...',
+          text: 'Sila tunggu semasa kami menukar ke akaun pengguna.',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        // Redirect to impersonate URL
+        window.location.href = impersonateUrl;
+      }
+    });
+  });
+
   // Filter form control to default size
   // ? setTimeout used for multilingual table initialization
   setTimeout(() => {
@@ -255,60 +310,5 @@ $(function () {
       // defaultSubmit: new FormValidation.plugins.DefaultSubmit(),
       autoFocus: new FormValidation.plugins.AutoFocus()
     }
-  });
-
-  // Handle impersonate button clicks with confirmation
-  $(document).on('click', '.impersonate-user', function(e) {
-    e.preventDefault();
-
-    const impersonateUrl = $(this).attr('href');
-    const userName = $(this).data('user-name') || 'this user';
-
-    // Get the row data to check user role
-    const $row = $(this).closest('tr');
-    const rowData = dt_user.row($row).data();
-    const userRole = rowData ? rowData.role : null;
-
-    // Additional client-side validation for Administrator roles
-    if (userRole === 'Administrator') {
-      Swal.fire({
-        title: 'Tindakan Tidak Dibenarkan',
-        html: `Pengguna dengan peranan <strong>Administrator</strong> tidak boleh diambil alih.<br><small class="text-muted">Hanya Administrator boleh mengambil alih pengguna lain, tetapi tidak boleh mengambil alih sesama Administrator.</small>`,
-        icon: 'error',
-        confirmButtonColor: '#696cff',
-        confirmButtonText: '<i class="bx bx-check me-1"></i>Faham'
-      });
-      return;
-    }
-
-    // Show confirmation dialog using SweetAlert2
-    Swal.fire({
-      title: 'Ambil Alih Pengguna',
-      html: `Adakah anda pasti untuk mengambil alih sebagai Pengguna <strong>${userName}</strong>?<br><small class="text-muted">Semua tindakan akan dilakukan sebagai pengguna ini. Peranan: <span class="badge bg-primary">${userRole || 'Tidak diketahui'}</span></small>`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#696cff',
-      cancelButtonColor: '#8592a3',
-      confirmButtonText: '<i class="bx bx-user-check me-1"></i>Ya, Ambil Alih!',
-      cancelButtonText: '<i class="bx bx-x me-1"></i>Batal',
-      showDenyButton: false
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Show loading state
-        Swal.fire({
-          title: 'Mengambil Alih...',
-          text: 'Sila tunggu semasa kami menukar ke akaun pengguna.',
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-
-        // Redirect to impersonate URL
-        window.location.href = impersonateUrl;
-      }
-    });
   });
 })();

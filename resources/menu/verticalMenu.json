@@ -17,8 +17,7 @@
       "url": "knowledgebase",
       "icon": "menu-icon icon-base bx bx-book-open",
       "name": "Knowledge Base",
-      "slug": "knowledgebase-index",
-      "permission": "knowledgebase.view"
+      "slug": "knowledgebase-index"
     },
     {
       "url": "#",

@@ -12,6 +12,18 @@
     e.preventDefault();
     e.stopPropagation();
 
+    // Check if user has a role
+    if (typeof window.userHasRole !== 'undefined' && !window.userHasRole) {
+      Swal.fire({
+        title: 'Akses Ditolak',
+        html: 'Anda tidak mempunyai kebenaran untuk mengedit artikel.<br><small class="text-muted">Hanya pengguna dengan peranan yang ditetapkan boleh mengedit artikel.</small>',
+        icon: 'error',
+        confirmButtonColor: '#696cff',
+        confirmButtonText: 'Faham'
+      });
+      return;
+    }
+
     var id = $(this).data('id');
     console.log('Edit button clicked, ID:', id); // Debug log
     console.log('Element:', this); // Debug log

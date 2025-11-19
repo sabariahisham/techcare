@@ -129,6 +129,12 @@ $(function () {
           attr: {
             'data-bs-toggle': 'modal',
             'data-bs-target': '#knowledgeBaseModal'
+          },
+          init: function(api, node, config) {
+            // Hide the button if user doesn't have a role
+            if (typeof window.userHasRole !== 'undefined' && !window.userHasRole) {
+              $(node).hide();
+            }
           }
         }
       ],
@@ -229,6 +235,22 @@ $(function () {
 
     if (id) {
       $(document).trigger('editKnowledgeBase', {id: id});
+    }
+  });
+
+  // Prevent opening add modal for users without roles
+  $(document).on('click', '.add-new', function(e) {
+    if (typeof window.userHasRole !== 'undefined' && !window.userHasRole) {
+      e.preventDefault();
+      e.stopPropagation();
+      Swal.fire({
+        title: 'Akses Ditolak',
+        html: 'Anda tidak mempunyai kebenaran untuk menambah artikel.<br><small class="text-muted">Hanya pengguna dengan peranan yang ditetapkan boleh menambah artikel.</small>',
+        icon: 'error',
+        confirmButtonColor: '#696cff',
+        confirmButtonText: 'Faham'
+      });
+      return false;
     }
   });
 

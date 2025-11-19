@@ -334,7 +334,7 @@ class PermissionController extends Controller
         $request->validate([
             'module' => 'required|string|max:255',
             'actions' => 'required|array',
-            'actions.*' => 'string|in:view,create,edit,delete,manage,export,import,approve',
+            'actions.*' => 'string|in:create,edit,view,delete,manage,export,import,approve',
             'description' => 'nullable|string|max:500',
         ]);
 

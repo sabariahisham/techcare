@@ -112,7 +112,7 @@
         <label class="form-label" for="add-module-name">Nama Modul <span class="text-danger">*</span></label>
         <input type="text" class="form-control" id="add-module-name" placeholder="Masukkan nama modul" name="module_name" required />
         <div class="invalid-feedback"></div>
-        <small class="form-text text-muted">Sistem akan menjana 4 permission secara automatik: {nama_modul}.create, {nama_modul}.edit, {nama_modul}.view, {nama_modul}.manage</small>
+        <small class="form-text text-muted">Sistem akan menjana 4 capaian secara automatik: {nama_modul}.create, {nama_modul}.edit, {nama_modul}.view, {nama_modul}.delete</small>
       </div>
       <button type="submit" class="btn btn-primary me-3" id="btn-add-module">
         <span class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
