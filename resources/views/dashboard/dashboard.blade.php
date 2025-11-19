@@ -31,7 +31,7 @@
     </div>
 
     <!-- Flash Messages for Impersonation -->
-    @if(session('impersonate_success'))
+    @if (session('impersonate_success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="bx bx-check-circle me-2"></i>
             {{ session('impersonate_success') }}
@@ -39,7 +39,7 @@
         </div>
     @endif
 
-    @if(session('impersonate_leave'))
+    @if (session('impersonate_leave'))
         <div class="alert alert-info alert-dismissible fade show" role="alert">
             <i class="bx bx-info-circle me-2"></i>
             {{ session('impersonate_leave') }}
@@ -67,6 +67,24 @@
         @include('dashboard/partials/card-status-user')
     </div>
 
+    <!-- Pegawai Tugasan Specific Section -->
+    @if (Auth::user()->hasRole('Pegawai Tugasan'))
+        <div class="card mb-6 bg-transparent">
+            <div class="card-header">
+                <div class="p-2 bg-white rounded shadow-sm d-flex align-items-center">
+                    <i class='bx bxs-bell-ring fs-2 me-2' style='color:#1431eb'></i>
+                    <h4 class="text-primary mb-0">TUGASAN ANDA!</h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row dashboard-row-consistent">
+                    @include('dashboard/partials/my-tasks') <!-- My Tasks Section -->
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Administrator, Pengurusan MOF, Pentadbir Sistem, Penyelia Helpdesk, Helpdesk On Duty Section -->
     @if (Auth::user()->hasRole('Administrator'))
         <div class="row g-4 mb-6 dashboard-row-consistent">
             @include('dashboard/partials/cards-status') <!-- Card Status -->
@@ -95,13 +113,6 @@
             @include('dashboard/partials/chart-trend')
             @include('dashboard/partials/chart-total')
             @include('dashboard/partials/chart-assigned')
-        </div>
-    @elseif(Auth::user()->hasRole('Pegawai Tugasan'))
-        <div class="row dashboard-row-consistent">
-            @include('dashboard/partials/cards-status')
-            @include('dashboard/partials/chart-status')
-            @include('dashboard/partials/chart-category')
-            @include('dashboard/partials/table-ticket-overdue')
         </div>
     @endif
 
