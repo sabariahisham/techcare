@@ -15,7 +15,10 @@ class KnowledgeBaseController extends Controller
 {
     public function index()
     {
-        return view('knowledgebase.index');
+        $user = Auth::user();
+        $hasRole = $user && $user->roles->isNotEmpty();
+
+        return view('knowledgebase.index', compact('hasRole'));
     }
 
     public function getData(Request $request)
@@ -27,10 +30,19 @@ class KnowledgeBaseController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function($row) {
+                    $user = Auth::user();
+                    $hasRole = $user && $user->roles->isNotEmpty();
+
                     $btn = '<div class="d-flex align-items-center">';
+                    // View button - always visible to all users
                     $btn .= '<a href="javascript:void(0);" class="text-body show-record" data-id="'.$row->id.'" title="View Details"><i class="bx bx-show mx-1"></i></a>';
-                    $btn .= '<a href="javascript:void(0);" class="text-body edit-record" data-id="'.$row->id.'" title="Edit"><i class="bx bx-edit mx-1"></i></a>';
-                    $btn .= '<a href="javascript:void(0);" class="text-body delete-record" data-id="'.$row->id.'" data-title="'.htmlspecialchars($row->kb_title, ENT_QUOTES, 'UTF-8').'" title="Delete"><i class="bx bx-trash mx-1"></i></a>';
+
+                    // Edit and Delete buttons - only visible to users with roles
+                    if ($hasRole) {
+                        $btn .= '<a href="javascript:void(0);" class="text-body edit-record" data-id="'.$row->id.'" title="Edit"><i class="bx bx-edit mx-1"></i></a>';
+                        $btn .= '<a href="javascript:void(0);" class="text-body delete-record" data-id="'.$row->id.'" data-title="'.htmlspecialchars($row->kb_title, ENT_QUOTES, 'UTF-8').'" title="Delete"><i class="bx bx-trash mx-1"></i></a>';
+                    }
+
                     $btn .= '</div>';
                     return $btn;
                 })
@@ -79,6 +91,15 @@ class KnowledgeBaseController extends Controller
 
     public function store(Request $request)
     {
+        // Check if user has a role
+        $user = Auth::user();
+        if (!$user || $user->roles->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak mempunyai kebenaran untuk menambah artikel. Hanya pengguna dengan peranan yang ditetapkan boleh menambah artikel.'
+            ], 403);
+        }
+
         $request->validate([
             'kb_title' => 'required|string|max:255',
             'cat_id' => 'required|exists:ref_categories,id',
@@ -170,6 +191,15 @@ class KnowledgeBaseController extends Controller
 
     public function edit($id)
     {
+        // Check if user has a role
+        $user = Auth::user();
+        if (!$user || $user->roles->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak mempunyai kebenaran untuk mengedit artikel. Hanya pengguna dengan peranan yang ditetapkan boleh mengedit artikel.'
+            ], 403);
+        }
+
         $knowledgeBase = KnowledgeBase::with(['category', 'subCategory', 'documents'])->findOrFail($id);
 
         $data = [
@@ -196,6 +226,15 @@ class KnowledgeBaseController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Check if user has a role
+        $user = Auth::user();
+        if (!$user || $user->roles->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak mempunyai kebenaran untuk mengedit artikel. Hanya pengguna dengan peranan yang ditetapkan boleh mengedit artikel.'
+            ], 403);
+        }
+
         $request->validate([
             'kb_title' => 'required|string|max:255',
             'cat_id' => 'required|exists:ref_categories,id',
@@ -267,6 +306,15 @@ class KnowledgeBaseController extends Controller
 
     public function destroy($id)
     {
+        // Check if user has a role
+        $user = Auth::user();
+        if (!$user || $user->roles->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak mempunyai kebenaran untuk menghapus artikel. Hanya pengguna dengan peranan yang ditetapkan boleh menghapus artikel.'
+            ], 403);
+        }
+
         $knowledgeBase = KnowledgeBase::with('documents')->findOrFail($id);
 
         // Delete associated files from storage only (keep database records)
@@ -312,6 +360,15 @@ class KnowledgeBaseController extends Controller
      */
     public function softDelete(Request $request, $id)
     {
+        // Check if user has a role
+        $user = Auth::user();
+        if (!$user || $user->roles->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak mempunyai kebenaran untuk menghapus artikel. Hanya pengguna dengan peranan yang ditetapkan boleh menghapus artikel.'
+            ], 403);
+        }
+
         $knowledgeBase = KnowledgeBase::with('documents')->findOrFail($id);
 
         $unlinkFiles = $request->boolean('unlink_files', false);

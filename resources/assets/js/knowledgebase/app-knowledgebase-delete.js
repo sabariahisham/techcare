@@ -267,6 +267,18 @@ $(function () {
   $(document).on('click', '.delete-record, .delete-article', function(e) {
     e.preventDefault();
 
+    // Check if user has a role
+    if (typeof window.userHasRole !== 'undefined' && !window.userHasRole) {
+      Swal.fire({
+        title: 'Akses Ditolak',
+        html: 'Anda tidak mempunyai kebenaran untuk menghapus artikel.<br><small class="text-muted">Hanya pengguna dengan peranan yang ditetapkan boleh menghapus artikel.</small>',
+        icon: 'error',
+        confirmButtonColor: '#696cff',
+        confirmButtonText: 'Faham'
+      });
+      return;
+    }
+
     const $button = $(this);
     const articleId = $button.data('id');
     let articleTitle = $button.data('title') || $button.data('name');
