@@ -14,8 +14,8 @@
         }
 
         /* .offcanvas-60 {
-                                      width: 60% !important;
-                                      } */
+                                  width: 60% !important;
+                                  } */
 
         /* Responsive breakpoints for offcanvas */
 
@@ -314,9 +314,9 @@
 
         /* Custom purple badge for status */
         /* .badge.bg-purple {
-                                    background-color: #7b68ee !important;
-                                    color: #fff !important;
-                                } */
+                                background-color: #7b68ee !important;
+                                color: #fff !important;
+                            } */
     </style>
 @endsection
 
@@ -326,8 +326,8 @@
 
 @section('page-script')
     @vite([
-        'resources/assets/js/ticket-list.js',
-        'resources/assets/js/ticket.js',
+        'resources/assets/js/ticket/ticket-list.js',
+        'resources/assets/js/ticket/ticket.js',
         // 'resources/assets/js/ui-toasts.js',
         // 'resources/assets/js/extended-ui-sweetalert2.js',
     ])
@@ -344,8 +344,8 @@
     <div class="card mb-4">
         <div class="card-header">
             <div>
-                <h4 class="card-title mb-0">Tiket Aduan</h4>
-                <p class="text-muted mb-0">Senarai tiket yang berkaitan dengan {{ auth()->user()->nama }}</p>
+                <h5 class="card-title mb-0">Tiket Saya</h5>
+                <p class="text-muted small mb-0">Senarai tiket yang berkaitan dengan {{ auth()->user()->nama }}</p>
             </div>
         </div>
         <div class="card-datatable table-responsive">
@@ -413,15 +413,10 @@
     <!-- Offcanvas to add new ticket -->
     <div class="offcanvas offcanvas-end offcanvas-50" tabindex="-1" id="offcanvasAddTicket"
         aria-labelledby="offcanvasAddTicketLabel">
-        <div class="offcanvas-header border-bottom align-items-start">
-        <div class="me-3">
-            <h5 id="offcanvasAddTicketLabel" class="mb-0">Tambah Log Tiket</h5>
-            <small class="text-muted fst-italic d-block mt-1">
-                ***Maluman:<br>Data dalam ruangan ini diselaraskan daripada <strong>Sistem Pergerakan Pegawai (SPP)</strong>. Sebarang kemas kini hendaklah dibuat di sistem tersebut.
-            </small>
+        <div class="offcanvas-header border-bottom">
+            <h5 id="offcanvasAddTicketLabel">Tambah Log Tiket</h5>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
         </div>
-        <button type="button" class="btn-close text-reset mt-1" data-bs-dismiss="offcanvas"></button>
-    </div>
 
         <div class="offcanvas-body">
             <form id="addTicketForm" enctype="multipart/form-data">
