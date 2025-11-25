@@ -29,6 +29,9 @@ const LibsJsFiles = GetFilesArray('resources/assets/vendor/libs/**/*.js');
 // Processing Core, Themes & Pages Scss Files
 const CoreScssFiles = GetFilesArray('resources/assets/vendor/scss/**/!(_)*.scss');
 
+// Processing Custom Pages & Components Scss Files
+const CustomScssFiles = GetFilesArray('resources/assets/scss/**/*.scss');
+
 // Processing Libs Scss & Css Files
 const LibsScssFiles = GetFilesArray('resources/assets/vendor/libs/**/!(_)*.scss');
 const LibsCssFiles = GetFilesArray('resources/assets/vendor/libs/**/*.css');
@@ -63,6 +66,7 @@ export default defineConfig({
         ...vendorJsFiles,
         ...LibsJsFiles,
         ...CoreScssFiles,
+        ...CustomScssFiles,
         ...LibsScssFiles,
         ...LibsCssFiles,
         ...FontsScssFiles
