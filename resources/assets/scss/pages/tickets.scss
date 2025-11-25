@@ -1,0 +1,334 @@
+/**
+ * Ticket Module Styles
+ * =====================
+ *
+ * This file contains all ticket-specific styles for the eHelp system.
+ * Organized for maintainability and team collaboration.
+ */
+
+// Ticket Page Specific Variables
+:root {
+  --ticket-offcanvas-bg: #f8f9fa;
+  --ticket-border-color: #d9dee3;
+  --ticket-text-muted: #6c757d;
+  --ticket-error-color: #ea5455;
+  --ticket-focus-color: #696cff;
+}
+
+// ===================================
+// TICKET OFFCANVAS STYLES
+// ===================================
+
+/* Custom Offcanvas Styles - Responsive Percentage Widths */
+.offcanvas-50 {
+  width: 30% !important;
+}
+
+/* Responsive breakpoints for offcanvas */
+/* Between 1200px and 1600px (typical laptops and medium desktops) */
+@media (max-width: 1600px) and (min-width: 1201px) {
+  .offcanvas-50 {
+    width: 45% !important;
+  }
+}
+
+/* Responsive breakpoints for smaller screens */
+@media (max-width: 1200px) {
+  .offcanvas-50 {
+    width: 70% !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .offcanvas-50 {
+    width: 80% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .offcanvas-50 {
+    width: 90% !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .offcanvas-50 {
+    width: 95% !important;
+  }
+}
+
+/* Ensure offcanvas content is scrollable on smaller screens */
+.offcanvas-body {
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+// ===================================
+// TICKET FORM STYLING
+// ===================================
+
+/* Make form-select border styling match form-control */
+.form-select {
+  display: block;
+  width: 100%;
+  padding: 0.4375rem 2.25rem 0.4375rem 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.53;
+  color: #697a8d;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23697a8d' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 16px 12px;
+  border: 1px solid var(--ticket-border-color);
+  border-radius: 0.375rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  appearance: none;
+
+  &:focus {
+    border-color: var(--ticket-focus-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25);
+  }
+
+  &:disabled,
+  &[readonly] {
+    background-color: #f5f5f9;
+  }
+}
+
+// ===================================
+// SELECT2 STYLING FOR TICKETS
+// ===================================
+
+/* Fix Select2 dropdown z-index in offcanvas */
+.select2-container {
+  z-index: 9999 !important;
+  width: 100% !important;
+
+  &--bootstrap-5 {
+    width: 100% !important;
+  }
+}
+
+.select2-dropdown {
+  z-index: 9999 !important;
+}
+
+/* Fix Select2 in offcanvas */
+.offcanvas .select2-container {
+  width: 100% !important;
+}
+
+/* Ensure Select2 elements match form-control styling */
+.select2-container--bootstrap-5 {
+  .select2-selection--single {
+    height: calc(2.25rem + 2px) !important;
+    padding: 0.4375rem 0.875rem !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.53 !important;
+    border: 1px solid var(--ticket-border-color) !important;
+    border-radius: 0.375rem !important;
+  }
+
+  &.select2-container--focus .select2-selection--single {
+    border-color: var(--ticket-focus-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.25) !important;
+  }
+
+  .select2-selection--single:not(.select2-container--focus) {
+    border-color: var(--ticket-border-color) !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Select2 Error State */
+.select2-container {
+  &.is-invalid .select2-selection--single {
+    border-color: var(--ticket-error-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(234, 84, 85, 0.25) !important;
+  }
+
+  +.invalid-feedback {
+    display: block !important;
+    color: var(--ticket-error-color);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+}
+
+// ===================================
+// FILE INPUT STYLING
+// ===================================
+
+/* File input error state styling - match Bootstrap form-control styling */
+input[type="file"] {
+  &.is-invalid {
+    border-color: #dc3545 !important;
+    padding-right: calc(1.5em + 0.75rem) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 1.4 1.4m0-1.4-1.4 1.4'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right calc(0.375em + 0.1875rem) center !important;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem) !important;
+
+    &:focus {
+      border-color: #dc3545 !important;
+      box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+    }
+  }
+}
+
+/* Make sure file input shows error state clearly - Bootstrap style */
+.form-field-wrapper input[type="file"].is-invalid,
+input[name="attachments[]"].is-invalid {
+  border-color: #dc3545 !important;
+  background-color: #fff !important;
+
+  &:focus {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+    background-color: #fff !important;
+  }
+}
+
+// ===================================
+// USER SEARCH SECTION
+// ===================================
+
+/* Search user section styling */
+.user-search-section {
+  border: 1px solid var(--ticket-border-color);
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: var(--ticket-offcanvas-bg);
+}
+
+.search-loading {
+  color: var(--ticket-text-muted);
+  font-size: 0.875rem;
+}
+
+/* User info display */
+#foundUserInfo,
+#editFoundUserInfo {
+  margin-top: 1rem;
+}
+
+/* Subtle styling for readonly fields */
+input[readonly].form-control {
+  background-color: var(--ticket-offcanvas-bg);
+  border-color: #e9ecef;
+  color: var(--ticket-text-muted);
+}
+
+.input-group .btn {
+  white-space: nowrap;
+}
+
+// ===================================
+// OFFCANVAS TYPOGRAPHY & SIZING
+// ===================================
+
+/* Standard smaller font size for form elements in offcanvas */
+.offcanvas {
+  .form-label {
+    font-size: 0.8125rem !important;
+    /* 13px */
+    font-weight: 500;
+    margin-bottom: 0.375rem;
+  }
+
+  .form-control,
+  .form-select {
+    font-size: 0.8125rem !important;
+    /* 13px */
+    padding: 0.375rem 0.75rem !important;
+    line-height: 1.4 !important;
+  }
+
+  textarea.form-control {
+    font-size: 0.8125rem !important;
+    /* 13px */
+    line-height: 1.4 !important;
+  }
+
+  .btn {
+    font-size: 0.8125rem !important;
+    /* 13px */
+    padding: 0.375rem 0.75rem !important;
+  }
+
+  h6 {
+    font-size: 0.9375rem !important;
+    /* 15px */
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  h5 {
+    font-size: 1rem !important;
+    /* 16px */
+    font-weight: 600;
+  }
+
+  .text-muted,
+  small {
+    font-size: 0.75rem !important;
+    /* 12px */
+  }
+
+  // Select2 specific sizing
+  .select2-container--bootstrap-5 {
+    .select2-selection--single {
+      font-size: 0.8125rem !important;
+      /* 13px */
+      padding: 0.375rem 0.75rem !important;
+      line-height: 1.4 !important;
+    }
+
+    .select2-selection__rendered {
+      font-size: 0.8125rem !important;
+      /* 13px */
+      line-height: 1.4 !important;
+    }
+  }
+
+  // Input group buttons
+  .input-group .btn {
+    font-size: 0.8125rem !important;
+    /* 13px */
+    padding: 0.375rem 0.75rem !important;
+  }
+
+  // Error text
+  .error-text {
+    font-size: 0.75rem !important;
+    /* 12px */
+  }
+
+  // Loading indicators
+  .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .search-loading,
+  .alert {
+    font-size: 0.8125rem !important;
+    /* 13px */
+  }
+}
+
+// ===================================
+// VALIDATION & ERROR STYLING
+// ===================================
+
+/* Ensure invalid feedback is visible for all field types */
+.invalid-feedback {
+  display: block !important;
+  color: var(--ticket-error-color);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
