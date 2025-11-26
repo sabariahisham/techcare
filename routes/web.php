@@ -320,8 +320,14 @@ Route::middleware(['auth'])->prefix('tickets')->group(function () {
   Route::post('/{ticket}/update-status', [TicketController::class, 'updateTicketStatus'])->name('tickets.update-status');
 });
 
+// Route for searching user by name - for ticket forms
+Route::middleware(['auth'])->post('/search-user-by-name', [TicketController::class, 'searchUserByName'])->name('search.user.by.name');
+
 // Route for searching user by email - for ticket forms
 Route::middleware(['auth'])->post('/search-user-by-email', [TicketController::class, 'searchUserByEmail'])->name('search.user.by.email');
+
+// Route for autocomplete user search - for ticket forms
+Route::middleware(['auth'])->post('/search-user-autocomplete', [TicketController::class, 'searchUserAutocomplete'])->name('search.user.autocomplete');
 
 // Route for getting subcategories by category - for ticket forms
 Route::get('/get-subcategory/{categoryId}', [App\Http\Controllers\Configuration\RefCategoryManagementController::class, 'getSubcategories'])->name('get.subcategory');

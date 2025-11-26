@@ -58,10 +58,6 @@ export default defineConfig({
   plugins: [
     laravel({
       input: [
-        'resources/css/app.css',
-        'resources/assets/css/demo.css',
-        'resources/assets/css/dashboard-layout.css',
-        'resources/js/app.js',
         ...pageJsFiles,
         ...vendorJsFiles,
         ...LibsJsFiles,
