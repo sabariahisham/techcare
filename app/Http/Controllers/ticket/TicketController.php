@@ -13,7 +13,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 use App\Http\Requests\Ticket\StoreTicketRequest;
-use App\Http\Requests\Ticket\UpdateTicketRequest;
 
 class TicketController extends Controller
 {
@@ -372,82 +371,11 @@ class TicketController extends Controller
     return view('tickets.show', compact('ticket', 'ticketHistory', 'allStatuses'));
   }
 
-  public function edit(Ticket $ticket)
-  {
-    //using index.blade.php
-    //this function is not used
-  }
+  // Edit functionality removed - complainants should only log and submit tickets
 
-  public function update(UpdateTicketRequest $request, Ticket $ticket)
-  {
+  // Update functionality removed - complainants should only log and submit tickets
 
-    //using index.blade.php
-    //this function is not used
-
-
-
-    // $validated = $request->validated();
-
-    // // Determine user_id based on ticket_type
-    // $user_id = $ticket->user_id; // Keep existing user_id by default
-
-    // if ($validated['ticket_type'] == 1) {
-    //   // Diri Sendiri - use authenticated user
-    //   $user_id = Auth::id();
-    // } else {
-    //   // Bagi Pihak - find user by email from search
-    //   $other_email = $validated['other_email'] ?? null;
-    //   if ($other_email) {
-    //     $otherUser = \App\Models\User::where('email', $other_email)->first();
-    //     if ($otherUser) {
-    //       $user_id = $otherUser->id;
-    //     } else {
-    //       return response()->json([
-    //         'success' => false,
-    //         'message' => 'Pengguna tidak dijumpai. Sila pastikan email yang dicari adalah betul.',
-    //         'errors' => ['other_email' => ['Pengguna dengan email ini tidak dijumpai dalam sistem.']]
-    //       ], 422);
-    //     }
-    //   } else {
-    //     return response()->json([
-    //       'success' => false,
-    //       'message' => 'Email pengguna diperlukan untuk aduan bagi pihak.',
-    //       'errors' => ['other_email' => ['Sila cari dan pilih pengguna terlebih dahulu.']]
-    //     ], 422);
-    //   }
-    // }
-
-    // $data = [
-    //   'user_id' => $user_id,
-    //   'cat_id' => $validated['cat_id'],
-    //   'subcat_id' => $validated['subcat_id'],
-    //   'ticket_title' => $validated['tick_title'], // Map tick_title to ticket_title
-    //   'ticket_desc' => $validated['tick_desc'], // Map tick_desc to ticket_desc
-    //   'ticket_type' => $validated['ticket_type'],
-    //   'updated_by' => Auth::id(),
-    // ];
-
-    // $ticket->update($data);
-
-    // return response()->json([
-    //   'success' => true,
-    //   'message' => 'Tiket berjaya dikemaskini!',
-    //   'ticket' => $ticket
-    // ]);
-  }
-
-  public function destroy(Ticket $ticket)
-  {
-    //using index.blade.php
-    //this function is not used
-
-    // $ticket->delete();
-
-    // return response()->json([
-    //   'success' => true,
-    //   'message' => 'Tiket berjaya dipadam!'
-    // ]);
-  }
+  // Delete functionality removed - complainants should only log and submit tickets
 
   public function searchUserByName(Request $request)
   {

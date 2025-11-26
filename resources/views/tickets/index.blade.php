@@ -33,7 +33,7 @@
 
 @section('content')
     <h4 class="mb-1">Senarai Tiket</h4>
-    <p class="mb-6">Papar, tambah, edit atau padam tiket berdasarkan peranan pengguna.</p>
+    <p class="mb-6">Papar dan tambah tiket berdasarkan peranan pengguna. Tiket yang telah dihantar tidak boleh diedit.</p>
 
     <!-- My Tickets Table -->
     <div class="card mb-4">

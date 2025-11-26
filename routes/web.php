@@ -314,9 +314,7 @@ Route::middleware(['auth'])->prefix('tickets')->group(function () {
   Route::get('/data', [TicketController::class, 'getData'])->name('tickets.data');
   Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
   Route::get('/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
-  Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
-  Route::put('/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
-  Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
+  // Edit, update and delete functionality removed - complainants should only log and submit tickets
   Route::post('/{ticket}/update-status', [TicketController::class, 'updateTicketStatus'])->name('tickets.update-status');
 });
 

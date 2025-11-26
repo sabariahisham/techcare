@@ -54,30 +54,7 @@ $(function () {
     });
   }
 
-  // Initialize Select2 for Edit Ticket form
-  function initializeEditTicketSelect2() {
-    // Check if Select2 is available
-    if (typeof $.fn.select2 === 'undefined') {
-      console.error('Select2 is not loaded!');
-      return;
-    }
-
-    $('#edit_cat_id').select2({
-      placeholder: '-- Pilih Kategori --',
-      allowClear: true,
-      width: '100%',
-      dropdownParent: $('#offcanvasEditTicket'),
-      theme: 'bootstrap-5'
-    });
-
-    $('#edit_subcat_id').select2({
-      placeholder: '-- Pilih Sub Kategori --',
-      allowClear: true,
-      width: '100%',
-      dropdownParent: $('#offcanvasEditTicket'),
-      theme: 'bootstrap-5'
-    });
-  }
+  // Edit functionality removed - complainants can only log tickets, not edit them
 
   // Initialize when Add Ticket offcanvas is shown
   $('#offcanvasAddTicket').on('shown.bs.offcanvas', function () {
@@ -113,40 +90,6 @@ $(function () {
     }, 150);
   });
 
-  // Initialize when Edit Ticket offcanvas is shown
-  $('#offcanvasEditTicket').on('shown.bs.offcanvas', function () {
-    // Auto-scroll to top of the offcanvas content
-    setTimeout(function () {
-      var offcanvasBody = $('#offcanvasEditTicket .offcanvas-body');
-      if (offcanvasBody.length > 0) {
-        offcanvasBody.scrollTop(0);
-      }
-    }, 100);
-
-    // Destroy existing select2 instances safely
-    try {
-      if ($('#edit_cat_id').hasClass('select2-hidden-accessible')) {
-        $('#edit_cat_id').select2('destroy');
-      }
-      if ($('#edit_subcat_id').hasClass('select2-hidden-accessible')) {
-        $('#edit_subcat_id').select2('destroy');
-      }
-    } catch (e) {
-      console.log('No existing Select2 to destroy');
-    }
-
-    // Disable HTML5 validation for custom handling
-    $('#editTicketForm').attr('novalidate', 'novalidate');
-
-    // Remove required attributes from fields that use custom validation
-    $('#edit_cat_id, #edit_subcat_id').removeAttr('required');
-
-    // Reinitialize with proper configuration
-    setTimeout(function () {
-      initializeEditTicketSelect2();
-    }, 150);
-  });
-
   // Clean up when offcanvas is hidden
   $('#offcanvasAddTicket').on('hidden.bs.offcanvas', function () {
     try {
@@ -161,19 +104,6 @@ $(function () {
     }
   });
 
-  $('#offcanvasEditTicket').on('hidden.bs.offcanvas', function () {
-    try {
-      if ($('#edit_cat_id').hasClass('select2-hidden-accessible')) {
-        $('#edit_cat_id').select2('destroy');
-      }
-      if ($('#edit_subcat_id').hasClass('select2-hidden-accessible')) {
-        $('#edit_subcat_id').select2('destroy');
-      }
-    } catch (e) {
-      console.log('Select2 cleanup error:', e);
-    }
-  });
-
   // Handle select2 selection events
   $(document).on('select2:select', '#cat_id', function (e) {
     // Close the dropdown
@@ -182,17 +112,7 @@ $(function () {
     $(this).trigger('change');
   });
 
-  $(document).on('select2:select', '#edit_cat_id', function (e) {
-    // Close the dropdown
-    $(this).select2('close');
-    // Trigger change for subcategory loading
-    $(this).trigger('change');
-  });
 
-  $(document).on('select2:select', '#subcat_id, #edit_subcat_id', function (e) {
-    // Close the dropdown
-    $(this).select2('close');
-  });
   // Handle ticket type change (ADD FORM)
   $('#ticketType').on('change', function () {
     if ($(this).val() == '0') {
@@ -207,23 +127,6 @@ $(function () {
       $('#otherInfo').addClass('d-none');
       // Show form fields for "Diri Sendiri"
       $('#ticketFormFields').removeClass('d-none');
-    }
-  });
-
-  // Handle ticket type change (EDIT FORM) - TAMBAH INI
-  $('#edit_ticketType').on('change', function () {
-    if ($(this).val() == '0') {
-      $('#edit_selfInfo').addClass('d-none');
-      $('#edit_otherInfo').removeClass('d-none');
-      // Hide form fields until user is found
-      $('#editTicketFormFields').addClass('d-none');
-      // Reset search when switching to "Bagi Pihak"
-      resetEditUserSearch();
-    } else {
-      $('#edit_selfInfo').removeClass('d-none');
-      $('#edit_otherInfo').addClass('d-none');
-      // Show form fields for "Diri Sendiri"
-      $('#editTicketFormFields').removeClass('d-none');
     }
   });
 
@@ -249,19 +152,6 @@ $(function () {
     clearUserFields();
   }
 
-  // Function to reset user search (EDIT FORM)
-  function resetEditUserSearch() {
-    $('#editFoundUserInfo').hide();
-    $('#editSearchLoading').hide();
-    // Hide alert notifications
-    $('#editSearchAlert').hide();
-    // Hide form fields when clearing search
-    $('#editTicketFormFields').addClass('d-none');
-    // Restore normal Select2 behavior
-    $('#edit_cat_id, #edit_subcat_id').next('.select2-container').removeClass('select2-normal-state');
-    clearEditUserFields();
-  }
-
   // Function to clear user fields (ADD FORM)
   function clearUserFields() {
     $('#other_name').val('');
@@ -275,21 +165,6 @@ $(function () {
     $('#other_unit').val('');
     $('#other_p').val('');
     $('#other_hp').val('');
-  }
-
-  // Function to clear user fields (EDIT FORM)
-  function clearEditUserFields() {
-    $('#edit_other_name').val('');
-    $('#edit_other_jawatan').val('');
-    $('#edit_other_skim').val('');
-    $('#edit_other_gred').val('');
-    $('#edit_other_email').val('');
-    $('#edit_other_sektor').val('');
-    $('#edit_other_agency').val('');
-    $('#edit_other_seksyen').val('');
-    $('#edit_other_unit').val('');
-    $('#edit_other_p').val('');
-    $('#edit_other_hp').val('');
   }
 
   // Handle search user button click (ADD FORM)
@@ -312,11 +187,6 @@ $(function () {
   // Handle clear search button (ADD FORM)
   $('#clearSearchBtn').on('click', function () {
     resetUserSearch();
-  });
-
-  // Handle clear search button (EDIT FORM)
-  $('#editClearSearchBtn').on('click', function () {
-    resetEditUserSearch();
   });
 
   // Autocomplete functionality variables
@@ -526,11 +396,17 @@ $(function () {
     }
   });
 
-  // Function to search user by name
-  function searchUserByName(nameOrEmail, isEdit, fromAutocomplete = false) {
-    var loadingElement = isEdit ? $('#editSearchLoading') : $('#searchLoading');
-    var userInfoElement = isEdit ? $('#editFoundUserInfo') : $('#foundUserInfo');
-    var searchBtn = isEdit ? $('#editSearchUserBtn') : $('#searchUserBtn');
+  // Function to search user by name (ADD FORM only - edit functionality removed)
+  function searchUserByName(nameOrEmail, isEdit = false, fromAutocomplete = false) {
+    // Edit functionality disabled - only support add form
+    if (isEdit) {
+      console.warn('Edit functionality disabled for complainants');
+      return;
+    }
+
+    var loadingElement = $('#searchLoading');
+    var userInfoElement = $('#foundUserInfo');
+    var searchBtn = $('#searchUserBtn');
 
     // Show loading, hide user info
     loadingElement.show();
@@ -551,30 +427,20 @@ $(function () {
       data: searchData,
       success: function (response) {
         if (response.success && response.user) {
-          // Populate user fields
-          if (isEdit) {
-            populateEditUserFields(response.user);
-          } else {
-            populateUserFields(response.user);
-          }
+          // Populate user fields (add form only)
+          populateUserFields(response.user);
 
           // Show user info section
           userInfoElement.show();
 
           // Hide any existing alerts
-          var alertContainer = isEdit ? $('#editSearchAlert') : $('#searchAlert');
+          var alertContainer = $('#searchAlert');
           alertContainer.hide();
 
           // Show form fields after user is found
-          if (isEdit) {
-            $('#editTicketFormFields').removeClass('d-none');
-            // Remove blue border from Select2 elements in edit form
-            $('#edit_cat_id, #edit_subcat_id').next('.select2-container').addClass('select2-normal-state');
-          } else {
-            $('#ticketFormFields').removeClass('d-none');
-            // Remove blue border from Select2 elements in add form
-            $('#cat_id, #subcat_id').next('.select2-container').addClass('select2-normal-state');
-          }
+          $('#ticketFormFields').removeClass('d-none');
+          // Remove blue border from Select2 elements in add form
+          $('#cat_id, #subcat_id').next('.select2-container').addClass('select2-normal-state');
 
           // Show success message
           toastr.success('Maklumat pengguna berjaya ditemui!');
@@ -583,8 +449,8 @@ $(function () {
           userInfoElement.hide();
 
           // Show inline alert notification in the form
-          var alertContainer = isEdit ? $('#editSearchAlert') : $('#searchAlert');
-          var alertMessage = isEdit ? $('#editSearchAlertMessage') : $('#searchAlertMessage');
+          var alertContainer = $('#searchAlert');
+          var alertMessage = $('#searchAlertMessage');
 
           alertMessage.text(response.message || 'Pengguna tidak ditemui dengan nama tersebut. Sila periksa nama dan cuba lagi.');
           alertContainer.show();
@@ -607,8 +473,8 @@ $(function () {
         userInfoElement.hide();
 
         // Show inline alert notification in the form
-        var alertContainer = isEdit ? $('#editSearchAlert') : $('#searchAlert');
-        var alertMessage = isEdit ? $('#editSearchAlertMessage') : $('#searchAlertMessage');
+        var alertContainer = $('#searchAlert');
+        var alertMessage = $('#searchAlertMessage');
 
         alertMessage.text(message);
         alertContainer.show();
@@ -649,29 +515,7 @@ $(function () {
     $('#other_hp').val(getValueOrFallback(user.tel_no_hp));
   }
 
-  // Function to populate user fields (VALUE-EDIT FORM BAGI PIHAK)
-  function populateEditUserFields(user) {
-    $('#edit_other_name').val(getValueOrFallback(user.nama));
-    $('#edit_other_jawatan').val(getValueOrFallback(user.nama_jawatan) || getValueOrFallback(user.kod_jawatan));
-
-    // Handle Skim Perkhidmatan with complex formatting
-    var skimValue = 'Tiada data';
-    if (getValueOrFallback(user.nama_skim, null) && getValueOrFallback(user.kod_skim, null)) {
-      skimValue = user.nama_skim + ' (' + user.kod_skim + ')';
-    } else if (getValueOrFallback(user.kod_skim, null)) {
-      skimValue = user.kod_skim;
-    }
-    $('#edit_other_skim').val(skimValue);
-
-    $('#edit_other_gred').val(getValueOrFallback(user.nama_gred) || getValueOrFallback(user.kod_gred));
-    $('#edit_other_email').val(getValueOrFallback(user.email));
-    $('#edit_other_sektor').val(getValueOrFallback(user.nama_sektor) || getValueOrFallback(user.kod_sektor));
-    $('#edit_other_agency').val(getValueOrFallback(user.nama_bah) || getValueOrFallback(user.kod_bah));
-    $('#edit_other_seksyen').val(getValueOrFallback(user.nama_sec) || getValueOrFallback(user.kod_sec));
-    $('#edit_other_unit').val(getValueOrFallback(user.nama_unit) || getValueOrFallback(user.kod_unit));
-    $('#edit_other_p').val(getValueOrFallback(user.tel_no_p));
-    $('#edit_other_hp').val(getValueOrFallback(user.tel_no_hp));
-  }
+  // Edit form user population function removed - edit functionality disabled for complainants
 
   // Handle category change for subcategory (ADD FORM)
   $('#cat_id').change(function () {
@@ -705,51 +549,7 @@ $(function () {
     }
   });
 
-  // Handle category change for subcategory (EDIT FORM) - TAMBAH INI
-  $('#edit_cat_id').change(function () {
-    var catID = $(this).val();
-    console.log('Edit category changed:', catID);
-
-    if (catID) {
-      $.ajax({
-        url: '/get-subcategory/' + catID,
-        type: 'GET',
-        success: function (data) {
-          console.log('Edit subcategories loaded:', data);
-
-          // Clear and repopulate subcategory dropdown
-          $('#edit_subcat_id').empty();
-          $('#edit_subcat_id').append('<option value="">-- Pilih Sub Kategori --</option>');
-
-          $.each(data, function (key, value) {
-            $('#edit_subcat_id').append('<option value="' + value.id + '">' + value.name + '</option>');
-          });
-
-          // Reinitialize Select2 if it was destroyed
-          if (!$('#edit_subcat_id').hasClass('select2-hidden-accessible')) {
-            setTimeout(function () {
-              $('#edit_subcat_id').select2({
-                placeholder: '-- Pilih Sub Kategori --',
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#offcanvasEditTicket'),
-                theme: 'bootstrap-5'
-              });
-            }, 100);
-          }
-        },
-        error: function (xhr) {
-          console.error('Error loading subcategories:', xhr);
-          if (typeof toastr !== 'undefined') {
-            toastr.error('Ralat memuat subkategori');
-          }
-        }
-      });
-    } else {
-      $('#edit_subcat_id').empty();
-      $('#edit_subcat_id').append('<option value="">-- Pilih Sub Kategori --</option>');
-    }
-  });
+  // Edit category change handler removed - edit functionality disabled for complainants
 
   // Function to clear all validation errors
   function clearValidationErrors() {
@@ -1184,149 +984,9 @@ $(function () {
     });
   });
 
-  // Function to validate form based on ticket type (EDIT FORM)
-  function validateEditForm() {
-    clearValidationErrors();
-    var isValid = true;
-    var errors = {};
+  // Edit form validation function removed - edit functionality disabled for complainants
 
-    var ticketType = $('#edit_ticketType').val();
-
-    // Validate based on ticket type
-    if (ticketType == '0') {
-      // Bagi Pihak - check if user search was completed
-      if (!$('#editFoundUserInfo').is(':visible')) {
-        errors['other_email'] = ['Sila cari pengguna menggunakan nama untuk aduan bagi pihak.'];
-        isValid = false;
-      } else {
-        // If user info is shown, validate the readonly fields have values
-        var otherEmail = $('#edit_other_email').val();
-        if (!otherEmail || otherEmail.trim() === '') {
-          errors['other_email'] = ['Sila cari dan pilih pengguna untuk aduan bagi pihak.'];
-          isValid = false;
-        }
-      }
-    }
-
-    // Common validations
-    var title = $('#editTicketForm [name="tick_title"]').val();
-    var category = $('#editTicketForm [name="cat_id"]').val();
-    var subcategory = $('#editTicketForm [name="subcat_id"]').val();
-    var description = $('#editTicketForm [name="tick_desc"]').val();
-
-    if (!title || title.trim() === '') {
-      errors['tick_title'] = ['Tajuk aduan diperlukan.'];
-      isValid = false;
-    }
-
-    if (!category || category === '') {
-      errors['cat_id'] = ['Sila pilih kategori.'];
-      isValid = false;
-    }
-
-    if (!subcategory || subcategory === '') {
-      errors['subcat_id'] = ['Sila pilih sub kategori.'];
-      isValid = false;
-    }
-
-    if (!description || description.trim() === '') {
-      errors['tick_desc'] = ['Keterangan aduan diperlukan.'];
-      isValid = false;
-    }
-
-    // Validate file attachments
-    var attachmentField = $('#editTicketForm [name="attachments[]"]');
-    if (attachmentField.length > 0 && attachmentField[0].files && attachmentField[0].files.length > 0) {
-      var allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
-      var maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
-
-      for (var i = 0; i < attachmentField[0].files.length; i++) {
-        var file = attachmentField[0].files[i];
-        var fileName = file.name.toLowerCase();
-        var fileExtension = fileName.split('.').pop();
-
-        // Check file extension
-        if (!allowedExtensions.includes(fileExtension)) {
-          errors['attachments'] = ['Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG.'];
-          isValid = false;
-          break;
-        }
-
-        // Check file size
-        if (file.size > maxFileSize) {
-          errors['attachments'] = ['Saiz fail lampiran tidak boleh melebihi 2MB.'];
-          isValid = false;
-          break;
-        }
-      }
-    }
-
-    if (!isValid) {
-      displayValidationErrors(errors);
-    }
-
-    return isValid;
-  }
-
-  // Handle form submission (EDIT FORM) - TAMBAH INI
-  $('#editTicketForm').on('submit', function (e) {
-    e.preventDefault();
-
-    // Client-side validation
-    if (!validateEditForm()) {
-      toastr.error('Sila betulkan ralat dalam borang sebelum menghantar.');
-      return;
-    }
-
-    var formData = new FormData(this);
-    var ticketId = $('#edit_ticket_id').val();
-    var submitBtn = $(this).find('button[type="submit"]');
-
-    // Add method spoofing for PUT request
-    formData.append('_method', 'PUT');
-
-    // Disable submit button
-    submitBtn.prop('disabled', true).text('Mengemas kini...');
-
-    $.ajax({
-      url: '/tickets/' + ticketId,
-      type: 'POST',
-      data: formData,
-      processData: false,
-      contentType: false,
-      success: function (response) {
-        // Clear any validation errors
-        clearValidationErrors();
-
-        // Close offcanvas
-        $('#offcanvasEditTicket').offcanvas('hide');
-
-        // Reload both DataTables
-        reloadAllTables();
-
-        // Show success message
-        if (typeof toastr !== 'undefined') {
-          toastr.success(response.message || 'Tiket berjaya dikemas kini!');
-        }
-      },
-      error: function (xhr) {
-        console.log('Edit form submission error:', xhr.responseJSON);
-        var response = xhr.responseJSON;
-        if (response && response.errors) {
-          console.log('Server validation errors for edit form:', response.errors);
-          // Display validation errors from server
-          displayValidationErrors(response.errors);
-          toastr.error('Sila betulkan ralat dalam borang.');
-        } else {
-          toastr.error('Ralat berlaku. Sila cuba lagi.');
-        }
-      },
-      complete: function () {
-        // Re-enable submit button
-        submitBtn.prop('disabled', false).text('Kemaskini Tiket');
-      }
-    });
-  });
+  // Edit form submission handler removed - edit functionality disabled for complainants
 
   // Handle delete ticket
   $(document).on('click', '.delete-record', function () {
@@ -1361,47 +1021,7 @@ $(function () {
     });
   });
 
-  // Function to load ticket data for editing
-  window.loadTicketData = function (ticket) {
-    console.log('Loading ticket data:', ticket);
-
-    // Set basic ticket information
-    $('#edit_ticket_id').val(ticket.id);
-    $('#edit_tick_title').val(ticket.ticket_title);  // Updated field mapping
-    $('#edit_tick_desc').val(ticket.ticket_desc);    // Updated field mapping
-
-    // Clear any previous validation errors
-    clearValidationErrors();
-
-    // Set ticket type and trigger change first
-    $('#edit_ticketType').val(ticket.ticket_type).trigger('change');
-
-    // Set category - make sure to destroy and reinitialize Select2 if needed
-    if ($('#edit_cat_id').hasClass('select2-hidden-accessible')) {
-      $('#edit_cat_id').select2('destroy');
-    }
-
-    $('#edit_cat_id').val(ticket.cat_id);
-
-    // Reinitialize Select2 for category
-    initializeEditTicketSelect2();
-
-    // Trigger change to load subcategories
-    $('#edit_cat_id').trigger('change');
-
-    // Wait for subcategories to load, then set the value
-    setTimeout(function () {
-      $('#edit_subcat_id').val(ticket.subcat_id);
-
-      // Reinitialize Select2 for subcategory if needed
-      if ($('#edit_subcat_id').hasClass('select2-hidden-accessible')) {
-        $('#edit_subcat_id').select2('destroy');
-        setTimeout(function () {
-          initializeEditTicketSelect2();
-        }, 100);
-      }
-    }, 800);
-  };
+  // loadTicketData function removed - edit functionality disabled for complainants
 
   // Handle view button click
   $(document).on('click', '.view-record', function () {
@@ -1411,35 +1031,10 @@ $(function () {
     window.location.href = '/tickets/' + ticketId;
   });
 
-  // Handle edit button click - TAMBAH INI
-  $(document).on('click', '.edit-record', function () {
-    var ticketId = $(this).data('id');
+  // Edit button click handler removed - edit functionality disabled for complainants
 
-    // Fetch ticket data
-    $.ajax({
-      url: '/tickets/' + ticketId + '/edit',
-      type: 'GET',
-      success: function (response) {
-        // Load data into form
-        loadTicketData(response.ticket);
-
-        // Show offcanvas
-        $('#offcanvasEditTicket').offcanvas('show');
-
-        // Initialize custom validation messages for edit form
-        setCustomValidationMessages();
-
-        // Clear any existing validation errors since we're loading valid data
-        clearValidationErrors();
-      },
-      error: function () {
-        toastr.error('Ralat memuat data tiket');
-      }
-    });
-  });
-
-  // Clear validation errors when ticket type changes
-  $(document).on('change', '#ticketType, #edit_ticket_type', function () {
+  // Clear validation errors when ticket type changes (add form only)
+  $(document).on('change', '#ticketType', function () {
     clearValidationErrors();
   });
 
@@ -1458,8 +1053,8 @@ $(function () {
     }
   });
 
-  // Handle Select2 specific change events
-  $(document).on('select2:select select2:unselect', '#cat_id, #subcat_id, #edit_cat_id, #edit_subcat_id', function () {
+  // Handle Select2 specific change events (add form only - edit functionality removed)
+  $(document).on('select2:select select2:unselect', '#cat_id, #subcat_id', function () {
     var field = $(this);
     // Remove validation errors for Select2 fields
     field.removeClass('is-invalid');
@@ -1470,8 +1065,8 @@ $(function () {
   // Initialize custom validation messages on document ready
   setCustomValidationMessages();
 
-  // Re-initialize when offcanvas is shown
-  $('#offcanvasAddTicket, #offcanvasEditTicket').on('shown.bs.offcanvas', function () {
+  // Re-initialize when add ticket offcanvas is shown (edit functionality removed)
+  $('#offcanvasAddTicket').on('shown.bs.offcanvas', function () {
     setCustomValidationMessages();
   });
 });
