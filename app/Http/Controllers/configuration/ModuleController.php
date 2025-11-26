@@ -70,7 +70,7 @@ class ModuleController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:module_list,module_name',
+            'name' => 'required|string|max:255|unique:module_list,module_name,NULL,id,deleted_at,NULL',
             'status' => 'required'
         ]);
 
@@ -126,12 +126,31 @@ class ModuleController extends Controller
                 ],
             ];
 
-             // create, edit, view, delete 
+             // create, edit, view, delete
 
             foreach ($permissions as $permissionData) {
-                // Add created_by to permission data
-                $permissionData['created_by'] = Auth::id();
-                Permission::create($permissionData);
+                // Check if a soft-deleted permission with this name exists
+                $existingPermission = Permission::withTrashed()
+                    ->where('name', $permissionData['name'])
+                    ->where('guard_name', $permissionData['guard_name'])
+                    ->first();
+
+                if ($existingPermission && $existingPermission->trashed()) {
+                    // Restore the soft-deleted permission and update its data
+                    $existingPermission->restore();
+                    $existingPermission->update([
+                        'module' => $permissionData['module'],
+                        'description' => $permissionData['description'],
+                        'is_active' => $permissionData['is_active'],
+                        'sort_order' => $permissionData['sort_order'],
+                        'updated_by' => Auth::id(),
+                        'deleted_by' => null,
+                    ]);
+                } else {
+                    // Create new permission
+                    $permissionData['created_by'] = Auth::id();
+                    Permission::create($permissionData);
+                }
             }
 
             DB::commit();
@@ -189,7 +208,7 @@ class ModuleController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:module_list,module_name,' . $id . ',id'
+            'name' => 'required|string|max:255|unique:module_list,module_name,' . $id . ',id,deleted_at,NULL'
         ]);
 
         if ($validator->fails()) {
