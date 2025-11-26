@@ -51,9 +51,9 @@
             <span class="text-heading">Jumlah Kategori</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ $totalCategories }}</h4>
-              {{-- <p class="text-success mb-0">(100%)</p> --}}
+              <p class="text-success mb-0">({{ $categoryPercentage }}%)</p>
             </div>
-            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
+            <small class="mb-0">{{ $categoriesWithOfficers }} daripada {{ $totalCategories }} kategori telah diisytihar pegawai tugasan</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-primary">
@@ -72,9 +72,9 @@
             <span class="text-heading">Jumlah Sub-Kategori</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ $totalSubCategories }}</h4>
-              {{-- <p class="text-success mb-0">(100%)</p> --}}
+              <p class="text-success mb-0">({{ $subCategoryPercentage }}%)</p>
             </div>
-            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
+            <small class="mb-0">{{ $subCategoriesWithOfficers }} daripada {{ $totalSubCategories }} sub-kategori telah diisytihar pegawai tugasan</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-success">

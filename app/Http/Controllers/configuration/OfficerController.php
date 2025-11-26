@@ -25,7 +25,15 @@ class OfficerController extends Controller
         $totalSlas = Sla::count();
         $totalOfficers = Officer::count();
 
-        return view('officers.index', compact('categories', 'users', 'totalCategories', 'totalSubCategories', 'totalSlas', 'totalOfficers'));
+        // Calculate categories with officers assigned
+        $categoriesWithOfficers = RefCategory::whereHas('officers')->count();
+        $categoryPercentage = $totalCategories > 0 ? round(($categoriesWithOfficers / $totalCategories) * 100, 2) : 0;
+
+        // Calculate sub-categories with officers assigned
+        $subCategoriesWithOfficers = RefSubCategory::whereHas('officers')->count();
+        $subCategoryPercentage = $totalSubCategories > 0 ? round(($subCategoriesWithOfficers / $totalSubCategories) * 100, 2) : 0;
+
+        return view('officers.index', compact('categories', 'users', 'totalCategories', 'totalSubCategories', 'totalSlas', 'totalOfficers', 'categoriesWithOfficers', 'categoryPercentage', 'subCategoriesWithOfficers', 'subCategoryPercentage'));
     }
 
     public function data(Request $request)

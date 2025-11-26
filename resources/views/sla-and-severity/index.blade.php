@@ -1,6 +1,6 @@
 @extends('layouts/layoutMaster')
 
-@section('title', 'Senarai SLA & Severity')
+@section('title', 'Senarai Tahap Pegawai Tugasan &  Tahap Keterukan')
 
 @section('vendor-style')
 @vite([
@@ -51,9 +51,9 @@
             <span class="text-heading">Jumlah Kategori</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ $totalCategories }}</h4>
-              {{-- <p class="text-success mb-0">(100%)</p> --}}
+              <p class="text-success mb-0">({{ $categoryPercentage }}%)</p>
             </div>
-            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
+            <small class="mb-0">{{ $categoriesWithSla }} daripada {{ $totalCategories }} kategori telah diisytihar SLA</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-primary">
@@ -72,9 +72,9 @@
             <span class="text-heading">Jumlah Sub-Kategori</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ $totalSubCategories }}</h4>
-              {{-- <p class="text-success mb-0">(100%)</p> --}}
+              <p class="text-success mb-0">({{ $subCategoryPercentage }}%)</p>
             </div>
-            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
+            <small class="mb-0">{{ $subCategoriesWithSla }} daripada {{ $totalSubCategories }} sub-kategori telah diisytihar SLA</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-success">
@@ -108,7 +108,7 @@
   </div>
 <div class="card">
   <div class="card-header border-bottom">
-    <h5 class="card-title mb-0">SENARAI SLA & SEVERITY</h5>
+    <h5 class="card-title mb-0">SENARAI TAHAP PEGAWAI TUGASAN & SEVERITY</h5>
   </div>
   <div class="card-datatable table-responsive">
     <table class="datatables-sla table border-top">
@@ -119,7 +119,7 @@
           {{-- <th>Kategori</th> --}}
           <th>Sub Kategori</th>
           <th>Tahap Pegawai Tugasan</th>
-          <th>Tahap Keterukan</th>
+          <th>Severity</th>
           <th>Hari</th>
           <th>Tindakan</th>
         </tr>
@@ -161,12 +161,12 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-sla-severity">Tahap Keterukan</label>
+          <label class="form-label" for="add-sla-severity">Severity</label>
           <select class="form-select" id="add-sla-severity" name="sla_severity" required>
-            <option value="">Pilih Tahap Keterukan</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
+            <option value="">Pilih Severity</option>
+            <option value="High">HIGH</option>
+            <option value="Medium">MEDIUM</option>
+            <option value="Low">LOW</option>
           </select>
         </div>
         <div class="mb-6">
@@ -214,12 +214,12 @@
         </select>
       </div>
       <div class="mb-6">
-        <label class="form-label" for="edit_sla_severity">Tahap Keterukan</label>
+        <label class="form-label" for="edit_sla_severity">Severity</label>
         <select class="form-select" id="edit_sla_severity" name="sla_severity" required>
-          <option value="">Pilih Tahap Keterukan</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
+          <option value="">Pilih Severity</option>
+          <option value="High">HIGH</option>
+          <option value="Medium">MEDIUM</option>
+          <option value="Low">LOW</option>
         </select>
       </div>
       <div class="mb-6">
