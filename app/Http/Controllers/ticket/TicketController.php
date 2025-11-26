@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Ticket;
 
+use id;
 use App\Models\User;
 use App\Models\Ticket;
 use App\Models\RefCategory;
-use App\Models\TicketChronology;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\RefTicketStatus;
+use App\Models\TicketChronology;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
@@ -388,6 +389,7 @@ class TicketController extends Controller
     // Search for user by name with relationships
     $user = User::with(['sektor', 'bahagian', 'seksyen', 'unit', 'jawatan', 'skim'])
       ->where('nama', 'like', '%' . $name . '%')
+      ->where('id', '!=', Auth::id()) // Exclude current user
       ->first();
 
     if (!$user) {
@@ -456,6 +458,7 @@ class TicketController extends Controller
     // Search for user by exact email with relationships
     $user = User::with(['sektor', 'bahagian', 'seksyen', 'unit', 'jawatan', 'skim'])
       ->where('email', $email)
+      ->where('id', '!=', auth()->id()) // Exclude current user
       ->first();
 
     if (!$user) {
@@ -529,6 +532,7 @@ class TicketController extends Controller
         // Secondary search: by email username part (before @)
         $q->orWhere('email', 'like', $query . '%@%');
       })
+      ->where('id', '!=', auth()->id()) // Exclude current user
       ->whereNotNull('nama') // Ensure nama is not null
       ->where('nama', '!=', '') // Ensure nama is not empty
       ->where('nama', 'not like', '%@%') // Exclude email-like names

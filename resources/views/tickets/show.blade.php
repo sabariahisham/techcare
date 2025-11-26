@@ -32,7 +32,7 @@
                         @if ($ticket->ticket_type == 1)
                             Maklumat Pengadu
                         @else
-                            Maklumat Bagi Pihak
+                            Maklumat Pengadu (Bagi Pihak)
                         @endif
                     </h5>
                 </div>

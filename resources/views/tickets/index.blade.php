@@ -28,7 +28,13 @@
 @endsection
 
 @section('page-script')
-    @vite(['resources/assets/js/ticket/ticket-list.js', 'resources/assets/js/ticket/ticket.js'])
+    @vite([
+      'resources/assets/js/ticket/ticket-list.js',
+      'resources/assets/js/ticket/ticket-config.js',
+      'resources/assets/js/ticket/ticket-add.js',
+      'resources/assets/js/ticket/ticket-search-user.js',
+      'resources/assets/js/ticket/ticket-attachment-file.js',
+      ])
 @endsection
 
 @section('content')
