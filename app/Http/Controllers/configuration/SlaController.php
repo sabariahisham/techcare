@@ -21,7 +21,15 @@ class SlaController extends Controller
         $totalSubCategories = RefSubCategory::count();
         $totalSlas = Sla::count();
 
-        return view('sla-and-severity.index', compact('categories', 'subCategories', 'totalCategories', 'totalSubCategories', 'totalSlas'));
+        // Calculate categories with SLA declared
+        $categoriesWithSla = RefCategory::has('slas')->count();
+        $categoryPercentage = $totalCategories > 0 ? round(($categoriesWithSla / $totalCategories) * 100, 2) : 0;
+
+        // Calculate sub-categories with SLA declared
+        $subCategoriesWithSla = RefSubCategory::has('slas')->count();
+        $subCategoryPercentage = $totalSubCategories > 0 ? round(($subCategoriesWithSla / $totalSubCategories) * 100, 2) : 0;
+
+        return view('sla-and-severity.index', compact('categories', 'subCategories', 'totalCategories', 'totalSubCategories', 'totalSlas', 'categoriesWithSla', 'categoryPercentage', 'subCategoriesWithSla', 'subCategoryPercentage'));
     }
 
     public function data(Request $request)
@@ -39,7 +47,7 @@ class SlaController extends Controller
             ->editColumn('sla_level', function ($sla) {
                 $level = $sla->sla_level;
                 $badgeClass = '';
-                $badgeText = 'Level ' . $level;
+                $badgeText = 'Tahap ' . $level;
 
                 switch($level) {
                     case '1':
@@ -63,12 +71,15 @@ class SlaController extends Controller
                 switch($severity) {
                     case 'high':
                         $badgeClass = 'bg-danger';
+                        $badgeText = 'HIGH';
                         break;
                     case 'medium':
                         $badgeClass = 'bg-warning';
+                        $badgeText = 'MEDIUM';
                         break;
                     case 'low':
                         $badgeClass = 'bg-success';
+                        $badgeText = 'LOW';
                         break;
                     default:
                         $badgeClass = 'bg-secondary';

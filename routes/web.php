@@ -166,6 +166,7 @@ use App\Http\Controllers\apps\EcommerceCustomerDetailsNotifications;
 use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
+use App\Http\Controllers\Configuration\ReportController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 use App\Http\Controllers\dashboard\DashboardController;
 
@@ -290,6 +291,12 @@ Route::middleware(['auth'])->group(function () {
   Route::put('/officer/{id}', [App\Http\Controllers\Configuration\OfficerController::class, 'update'])->name('officer-update');
   Route::get('/officer/{id}/preview-delete', [App\Http\Controllers\Configuration\OfficerController::class, 'previewDelete'])->name('officer-preview-delete');
   Route::delete('/officer/{id}', [App\Http\Controllers\Configuration\OfficerController::class, 'destroy'])->name('officer-destroy');
+});
+
+// report management
+Route::middleware(['auth'])->group(function () {
+  Route::get('/report/index', [App\Http\Controllers\Configuration\ReportController::class, 'index'])->name('report-index');
+  Route::get('/report/data', [App\Http\Controllers\Configuration\ReportController::class, 'data'])->name('report-data');
 });
 
 // references

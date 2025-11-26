@@ -20,7 +20,7 @@
       "slug": "knowledgebase-index"
     },
     {
-      "url": "#",
+      "url": "report/index",
       "icon": "menu-icon icon-base bx bx-spreadsheet",
       "name": "Laporan",
       "slug": "report-index",
@@ -82,7 +82,7 @@
             },
             {
               "url": "sla-severity/index",
-              "name": "SLA & Severity",
+              "name": "Tahap & Severity",
               "slug": "sla-severity-index",
               "permission": "konfigurasi.view"
             },

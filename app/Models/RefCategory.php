@@ -34,5 +34,10 @@ class RefCategory extends Model
     {
         return $this->hasMany(Sla::class, 'cat_id');
     }
+
+    public function officers()
+    {
+        return $this->hasMany(Officer::class, 'cat_id');
+    }
 }
 
