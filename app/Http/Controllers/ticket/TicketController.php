@@ -152,7 +152,7 @@ class TicketController extends Controller
       // Administrator can see all tickets
       $query->latest();
     } elseif ($user->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
-      // Helpdesk roles can see all tickets except drafts or specific statuses if needed
+      // Helpdesk roles can see all tickets except specific statuses if needed
       $query->latest();
     } elseif ($user->hasRole('Pegawai Tugasan')) {
       // Pegawai Tugasan can see tickets assigned to them via escalation
@@ -257,32 +257,20 @@ class TicketController extends Controller
     $user = Auth::user();
     $buttons = [];
 
-    // View button - always available
-    //$buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></button>';
-
-    //if ($context !== 'my') {
-      if ($context === 'my') {
-      // For user's own tickets
+    // View button for all tickets
+    if ($context === 'my') {
       $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></button>';
-      // Edit button - only if ticket is not closed or cancelled
-      // if ($ticket->status && $ticket->status->st_name === 'Aduan Baru') {
-      //   $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Edit"><i class="bx bx-edit"></i></button>';
-      //   $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Delete"><i class="bx bx-trash"></i></button>';
-      // }
-      } else {
+    } else {
       // For tickets to manage
       if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
-        // Admin and helpdesk roles can edit and manage tickets
         $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm manage-ticket" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Manage Status"><i class="bx bx-cog"></i></button>';
       } elseif ($user->hasRole('Pegawai Tugasan')) {
-        // Pegawai Tugasan can update status of assigned tickets
         $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm manage-ticket" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Update Status"><i class="bx bx-task"></i></button>';
       }
     }
 
     return '<div class="d-inline-block text-nowrap">' . implode(' ', $buttons) . '</div>';
   }
-
 
   public function index()
   {
@@ -307,7 +295,7 @@ class TicketController extends Controller
       // Bagi Pihak - find user by email from search
       $other_email = $validated['other_email'] ?? null;
       if ($other_email) {
-        $otherUser = \App\Models\User::where('email', $other_email)->first();
+        $otherUser = User::where('email', $other_email)->first();
         if ($otherUser) {
           $user_id = $otherUser->id;
         } else {
@@ -342,7 +330,6 @@ class TicketController extends Controller
       'tick_duedate' => null, // You can add logic for due date calculation
       'created_by' => Auth::id(),
     ];
-
     // Remove the other_person fields logic since we're using user_id directly
 
     $ticket = Ticket::create($data);
@@ -387,96 +374,98 @@ class TicketController extends Controller
 
   public function edit(Ticket $ticket)
   {
-    // Load the ticket with its relationships including user's organizational data
-    $ticket->load(['category', 'subCategory', 'user.sektor', 'user.bahagian', 'user.seksyen', 'user.unit', 'user.jawatan', 'user.skim']);
-
-    $categories = RefCategory::all();
-
-    return response()->json([
-      'ticket' => $ticket,
-      'categories' => $categories
-    ]);
+    //using index.blade.php
+    //this function is not used
   }
 
   public function update(UpdateTicketRequest $request, Ticket $ticket)
   {
-    $validated = $request->validated();
 
-    // Determine user_id based on ticket_type
-    $user_id = $ticket->user_id; // Keep existing user_id by default
+    //using index.blade.php
+    //this function is not used
 
-    if ($validated['ticket_type'] == 1) {
-      // Diri Sendiri - use authenticated user
-      $user_id = Auth::id();
-    } else {
-      // Bagi Pihak - find user by email from search
-      $other_email = $validated['other_email'] ?? null;
-      if ($other_email) {
-        $otherUser = \App\Models\User::where('email', $other_email)->first();
-        if ($otherUser) {
-          $user_id = $otherUser->id;
-        } else {
-          return response()->json([
-            'success' => false,
-            'message' => 'Pengguna tidak dijumpai. Sila pastikan email yang dicari adalah betul.',
-            'errors' => ['other_email' => ['Pengguna dengan email ini tidak dijumpai dalam sistem.']]
-          ], 422);
-        }
-      } else {
-        return response()->json([
-          'success' => false,
-          'message' => 'Email pengguna diperlukan untuk aduan bagi pihak.',
-          'errors' => ['other_email' => ['Sila cari dan pilih pengguna terlebih dahulu.']]
-        ], 422);
-      }
-    }
 
-    $data = [
-      'user_id' => $user_id,
-      'cat_id' => $validated['cat_id'],
-      'subcat_id' => $validated['subcat_id'],
-      'ticket_title' => $validated['tick_title'], // Map tick_title to ticket_title
-      'ticket_desc' => $validated['tick_desc'], // Map tick_desc to ticket_desc
-      'ticket_type' => $validated['ticket_type'],
-      'updated_by' => Auth::id(),
-    ];
 
-    $ticket->update($data);
+    // $validated = $request->validated();
 
-    return response()->json([
-      'success' => true,
-      'message' => 'Tiket berjaya dikemaskini!',
-      'ticket' => $ticket
-    ]);
+    // // Determine user_id based on ticket_type
+    // $user_id = $ticket->user_id; // Keep existing user_id by default
+
+    // if ($validated['ticket_type'] == 1) {
+    //   // Diri Sendiri - use authenticated user
+    //   $user_id = Auth::id();
+    // } else {
+    //   // Bagi Pihak - find user by email from search
+    //   $other_email = $validated['other_email'] ?? null;
+    //   if ($other_email) {
+    //     $otherUser = \App\Models\User::where('email', $other_email)->first();
+    //     if ($otherUser) {
+    //       $user_id = $otherUser->id;
+    //     } else {
+    //       return response()->json([
+    //         'success' => false,
+    //         'message' => 'Pengguna tidak dijumpai. Sila pastikan email yang dicari adalah betul.',
+    //         'errors' => ['other_email' => ['Pengguna dengan email ini tidak dijumpai dalam sistem.']]
+    //       ], 422);
+    //     }
+    //   } else {
+    //     return response()->json([
+    //       'success' => false,
+    //       'message' => 'Email pengguna diperlukan untuk aduan bagi pihak.',
+    //       'errors' => ['other_email' => ['Sila cari dan pilih pengguna terlebih dahulu.']]
+    //     ], 422);
+    //   }
+    // }
+
+    // $data = [
+    //   'user_id' => $user_id,
+    //   'cat_id' => $validated['cat_id'],
+    //   'subcat_id' => $validated['subcat_id'],
+    //   'ticket_title' => $validated['tick_title'], // Map tick_title to ticket_title
+    //   'ticket_desc' => $validated['tick_desc'], // Map tick_desc to ticket_desc
+    //   'ticket_type' => $validated['ticket_type'],
+    //   'updated_by' => Auth::id(),
+    // ];
+
+    // $ticket->update($data);
+
+    // return response()->json([
+    //   'success' => true,
+    //   'message' => 'Tiket berjaya dikemaskini!',
+    //   'ticket' => $ticket
+    // ]);
   }
 
   public function destroy(Ticket $ticket)
   {
-    $ticket->delete();
+    //using index.blade.php
+    //this function is not used
 
-    return response()->json([
-      'success' => true,
-      'message' => 'Tiket berjaya dipadam!'
-    ]);
+    // $ticket->delete();
+
+    // return response()->json([
+    //   'success' => true,
+    //   'message' => 'Tiket berjaya dipadam!'
+    // ]);
   }
 
-  public function searchUserByEmail(Request $request)
+  public function searchUserByName(Request $request)
   {
     $request->validate([
-      'email' => 'required|email'
+      'name' => 'required|string|min:2'
     ]);
 
-    $email = $request->input('email');
+    $name = $request->input('name');
 
-    // Search for user by email with relationships
+    // Search for user by name with relationships
     $user = User::with(['sektor', 'bahagian', 'seksyen', 'unit', 'jawatan', 'skim'])
-      ->where('email', $email)
+      ->where('nama', 'like', '%' . $name . '%')
       ->first();
 
     if (!$user) {
       return response()->json([
         'success' => false,
-        'message' => 'Pengguna tidak ditemui dengan alamat emel tersebut.'
+        'message' => 'Pengguna tidak ditemui dengan nama tersebut.'
       ], 404);
     }
 
@@ -525,6 +514,128 @@ class TicketController extends Controller
       'success' => true,
       'message' => 'Pengguna berjaya ditemui.',
       'user' => $userData
+    ]);
+  }
+
+  public function searchUserByEmail(Request $request)
+  {
+    $request->validate([
+      'email' => 'required|email'
+    ]);
+
+    $email = $request->input('email');
+
+    // Search for user by exact email with relationships
+    $user = User::with(['sektor', 'bahagian', 'seksyen', 'unit', 'jawatan', 'skim'])
+      ->where('email', $email)
+      ->first();
+
+    if (!$user) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Pengguna tidak ditemui dengan email tersebut.'
+      ], 404);
+    }
+
+    // Prepare user data with related information
+    $userData = [
+      'id' => $user->id,
+      'nama' => $user->nama,
+      'name' => $user->nama, // fallback
+      'email' => $user->email,
+      'kod_sektor' => $user->kod_sektor,
+      'kod_bah' => $user->kod_bah,
+      'kod_sec' => $user->kod_sec,
+      'kod_unit' => $user->kod_unit,
+      'kod_skim' => $user->kod_skim,
+      'nama_gred' => $user->nama_gred,
+      'tel_no_p' => $user->tel_no_p,
+      'tel_no_hp' => $user->tel_no_hp,
+    ];
+
+    // Get related names if relationships exist
+    if ($user->sektor) {
+      $userData['nama_sektor'] = $user->sektor->nama_sektor;
+    }
+
+    if ($user->bahagian) {
+      $userData['nama_bah'] = $user->bahagian->nama_bah;
+    }
+
+    if ($user->seksyen) {
+      $userData['nama_sec'] = $user->seksyen->nama_sec;
+    }
+
+    if ($user->unit) {
+      $userData['nama_unit'] = $user->unit->nama_unit;
+    }
+
+    if ($user->jawatan) {
+      $userData['nama_jawatan'] = $user->jawatan->nama_jawatan;
+    }
+
+    if ($user->skim) {
+      $userData['nama_skim'] = $user->skim->nama_skim;
+    }
+
+    return response()->json([
+      'success' => true,
+      'message' => 'Pengguna berjaya ditemui.',
+      'user' => $userData
+    ]);
+  }
+
+  public function searchUserAutocomplete(Request $request)
+  {
+    $request->validate([
+      'query' => 'required|string|min:2'
+    ]);
+
+    $query = $request->input('query');
+
+    // Search for users primarily by name (with some email support for edge cases)
+    $users = User::select('id', 'nama', 'email')
+      ->where(function ($q) use ($query) {
+        // Primary search: by name (case insensitive)
+        $q->where('nama', 'like', '%' . $query . '%');
+        // Secondary search: by email username part (before @)
+        $q->orWhere('email', 'like', $query . '%@%');
+      })
+      ->whereNotNull('nama') // Ensure nama is not null
+      ->where('nama', '!=', '') // Ensure nama is not empty
+      ->where('nama', 'not like', '%@%') // Exclude email-like names
+      ->orderBy('nama', 'asc') // Order by name alphabetically
+      ->limit(8) // Limit results to prevent too many options
+      ->get()
+      ->filter(function ($user) {
+        // Additional filtering: exclude names that are just initials or codes
+        $name = trim($user->nama);
+
+        // Skip if name is just 1-2 characters (likely initials)
+        if (strlen($name) <= 2) {
+          return false;
+        }
+
+        // Skip if name contains only uppercase letters and spaces (likely codes)
+        if (preg_match('/^[A-Z\s]+$/', $name) && strlen($name) <= 5) {
+          return false;
+        }
+
+        return true;
+      })
+      ->values() // Reset array keys
+      ->map(function ($user) {
+        return [
+          'id' => $user->id,
+          'email' => $user->email,
+          'nama' => $user->nama,
+          'display' => $user->nama // Only show name in display
+        ];
+      });
+
+    return response()->json([
+      'success' => true,
+      'users' => $users
     ]);
   }
 

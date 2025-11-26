@@ -237,7 +237,7 @@ $(function () {
 
   // Function to reset user search (ADD FORM)
   function resetUserSearch() {
-    $('#search_email').val('');
+    $('#search_name').val('');
     $('#foundUserInfo').hide();
     $('#searchLoading').hide();
     // Hide alert notifications
@@ -251,7 +251,6 @@ $(function () {
 
   // Function to reset user search (EDIT FORM)
   function resetEditUserSearch() {
-    $('#edit_search_email').val('');
     $('#editFoundUserInfo').hide();
     $('#editSearchLoading').hide();
     // Hide alert notifications
@@ -295,50 +294,19 @@ $(function () {
 
   // Handle search user button click (ADD FORM)
   $('#searchUserBtn').on('click', function () {
-    var email = $('#search_email').val().trim();
+    var username = $('#search_name').val().trim();
 
-    if (!email) {
-      toastr.error('Sila masukkan alamat emel untuk mencari.');
+    if (!username) {
+      toastr.error('Sila masukkan nama pengguna untuk mencari.');
       return;
     }
 
-    // Auto-append @treasury.gov.my if not present
-    if (!email.includes('@')) {
-      email = email + '@treasury.gov.my';
-      $('#search_email').val(email); // Update the input field to show full email
-    }
-
-    // Comment out these lines if you want to use full email address validation
-    // if (!isValidEmail(email)) {
-    //   toastr.error('Format alamat emel tidak sah.');
-    //   return;
-    // }
-
-    searchUserByEmail(email, false);
-  });
-
-  // Handle search user button click (EDIT FORM)
-  $('#editSearchUserBtn').on('click', function () {
-    var email = $('#edit_search_email').val().trim();
-
-    if (!email) {
-      toastr.error('Sila masukkan alamat emel untuk mencari.');
+    if (username.length < 2) {
+      toastr.error('Sila masukkan sekurang-kurangnya 2 aksara untuk mencari.');
       return;
     }
 
-    // Auto-append @treasury.gov.my if not present
-    if (!email.includes('@')) {
-      email = email + '@treasury.gov.my';
-      $('#edit_search_email').val(email); // Update the input field to show full email
-    }
-
-    // Comment out these lines if you want to use full email address validation
-    // if (!isValidEmail(email)) {
-    //   toastr.error('Format alamat emel tidak sah.');
-    //   return;
-    // }
-
-    searchUserByEmail(email, true);
+    searchUserByName(username, false);
   });
 
   // Handle clear search button (ADD FORM)
@@ -351,23 +319,215 @@ $(function () {
     resetEditUserSearch();
   });
 
-  // Handle Enter key in search email fields
-  $('#search_email').on('keypress', function (e) {
+  // Autocomplete functionality variables
+  let autocompleteTimeout = null;
+  let currentAutocompleteIndex = -1;
+  let autocompleteResults = [];
+
+  // Handle input for autocomplete search (ADD FORM)
+  $('#search_name').on('input', function () {
+    const query = $(this).val().trim();
+
+    // Clear existing timeout
+    if (autocompleteTimeout) {
+      clearTimeout(autocompleteTimeout);
+    }
+
+    // Hide dropdown if query is empty
+    if (query === '') {
+      hideAutocompleteDropdown();
+      return;
+    }
+
+    // Only trigger search if query is at least 2 characters
+    if (query.length < 2) {
+      hideAutocompleteDropdown();
+      return;
+    }
+
+    // Debounce the search
+    autocompleteTimeout = setTimeout(function () {
+      performAutocompleteSearch(query);
+    }, 300); // 300ms delay
+  });
+
+  // Handle keyboard navigation in autocomplete
+  $('#search_name').on('keydown', function (e) {
+    const dropdown = $('#autocompleteDropdown');
+
+    if (!dropdown.is(':visible')) {
+      return;
+    }
+
+    const items = $('.autocomplete-item');
+
+    switch (e.which) {
+      case 40: // Arrow Down
+        e.preventDefault();
+        currentAutocompleteIndex = Math.min(currentAutocompleteIndex + 1, items.length - 1);
+        updateAutocompleteHighlight();
+        break;
+      case 38: // Arrow Up
+        e.preventDefault();
+        currentAutocompleteIndex = Math.max(currentAutocompleteIndex - 1, -1);
+        updateAutocompleteHighlight();
+        break;
+      case 13: // Enter
+        if (currentAutocompleteIndex >= 0 && items[currentAutocompleteIndex]) {
+          e.preventDefault();
+          $(items[currentAutocompleteIndex]).click();
+        }
+        break;
+      case 27: // Escape
+        e.preventDefault();
+        hideAutocompleteDropdown();
+        break;
+    }
+  });
+
+  // Handle autocomplete item selection
+  $(document).on('click', '.autocomplete-item', function () {
+    const email = $(this).data('email');
+    const userData = $(this).data('user');
+
+    // Format the name to title case
+    const formattedName = userData.nama.toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    // Keep the user's formatted name in the input field
+    $('#search_name').val(formattedName);
+    hideAutocompleteDropdown();
+
+    // Automatically search using the email (backend will still use email to find exact match)
+    setTimeout(function () {
+      searchUserByName(email, false, true); // Pass true to indicate this is from autocomplete
+    }, 150);
+  });
+
+  // Hide dropdown when clicking outside
+  $(document).on('click', function (e) {
+    if (!$(e.target).closest('#search_name, #autocompleteDropdown').length) {
+      hideAutocompleteDropdown();
+    }
+  });
+
+  // Function to perform autocomplete search
+  function performAutocompleteSearch(query) {
+    if (query.length < 2) {
+      hideAutocompleteDropdown();
+      return;
+    }
+
+    // Show loading state
+    showAutocompleteLoading();
+
+    $.ajax({
+      url: '/search-user-autocomplete',
+      type: 'POST',
+      data: {
+        query: query,
+        _token: $('meta[name="csrf-token"]').attr('content')
+      },
+      success: function (response) {
+        if (response.success && response.users.length > 0) {
+          showAutocompleteResults(response.users);
+        } else {
+          showNoResults();
+        }
+      },
+      error: function () {
+        hideAutocompleteDropdown();
+      }
+    });
+  }
+
+  // Function to show autocomplete results
+  function showAutocompleteResults(users) {
+    autocompleteResults = users;
+    currentAutocompleteIndex = -1;
+
+    const resultsHtml = users.map(function (user, index) {
+      // Format the name to title case for better display
+      const formattedName = user.nama.toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+
+      return `
+        <div class="list-group-item autocomplete-item" data-email="${user.email}" data-user='${JSON.stringify(user)}' data-index="${index}">
+          <div class="user-info">
+            <div class="user-details">
+              <div class="user-name">${formattedName}</div>
+              <div class="user-email">${user.email}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    $('#autocompleteResults').html(resultsHtml);
+    $('#autocompleteDropdown').show();
+  }
+
+  // Function to show no results
+  function showNoResults() {
+    $('#autocompleteResults').html(`
+      <div class="list-group-item no-results">
+        <i class="bx bx-search"></i>
+        Tiada pengguna ditemui
+      </div>
+    `);
+    $('#autocompleteDropdown').show();
+  }
+
+  // Function to show loading state
+  function showAutocompleteLoading() {
+    $('#autocompleteResults').html(`
+      <div class="list-group-item loading">
+        <div class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        Mencari pengguna...
+      </div>
+    `);
+    $('#autocompleteDropdown').show();
+  }
+
+  // Function to hide autocomplete dropdown
+  function hideAutocompleteDropdown() {
+    $('#autocompleteDropdown').hide();
+    currentAutocompleteIndex = -1;
+    autocompleteResults = [];
+  }
+
+  // Function to update autocomplete highlight
+  function updateAutocompleteHighlight() {
+    $('.autocomplete-item').removeClass('highlighted');
+
+    if (currentAutocompleteIndex >= 0) {
+      $('.autocomplete-item').eq(currentAutocompleteIndex).addClass('highlighted');
+    }
+  }
+
+  // Handle Enter key in search name fields
+  $('#search_name').on('keypress', function (e) {
     if (e.which === 13) { // Enter key
+      // Check if autocomplete is visible
+      if ($('#autocompleteDropdown').is(':visible') && currentAutocompleteIndex >= 0) {
+        // Let the keydown handler manage this
+        return;
+      }
+
       e.preventDefault();
+      hideAutocompleteDropdown();
       $('#searchUserBtn').click();
     }
   });
 
-  $('#edit_search_email').on('keypress', function (e) {
-    if (e.which === 13) { // Enter key
-      e.preventDefault();
-      $('#editSearchUserBtn').click();
-    }
-  });
-
-  // Function to search user by email
-  function searchUserByEmail(email, isEdit) {
+  // Function to search user by name
+  function searchUserByName(nameOrEmail, isEdit, fromAutocomplete = false) {
     var loadingElement = isEdit ? $('#editSearchLoading') : $('#searchLoading');
     var userInfoElement = isEdit ? $('#editFoundUserInfo') : $('#foundUserInfo');
     var searchBtn = isEdit ? $('#editSearchUserBtn') : $('#searchUserBtn');
@@ -377,13 +537,18 @@ $(function () {
     userInfoElement.hide();
     searchBtn.prop('disabled', true);
 
+    // Use name-based search endpoint
+    var searchUrl = fromAutocomplete ? '/search-user-by-email' : '/search-user-by-name';
+    var searchField = fromAutocomplete ? 'email' : 'name';
+    var searchData = {
+      _token: $('meta[name="csrf-token"]').attr('content')
+    };
+    searchData[searchField] = nameOrEmail;
+
     $.ajax({
-      url: '/search-user-by-email',
+      url: searchUrl,
       type: 'POST',
-      data: {
-        email: email,
-        _token: $('meta[name="csrf-token"]').attr('content')
-      },
+      data: searchData,
       success: function (response) {
         if (response.success && response.user) {
           // Populate user fields
@@ -421,7 +586,7 @@ $(function () {
           var alertContainer = isEdit ? $('#editSearchAlert') : $('#searchAlert');
           var alertMessage = isEdit ? $('#editSearchAlertMessage') : $('#searchAlertMessage');
 
-          alertMessage.text(response.message || 'Pengguna tidak ditemui dengan alamat emel tersebut. Sila periksa alamat emel dan cuba lagi.');
+          alertMessage.text(response.message || 'Pengguna tidak ditemui dengan nama tersebut. Sila periksa nama dan cuba lagi.');
           alertContainer.show();
 
           // Auto-hide alert after 5 seconds
@@ -739,7 +904,7 @@ $(function () {
         }
       } else {
         // If user info is not shown, user hasn't searched or found a user
-        errors['other_email'] = ['Sila cari pengguna menggunakan alamat emel untuk aduan bagi pihak.'];
+        errors['other_email'] = ['Sila cari pengguna menggunakan nama untuk aduan bagi pihak.'];
         isValid = false;
       }
     }
@@ -1031,7 +1196,7 @@ $(function () {
     if (ticketType == '0') {
       // Bagi Pihak - check if user search was completed
       if (!$('#editFoundUserInfo').is(':visible')) {
-        errors['other_email'] = ['Sila cari pengguna menggunakan alamat emel untuk aduan bagi pihak.'];
+        errors['other_email'] = ['Sila cari pengguna menggunakan nama untuk aduan bagi pihak.'];
         isValid = false;
       } else {
         // If user info is shown, validate the readonly fields have values
@@ -1236,65 +1401,6 @@ $(function () {
         }, 100);
       }
     }, 800);
-
-    // Handle "Bagi Pihak" (ticket_type == 0) by loading edit user data
-    if (ticket.ticket_type == 0 && ticket.user) {
-      // Populate search email field with the user's email
-      $('#edit_search_email').val(ticket.user.email);
-
-      // Populate user display fields with the associated user's data
-      $('#edit_other_name').val(getValueOrFallback(ticket.user.nama));
-      $('#edit_other_jawatan').val(
-        getValueOrFallback(ticket.user.jawatan?.nama_jawatan) ||
-        getValueOrFallback(ticket.user.kod_jawatan)
-      );
-
-      // Handle Skim Perkhidmatan with complex formatting for loadTicketData
-      var skimValue = 'Tiada data';
-      if (getValueOrFallback(ticket.user.skim?.nama_skim, null) && getValueOrFallback(ticket.user.kod_skim, null)) {
-        skimValue = ticket.user.skim.nama_skim + ' (' + ticket.user.kod_skim + ')';
-      } else if (getValueOrFallback(ticket.user.kod_skim, null)) {
-        skimValue = ticket.user.kod_skim;
-      }
-      $('#edit_other_skim').val(skimValue);
-
-      $('#edit_other_gred').val(getValueOrFallback(ticket.user.nama_gred));
-      $('#edit_other_email').val(getValueOrFallback(ticket.user.email));
-      $('#edit_other_sektor').val(
-        getValueOrFallback(ticket.user.sektor?.nama_sektor) ||
-        getValueOrFallback(ticket.user.kod_sektor)
-      );
-      $('#edit_other_agency').val(
-        getValueOrFallback(ticket.user.bahagian?.nama_bah) ||
-        getValueOrFallback(ticket.user.kod_bah)
-      );
-      $('#edit_other_seksyen').val(
-        getValueOrFallback(ticket.user.seksyen?.nama_sec) ||
-        getValueOrFallback(ticket.user.kod_sec)
-      );
-      $('#edit_other_unit').val(
-        getValueOrFallback(ticket.user.unit?.nama_unit) ||
-        getValueOrFallback(ticket.user.kod_unit)
-      );
-      $('#edit_other_p').val(getValueOrFallback(ticket.user.tel_no_p));
-      $('#edit_other_hp').val(getValueOrFallback(ticket.user.tel_no_hp));
-
-      // Show the user info section
-      $('#editFoundUserInfo').show();
-      // Show form fields since user is already loaded
-      $('#editTicketFormFields').removeClass('d-none');
-      // Remove blue border from Select2 elements since user is found
-      setTimeout(function () {
-        $('#edit_cat_id, #edit_subcat_id').next('.select2-container').addClass('select2-normal-state');
-      }, 1000); // Wait for Select2 to initialize
-    } else {
-      // Reset edit form if switching back to "Diri Sendiri"
-      resetEditUserSearch();
-      // Ensure form fields are shown for "Diri Sendiri" tickets
-      $('#editTicketFormFields').removeClass('d-none');
-    }
-
-    console.log('Ticket data loaded successfully');
   };
 
   // Handle view button click
