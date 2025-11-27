@@ -119,27 +119,35 @@ class SlaController extends Controller
                     $exists = Sla::where('cat_id', $request->cat_id)
                                  ->where('subcat_id', $request->subcat_id)
                                  ->where('sla_level', $value)
-                                 ->where('sla_severity', $request->sla_severity)
-                                 ->where('sla_days', $request->sla_days)
                                  ->exists();
                     if ($exists) {
                         $fail('SLA untuk kombinasi ini sudah wujud.');
                     }
                 },
             ],
-            'sla_severity' => 'required|string|max:255',
-            'sla_days' => 'required|integer|min:1',
+            'sla_days_high' => 'required|integer|min:1',
+            'sla_days_medium' => 'required|integer|min:1',
+            'sla_days_low' => 'required|integer|min:1',
         ]);
 
         try {
-            Sla::create([
-                'cat_id' => $request->cat_id,
-                'subcat_id' => $request->subcat_id,
-                'sla_level' => $request->sla_level,
-                'sla_severity' => $request->sla_severity,
-                'sla_days' => $request->sla_days,
-                'created_by' => Auth::id(),
-            ]);
+            // Create three SLA records for High, Medium, and Low severity
+            $severities = [
+                'High' => $request->sla_days_high,
+                'Medium' => $request->sla_days_medium,
+                'Low' => $request->sla_days_low,
+            ];
+
+            foreach ($severities as $severity => $days) {
+                Sla::create([
+                    'cat_id' => $request->cat_id,
+                    'subcat_id' => $request->subcat_id,
+                    'sla_level' => $request->sla_level,
+                    'sla_severity' => $severity,
+                    'sla_days' => $days,
+                    'created_by' => Auth::id(),
+                ]);
+            }
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
@@ -155,7 +163,25 @@ class SlaController extends Controller
     {
         try {
             $sla = Sla::with(['category', 'subCategory'])->findOrFail($id);
-            return response()->json($sla);
+
+            // Get all three severity records for this cat_id, subcat_id, and sla_level
+            $slas = Sla::where('cat_id', $sla->cat_id)
+                       ->where('subcat_id', $sla->subcat_id)
+                       ->where('sla_level', $sla->sla_level)
+                       ->get()
+                       ->keyBy('sla_severity');
+
+            $response = [
+                'id' => $sla->id,
+                'cat_id' => $sla->cat_id,
+                'subcat_id' => $sla->subcat_id,
+                'sla_level' => $sla->sla_level,
+                'sla_days_high' => $slas->get('High')->sla_days ?? '',
+                'sla_days_medium' => $slas->get('Medium')->sla_days ?? '',
+                'sla_days_low' => $slas->get('Low')->sla_days ?? '',
+            ];
+
+            return response()->json($response);
         } catch (\Exception $e) {
             return response()->json(['error' => true], 404);
         }
@@ -166,38 +192,36 @@ class SlaController extends Controller
         $request->validate([
             'cat_id' => 'required|exists:ref_categories,id',
             'subcat_id' => 'required|exists:ref_sub_categories,id',
-            'sla_level' => [
-                'required',
-                'string',
-                'max:255',
-                function ($attribute, $value, $fail) use ($request, $id) {
-                    $exists = Sla::where('cat_id', $request->cat_id)
-                                 ->where('subcat_id', $request->subcat_id)
-                                 ->where('sla_level', $value)
-                                 ->where('sla_severity', $request->sla_severity)
-                                 ->where('sla_days', $request->sla_days)
-                                 ->where('id', '!=', $id)
-                                 ->exists();
-                    if ($exists) {
-                        $fail('SLA untuk kombinasi ini sudah wujud.');
-                    }
-                },
-            ],
-            'sla_severity' => 'required|string|max:255',
-            'sla_days' => 'required|integer|min:1',
+            'sla_level' => 'required|string|max:255',
+            'sla_days_high' => 'required|integer|min:1',
+            'sla_days_medium' => 'required|integer|min:1',
+            'sla_days_low' => 'required|integer|min:1',
         ]);
 
         try {
             $sla = Sla::findOrFail($id);
 
-            $sla->update([
-                'cat_id' => $request->cat_id,
-                'subcat_id' => $request->subcat_id,
-                'sla_level' => $request->sla_level,
-                'sla_severity' => $request->sla_severity,
-                'sla_days' => $request->sla_days,
-                'updated_by' => Auth::id(),
-            ]);
+            // Update all three severity records for this combination
+            $severities = [
+                'High' => $request->sla_days_high,
+                'Medium' => $request->sla_days_medium,
+                'Low' => $request->sla_days_low,
+            ];
+
+            foreach ($severities as $severity => $days) {
+                Sla::updateOrCreate(
+                    [
+                        'cat_id' => $request->cat_id,
+                        'subcat_id' => $request->subcat_id,
+                        'sla_level' => $request->sla_level,
+                        'sla_severity' => $severity,
+                    ],
+                    [
+                        'sla_days' => $days,
+                        'updated_by' => Auth::id(),
+                    ]
+                );
+            }
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
@@ -253,20 +277,25 @@ class SlaController extends Controller
             'cat_id' => 'required|integer',
             'subcat_id' => 'required|integer',
             'sla_level' => 'required|string',
-            'sla_severity' => 'required|string',
-            'sla_days' => 'required|integer|min:1',
         ]);
 
         // Check for existing SLA with same combination (excluding soft-deleted records)
         $query = Sla::where('cat_id', $request->cat_id)
                      ->where('subcat_id', $request->subcat_id)
-                     ->where('sla_level', $request->sla_level)
-                     ->where('sla_severity', $request->sla_severity)
-                     ->where('sla_days', $request->sla_days);
+                     ->where('sla_level', $request->sla_level);
 
         // Exclude current record if updating
         if ($request->has('id') && $request->id) {
-            $query->where('id', '!=', $request->id);
+            // When updating, check if any record exists for this combination
+            // but exclude all records from the same group (same cat, subcat, level)
+            $sla = Sla::find($request->id);
+            if ($sla) {
+                $query->where(function($q) use ($sla) {
+                    $q->where('cat_id', '!=', $sla->cat_id)
+                      ->orWhere('subcat_id', '!=', $sla->subcat_id)
+                      ->orWhere('sla_level', '!=', $sla->sla_level);
+                });
+            }
         }
 
         $exists = $query->exists();

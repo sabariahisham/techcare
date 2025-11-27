@@ -82,7 +82,7 @@
             },
             {
               "url": "sla-severity/index",
-              "name": "Tahap & Severity",
+              "name": "SLA",
               "slug": "sla-severity-index",
               "permission": "konfigurasi.view"
             },

@@ -108,7 +108,7 @@
   </div>
 <div class="card">
   <div class="card-header border-bottom">
-    <h5 class="card-title mb-0">SENARAI TAHAP PEGAWAI TUGASAN & SEVERITY</h5>
+    <h5 class="card-title mb-0">SENARAI SLA</h5>
   </div>
   <div class="card-datatable table-responsive">
     <table class="datatables-sla table border-top">
@@ -161,17 +161,27 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-sla-severity">Severity</label>
-          <select class="form-select" id="add-sla-severity" name="sla_severity" required>
-            <option value="">Pilih Severity</option>
-            <option value="High">HIGH</option>
-            <option value="Medium">MEDIUM</option>
-            <option value="Low">LOW</option>
-          </select>
-        </div>
-        <div class="mb-6">
-          <label class="form-label" for="add-sla-days">Hari</label>
-          <input type="number" id="add-sla-days" class="form-control" placeholder="SLA Days" name="sla_days" required />
+          <label class="form-label">Severity & Hari</label>
+          <div class="border rounded p-3">
+            <div class="mb-3">
+              <label class="form-label" for="add-sla-days-high">
+                <span class="badge bg-danger me-2">HIGH</span>
+              </label>
+              <input type="number" id="add-sla-days-high" class="form-control" placeholder="Bilangan Hari" name="sla_days_high" min="1" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="add-sla-days-medium">
+                <span class="badge bg-warning me-2">MEDIUM</span>
+              </label>
+              <input type="number" id="add-sla-days-medium" class="form-control" placeholder="Bilangan Hari" name="sla_days_medium" min="1" required />
+            </div>
+            <div class="mb-0">
+              <label class="form-label" for="add-sla-days-low">
+                <span class="badge bg-success me-2">LOW</span>
+              </label>
+              <input type="number" id="add-sla-days-low" class="form-control" placeholder="Bilangan Hari" name="sla_days_low" min="1" required />
+            </div>
+          </div>
         </div>
         <button type="submit" class="btn btn-primary me-3 data-submit">Simpan</button>
         <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
@@ -214,17 +224,27 @@
         </select>
       </div>
       <div class="mb-6">
-        <label class="form-label" for="edit_sla_severity">Severity</label>
-        <select class="form-select" id="edit_sla_severity" name="sla_severity" required>
-          <option value="">Pilih Severity</option>
-          <option value="High">HIGH</option>
-          <option value="Medium">MEDIUM</option>
-          <option value="Low">LOW</option>
-        </select>
-      </div>
-      <div class="mb-6">
-        <label class="form-label" for="edit_sla_days">Hari</label>
-        <input type="number" id="edit_sla_days" class="form-control" placeholder="SLA Days" name="sla_days" required />
+        <label class="form-label">Severity & Hari</label>
+        <div class="border rounded p-3">
+          <div class="mb-3">
+            <label class="form-label" for="edit_sla_days_high">
+              <span class="badge bg-danger me-2">HIGH</span>
+            </label>
+            <input type="number" id="edit_sla_days_high" class="form-control" placeholder="Bilangan Hari" name="sla_days_high" min="1" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="edit_sla_days_medium">
+              <span class="badge bg-warning me-2">MEDIUM</span>
+            </label>
+            <input type="number" id="edit_sla_days_medium" class="form-control" placeholder="Bilangan Hari" name="sla_days_medium" min="1" required />
+          </div>
+          <div class="mb-0">
+            <label class="form-label" for="edit_sla_days_low">
+              <span class="badge bg-success me-2">LOW</span>
+            </label>
+            <input type="number" id="edit_sla_days_low" class="form-control" placeholder="Bilangan Hari" name="sla_days_low" min="1" required />
+          </div>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary me-3 data-submit">Kemaskini</button>
       <button type="reset" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>

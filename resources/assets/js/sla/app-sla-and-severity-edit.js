@@ -12,7 +12,7 @@ $(function () {
   if (select2.length) {
     var $this = select2;
     $this.wrap('<div class="position-relative"></div>').select2({
-      placeholder: 'Select Category',
+      placeholder: 'Pilih Kategori',
       dropdownParent: $this.parent()
     });
   }
@@ -65,17 +65,38 @@ $(document).ready(function() {
             }
           }
         },
-        'sla_severity': {
+        'sla_days_high': {
           validators: {
             notEmpty: {
-              message: 'Sila pilih keutamaan SLA'
+              message: 'Sila masukkan bilangan hari untuk HIGH'
+            },
+            integer: {
+              message: 'Bilangan hari mesti dalam bentuk nombor'
+            },
+            greaterThan: {
+              message: 'Bilangan hari mesti lebih daripada 0',
+              min: 0
             }
           }
         },
-        'sla_days': {
+        'sla_days_medium': {
           validators: {
             notEmpty: {
-              message: 'Sila masukkan bilangan hari SLA'
+              message: 'Sila masukkan bilangan hari untuk MEDIUM'
+            },
+            integer: {
+              message: 'Bilangan hari mesti dalam bentuk nombor'
+            },
+            greaterThan: {
+              message: 'Bilangan hari mesti lebih daripada 0',
+              min: 0
+            }
+          }
+        },
+        'sla_days_low': {
+          validators: {
+            notEmpty: {
+              message: 'Sila masukkan bilangan hari untuk LOW'
             },
             integer: {
               message: 'Bilangan hari mesti dalam bentuk nombor'
@@ -118,6 +139,9 @@ $(document).ready(function() {
       // Reset select2 dropdowns in edit form
       $('#edit_cat_id, #edit_subcat_id').val(null).trigger('change');
 
+      // Reset severity day fields
+      $('#edit_sla_days_high, #edit_sla_days_medium, #edit_sla_days_low').val('');
+
       // Clear any validation errors
       $('.is-invalid').removeClass('is-invalid');
       $('.invalid-feedback').remove();
@@ -146,7 +170,7 @@ $(document).ready(function() {
     console.log('SLA ID:', id); // Debug log
 
     if (!id) {
-      toastr.error('SLA ID not found. Please try again.');
+      toastr.error('ID SLA tidak dijumpai. Sila cuba lagi.');
       return;
     }
 
@@ -164,9 +188,12 @@ $(document).ready(function() {
         if (data && data.id) {
           // Populate the edit form with data
           $('#edit_sla_level').val(data.sla_level);
-          $('#edit_sla_severity').val(data.sla_severity);
-          $('#edit_sla_days').val(data.sla_days);
           $('#edit_sla_id').val(data.id);
+
+          // Populate severity-specific days (expecting data to have days per severity)
+          $('#edit_sla_days_high').val(data.sla_days_high || '');
+          $('#edit_sla_days_medium').val(data.sla_days_medium || '');
+          $('#edit_sla_days_low').val(data.sla_days_low || '');
 
           // Set category first
           $('#edit_cat_id').val(data.cat_id).trigger('change');
@@ -180,19 +207,19 @@ $(document).ready(function() {
           var editOffcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasEditSla'));
           editOffcanvas.show();
         } else {
-          toastr.error('Invalid SLA data received.');
+          toastr.error('Data SLA tidak sah diterima.');
         }
       },
       error: function (xhr) {
         console.error('Error fetching SLA data:', xhr);
         if (xhr.status === 404) {
-          toastr.error('SLA record not found. It may have been deleted.');
+          toastr.error('Rekod SLA tidak dijumpai. Ia mungkin telah dipadam.');
         } else if (xhr.status === 403) {
-          toastr.error('You do not have permission to edit this SLA record.');
+          toastr.error('Anda tidak mempunyai kebenaran untuk mengedit rekod SLA ini.');
         } else if (xhr.status === 500) {
-          toastr.error('Server error occurred while fetching SLA data. Please try again.');
+          toastr.error('Ralat pelayan berlaku semasa mengambil data SLA. Sila cuba lagi.');
         } else {
-          toastr.error('An error occurred while fetching SLA data. Please try again.');
+          toastr.error('Ralat berlaku semasa mengambil data SLA. Sila cuba lagi.');
         }
       },
       complete: function() {
@@ -208,14 +235,14 @@ $(document).ready(function() {
     const id = $('#edit_sla_id').val();
 
     if (!id) {
-      toastr.error('SLA ID is missing. Please try again.');
+      toastr.error('ID SLA tiada. Sila cuba lagi.');
       return;
     }
 
     // Disable submit button to prevent multiple submissions
     const submitBtn = $(editSlaForm).find('button[type="submit"]');
     const originalText = submitBtn.text();
-    submitBtn.prop('disabled', true).text('Updating...');
+    submitBtn.prop('disabled', true).text('Mengemaskini...');
 
     $.ajax({
       type: 'POST',
@@ -268,7 +295,7 @@ $(document).ready(function() {
         if (xhr.status === 422) {
           // Validation errors
           const errors = xhr.responseJSON.errors;
-          let errorMessage = 'Validation failed:\n';
+          let errorMessage = 'Pengesahan gagal:\n';
           for (const field in errors) {
             errorMessage += '• ' + errors[field][0] + '\n';
           }
@@ -278,25 +305,25 @@ $(document).ready(function() {
             progressBar: true
           });
         } else if (xhr.status === 404) {
-          toastr.error('SLA record not found. It may have been deleted.', '', {
+          toastr.error('Rekod SLA tidak dijumpai. Ia mungkin telah dipadam.', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true
           });
         } else if (xhr.status === 403) {
-          toastr.error('You do not have permission to update this SLA record.', '', {
+          toastr.error('Anda tidak mempunyai kebenaran untuk mengemaskini rekod SLA ini.', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true
           });
         } else if (xhr.status === 500) {
-          toastr.error('Server error occurred while updating the SLA. Please try again.', '', {
+          toastr.error('Ralat pelayan berlaku semasa mengemaskini SLA. Sila cuba lagi.', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true
           });
         } else {
-          toastr.error('An error occurred while updating the SLA. Please try again.', '', {
+          toastr.error('Ralat berlaku semasa mengemaskini SLA. Sila cuba lagi.', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true
@@ -334,7 +361,7 @@ $(document).ready(function() {
             // Trigger change to update select2 if used
             subcategorySelect.trigger('change');
           } else {
-            toastr.warning('No subcategories found for the selected category.', '', {
+            toastr.warning('Tiada sub kategori dijumpai untuk kategori yang dipilih.', '', {
               timeOut: 4000,
               closeButton: true,
               progressBar: true
@@ -344,19 +371,19 @@ $(document).ready(function() {
         error: function(xhr) {
           console.error('Error loading subcategories:', xhr);
           if (xhr.status === 404) {
-            toastr.error('Category not found. Please refresh the page and try again.', '', {
+            toastr.error('Kategori tidak dijumpai. Sila muat semula halaman dan cuba lagi.', '', {
               timeOut: 5000,
               closeButton: true,
               progressBar: true
             });
           } else if (xhr.status === 500) {
-            toastr.error('Server error occurred while loading subcategories. Please try again.', '', {
+            toastr.error('Ralat pelayan berlaku semasa memuatkan sub kategori. Sila cuba lagi.', '', {
               timeOut: 5000,
               closeButton: true,
               progressBar: true
             });
           } else {
-            toastr.error('Unable to load subcategories. Please refresh the page and try again.', '', {
+            toastr.error('Tidak dapat memuatkan sub kategori. Sila muat semula halaman dan cuba lagi.', '', {
               timeOut: 5000,
               closeButton: true,
               progressBar: true
@@ -367,17 +394,10 @@ $(document).ready(function() {
     }
   }
 
-  // Function to check for duplicate SLA in edit form (all 5 fields: cat_id, subcat_id, sla_level, sla_severity, sla_days)
-  function checkDuplicateSlaForEdit(catId, subcatId, slaLevel, slaSeverity, slaDays, excludeId, callback) {
+  // Function to check for duplicate SLA in edit form (cat_id, subcat_id, sla_level)
+  function checkDuplicateSlaForEdit(catId, subcatId, slaLevel, excludeId, callback) {
     // Validate that all fields are present and valid
-    if (!catId || !subcatId || !slaLevel || !slaSeverity) {
-      callback(false);
-      return;
-    }
-
-    // Validate sla_days is a valid positive integer
-    const days = parseInt(slaDays);
-    if (!slaDays || isNaN(days) || days <= 0) {
+    if (!catId || !subcatId || !slaLevel) {
       callback(false);
       return;
     }
@@ -389,8 +409,6 @@ $(document).ready(function() {
         cat_id: catId,
         subcat_id: subcatId,
         sla_level: slaLevel,
-        sla_severity: slaSeverity,
-        sla_days: days,
         id: excludeId
       },
       headers: {
@@ -425,8 +443,6 @@ $(document).ready(function() {
       const catId = $('#edit_cat_id').val();
       const subcatId = $('#edit_subcat_id').val();
       const slaLevel = $('#edit_sla_level').val();
-      const slaSeverity = $('#edit_sla_severity').val();
-      const slaDays = $('#edit_sla_days').val();
       const excludeId = $('#edit_sla_id').val();
 
       // Get error container or create it
@@ -440,20 +456,12 @@ $(document).ready(function() {
         formContainer.appendChild(errorDiv);
       }
 
-      // Only check for duplicates if ALL 5 fields have values
-      if (catId && subcatId && slaLevel && slaSeverity && slaDays) {
-        // Validate that sla_days is a valid positive number
-        const days = parseInt(slaDays);
-        if (isNaN(days) || days <= 0) {
-          errorDiv.innerHTML = '<div class="alert alert-danger"><i class="bx bx-error-circle me-2"></i>Bilangan hari mesti lebih daripada 0.</div>';
-          errorDiv.style.display = 'block';
-          return;
-        }
-
+      // Only check for duplicates if ALL 3 fields have values
+      if (catId && subcatId && slaLevel) {
         // All fields are valid, check for duplicates
-        checkDuplicateSlaForEdit(catId, subcatId, slaLevel, slaSeverity, slaDays, excludeId, function(isDuplicate) {
+        checkDuplicateSlaForEdit(catId, subcatId, slaLevel, excludeId, function(isDuplicate) {
           if (isDuplicate) {
-            errorDiv.innerHTML = '<div class="alert alert-warning"><i class="bx bx-info-circle me-2"></i>SLA dengan kombinasi Kategori, Sub Kategori, Tahap Pegawai Tugasan, Tahap Keterukan dan Hari ini sudah wujud.</div>';
+            errorDiv.innerHTML = '<div class="alert alert-warning"><i class="bx bx-info-circle me-2"></i>SLA dengan kombinasi Kategori, Sub Kategori dan Tahap Pegawai Tugasan ini sudah wujud.</div>';
             errorDiv.style.display = 'block';
           } else {
             errorDiv.style.display = 'none';
@@ -461,38 +469,15 @@ $(document).ready(function() {
           }
         });
       } else {
-        // Clear any existing duplicate errors when not all 5 fields are filled
+        // Clear any existing duplicate errors when not all 3 fields are filled
         errorDiv.style.display = 'none';
         errorDiv.innerHTML = '';
       }
     }, 500); // 500ms delay
   }
 
-  // Add event listeners for duplicate checking in edit form (all 5 fields)
-  $('#edit_cat_id, #edit_subcat_id, #edit_sla_level, #edit_sla_severity, #edit_sla_days').on('change input', validateDuplicateOnChangeEdit);
-
-  // Additional validation specifically for edit sla_days field
-  $('#edit_sla_days').on('input blur', function() {
-    const slaDays = $(this).val();
-    const daysField = this;
-    const existingDaysError = daysField.parentNode.querySelector('.days-validation-error');
-
-    // Remove existing validation error
-    if (existingDaysError) {
-      existingDaysError.remove();
-    }
-
-    // Validate that days is a positive number for duplicate checking
-    if (slaDays && (isNaN(slaDays) || parseInt(slaDays) <= 0)) {
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'text-warning mt-1 days-validation-error';
-      errorDiv.textContent = 'Bilangan hari mesti lebih daripada 0 untuk pemeriksaan pendua.';
-      daysField.parentNode.appendChild(errorDiv);
-    }
-
-    // Note: Duplicate validation will be triggered automatically by the main event listener
-    // No need to manually trigger it here to avoid false positives
-  });
+  // Add event listeners for duplicate checking in edit form (cat_id, subcat_id, sla_level only)
+  $('#edit_cat_id, #edit_subcat_id, #edit_sla_level').on('change', validateDuplicateOnChangeEdit);
 
   // Category change handler for edit form to populate subcategories
   $('#edit_cat_id').on('change', function() {
