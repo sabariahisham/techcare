@@ -28,12 +28,18 @@
 @endsection
 
 @section('page-script')
-    @vite(['resources/assets/js/ticket/ticket-list.js', 'resources/assets/js/ticket/ticket.js'])
+    @vite([
+      'resources/assets/js/ticket/ticket-list.js',
+      'resources/assets/js/ticket/ticket-config.js',
+      'resources/assets/js/ticket/ticket-add.js',
+      'resources/assets/js/ticket/ticket-search-user.js',
+      'resources/assets/js/ticket/ticket-attachment-file.js',
+      ])
 @endsection
 
 @section('content')
     <h4 class="mb-1">Senarai Tiket</h4>
-    <p class="mb-6">Papar, tambah, edit atau padam tiket berdasarkan peranan pengguna.</p>
+    <p class="mb-6">Papar dan tambah tiket berdasarkan peranan pengguna. Tiket yang telah dihantar tidak boleh diedit.</p>
 
     <!-- My Tickets Table -->
     <div class="card mb-4">

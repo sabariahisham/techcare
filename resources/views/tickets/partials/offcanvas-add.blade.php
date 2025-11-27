@@ -1,9 +1,16 @@
 <!-- Offcanvas to add new ticket -->
 <div class="offcanvas offcanvas-end offcanvas-50" tabindex="-1" id="offcanvasAddTicket"
     aria-labelledby="offcanvasAddTicketLabel">
-    <div class="offcanvas-header border-bottom">
-        <h5 id="offcanvasAddTicketLabel">Tambah Log Tiket</h5>
-        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+    <div class="offcanvas-header border-bottom align-items-start">
+        <div class="me-3">
+            <h5 id="offcanvasAddTicketLabel" class="mb-0">Tambah Log Tiket</h5>
+            <small class="text-muted fst-italic d-block mt-3">
+                <strong>Makluman:</strong><br>
+                Data dalam ruangan ini diselaraskan daripada <strong>Sistem Pergerakan Pegawai (SPP)</strong>.
+                Sebarang kemas kini hendaklah dibuat melalui sistem tersebut.
+            </small>
+        </div>
+        <button type="button" class="btn-close text-reset mt-1" data-bs-dismiss="offcanvas"></button>
     </div>
 
     <div class="offcanvas-body">
@@ -87,7 +94,7 @@
 
             <!-- Papar hanya jika Bagi Pihak -->
             <div id="otherInfo" class="d-none mb-4">
-                <h6>Maklumat Bagi Pihak</h6>
+                <h6>Maklumat Pengadu (Bagi Pihak)</h6>
                 <div class="row g-3">
                     <!-- Username search field -->
                     <div class="col-12">
@@ -247,11 +254,25 @@
                 <!-- Lampiran -->
                 <div class="form-field-wrapper mb-3">
                     <label class="form-label">Lampiran</label>
-                    <input type="file" name="attachments[]" class="form-control" multiple
-                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                    <small class="text-muted">Format yang dibenarkan: PDF, DOC, DOCX, JPG, JPEG, PNG. Saiz maksimum
-                        setiap fail 2MB</small>
-                    <div class="error-text text-danger mt-1" style="display:none;"></div>
+                    <div class="file-upload-wrapper">
+                        <div id="attachment-drop-zone"
+                            class="file-drop-zone border-2 border-dashed border-secondary rounded-3 p-4 text-center position-relative">
+                            <input type="file" id="ticket-attachments" name="attachments[]"
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple
+                                class="file-input position-absolute w-100 h-100 opacity-0"
+                                style="cursor: pointer; z-index: 2;">
+                            <div class="drop-zone-content">
+                                <i class="bx bx-file-find display-4 text-muted mb-3"></i>
+                                <h6 class="text-muted mb-2">Seret & Letak fail di sini</h6>
+                                <p class="text-muted mb-2">atau <span class="text-primary fw-semibold"
+                                        style="cursor: pointer;">telusuri (browse) fail</span></p>
+                                <small class="text-muted">Format yang dibenarkan: PDF, DOC, DOCX, JPG, JPEG, PNG (Maks:
+                                    2MB setiap fail, maksimum 5 fail)</small>
+                            </div>
+                        </div>
+                        <div id="attachments-preview" class="files-preview mt-3"></div>
+                        <div class="invalid-feedback"></div>
+                    </div>
                 </div>
 
                 <!-- Butang -->
@@ -265,3 +286,48 @@
     </div>
 </div>
 </div>
+
+<style>
+    .file-drop-zone {
+        transition: all 0.3s ease;
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .file-drop-zone.dragover {
+        border-color: #007bff !important;
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+
+    .file-drop-zone.error {
+        border-color: #dc3545 !important;
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .file-input {
+        cursor: pointer !important;
+    }
+
+    .files-preview {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .file-item {
+        margin-bottom: 10px;
+        padding: 12px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .file-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .drop-zone-content {
+        pointer-events: none;
+    }
+</style>
