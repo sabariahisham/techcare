@@ -166,7 +166,7 @@ use App\Http\Controllers\apps\EcommerceCustomerDetailsNotifications;
 use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
-use App\Http\Controllers\Configuration\ReportController;
+use App\Http\Controllers\Reports\ReportLogTicketController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 use App\Http\Controllers\dashboard\DashboardController;
 
@@ -295,8 +295,12 @@ Route::middleware(['auth'])->group(function () {
 
 // report management
 Route::middleware(['auth'])->group(function () {
-  Route::get('/report/index', [App\Http\Controllers\Configuration\ReportController::class, 'index'])->name('report-index');
-  Route::get('/report/data', [App\Http\Controllers\Configuration\ReportController::class, 'data'])->name('report-data');
+  Route::get('/report/index', [App\Http\Controllers\Reports\ReportLogTicketController::class, 'index'])->name('report-index');
+  Route::get('/report/data', [App\Http\Controllers\Reports\ReportLogTicketController::class, 'data'])->name('report-data');
+  Route::get('/report/senarai-log-tiket', [App\Http\Controllers\Reports\ReportLogTicketController::class, 'logTicket'])->name('report-log-ticket');
+  Route::get('/report/senarai-log-tiket/data', [App\Http\Controllers\Reports\ReportLogTicketController::class, 'logTicketData'])->name('report-log-ticket-data');
+  Route::get('/report/senarai-log-tiket/export-excel', [App\Http\Controllers\Reports\ReportLogTicketController::class, 'exportExcel'])->name('report-log-ticket-export-excel');
+  Route::get('/report/senarai-log-tiket/export-pdf', [App\Http\Controllers\Reports\ReportLogTicketController::class, 'exportPdf'])->name('report-log-ticket-export-pdf');
 });
 
 // references
