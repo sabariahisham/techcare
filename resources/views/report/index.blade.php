@@ -36,6 +36,7 @@
 @vite([
   'resources/assets/js/ui-toasts.js',
   'resources/assets/js/extended-ui-sweetalert2.js',
+  'resources/assets/js/report/app-report-list.js',
   ])
 @endsection
 
@@ -63,27 +64,7 @@
       </div>
     </div>
   </div>
-  <div class="col-sm-6 col-xl-4">
-    <div class="card">
-      <div class="card-body">
-        <div class="d-flex align-items-start justify-content-between">
-          <div class="content-left">
-            <span class="text-heading">Jumlah Statistik</span>
-            <div class="d-flex align-items-center my-1">
-               <h4 class="mb-0 me-2">Akan datang</h4>
-              {{-- <p class="text-success mb-0">(100%)</p> --}}
-            </div>
-            <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>
-          </div>
-          <div class="avatar">
-            <span class="avatar-initial rounded bg-label-success">
-              <i class="bx bx-stats bx-lg"></i>
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+
   <div class="card">
   <div class="card-header border-bottom">
     <h5 class="card-title mb-0">SENARAI LAPORAN</h5>
