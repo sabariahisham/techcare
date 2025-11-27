@@ -11,7 +11,7 @@ $(function () {
       console.error('No SLA ID found on delete button');
       Swal.fire({
         icon: 'error',
-        title: 'Error',
+        title: 'Ralat',
         text: 'ID SLA tidak dijumpai',
         customClass: {
           confirmButton: 'btn btn-primary'
@@ -88,7 +88,7 @@ $(function () {
           } else {
             Swal.fire({
               icon: 'error',
-              title: 'Error',
+              title: 'Ralat',
               text: data.message || 'Ralat semasa memadam SLA',
               customClass: {
                 confirmButton: 'btn btn-primary'
@@ -101,7 +101,7 @@ $(function () {
           console.error('Delete error:', error);
           Swal.fire({
             icon: 'error',
-            title: 'Error',
+            title: 'Ralat',
             text: `Ralat semasa memadam SLA: ${error.message}`,
             customClass: {
               confirmButton: 'btn btn-primary'

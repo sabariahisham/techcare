@@ -12,7 +12,7 @@ $(function () {
   if (select2.length) {
     var $this = select2;
     $this.wrap('<div class="position-relative"></div>').select2({
-      placeholder: 'Select Category',
+      placeholder: 'Pilih Kategori',
       dropdownParent: $this.parent()
     });
   }
@@ -53,17 +53,38 @@ $(function () {
             }
           }
         },
-        'sla_severity': {
+        'sla_days_high': {
           validators: {
             notEmpty: {
-              message: 'Sila pilih keutamaan SLA'
+              message: 'Sila masukkan bilangan hari untuk HIGH'
+            },
+            integer: {
+              message: 'Bilangan hari mesti dalam bentuk nombor'
+            },
+            greaterThan: {
+              message: 'Bilangan hari mesti lebih daripada 0',
+              min: 0
             }
           }
         },
-        'sla_days': {
+        'sla_days_medium': {
           validators: {
             notEmpty: {
-              message: 'Sila masukkan bilangan hari SLA'
+              message: 'Sila masukkan bilangan hari untuk MEDIUM'
+            },
+            integer: {
+              message: 'Bilangan hari mesti dalam bentuk nombor'
+            },
+            greaterThan: {
+              message: 'Bilangan hari mesti lebih daripada 0',
+              min: 0
+            }
+          }
+        },
+        'sla_days_low': {
+          validators: {
+            notEmpty: {
+              message: 'Sila masukkan bilangan hari untuk LOW'
             },
             integer: {
               message: 'Bilangan hari mesti dalam bentuk nombor'
@@ -147,7 +168,7 @@ $(function () {
           }
         } else {
           // Show error message (defined in JS, not from controller)
-          toastr.error('Error creating SLA', '', {
+          toastr.error('Ralat mencipta SLA', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true
@@ -161,7 +182,7 @@ $(function () {
         if (xhr.status === 422) {
           // Validation errors - show specific field errors
           const errors = xhr.responseJSON.errors;
-          let errorMessage = 'Validation failed:\n';
+          let errorMessage = 'Pengesahan gagal:\n';
           for (const field in errors) {
             errorMessage += '• ' + errors[field][0] + '\n';
           }
@@ -172,28 +193,28 @@ $(function () {
           });
         } else if (xhr.status === 500) {
           // Server error
-          toastr.error('Server error occurred while creating the SLA. Please try again.', '', {
+          toastr.error('Ralat pelayan berlaku semasa mencipta SLA. Sila cuba lagi.', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true
           });
         } else if (xhr.status === 403) {
           // Forbidden
-          toastr.error('You do not have permission to create SLA records.', '', {
+          toastr.error('Anda tidak mempunyai kebenaran untuk mencipta rekod SLA.', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true
           });
         } else if (xhr.status === 401) {
           // Unauthorized
-          toastr.error('Your session has expired. Please login again.', '', {
+          toastr.error('Sesi anda telah tamat tempoh. Sila log masuk semula.', '', {
             timeOut: 6000,
             closeButton: true,
             progressBar: true
           });
         } else {
           // General error
-          toastr.error('An unexpected error occurred while creating the SLA. Please try again.', '', {
+          toastr.error('Ralat tidak dijangka berlaku semasa mencipta SLA. Sila cuba lagi.', '', {
             timeOut: 5000,
             closeButton: true,
             progressBar: true
@@ -237,17 +258,10 @@ $(function () {
     }
   });
 
-  // Function to check for duplicate SLA (all 5 fields: cat_id, subcat_id, sla_level, sla_severity, sla_days)
-  function checkDuplicateSla(catId, subcatId, slaLevel, slaSeverity, slaDays, callback) {
+  // Function to check for duplicate SLA (cat_id, subcat_id, sla_level)
+  function checkDuplicateSla(catId, subcatId, slaLevel, callback) {
     // Validate that all fields are present and valid
-    if (!catId || !subcatId || !slaLevel || !slaSeverity) {
-      callback(false);
-      return;
-    }
-
-    // Validate sla_days is a valid positive integer
-    const days = parseInt(slaDays);
-    if (!slaDays || isNaN(days) || days <= 0) {
+    if (!catId || !subcatId || !slaLevel) {
       callback(false);
       return;
     }
@@ -258,9 +272,7 @@ $(function () {
       data: {
         cat_id: catId,
         subcat_id: subcatId,
-        sla_level: slaLevel,
-        sla_severity: slaSeverity,
-        sla_days: days
+        sla_level: slaLevel
       },
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -294,8 +306,6 @@ $(function () {
       const catId = $('#add-cat-id').val();
       const subcatId = $('#add-subcat-id').val();
       const slaLevel = $('#add-sla-level').val();
-      const slaSeverity = $('#add-sla-severity').val();
-      const slaDays = $('#add-sla-days').val();
 
       // Get error container or create it
       let errorDiv = document.getElementById('duplicate-error-container');
@@ -308,20 +318,12 @@ $(function () {
         formContainer.appendChild(errorDiv);
       }
 
-      // Only check for duplicates if ALL 5 fields have values
-      if (catId && subcatId && slaLevel && slaSeverity && slaDays) {
-        // Validate that sla_days is a valid positive number
-        const days = parseInt(slaDays);
-        if (isNaN(days) || days <= 0) {
-          errorDiv.innerHTML = '<div class="alert alert-danger"><i class="bx bx-error-circle me-2"></i>Bilangan hari mesti lebih daripada 0.</div>';
-          errorDiv.style.display = 'block';
-          return;
-        }
-
+      // Only check for duplicates if ALL 3 fields have values
+      if (catId && subcatId && slaLevel) {
         // All fields are valid, check for duplicates
-        checkDuplicateSla(catId, subcatId, slaLevel, slaSeverity, slaDays, function(isDuplicate) {
+        checkDuplicateSla(catId, subcatId, slaLevel, function(isDuplicate) {
           if (isDuplicate) {
-            errorDiv.innerHTML = '<div class="alert alert-warning"><i class="bx bx-info-circle me-2"></i>SLA dengan kombinasi Kategori, Sub Kategori, Tahap Pegawai Tugasan, Tahap Keterukan dan Hari ini sudah wujud.</div>';
+            errorDiv.innerHTML = '<div class="alert alert-warning"><i class="bx bx-info-circle me-2"></i>SLA dengan kombinasi Kategori, Sub Kategori dan Tahap Pegawai Tugasan ini sudah wujud.</div>';
             errorDiv.style.display = 'block';
           } else {
             errorDiv.style.display = 'none';
@@ -329,38 +331,15 @@ $(function () {
           }
         });
       } else {
-        // Clear any existing duplicate errors when not all 5 fields are filled
+        // Clear any existing duplicate errors when not all 3 fields are filled
         errorDiv.style.display = 'none';
         errorDiv.innerHTML = '';
       }
     }, 500); // 500ms delay
   }
 
-  // Add event listeners for duplicate checking (all 5 fields)
-  $('#add-cat-id, #add-subcat-id, #add-sla-level, #add-sla-severity, #add-sla-days').on('change input', validateDuplicateOnChange);
-
-  // Additional validation specifically for sla_days field
-  $('#add-sla-days').on('input blur', function() {
-    const slaDays = $(this).val();
-    const daysField = this;
-    const existingDaysError = daysField.parentNode.querySelector('.days-validation-error');
-
-    // Remove existing validation error
-    if (existingDaysError) {
-      existingDaysError.remove();
-    }
-
-    // Validate that days is a positive number for duplicate checking
-    if (slaDays && (isNaN(slaDays) || parseInt(slaDays) <= 0)) {
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'text-warning mt-1 days-validation-error';
-      errorDiv.textContent = 'Bilangan hari mesti lebih daripada 0 untuk pemeriksaan pendua.';
-      daysField.parentNode.appendChild(errorDiv);
-    }
-
-    // Note: Duplicate validation will be triggered automatically by the main event listener
-    // No need to manually trigger it here to avoid false positives
-  });
+  // Add event listeners for duplicate checking (cat_id, subcat_id, sla_level only)
+  $('#add-cat-id, #add-subcat-id, #add-sla-level').on('change', validateDuplicateOnChange);
 
   // Category change handler to populate subcategories
   $('#add-cat-id').on('change', function() {
@@ -383,7 +362,7 @@ $(function () {
               subcategorySelect.append(`<option value="${subcategory.id}">${subcategory.subcat_name}</option>`);
             });
           } else {
-            toastr.warning('No subcategories found for the selected category.', '', {
+            toastr.warning('Tiada sub kategori dijumpai untuk kategori yang dipilih.', '', {
               timeOut: 4000,
               closeButton: true,
               progressBar: true
@@ -393,19 +372,19 @@ $(function () {
         error: function(xhr) {
           console.error('Error loading subcategories:', xhr);
           if (xhr.status === 404) {
-            toastr.error('Category not found. Please refresh the page and try again.', '', {
+            toastr.error('Kategori tidak dijumpai. Sila muat semula halaman dan cuba lagi.', '', {
               timeOut: 5000,
               closeButton: true,
               progressBar: true
             });
           } else if (xhr.status === 500) {
-            toastr.error('Server error occurred while loading subcategories. Please try again.', '', {
+            toastr.error('Ralat pelayan berlaku semasa memuatkan sub kategori. Sila cuba lagi.', '', {
               timeOut: 5000,
               closeButton: true,
               progressBar: true
             });
           } else {
-            toastr.error('Unable to load subcategories. Please refresh the page and try again.', '', {
+            toastr.error('Tidak dapat memuatkan sub kategori. Sila muat semula halaman dan cuba lagi.', '', {
               timeOut: 5000,
               closeButton: true,
               progressBar: true
