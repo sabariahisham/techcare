@@ -96,6 +96,29 @@
         }
       ]
     },
+    {
+      "menuHeader": "Super Admin"
+    },
+    {
+          "name": "Audit Trail",
+          "slug": "audit-trail",
+          "icon": "menu-icon icon-base bx bx-list-check",
+          "permission" : "konfigurasi.view",
+          "submenu": [
+            {
+              "url": "audit-trail",
+              "name": "Senarai Audit Trail",
+              "slug": "audit-trail-index",
+              "permission": "konfigurasi.view"
+            },
+            {
+              "url": "audit/logs",
+              "name": "Log Keseluruhan",
+              "slug": "log-index",
+              "permission": "konfigurasi.view"
+            }
+          ]
+    },
 
     {
       "menuHeader": "#(rujukan developer)"
