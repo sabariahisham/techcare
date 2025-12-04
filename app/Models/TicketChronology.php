@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class TicketChronology extends Model
+class TicketChronology extends Model implements Auditable
 {
   use HasFactory, SoftDeletes;
+  use \OwenIt\Auditing\Auditable;
 
   protected $table = 'tickets_chronologies';
 
@@ -26,6 +28,27 @@ class TicketChronology extends Model
   protected $casts = [
     'sla_duedate' => 'datetime',
   ];
+
+  /**
+   * Attributes to include in audit.
+   */
+  protected $auditInclude = [
+    'ticket_id',
+    'frm_user_id',
+    'level_pegtugas_id',
+    'tick_status',
+    'escalate_to',
+    'sla_duedate',
+    'updated_by'
+  ];
+
+  /**
+   * Generate audit tags.
+   */
+  public function generateTags(): array
+  {
+    return ['ticket-chronology'];
+  }
 
   // Relationships
   public function ticket()

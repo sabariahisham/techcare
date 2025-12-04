@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class KnowledgeBase extends Model
+class KnowledgeBase extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $table = 'knowledge_base';
 
@@ -24,6 +26,28 @@ class KnowledgeBase extends Model
         'created_by',
         'updated_by',
     ];
+
+    /**
+     * Attributes to include in audit.
+     */
+    protected $auditInclude = [
+        'cat_id',
+        'subcat_id',
+        'kb_title',
+        'kb_desc',
+        'kb_tag',
+        'kb_status',
+        'kb_jenis',
+        'updated_by'
+    ];
+
+    /**
+     * Generate audit tags.
+     */
+    public function generateTags(): array
+    {
+        return ['knowledge-base'];
+    }
 
     public function category()
     {

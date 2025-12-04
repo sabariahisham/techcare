@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Ticket extends Model
+class Ticket extends Model implements Auditable
 {
   use HasFactory, SoftDeletes;
+  use \OwenIt\Auditing\Auditable;
 
   protected $table = 'tickets';
 
@@ -35,6 +37,30 @@ class Ticket extends Model
   protected $casts = [
     'tick_duedate' => 'datetime',
   ];
+
+  /**
+   * Attributes to include in audit.
+   */
+  protected $auditInclude = [
+    'ticket_nolog',
+    'user_id',
+    'cat_id',
+    'subcat_id', 
+    'tick_status',
+    'tick_duedate',
+    'ticket_title',
+    'ticket_desc',
+    'ticket_type',
+    'updated_by'
+  ];
+
+  /**
+   * Generate audit tags.
+   */
+  public function generateTags(): array
+  {
+    return ['ticket'];
+  }
 
   protected static function boot()
   {
