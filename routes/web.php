@@ -328,6 +328,8 @@ Route::middleware(['auth'])->prefix('tickets')->group(function () {
   Route::get('/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
   // Edit, update and delete functionality removed - complainants should only log and submit tickets
   Route::post('/{ticket}/update-status', [TicketController::class, 'updateTicketStatus'])->name('tickets.update-status');
+  Route::post('/{ticket}/add-comment', [TicketController::class, 'addComment'])->name('tickets.add-comment');
+  Route::get('/attachment/{document}/download', [TicketController::class, 'downloadAttachment'])->name('tickets.downloadAttachment');
 });
 
 // Route for searching user by name - for ticket forms
