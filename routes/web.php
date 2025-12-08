@@ -14,7 +14,6 @@ use App\Http\Controllers\layouts\Blank;
 use App\Http\Controllers\layouts\Fluid;
 use App\Http\Controllers\charts\ChartJs;
 use App\Http\Controllers\icons\Boxicons;
-use App\Http\Controllers\configuration\RoleController;
 use App\Http\Controllers\apps\InvoiceAdd;
 use App\Http\Controllers\cards\CardBasic;
 use App\Http\Controllers\pages\MiscError;
@@ -53,9 +52,7 @@ use App\Http\Controllers\extended_ui\Treeview;
 use App\Http\Controllers\form_elements\Extras;
 use App\Http\Controllers\form_elements\Picker;
 use App\Http\Controllers\front_pages\Checkout;
-use App\Http\Controllers\configuration\ModuleController;
 use App\Http\Controllers\pages\MiscComingSoon;
-use App\Http\Controllers\configuration\PermissionController;
 use App\Http\Controllers\apps\AccessPermission;
 use App\Http\Controllers\apps\UserViewSecurity;
 use App\Http\Controllers\form_elements\Editors;
@@ -91,6 +88,7 @@ use App\Http\Controllers\user_interface\Progress;
 use App\Http\Controllers\user_interface\Spinners;
 use App\Http\Controllers\apps\EcommerceProductAdd;
 use App\Http\Controllers\apps\UserViewConnections;
+use App\Http\Controllers\audit\AuditLogController;
 use App\Http\Controllers\form_elements\BasicInput;
 use App\Http\Controllers\form_elements\FileUpload;
 use App\Http\Controllers\tables\DatatableAdvanced;
@@ -123,6 +121,7 @@ use App\Http\Controllers\form_elements\CustomOptions;
 use App\Http\Controllers\form_layouts\HorizontalForm;
 use App\Http\Controllers\language\LanguageController;
 use App\Http\Controllers\tables\Basic as TablesBasic;
+use App\Http\Controllers\configuration\RoleController;
 use App\Http\Controllers\extended_ui\PerfectScrollbar;
 use App\Http\Controllers\pages\AccountSettingsAccount;
 use App\Http\Controllers\pages\AccountSettingsBilling;
@@ -132,12 +131,14 @@ use App\Http\Controllers\authentications\RegisterBasic;
 use App\Http\Controllers\authentications\RegisterCover;
 use App\Http\Controllers\authentications\TwoStepsBasic;
 use App\Http\Controllers\authentications\TwoStepsCover;
+use App\Http\Controllers\dashboard\DashboardController;
 use App\Http\Controllers\front_pages\HelpCenterArticle;
 use App\Http\Controllers\pages\AccountSettingsSecurity;
 use App\Http\Controllers\pages\Pricing as PagesPricing;
 use App\Http\Controllers\apps\EcommerceSettingsCheckout;
 use App\Http\Controllers\apps\EcommerceSettingsPayments;
 use App\Http\Controllers\apps\EcommerceSettingsShipping;
+use App\Http\Controllers\configuration\ModuleController;
 use App\Http\Controllers\extended_ui\TimelineFullscreen;
 use App\Http\Controllers\laravel_example\UserManagement;
 use App\Http\Controllers\wizard_example\PropertyListing;
@@ -147,9 +148,11 @@ use App\Http\Controllers\user_interface\TooltipsPopovers;
 use App\Http\Controllers\authentications\VerifyEmailBasic;
 use App\Http\Controllers\authentications\VerifyEmailCover;
 use App\Http\Controllers\pages\AccountSettingsConnections;
+use App\Http\Controllers\Reports\ReportLogTicketController;
 use App\Http\Controllers\authentications\RegisterMultiSteps;
 use App\Http\Controllers\authentications\ResetPasswordBasic;
 use App\Http\Controllers\authentications\ResetPasswordCover;
+use App\Http\Controllers\configuration\PermissionController;
 use App\Http\Controllers\pages\AccountSettingsNotifications;
 use App\Http\Controllers\apps\EcommerceSettingsNotifications;
 use App\Http\Controllers\authentications\ForgotPasswordBasic;
@@ -169,7 +172,6 @@ use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
 use App\Http\Controllers\Reports\ReportLogTicketController;
 use App\Http\Controllers\Reports\PrestasiPegtugasController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
-use App\Http\Controllers\dashboard\DashboardController;
 
 Route::get('/', function () {
   if (Auth::check()) {
@@ -391,6 +393,7 @@ Route::middleware(['auth'])->group(function () {
   });
 });
 
+
 // Impersonation Routes
 Route::middleware(['auth'])->group(function () {
   Route::get('/impersonate/user/{user}', function ($user) {
@@ -415,4 +418,29 @@ Route::middleware(['auth'])->group(function () {
 
     return redirect('/dashboard')->with('impersonate_leave', 'You have stopped impersonating.');
   })->name('impersonate.leave');
+
+  //Route untuk audit trail - senarai audit trail
+  route::middleware(['auth'])->group(function () {
+  Route::get('/audit-trail', [App\Http\Controllers\audit\AuditTrailController::class, 'index'])->name('audit.index');
+  Route::get('/audit-trail/data', [App\Http\Controllers\audit\AuditTrailController::class, 'getAuditData'])->name('audit.data');
+  Route::get('/audit-trail/detail/{audit}', [App\Http\Controllers\audit\AuditTrailController::class, 'getAuditDetail'])->name('audit.detail');
+  });
+
+  //route untuk  modul audit trails -log keseluruhan
+  Route::prefix('audit/logs')->middleware('auth')->group(function () {
+
+    // Senarai fail log harian
+    Route::get('/', [AuditLogController::class, 'index'])
+        ->name('audit.logs.index');
+
+    // Papar log mengikut tarikh
+    Route::get('/view/{date}', [AuditLogController::class, 'show'])
+        ->name('audit.logs.show');
+
+    // Download log
+    Route::get('/download/{date}', [AuditLogController::class, 'download'])
+        ->name('audit.logs.download');
+  });
+ 
+
 });
