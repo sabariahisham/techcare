@@ -23,19 +23,28 @@ $(function () {
   var dt_report_table = $('.datatables-refcategory');
 
   if (dt_report_table.length) {
+    // Get current date and time in D-M-Y H:M format
+    var now = new Date();
+    var day = now.getDate();
+    var month = now.getMonth() + 1;
+    var year = now.getFullYear();
+    var hours = String(now.getHours()).padStart(2, '0');
+    var minutes = String(now.getMinutes()).padStart(2, '0');
+    var currentDateTime = day + '-' + month + '-' + year + ' ' + hours + ':' + minutes;
+
     var dt_report = dt_report_table.DataTable({
       data: [
         {
           id: 1,
           name: 'Senarai Log Tiket',
           description: 'Laporan lengkap log aktiviti dan perubahan status tiket',
-          updated_at: '27-11-2025'
+          updated_at: currentDateTime
         },
         {
           id: 2,
           name: 'Prestasi Pegawai Tugasan',
           description: 'Laporan prestasi pegawai berdasarkan tiket yang ditugaskan',
-          updated_at: '27-11-2025'
+          updated_at: currentDateTime
         }
       ],
       columns: [

@@ -167,6 +167,7 @@ use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
 use App\Http\Controllers\Reports\ReportLogTicketController;
+use App\Http\Controllers\Reports\PrestasiPegtugasController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 use App\Http\Controllers\dashboard\DashboardController;
 
@@ -301,6 +302,12 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/report/senarai-log-tiket/data', [App\Http\Controllers\Reports\ReportLogTicketController::class, 'logTicketData'])->name('report-log-ticket-data');
   Route::get('/report/senarai-log-tiket/export-excel', [App\Http\Controllers\Reports\ReportLogTicketController::class, 'exportExcel'])->name('report-log-ticket-export-excel');
   Route::get('/report/senarai-log-tiket/export-pdf', [App\Http\Controllers\Reports\ReportLogTicketController::class, 'exportPdf'])->name('report-log-ticket-export-pdf');
+
+  // Prestasi Pegawai Tugasan
+  Route::get('/report/prestasi-pegawai-tugasan', [App\Http\Controllers\Reports\PrestasiPegtugasController::class, 'index'])->name('report-prestasi-pegtugas');
+  Route::get('/report/prestasi-pegawai-tugasan/data', [App\Http\Controllers\Reports\PrestasiPegtugasController::class, 'data'])->name('report-prestasi-pegtugas-data');
+  Route::get('/report/prestasi-pegawai-tugasan/export-excel', [App\Http\Controllers\Reports\PrestasiPegtugasController::class, 'exportExcel'])->name('report-prestasi-pegtugas-export-excel');
+  Route::get('/report/prestasi-pegawai-tugasan/export-pdf', [App\Http\Controllers\Reports\PrestasiPegtugasController::class, 'exportPdf'])->name('report-prestasi-pegtugas-export-pdf');
 });
 
 // references
