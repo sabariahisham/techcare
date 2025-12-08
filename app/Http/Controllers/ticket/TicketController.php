@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Ticket;
 use id;
 use App\Models\User;
 use App\Models\Ticket;
+use App\Models\Comment;
+use App\Models\Document;
 use App\Models\RefCategory;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -12,6 +14,8 @@ use App\Models\RefTicketStatus;
 use App\Models\TicketChronology;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use App\Http\Requests\Ticket\StoreTicketRequest;
 
@@ -335,7 +339,9 @@ class TicketController extends Controller
     $ticket = Ticket::create($data);
 
     // Handle file attachments if any
-    // TODO: Implement file handling logic later
+    if ($request->hasFile('attachments')) {
+      $this->handleFileAttachments($request->file('attachments'), $ticket->id);
+    }
 
     return response()->json([
       'success' => true,
@@ -360,14 +366,28 @@ class TicketController extends Controller
       'chronologies.status',
       'chronologies.createdBy',
       'chronologies.fromUser',
-      'chronologies.escalatedTo'
+      'chronologies.escalatedTo',
+      'comments.user'
     ]);
+
+    // Force reload comments to ensure they are current
+    $ticket->load('comments.user');
+
+    // Force load attachments using direct query to ensure they are loaded
+    $ticket->attachments = Document::where('doc_id', $ticket->id)
+      ->where('doc_jenis', 'TICKET')
+      ->get();
 
     // Get ticket history/audit trail if available
     $ticketHistory = $this->getTicketHistory($ticket);
 
     // Get other relevant data
     $allStatuses = RefTicketStatus::all();
+
+    Log::info('Showing ticket with comments', [
+      'ticket_id' => $ticket->id,
+      'comments_count' => $ticket->comments->count()
+    ]);
 
     return view('tickets.show', compact('ticket', 'ticketHistory', 'allStatuses'));
   }
@@ -458,7 +478,7 @@ class TicketController extends Controller
     // Search for user by exact email with relationships
     $user = User::with(['sektor', 'bahagian', 'seksyen', 'unit', 'jawatan', 'skim'])
       ->where('email', $email)
-      ->where('id', '!=', auth()->id()) // Exclude current user
+      ->where('id', '!=', Auth::id()) // Exclude current user
       ->first();
 
     if (!$user) {
@@ -532,7 +552,7 @@ class TicketController extends Controller
         // Secondary search: by email username part (before @)
         $q->orWhere('email', 'like', $query . '%@%');
       })
-      ->where('id', '!=', auth()->id()) // Exclude current user
+      ->where('id', '!=', Auth::id()) // Exclude current user
       ->whereNotNull('nama') // Ensure nama is not null
       ->where('nama', '!=', '') // Ensure nama is not empty
       ->where('nama', 'not like', '%@%') // Exclude email-like names
@@ -736,6 +756,131 @@ class TicketController extends Controller
         'success' => false,
         'message' => 'Ralat semasa mengemaskini status tiket: ' . $e->getMessage()
       ], 500);
+    }
+  }
+
+  /**
+   * Handle file attachments for ticket
+   *
+   * Stores uploaded files and creates Document records with:
+   * - Files saved to storage/app/public/ticket_attachments/
+   * - doc_jenis = 'TICKET'
+   * - doc_id = ticket ID
+   *
+   * @param array|\Illuminate\Http\UploadedFile $files
+   * @param int $ticketId
+   * @return void
+   */
+  private function handleFileAttachments($files, $ticketId)
+  {
+    if (!is_array($files)) {
+      $files = [$files];
+    }
+
+    foreach ($files as $file) {
+      if ($file && $file->isValid()) {
+        // Generate unique filename
+        $originalName = $file->getClientOriginalName();
+        $extension = $file->getClientOriginalExtension();
+        $filename = time() . '_' . uniqid() . '.' . $extension;
+
+        // Store file
+        $path = $file->storeAs('ticket_attachments', $filename, 'public');
+
+        // Create document record
+        Document::create([
+          'doc_id' => $ticketId,
+          'uuid' => Str::uuid(),
+          'doc_mime' => $file->getMimeType(),
+          'doc_name' => $originalName,
+          'doc_storage_nm' => $filename,
+          'doc_jenis' => 'TICKET',
+          'created_by' => Auth::id(),
+          'updated_by' => Auth::id(),
+        ]);
+      }
+    }
+  }
+
+  /**
+   * Download ticket attachment file
+   *
+   * Downloads a specific attachment file by document ID.
+   * Only allows downloads of documents with doc_jenis = 'TICKET'
+   *
+   * @param int $documentId
+   * @return \\Symfony\\Component\\HttpFoundation\\BinaryFileResponse
+   * @throws \\Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException
+   */
+  public function downloadAttachment($documentId)
+  {
+    $document = Document::where('id', $documentId)
+      ->where('doc_jenis', 'TICKET')
+      ->firstOrFail();
+
+    $filePath = storage_path('app/public/ticket_attachments/' . $document->doc_storage_nm);
+
+    if (!file_exists($filePath)) {
+      abort(404, 'File tidak dijumpai');
+    }
+
+    return response()->download($filePath, $document->doc_name, [
+      'Content-Type' => $document->doc_mime,
+    ]);
+  }
+
+  /**
+   * Add a comment to a ticket
+   *
+   * @param \Illuminate\Http\Request $request
+   * @param \App\Models\Ticket $ticket
+   * @return \Illuminate\Http\RedirectResponse
+   */
+  public function addComment(Request $request, Ticket $ticket)
+  {
+    Log::info('addComment method called', [
+      'ticket_id' => $ticket->id,
+      'user_id' => Auth::id(),
+      'request_data' => $request->all()
+    ]);
+
+    $request->validate([
+      'comment' => 'required|string|min:1|max:1000',
+    ], [
+      'comment.required' => 'Komen diperlukan.',
+      'comment.min' => 'Komen mestilah sekurang-kurangnya 1 aksara.',
+      'comment.max' => 'Komen tidak boleh melebihi 1000 aksara.',
+    ]);
+
+    try {
+      // Create the comment using Eloquent
+      $comment = Comment::create([
+        'user_id' => Auth::id(),
+        'ticket_id' => $ticket->id,
+        'comment_text' => $request->comment,
+        'created_by' => Auth::id(),
+        'updated_by' => Auth::id(),
+      ]);
+
+      Log::info('Comment created successfully', [
+        'comment_id' => $comment->id,
+        'ticket_id' => $ticket->id,
+        'user_id' => Auth::id()
+      ]);
+
+      return redirect()->back()->with('success', 'Komen berjaya ditambah!');
+    } catch (\Exception $e) {
+      Log::error('Error creating comment', [
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString(),
+        'request_data' => $request->all(),
+        'ticket_id' => $ticket->id,
+        'user_id' => Auth::id(),
+      ]);
+
+      return redirect()->back()
+        ->with('error', 'Ralat semasa menambah komen: ' . $e->getMessage())
+        ->withInput();
     }
   }
 }

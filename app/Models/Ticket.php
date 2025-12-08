@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Ramsey\Uuid\Uuid;
 use Illuminate\Database\Eloquent\Model;
-use League\CommonMark\Node\Block\Document;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
@@ -150,6 +149,31 @@ class Ticket extends Model implements Auditable
   {
     return $this->hasMany(TicketChronology::class, 'ticket_id')->orderBy('created_at', 'asc');
   }
+
+  /**
+   * Get all file attachments for this ticket
+   *
+   * Attachments are stored in the documents table with:
+   * - doc_jenis = 'TICKET'
+   * - doc_id = ticket ID (this ticket's ID)
+   *
+   * @return \Illuminate\Database\Eloquent\Relations\HasMany
+   */
+  public function attachments()
+  {
+    return $this->hasMany(Document::class, 'doc_id')->where('doc_jenis', 'TICKET');
+  }
+
+  /**
+   * Get all comments for this ticket
+   *
+   * @return \Illuminate\Database\Eloquent\Relations\HasMany
+   */
+  public function comments()
+  {
+    return $this->hasMany(Comment::class, 'ticket_id')->orderBy('created_at', 'asc');
+  }
+
 
   /**
    * Create a chronology entry when status changes

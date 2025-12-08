@@ -229,14 +229,13 @@ $(function () {
       isValid = false;
     }
 
-    // Validate file attachments
-    var attachmentField = $('[name="attachments[]"]');
-    if (attachmentField.length > 0 && attachmentField[0].files && attachmentField[0].files.length > 0) {
+    // Validate file attachments from selectedAttachments array
+    if (window.selectedAttachments && window.selectedAttachments.length > 0) {
       var allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
       var maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
 
-      for (var i = 0; i < attachmentField[0].files.length; i++) {
-        var file = attachmentField[0].files[i];
+      for (var i = 0; i < window.selectedAttachments.length; i++) {
+        var file = window.selectedAttachments[i];
         var fileName = file.name.toLowerCase();
         var fileExtension = fileName.split('.').pop();
 
@@ -356,6 +355,21 @@ $(function () {
     var formData = new FormData(this);
     var submitBtn = $(this).find('button[type="submit"]');
 
+    // Handle attachments from the global selectedAttachments array
+    // Remove any existing attachment files from FormData first
+    formData.delete('attachments[]');
+
+    // Add files from selectedAttachments if available
+    if (window.selectedAttachments && window.selectedAttachments.length > 0) {
+      console.log('Adding', window.selectedAttachments.length, 'attachments to form data');
+      window.selectedAttachments.forEach(function (file, index) {
+        formData.append('attachments[]', file);
+        console.log('Added attachment:', file.name);
+      });
+    } else {
+      console.log('No attachments to add');
+    }
+
     // Disable submit button
     submitBtn.prop('disabled', true).text('Menghantar...');
 
@@ -384,6 +398,11 @@ $(function () {
         $('#ticketFormFields').removeClass('d-none');
         // Restore normal Select2 behavior
         $('#cat_id, #subcat_id').next('.select2-container').removeClass('select2-normal-state');
+
+        // Clear attachments
+        if (window.removeAllAttachments) {
+          window.removeAllAttachments();
+        }
 
         // Reload both DataTables
         reloadAllTables();
