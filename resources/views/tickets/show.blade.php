@@ -437,7 +437,7 @@
                                         <div class="message-header">
                                             <div class="user-info">
                                                 <div class="user-details">
-                                                    <h6 class="user-name">{{ $comment->user->nama ?? 'Tidak Diketahui' }}
+                                                    <h6 class="user-name">{{ $comment->user->nama ?? 'Tidak Diketahui' }}<br>
                                                         <small class="message-time">
                                                            [{{ $comment->created_at->format('d/m/Y, H:i a') }}]
                                                         </small>
@@ -453,8 +453,8 @@
                         </div>
                     @else
                         <div class="empty-chat">
-                            <div class="text-center py-5">
-                                <i class="bx bx-chat display-1 text-muted mb-3"></i>
+                            <div class="text-center py-1">
+                                <i class="bx bx-chat empty-chat-icon mb-2"></i>
                                 <h6 class="text-muted mb-2">Tiada Komen Tersedia</h6>
                                 <p class="text-muted small mb-0">Komen akan dipaparkan di sini apabila terdapat maklum
                                     balas.</p>
