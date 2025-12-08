@@ -169,7 +169,6 @@ use App\Http\Controllers\apps\EcommerceCustomerDetailsNotifications;
 use App\Http\Controllers\form_wizard\Numbered as FormWizardNumbered;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use App\Http\Controllers\Configuration\RefSubCategoryManagementController;
-use App\Http\Controllers\Reports\ReportLogTicketController;
 use App\Http\Controllers\Reports\PrestasiPegtugasController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 
