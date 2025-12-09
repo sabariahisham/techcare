@@ -164,9 +164,18 @@
                     <hr>
                     <div class="row">
                         <div class="col-sm-3">
+                            <h6 class="mb-0">No. Siri <br> <small>(Aset / Sewaan)</small></h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            {{ $ticket->serial_number ?? '-' }}
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-3">
                             <h6 class="mb-0">Keterangan Aduan</h6>
                         </div>
-                        <div class="col-sm-9">
+                        <div class="col-sm-9 text-secondary">
                             {!! nl2br(e(ucfirst($ticket->ticket_desc))) !!}
                         </div>
                     </div>
@@ -219,6 +228,15 @@
                             @else
                                 <p class="mb-0 text-muted">Tiada lampiran tersedia.</p>
                             @endif
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row mt-6 mb-1">
+                        <div class="col-sm">
+                            <button type="button" class="btn btn-warning btn-sm "
+                                onclick="$('#commentModal').modal('show')">
+                                <i class="bx bx-message me-3"></i>Komen
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -303,6 +321,10 @@
                         <hr>
                         <div class="row mt-6 mb-1">
                             <div class="col-sm">
+                                <button type="button" class="btn btn-warning btn-sm "
+                                    onclick="$('#commentModal').modal('show')">
+                                    <i class="bx bx-message me-3"></i>Komen
+                                </button>
                                 <button class="btn btn-primary btn-sm float-end">
                                     <i class="bx bx-save me-1"></i>Kemaskini
                                 </button>
@@ -317,7 +339,7 @@
         </div>
 
         <!-- Center Column - Kronologi -->
-        <div class="col-xl-3 col-lg-3 col-md-6">
+        <div class="col-xl-6 col-lg-6 col-md-6">
             <!-- Kronologi Tiket -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -379,14 +401,22 @@
                                         </div>
                                         <p class="timeline-text">
                                             {{ $history['description'] ?? 'Tiada penerangan tersedia.' }}</p>
-                                        <small class="timeline-time">
+
+                                        <div class="mt-2">
+                                            <small class="timeline-time d-block mb-1">
+                                                <i class="bx bx-edit"></i>
+                                                <strong>Catatan:</strong>
+                                            </small>
+
+                                            <small class="timeline-time d-block ps-5">
+                                                {!! nl2br(e($history['notes'] ?? "ABsxcsddsvfvv\nsfsdffffgsgfdg\nsafdfdgfdgggggggggggdf")) !!}
+                                            </small>
+                                        </div>
+                                        <small class="timeline-time mt-3">
                                             <i class="bx bx-user"></i>
-                                            Oleh: {{ $history['user'] }}<br>
-                                        </small>
-                                        <small class="timeline-time">
-                                            <i class="bx bx-time"></i>
-                                            Tarikh:
+                                            <strong>Oleh:</strong> {{ $history['user'] }} [ Tarikh:
                                             {{ isset($history['timestamp']) ? $history['timestamp']->format('d/m/Y, H:i a') : now()->format('d/m/Y, H:i a') }}
+                                            ]<br>
                                         </small>
                                     </div>
                                 </div>
@@ -407,7 +437,7 @@
         </div>
 
         <!-- Right Column - Comments -->
-        <div class="col-xl-3 col-lg-3 col-md-6">
+        {{-- <div class="col-xl-3 col-lg-3 col-md-6">
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
@@ -502,8 +532,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
+
+    @include('tickets.partials.comment-modal')
 
 
 
@@ -597,10 +629,10 @@
         }
 
         /* Badge colors to match timeline markers
-                                                                                        .badge.bg-purple {
-                                                                                            background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
-                                                                                            color: white;
-                                                                                        } */
+                                                                                                        .badge.bg-purple {
+                                                                                                            background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
+                                                                                                            color: white;
+                                                                                                        } */
 
         .badge.badge-sm {
             font-size: 0.7rem;

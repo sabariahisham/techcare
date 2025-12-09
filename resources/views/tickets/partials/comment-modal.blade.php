@@ -1,5 +1,5 @@
 {{-- modal dialog box for comment input and submit button --}}
-{{-- <div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+<div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -21,4 +21,4 @@
             </div>
         </div>
     </div>
-</div> --}}
+</div>

@@ -54,17 +54,14 @@ class TicketController extends Controller
         break;
 
       case 'bagi_pihak':
-        // Show tickets I created on behalf of others (created_by = current user, but user_id != current user)
-        $query->where('created_by', $user->id)
-          ->where('user_id', '!=', $user->id)
-          ->where('ticket_type', 0);
-        break;
-
-      case 'bagi_pihak_sendiri':
-        // Show tickets others created on behalf of me (user_id = current user, but created_by != current user)
-        $query->where('user_id', $user->id)
-          ->where('created_by', '!=', $user->id)
-          ->where('ticket_type', 0);
+        // Show all "bagi pihak" tickets where I'm involved:
+        // 1. Tickets I created on behalf of others (I'm Wakil)
+        // 2. Tickets others created on behalf of me (I'm Pengadu)
+        $query->where('ticket_type', 0)
+          ->where(function ($q) use ($user) {
+            $q->where('created_by', $user->id) // I created for others (Wakil)
+              ->orWhere('user_id', $user->id); // Others created for me (Pengadu)
+          });
         break;
 
       default: // 'all' or any other value
@@ -99,15 +96,15 @@ class TicketController extends Controller
 
           // Check if current user created this ticket for someone else
           if ($ticket->created_by == $currentUserId && $ticket->user_id != $currentUserId) {
-            return '<span class="badge bg-warning">Bagi Pihak (Pengadu)</span><br><small class="text-muted" style="font-style: italic;">Nama Pengadu: ' . $userName . '</small>';
+            return '<span class="badge bg-warning">Bagi Pihak</span><i class="bx bx-info-circle ms-0" data-bs-toggle="tooltip" title="Aduan ini dibuat untuk pengguna lain."></i><br><small class="text-muted" style="font-style: italic;"> Pengadu: ' . $userName . '</small>';
           }
           // Check if someone else created this ticket for current user
           else if ($ticket->user_id == $currentUserId && $ticket->created_by != $currentUserId) {
-            return '<span class="badge bg-secondary">Bagi Pihak (Sendiri)</span><br><small class="text-muted" style="font-style: italic;">Dibuat oleh: ' . $creatorName . '</small>';
+            return '<span class="badge bg-warning">Bagi Pihak</span><i class="bx bx-info-circle ms-0" data-bs-toggle="tooltip" title="Aduan ini dibuat bagi pihak anda."></i><br><small class="text-muted" style="font-style: italic;">Wakil: ' . $creatorName . '</small>';
           }
           // Default case for other "bagi pihak" tickets
           else {
-            return '<span class="badge bg-secondary">Bagi Pihak</span><br><small class="text-muted" style="font-style: italic;">Nama Pengadu: ' . $userName . '</small>';
+            return '<span class="badge bg-warning" >Bagi Pihak</span><br><small class="text-muted" style="font-style: italic;">Pengadu: ' . $userName . '</small>';
           }
         }
       })
@@ -327,6 +324,7 @@ class TicketController extends Controller
       'user_id' => $user_id,
       'cat_id' => $validated['cat_id'],
       'subcat_id' => $validated['subcat_id'],
+      'serial_number' => $validated['no_siri'], // Map no_siri to serial_number column
       'ticket_title' => $validated['tick_title'], // Map tick_title to ticket_title
       'ticket_desc' => $validated['tick_desc'], // Map tick_desc to ticket_desc
       'ticket_type' => $validated['ticket_type'],
@@ -345,8 +343,15 @@ class TicketController extends Controller
 
     return response()->json([
       'success' => true,
-      'message' => 'Tiket berjaya dicipta!',
-      'ticket' => $ticket
+      'message' => 'Tiket berjaya dicipta! Tiket anda telah dilog dan akan diproses dalam masa terdekat.',
+      'ticket' => [
+        'id' => $ticket->id,
+        'uuid' => $ticket->uuid,
+        'ticket_nolog' => $ticket->ticket_nolog,
+        'ticket_title' => $ticket->ticket_title,
+        'ticket_type' => $ticket->ticket_type,
+        'created_at' => $ticket->created_at->format('d/m/Y H:i'),
+      ]
     ]);
   }
 
