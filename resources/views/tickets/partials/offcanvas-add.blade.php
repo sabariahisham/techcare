@@ -245,9 +245,15 @@
                     </select>
                 </div>
 
+                <!-- No Siri -->
+                <div class="mb-3" id="serialNumberField" style="display: none;">
+                    <label class="form-label">No. Siri <small>(Aset / Sewaan)</small></label>
+                    <input type="text" name="no_siri" class="form-control">
+                </div>
+
                 <!-- Keterangan -->
                 <div class="mb-3">
-                    <label class="form-label">Keterangan</label>
+                    <label class="form-label">Keterangan Aduan</label>
                     <textarea name="tick_desc" class="form-control" rows="4" required></textarea>
                 </div>
 

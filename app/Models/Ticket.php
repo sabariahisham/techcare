@@ -21,6 +21,7 @@ class Ticket extends Model implements Auditable
     'uuid',
     'ticket_nolog',
     'user_id',
+    'serial_number',
     'cat_id',
     'doc_id',
     'subcat_id',
@@ -43,8 +44,9 @@ class Ticket extends Model implements Auditable
   protected $auditInclude = [
     'ticket_nolog',
     'user_id',
+    'serial_number',
     'cat_id',
-    'subcat_id', 
+    'subcat_id',
     'tick_status',
     'tick_duedate',
     'ticket_title',

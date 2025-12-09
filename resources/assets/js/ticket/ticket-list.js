@@ -78,7 +78,7 @@ $(function () {
           ]
         },
         {
-          text: '<i class="bx bx-plus bx-sm me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">TAMBAH TIKET</span>',
+          text: '<i class="bx bx-plus bx-sm me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">ADUAN BAHARU</span>',
           className: 'add-new btn btn-primary',
           attr: {
             'data-bs-toggle': 'offcanvas',
@@ -93,6 +93,10 @@ $(function () {
       }
     });
 
+    // Expose to window for global access
+    window.dt_my_tickets = dt_my_tickets;
+    console.log('My Tickets DataTable initialized and exposed globally');
+
     // Add the filter dropdown to the ticket-filter-container
     if (dt_my_tickets) {
       $('.ticket-filter-container').html(`
@@ -101,8 +105,7 @@ $(function () {
           <select id="ticketFilterSelect" class="form-select form-select-sm" style="min-width: 200px;">
             <option value="all">Semua Tiket</option>
             <option value="diri_sendiri">Diri Sendiri</option>
-            <option value="bagi_pihak">Bagi Pihak (Pengadu)</option>
-            <option value="bagi_pihak_sendiri">Bagi Pihak (Sendiri)</option>
+            <option value="bagi_pihak">Bagi Pihak</option>
           </select>
         </div>
       `);
@@ -159,17 +162,14 @@ $(function () {
         searchPlaceholder: 'Carian Tiket untuk Diurus'
       }
     });
+
+    // Expose to window for global access
+    window.dt_manage_tickets = dt_manage_tickets;
+    console.log('Manage Tickets DataTable initialized and exposed globally');
   }
 
-  // Function to reload all tables
-  function reloadAllTables() {
-    if (dt_my_tickets) {
-      dt_my_tickets.ajax.reload();
-    }
-    if (dt_manage_tickets) {
-      dt_manage_tickets.ajax.reload();
-    }
-  }
+  // Global reloadAllTables function is defined in ticket-config.js
+  // It will automatically detect and reload the exposed DataTable instances
 
   // Edit and delete functionality removed - complainants should only log and submit tickets
 

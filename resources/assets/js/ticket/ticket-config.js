@@ -14,23 +14,167 @@ if (typeof $ === 'undefined') {
 
 // Function to reload all DataTables - defined globally so both files can use it
 window.reloadAllTables = function () {
-  // Reload My Tickets DataTable
-  if ($.fn.DataTable.isDataTable('.datatables-my-tickets')) {
-    $('.datatables-my-tickets').DataTable().ajax.reload();
+  console.log('Reloading all DataTables...');
+
+  var tablesReloaded = 0;
+  var totalTables = 0;
+  var reloadPromises = [];
+
+  // Function to create a reload promise for a DataTable
+  function createReloadPromise(table, tableName) {
+    return new Promise(function (resolve) {
+      try {
+        table.ajax.reload(function (json) {
+          console.log(tableName + ' reloaded successfully', json ? 'with ' + (json.recordsTotal || 0) + ' total records' : '');
+          tablesReloaded++;
+          resolve(true);
+        }, false);
+      } catch (e) {
+        console.error('Error reloading ' + tableName + ':', e);
+        tablesReloaded++;
+        resolve(false);
+      }
+    });
   }
 
-  // Reload Manage Tickets DataTable
-  if ($.fn.DataTable.isDataTable('.datatables-manage-tickets')) {
-    $('.datatables-manage-tickets').DataTable().ajax.reload();
+  // Try global variables first (preferred method)
+  if (window.dt_my_tickets && typeof window.dt_my_tickets.ajax === 'object' && window.dt_my_tickets.ajax) {
+    totalTables++;
+    console.log('Found My Tickets DataTable via global variable');
+    reloadPromises.push(createReloadPromise(window.dt_my_tickets, 'My Tickets'));
   }
 
-  // Keep backward compatibility for old single table
-  if ($.fn.DataTable.isDataTable('.datatables-tickets')) {
-    $('.datatables-tickets').DataTable().ajax.reload();
+  if (window.dt_manage_tickets && typeof window.dt_manage_tickets.ajax === 'object' && window.dt_manage_tickets.ajax) {
+    totalTables++;
+    console.log('Found Manage Tickets DataTable via global variable');
+    reloadPromises.push(createReloadPromise(window.dt_manage_tickets, 'Manage Tickets'));
+  }
+
+  // Fallback: Try to detect other DataTables by their CSS classes
+  var fallbackSelectors = ['.datatables-tickets', '.datatables-my-tickets', '.datatables-manage-tickets'];
+
+  fallbackSelectors.forEach(function (selector) {
+    // Only check if we haven't already found this table via global variables
+    var skipSelector = false;
+    if (selector === '.datatables-my-tickets' && window.dt_my_tickets) skipSelector = true;
+    if (selector === '.datatables-manage-tickets' && window.dt_manage_tickets) skipSelector = true;
+
+    if (!skipSelector && $.fn.DataTable && $.fn.DataTable.isDataTable(selector)) {
+      var table = $(selector).DataTable();
+      if (table && table.ajax) {
+        totalTables++;
+        console.log('Found DataTable by selector:', selector);
+        reloadPromises.push(createReloadPromise(table, 'DataTable (' + selector + ')'));
+      }
+    }
+  });
+
+  console.log('Total tables found:', totalTables);
+
+  // Wait for all reloads to complete
+  if (reloadPromises.length > 0) {
+    Promise.all(reloadPromises).then(function () {
+      console.log('All DataTables reload completed. Tables reloaded:', tablesReloaded);
+
+      // Enhanced visual feedback for table updates
+      setTimeout(function () {
+        // Add success highlight effect to all DataTable wrappers
+        var $tableWrappers = $('.dataTables_wrapper');
+
+        if ($tableWrappers.length > 0) {
+          $tableWrappers.addClass('table-updated table-reload-success');
+
+          // Show brief confirmation message
+          if (typeof toastr !== 'undefined') {
+            toastr.success('Senarai tiket telah dikemaskini', '', {
+              timeOut: 3000,
+              positionClass: 'toast-bottom-right',
+              iconClass: 'toast-success',
+              closeButton: false,
+              progressBar: true,
+              preventDuplicates: true
+            });
+          }
+
+          // Highlight the first row of each table (likely the newest ticket)
+          $tableWrappers.each(function () {
+            var $firstRow = $(this).find('tbody tr').first();
+            if ($firstRow.length > 0) {
+              $firstRow.addClass('new-ticket-highlight');
+              setTimeout(function () {
+                $firstRow.removeClass('new-ticket-highlight');
+              }, 3000);
+            }
+          });
+
+          // Gentle scroll to first visible table
+          var $firstVisibleTable = $tableWrappers.filter(':visible').first();
+          if ($firstVisibleTable.length > 0 && $firstVisibleTable.offset()) {
+            var scrollTop = $firstVisibleTable.offset().top - 120;
+            var currentScroll = $(window).scrollTop();
+
+            // Only scroll if we're not already near the table
+            if (Math.abs(currentScroll - scrollTop) > 200) {
+              $('html, body').animate({
+                scrollTop: scrollTop
+              }, 600, 'easeInOutQuad');
+            }
+          }
+
+          // Remove visual effects after animation
+          setTimeout(function () {
+            $tableWrappers.removeClass('table-updated table-reload-success');
+          }, 3500);
+        }
+      }, 200);
+    });
+  } else {
+    console.log('No DataTables found to reload. Checking for table elements...');
+
+    // Check if table elements exist but aren't initialized
+    var tableElements = $('.datatables-my-tickets, .datatables-manage-tickets, .datatables-tickets');
+    if (tableElements.length > 0) {
+      console.log('Found', tableElements.length, 'table elements, but they appear to not be initialized as DataTables yet.');
+    } else {
+      console.log('No table elements found at all.');
+    }
+
+    // Still show a success message to indicate the operation completed
+    if (typeof toastr !== 'undefined') {
+      toastr.info('Tiket berjaya dicipta! Sila refresh halaman untuk melihat tiket terbaru.', '', {
+        timeOut: 5000,
+        positionClass: 'toast-bottom-right',
+        closeButton: true,
+        progressBar: true
+      });
+    }
   }
 };
 
-// Helper function to check if value is empty/null/undefined and return fallback
+// Enhanced success notification function for ticket operations
+window.showTicketSuccessAlert = function (message, ticketData = null) {
+  // Create enhanced success message with ticket number if available
+  var successMessage = message || 'Operasi berjaya!';
+
+  if (ticketData && ticketData.ticket_nolog) {
+    successMessage = `Tiket berjaya dicipta! <br> No. Log: ${ticketData.ticket_nolog}`;
+  }
+
+  // Show main success toast
+  if (typeof toastr !== 'undefined') {
+    toastr.success(successMessage);
+  }
+
+  // Add visual highlighting effect to indicate successful operation
+  setTimeout(function () {
+    $('body').addClass('operation-success');
+    setTimeout(function () {
+      $('body').removeClass('operation-success');
+    }, 3000);
+  }, 500);
+};
+
+// Function to check if value is empty/null/undefined and return fallback
 window.getValueOrFallback = function (value, fallback = 'Tiada data') {
   if (value === null || value === undefined || value === '' || value === 0) {
     return fallback;

@@ -79,6 +79,9 @@ $(function () {
     } catch (e) {
       console.log('Select2 cleanup error:', e);
     }
+
+    // Hide Serial Number field when form is closed
+    hideSerialNumberField();
   });
 
   // Handle select2 selection events
@@ -86,6 +89,14 @@ $(function () {
     // Close the dropdown
     $(this).select2('close');
     // Trigger change for subcategory loading
+    $(this).trigger('change');
+  });
+
+  // Handle Select2 selection for subcategory dropdown
+  $(document).on('select2:select', '#subcat_id', function (e) {
+    // Close the dropdown
+    $(this).select2('close');
+    // Trigger change for Serial Number field visibility
     $(this).trigger('change');
   });
 
@@ -112,6 +123,9 @@ $(function () {
   $('#cat_id').change(function () {
     var catID = $(this).val();
     console.log('Add category changed:', catID);
+
+    // Hide serial number field when category changes
+    hideSerialNumberField();
 
     if (catID) {
       $.ajax({
@@ -145,6 +159,43 @@ $(function () {
       $('#subcat_id').append('<option value="">-- Pilih Sub Kategori --</option>');
     }
   });
+
+  // Handle subcategory change to show/hide Serial Number field (ADD FORM)
+  $('#subcat_id').change(function () {
+    var selectedText = $('#subcat_id option:selected').text();
+    console.log('Subcategory changed:', selectedText);
+
+    // Check if serial number should be shown
+    if (shouldShowSerialNumber(selectedText)) {
+      showSerialNumberField();
+    } else {
+      hideSerialNumberField();
+    }
+  });
+
+  // Function to check if Serial Number field should be shown
+  function shouldShowSerialNumber(subcategoryName) {
+    const ictHardwareSubcategories = [
+      'Komputer Desktop/Laptop',
+      'Peralatan Komputer (Monitor/Mouse/Keyboard/etc)',
+      'Pencetak'
+    ];
+
+    return ictHardwareSubcategories.includes(subcategoryName);
+  }
+
+  // Function to show Serial Number field
+  function showSerialNumberField() {
+    $('#serialNumberField').show();
+    console.log('Serial number field shown');
+  }
+
+  // Function to hide Serial Number field and clear its value
+  function hideSerialNumberField() {
+    $('#serialNumberField').hide();
+    $('[name="no_siri"]').val(''); // Clear the field value
+    console.log('Serial number field hidden and cleared');
+  }
 
   // Function to validate form based on ticket type (ADD FORM)
   function validateAddForm() {
@@ -207,6 +258,7 @@ $(function () {
     var title = $('[name="tick_title"]').val();
     var category = $('[name="cat_id"]').val();
     var subcategory = $('[name="subcat_id"]').val();
+    var serialNumber = $('[name="no_siri"]').val();
     var description = $('[name="tick_desc"]').val();
 
     if (!title || title.trim() === '') {
@@ -223,6 +275,8 @@ $(function () {
       errors['subcat_id'] = ['Sila pilih sub kategori.'];
       isValid = false;
     }
+
+    // Serial No. field is optional for all categories - no validation required
 
     if (!description || description.trim() === '') {
       errors['tick_desc'] = ['Keterangan aduan diperlukan.'];
@@ -370,8 +424,14 @@ $(function () {
       console.log('No attachments to add');
     }
 
-    // Disable submit button
+    // Disable submit button and add visual feedback
     submitBtn.prop('disabled', true).text('Menghantar...');
+    submitBtn.addClass('submitted');
+
+    // Remove the submitted class after animation
+    setTimeout(function () {
+      submitBtn.removeClass('submitted');
+    }, 600);
 
     $.ajax({
       url: '/tickets',
@@ -380,15 +440,26 @@ $(function () {
       processData: false,
       contentType: false,
       success: function (response) {
+        console.log('Ticket submitted successfully:', response);
+
         // Clear any validation errors
         clearValidationErrors();
 
-        // Close offcanvas
+        // Show enhanced success notification with ticket details
+        showTicketSuccessAlert(
+          response.message || 'Tiket berjaya dicipta!',
+          response.ticket
+        );
+
+        // Close offcanvas with fade effect
         $('#offcanvasAddTicket').offcanvas('hide');
 
         // Reset form
         $('#addTicketForm')[0].reset();
         $('#subcat_id').empty().append('<option value="">-- Pilih Sub Kategori --</option>');
+
+        // Hide Serial Number field on reset
+        hideSerialNumberField();
 
         // Reset ticket type display
         $('#selfInfo').removeClass('d-none');
@@ -404,25 +475,123 @@ $(function () {
           window.removeAllAttachments();
         }
 
-        // Reload both DataTables
-        reloadAllTables();
+        // Reload tables with enhanced feedback after ensuring form is closed and DOM is updated
+        setTimeout(function () {
+          console.log('Initiating table reload after successful ticket submission...');
 
-        // Show success message
-        if (typeof toastr !== 'undefined') {
-          toastr.success(response.message || 'Tiket berjaya dicipta!');
+          // Force a more aggressive reload approach
+          var reloadSuccess = false;
+
+          // First attempt: Use the global reload function
+          if (typeof window.reloadAllTables === 'function') {
+            console.log('Using global reloadAllTables function...');
+            try {
+              window.reloadAllTables();
+              reloadSuccess = true;
+            } catch (e) {
+              console.error('Error with reloadAllTables:', e);
+            }
+          }
+
+          // Second attempt: Direct reload if global function failed or doesn't exist
+          if (!reloadSuccess) {
+            console.log('Attempting direct DataTable reload...');
+            var tablesReloaded = 0;
+
+            // Reload My Tickets table
+            if (window.dt_my_tickets && window.dt_my_tickets.ajax) {
+              try {
+                console.log('Reloading My Tickets table directly...');
+                window.dt_my_tickets.ajax.reload(function () {
+                  tablesReloaded++;
+                  console.log('My Tickets table reloaded successfully');
+                }, false);
+              } catch (e) {
+                console.error('Error reloading My Tickets table:', e);
+              }
+            }
+
+            // Reload Manage Tickets table
+            if (window.dt_manage_tickets && window.dt_manage_tickets.ajax) {
+              try {
+                console.log('Reloading Manage Tickets table directly...');
+                window.dt_manage_tickets.ajax.reload(function () {
+                  tablesReloaded++;
+                  console.log('Manage Tickets table reloaded successfully');
+                }, false);
+              } catch (e) {
+                console.error('Error reloading Manage Tickets table:', e);
+              }
+            }
+
+            // Fallback: Try jQuery DataTable API
+            if (tablesReloaded === 0) {
+              console.log('Attempting jQuery DataTable API reload...');
+              $('.datatables-my-tickets, .datatables-manage-tickets').each(function () {
+                if ($.fn.DataTable.isDataTable(this)) {
+                  try {
+                    $(this).DataTable().ajax.reload(null, false);
+                    console.log('Table reloaded via jQuery API:', this.className);
+                  } catch (e) {
+                    console.error('Error reloading table via jQuery API:', e);
+                  }
+                }
+              });
+            }
+          }
+
+          console.log('Table reload process completed.');
+        }, 800);
+
+        // Log success for debugging
+        if (response.ticket) {
+          console.log('New ticket created with ID:', response.ticket.id, 'and number:', response.ticket.ticket_nolog);
         }
       },
       error: function (xhr) {
-        console.log('Add form submission error:', xhr.responseJSON);
+        console.error('Ticket submission failed:', xhr);
         var response = xhr.responseJSON;
+
         if (response && response.errors) {
           console.log('Server validation errors for add form:', response.errors);
           // Display validation errors from server
           displayValidationErrors(response.errors);
-          toastr.error('Sila betulkan ralat dalam borang.');
+
+          // Enhanced error notification
+          if (typeof toastr !== 'undefined') {
+            toastr.error('Sila betulkan ralat dalam borang sebelum menghantar semula.', 'Ralat Pengesahan', {
+              timeOut: 6000,
+              extendedTimeOut: 3000,
+              closeButton: true,
+              progressBar: true
+            });
+          }
         } else {
-          toastr.error('Ralat berlaku. Sila cuba lagi.');
+          // Generic error handling
+          var errorMessage = response && response.message
+            ? response.message
+            : 'Ralat tidak dijangka berlaku. Sila cuba lagi atau hubungi pentadbir sistem.';
+
+          if (typeof toastr !== 'undefined') {
+            toastr.error(errorMessage, 'Ralat Sistem', {
+              timeOut: 8000,
+              extendedTimeOut: 4000,
+              closeButton: true,
+              progressBar: true
+            });
+          }
         }
+
+        // Scroll to first error if validation errors exist
+        setTimeout(function () {
+          var firstError = $('.is-invalid').first();
+          if (firstError.length > 0) {
+            $('html, body').animate({
+              scrollTop: firstError.offset().top - 150
+            }, 500);
+            firstError.focus();
+          }
+        }, 100);
       },
       complete: function () {
         // Re-enable submit button
