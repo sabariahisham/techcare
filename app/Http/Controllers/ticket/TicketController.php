@@ -324,7 +324,7 @@ class TicketController extends Controller
       'user_id' => $user_id,
       'cat_id' => $validated['cat_id'],
       'subcat_id' => $validated['subcat_id'],
-      'serial_number' => $validated['no_siri'], // Map no_siri to serial_number column
+      'serial_number' => $validated['no_siri'] ?? null, // Map no_siri to serial_number column (optional)
       'ticket_title' => $validated['tick_title'], // Map tick_title to ticket_title
       'ticket_desc' => $validated['tick_desc'], // Map tick_desc to ticket_desc
       'ticket_type' => $validated['ticket_type'],
