@@ -455,9 +455,6 @@ $(function () {
           response.ticket
         );
 
-        // Close offcanvas with fade effect
-        $('#offcanvasAddTicket').offcanvas('hide');
-
         // Reset form
         $('#addTicketForm')[0].reset();
         $('#subcat_id').empty().append('<option value="">-- Pilih Sub Kategori --</option>');
@@ -479,14 +476,45 @@ $(function () {
           window.removeAllAttachments();
         }
 
-        // Trigger custom event for table reload
-        $(document).trigger('ticketSubmitted', [response.ticket]);
+        // Close offcanvas first, then reload tables
+        $('#offcanvasAddTicket').offcanvas('hide');
 
-        // Reload tables with enhanced feedback after ensuring form is closed and DOM is updated
+        // Reload tables after offcanvas is closed
         setTimeout(function () {
-          console.log('Initiating table reload after successful ticket submission...');
-          reloadDataTablesAfterSubmission();
-        }, 500);
+          // Try multiple approaches to reload tables
+          console.log('Reloading DataTables...');
+
+          // Method 1: Global instances
+          if (window.dt_my_tickets) {
+            window.dt_my_tickets.ajax.reload(null, false);
+            console.log('Reloaded dt_my_tickets');
+          }
+          if (window.dt_manage_tickets) {
+            window.dt_manage_tickets.ajax.reload(null, false);
+            console.log('Reloaded dt_manage_tickets');
+          }
+
+          // Method 2: Direct jQuery DataTable reload
+          $('.datatables-my-tickets').each(function () {
+            if ($.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable().ajax.reload(null, false);
+              console.log('Reloaded my-tickets via jQuery');
+            }
+          });
+
+          $('.datatables-manage-tickets').each(function () {
+            if ($.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable().ajax.reload(null, false);
+              console.log('Reloaded manage-tickets via jQuery');
+            }
+          });
+
+          // Method 3: Global reload function as fallback
+          if (typeof window.reloadAllTables === 'function') {
+            window.reloadAllTables();
+            console.log('Called global reloadAllTables');
+          }
+        }, 300);
 
         // Log success for debugging
         if (response.ticket) {
@@ -539,10 +567,8 @@ $(function () {
         }, 100);
       },
       complete: function () {
-        // Re-enable submit button
+        // Re-enable submit button and remove loading spinner
         submitBtn.prop('disabled', false).text('Simpan & Hantar');
-
-        // Remove loading indicator from tables
         $('.datatables-my-tickets, .datatables-manage-tickets').closest('.card-datatable')
           .removeClass('datatable-refreshing');
       }
@@ -604,160 +630,4 @@ $(function () {
   });
 });
 
-/**
- * Enhanced DataTable reload function specifically for after ticket submission
- * This function ensures reliable table refresh with multiple fallback mechanisms
- */
-function reloadDataTablesAfterSubmission() {
-  console.log('Starting enhanced DataTable reload after ticket submission...');
-
-  var reloadPromises = [];
-  var reloadedTables = [];
-
-  // Method 1: Try global DataTable instances first
-  if (window.dt_my_tickets && typeof window.dt_my_tickets.ajax === 'object') {
-    console.log('Attempting to reload My Tickets table via global instance...');
-    reloadPromises.push(
-      new Promise(function (resolve) {
-        try {
-          window.dt_my_tickets.ajax.reload(function (json) {
-            console.log('My Tickets table reloaded successfully via global instance');
-            reloadedTables.push('My Tickets');
-            resolve(true);
-          }, false);
-        } catch (e) {
-          console.error('Error reloading My Tickets via global instance:', e);
-          resolve(false);
-        }
-      })
-    );
-  }
-
-  if (window.dt_manage_tickets && typeof window.dt_manage_tickets.ajax === 'object') {
-    console.log('Attempting to reload Manage Tickets table via global instance...');
-    reloadPromises.push(
-      new Promise(function (resolve) {
-        try {
-          window.dt_manage_tickets.ajax.reload(function (json) {
-            console.log('Manage Tickets table reloaded successfully via global instance');
-            reloadedTables.push('Manage Tickets');
-            resolve(true);
-          }, false);
-        } catch (e) {
-          console.error('Error reloading Manage Tickets via global instance:', e);
-          resolve(false);
-        }
-      })
-    );
-  }
-
-  // Method 2: Fallback - Direct jQuery DataTable API
-  if (reloadPromises.length === 0) {
-    console.log('No global instances found, trying jQuery DataTable API...');
-
-    $('.datatables-my-tickets').each(function () {
-      if ($.fn.DataTable.isDataTable(this)) {
-        reloadPromises.push(
-          new Promise(function (resolve) {
-            try {
-              $(this).DataTable().ajax.reload(function () {
-                console.log('My Tickets table reloaded via jQuery API');
-                reloadedTables.push('My Tickets (jQuery)');
-                resolve(true);
-              }, false);
-            } catch (e) {
-              console.error('Error reloading My Tickets via jQuery API:', e);
-              resolve(false);
-            }
-          }.bind(this))
-        );
-      }
-    });
-
-    $('.datatables-manage-tickets').each(function () {
-      if ($.fn.DataTable.isDataTable(this)) {
-        reloadPromises.push(
-          new Promise(function (resolve) {
-            try {
-              $(this).DataTable().ajax.reload(function () {
-                console.log('Manage Tickets table reloaded via jQuery API');
-                reloadedTables.push('Manage Tickets (jQuery)');
-                resolve(true);
-              }, false);
-            } catch (e) {
-              console.error('Error reloading Manage Tickets via jQuery API:', e);
-              resolve(false);
-            }
-          }.bind(this))
-        );
-      }
-    });
-  }
-
-  // Method 3: If still no promises, try the global reload function
-  if (reloadPromises.length === 0 && typeof window.reloadAllTables === 'function') {
-    console.log('Using global reloadAllTables function as fallback...');
-    reloadPromises.push(
-      new Promise(function (resolve) {
-        try {
-          window.reloadAllTables();
-          reloadedTables.push('All Tables (Global)');
-          resolve(true);
-        } catch (e) {
-          console.error('Error with global reloadAllTables:', e);
-          resolve(false);
-        }
-      })
-    );
-  }
-
-  // Execute reload promises and provide feedback
-  if (reloadPromises.length > 0) {
-    Promise.all(reloadPromises).then(function (results) {
-      var successCount = results.filter(Boolean).length;
-      console.log(`DataTable reload completed. ${successCount}/${results.length} tables reloaded successfully.`);
-      console.log('Reloaded tables:', reloadedTables);
-
-      // Show success notification
-      if (typeof toastr !== 'undefined') {
-        toastr.success(
-          'Tiket berjaya dihantar! Senarai tiket telah dikemaskini.',
-          'Berjaya',
-          {
-            timeOut: 4000,
-            closeButton: true,
-            progressBar: true,
-            positionClass: 'toast-bottom-right',
-            preventDuplicates: true
-          }
-        );
-      }
-
-      // Add visual feedback to refreshed tables
-      setTimeout(function () {
-        $('.datatables-my-tickets, .datatables-manage-tickets').closest('.card-datatable')
-          .addClass('table-refresh-success');
-
-        setTimeout(function () {
-          $('.table-refresh-success').removeClass('table-refresh-success');
-        }, 2000);
-      }, 300);
-    });
-  } else {
-    console.warn('No DataTable instances found for reload. Tables may not be initialized yet.');
-
-    // Show fallback notification
-    if (typeof toastr !== 'undefined') {
-      toastr.info(
-        'Tiket berjaya dihantar! Sila refresh halaman untuk melihat tiket terbaru.',
-        'Berjaya',
-        {
-          timeOut: 5000,
-          closeButton: true,
-          progressBar: true,
-          positionClass: 'toast-bottom-right'
-        }
-      );
-    }
-  }
-}
+// End of file

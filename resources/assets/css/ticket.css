@@ -404,6 +404,7 @@ body.operation-success {
 
 /* Loading state for datatable refresh */
 .datatable-refreshing {
+  position: relative;
   opacity: 0.7;
   transition: opacity 0.3s ease;
 }
@@ -420,6 +421,7 @@ body.operation-success {
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  z-index: 1000;
 }
 
 @keyframes spin {
