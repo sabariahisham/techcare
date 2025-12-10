@@ -47,25 +47,25 @@
 
     @if (!isset($menuHorizontal))
         <!-- Search -->
-        <div class="navbar-nav align-items-center">
+        {{-- <div class="navbar-nav align-items-center">
             <div class="nav-item navbar-search-wrapper mb-0">
                 <a class="nav-item nav-link search-toggler px-0" href="javascript:void(0);">
                     <i class="bx bx-search bx-md"></i>
                     <span class="d-none d-md-inline-block text-muted fw-normal ms-4">Search (Ctrl+/)</span>
                 </a>
             </div>
-        </div>
+        </div> --}}
         <!-- /Search -->
     @endif
 
     <ul class="navbar-nav flex-row align-items-center ms-auto">
         @if (isset($menuHorizontal))
             <!-- Search -->
-            <li class="nav-item navbar-search-wrapper me-2 me-xl-0">
+            {{-- <li class="nav-item navbar-search-wrapper me-2 me-xl-0">
                 <a class="nav-link search-toggler" href="javascript:void(0);">
                     <i class="bx bx-search bx-md"></i>
                 </a>
-            </li>
+            </li> --}}
             <!-- /Search -->
         @endif
 
