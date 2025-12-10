@@ -174,7 +174,7 @@
                         </div>
                     </a>
                 </li>
-                <li>
+                {{-- <li>
                     <div class="dropdown-divider my-1"></div>
                 </li>
                 <li>
@@ -189,7 +189,7 @@
                             <i class='bx bx-key bx-md me-3'></i><span>API Tokens</span>
                         </a>
                     </li>
-                @endif
+                @endif --}}
                 @if (Auth::check())
                     <li>
                         <a class="dropdown-item" href="{{ route('logout') }}"
