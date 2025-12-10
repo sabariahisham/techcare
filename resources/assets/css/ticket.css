@@ -336,3 +336,96 @@ body.operation-success {
     font-size: 0.8rem;
   }
 }
+
+/* DataTable refresh animation */
+.table-refresh-success {
+  animation: tableRefreshPulse 1.5s ease-in-out;
+}
+
+@keyframes tableRefreshPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgba(40, 167, 69, 0.1);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+  }
+}
+
+/* Enhanced table update feedback */
+.table-updated {
+  position: relative;
+}
+
+.table-updated::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #28a745, #20c997);
+  border-radius: 8px;
+  z-index: -1;
+  animation: tableUpdateGlow 2s ease-in-out;
+}
+
+@keyframes tableUpdateGlow {
+
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* New ticket highlight */
+.new-ticket-highlight {
+  background-color: rgba(40, 167, 69, 0.1) !important;
+  animation: newTicketFade 3s ease-out;
+}
+
+@keyframes newTicketFade {
+  0% {
+    background-color: rgba(40, 167, 69, 0.25) !important;
+  }
+
+  100% {
+    background-color: rgba(40, 167, 69, 0.05) !important;
+  }
+}
+
+/* Loading state for datatable refresh */
+.datatable-refreshing {
+  position: relative;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.datatable-refreshing::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #28a745;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  z-index: 1000;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

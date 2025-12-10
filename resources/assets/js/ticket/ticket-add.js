@@ -428,6 +428,10 @@ $(function () {
     submitBtn.prop('disabled', true).text('Menghantar...');
     submitBtn.addClass('submitted');
 
+    // Add visual indicator that tables will be refreshed
+    $('.datatables-my-tickets, .datatables-manage-tickets').closest('.card-datatable')
+      .addClass('datatable-refreshing');
+
     // Remove the submitted class after animation
     setTimeout(function () {
       submitBtn.removeClass('submitted');
@@ -451,9 +455,6 @@ $(function () {
           response.ticket
         );
 
-        // Close offcanvas with fade effect
-        $('#offcanvasAddTicket').offcanvas('hide');
-
         // Reset form
         $('#addTicketForm')[0].reset();
         $('#subcat_id').empty().append('<option value="">-- Pilih Sub Kategori --</option>');
@@ -475,73 +476,45 @@ $(function () {
           window.removeAllAttachments();
         }
 
-        // Reload tables with enhanced feedback after ensuring form is closed and DOM is updated
+        // Close offcanvas first, then reload tables
+        $('#offcanvasAddTicket').offcanvas('hide');
+
+        // Reload tables after offcanvas is closed
         setTimeout(function () {
-          console.log('Initiating table reload after successful ticket submission...');
+          // Try multiple approaches to reload tables
+          console.log('Reloading DataTables...');
 
-          // Force a more aggressive reload approach
-          var reloadSuccess = false;
+          // Method 1: Global instances
+          if (window.dt_my_tickets) {
+            window.dt_my_tickets.ajax.reload(null, false);
+            console.log('Reloaded dt_my_tickets');
+          }
+          if (window.dt_manage_tickets) {
+            window.dt_manage_tickets.ajax.reload(null, false);
+            console.log('Reloaded dt_manage_tickets');
+          }
 
-          // First attempt: Use the global reload function
+          // Method 2: Direct jQuery DataTable reload
+          $('.datatables-my-tickets').each(function () {
+            if ($.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable().ajax.reload(null, false);
+              console.log('Reloaded my-tickets via jQuery');
+            }
+          });
+
+          $('.datatables-manage-tickets').each(function () {
+            if ($.fn.DataTable.isDataTable(this)) {
+              $(this).DataTable().ajax.reload(null, false);
+              console.log('Reloaded manage-tickets via jQuery');
+            }
+          });
+
+          // Method 3: Global reload function as fallback
           if (typeof window.reloadAllTables === 'function') {
-            console.log('Using global reloadAllTables function...');
-            try {
-              window.reloadAllTables();
-              reloadSuccess = true;
-            } catch (e) {
-              console.error('Error with reloadAllTables:', e);
-            }
+            window.reloadAllTables();
+            console.log('Called global reloadAllTables');
           }
-
-          // Second attempt: Direct reload if global function failed or doesn't exist
-          if (!reloadSuccess) {
-            console.log('Attempting direct DataTable reload...');
-            var tablesReloaded = 0;
-
-            // Reload My Tickets table
-            if (window.dt_my_tickets && window.dt_my_tickets.ajax) {
-              try {
-                console.log('Reloading My Tickets table directly...');
-                window.dt_my_tickets.ajax.reload(function () {
-                  tablesReloaded++;
-                  console.log('My Tickets table reloaded successfully');
-                }, false);
-              } catch (e) {
-                console.error('Error reloading My Tickets table:', e);
-              }
-            }
-
-            // Reload Manage Tickets table
-            if (window.dt_manage_tickets && window.dt_manage_tickets.ajax) {
-              try {
-                console.log('Reloading Manage Tickets table directly...');
-                window.dt_manage_tickets.ajax.reload(function () {
-                  tablesReloaded++;
-                  console.log('Manage Tickets table reloaded successfully');
-                }, false);
-              } catch (e) {
-                console.error('Error reloading Manage Tickets table:', e);
-              }
-            }
-
-            // Fallback: Try jQuery DataTable API
-            if (tablesReloaded === 0) {
-              console.log('Attempting jQuery DataTable API reload...');
-              $('.datatables-my-tickets, .datatables-manage-tickets').each(function () {
-                if ($.fn.DataTable.isDataTable(this)) {
-                  try {
-                    $(this).DataTable().ajax.reload(null, false);
-                    console.log('Table reloaded via jQuery API:', this.className);
-                  } catch (e) {
-                    console.error('Error reloading table via jQuery API:', e);
-                  }
-                }
-              });
-            }
-          }
-
-          console.log('Table reload process completed.');
-        }, 800);
+        }, 300);
 
         // Log success for debugging
         if (response.ticket) {
@@ -594,8 +567,10 @@ $(function () {
         }, 100);
       },
       complete: function () {
-        // Re-enable submit button
+        // Re-enable submit button and remove loading spinner
         submitBtn.prop('disabled', false).text('Simpan & Hantar');
+        $('.datatables-my-tickets, .datatables-manage-tickets').closest('.card-datatable')
+          .removeClass('datatable-refreshing');
       }
     });
   });
@@ -654,3 +629,5 @@ $(function () {
     window.location.href = '/tickets/' + ticketId;
   });
 });
+
+// End of file

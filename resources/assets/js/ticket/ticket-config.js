@@ -24,13 +24,28 @@ window.reloadAllTables = function () {
   function createReloadPromise(table, tableName) {
     return new Promise(function (resolve) {
       try {
+        // Add loading state visual feedback
+        var tableWrapper = $(table.table().node()).closest('.card-datatable');
+        tableWrapper.addClass('datatable-refreshing');
+
         table.ajax.reload(function (json) {
           console.log(tableName + ' reloaded successfully', json ? 'with ' + (json.recordsTotal || 0) + ' total records' : '');
           tablesReloaded++;
+
+          // Remove loading state
+          setTimeout(function () {
+            tableWrapper.removeClass('datatable-refreshing');
+          }, 300);
+
           resolve(true);
         }, false);
       } catch (e) {
         console.error('Error reloading ' + tableName + ':', e);
+
+        // Remove loading state even on error
+        var tableWrapper = $(table.table().node()).closest('.card-datatable');
+        tableWrapper.removeClass('datatable-refreshing');
+
         tablesReloaded++;
         resolve(false);
       }
@@ -374,4 +389,93 @@ $(document).ready(function () {
     field.next('.select2-container').removeClass('is-invalid');
     field.next('.select2-container').siblings('.invalid-feedback').remove();
   });
+
+  // Enhanced DataTable reload mechanism with retry logic
+  window.forceReloadDataTables = function (maxRetries = 3, retryDelay = 1000) {
+    console.log('Force reloading DataTables with retry mechanism...');
+
+    function attemptReload(attempt) {
+      console.log(`Reload attempt ${attempt}/${maxRetries}`);
+
+      // Check if DataTables are initialized
+      var myTicketsReady = window.dt_my_tickets && typeof window.dt_my_tickets.ajax === 'object';
+      var manageTicketsReady = window.dt_manage_tickets && typeof window.dt_manage_tickets.ajax === 'object';
+
+      if (myTicketsReady || manageTicketsReady) {
+        console.log('DataTables found, proceeding with reload...');
+        if (typeof window.reloadAllTables === 'function') {
+          window.reloadAllTables();
+        } else if (typeof reloadDataTablesAfterSubmission === 'function') {
+          reloadDataTablesAfterSubmission();
+        }
+        return true;
+      } else if (attempt < maxRetries) {
+        console.log(`DataTables not ready yet, retrying in ${retryDelay}ms...`);
+        setTimeout(function () {
+          attemptReload(attempt + 1);
+        }, retryDelay);
+        return false;
+      } else {
+        console.warn('DataTables not available after maximum retries. User may need to refresh page.');
+        if (typeof toastr !== 'undefined') {
+          toastr.warning(
+            'Sila refresh halaman untuk melihat tiket terbaru.',
+            'Tiket Berjaya Dihantar',
+            {
+              timeOut: 5000,
+              closeButton: true,
+              progressBar: true
+            }
+          );
+        }
+        return false;
+      }
+    }
+
+    return attemptReload(1);
+  };
+
+  // Listen for custom events that might trigger table reloads
+  $(document).on('ticketSubmitted', function (event, ticketData) {
+    console.log('Ticket submitted event received:', ticketData);
+    setTimeout(function () {
+      window.forceReloadDataTables();
+    }, 500);
+  });
+
+  // Backup mechanism: Monitor for successful ticket submissions and auto-refresh tables
+  var lastTicketCount = {};
+
+  function monitorTicketChanges() {
+    if (window.dt_my_tickets && typeof window.dt_my_tickets.ajax === 'object') {
+      var currentPage = window.dt_my_tickets.page.info();
+      if (currentPage && currentPage.recordsTotal !== undefined) {
+        var currentCount = currentPage.recordsTotal;
+        if (lastTicketCount.myTickets !== undefined && currentCount > lastTicketCount.myTickets) {
+          console.log('New ticket detected, refreshing table...');
+          window.dt_my_tickets.ajax.reload(null, false);
+        }
+        lastTicketCount.myTickets = currentCount;
+      }
+    }
+
+    if (window.dt_manage_tickets && typeof window.dt_manage_tickets.ajax === 'object') {
+      var currentPage = window.dt_manage_tickets.page.info();
+      if (currentPage && currentPage.recordsTotal !== undefined) {
+        var currentCount = currentPage.recordsTotal;
+        if (lastTicketCount.manageTickets !== undefined && currentCount > lastTicketCount.manageTickets) {
+          console.log('New ticket detected in manage tickets, refreshing table...');
+          window.dt_manage_tickets.ajax.reload(null, false);
+        }
+        lastTicketCount.manageTickets = currentCount;
+      }
+    }
+  }
+
+  // Set up periodic monitoring (every 10 seconds, but only when page is active)
+  setInterval(function () {
+    if (!document.hidden && typeof window.dt_my_tickets !== 'undefined' || typeof window.dt_manage_tickets !== 'undefined') {
+      monitorTicketChanges();
+    }
+  }, 10000);
 });
