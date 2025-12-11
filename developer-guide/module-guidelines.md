@@ -8,11 +8,12 @@ Each module must include:
 - AJAX scripts
 
 ## Example Modules:
-- Tickets
-- Categories
-- Users
-- Roles
-- Departments
+1. Dashboard
+2. Tiket
+3. Knowledge Base
+4. Laporan
+5. Pentadbir: Pengurusan Pengguna (Pengguna, Modul & Capaian, Peranan), Konfigurasi (Kategori, Sub-kategori, SLA, Pegawai Tugasan)
+6. Audit Trail
 
 ---
 

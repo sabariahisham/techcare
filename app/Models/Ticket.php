@@ -173,7 +173,7 @@ class Ticket extends Model implements Auditable
    */
   public function comments()
   {
-    return $this->hasMany(Comment::class, 'ticket_id')->orderBy('created_at', 'asc');
+    return $this->hasMany(TicketComment::class, 'ticket_id')->orderBy('created_at', 'asc');
   }
 
 
