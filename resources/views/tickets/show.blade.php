@@ -216,7 +216,7 @@
                                                         Dimuat naik: {{ $attachment->created_at->format('d M Y, H:i') }}
                                                     </small>
                                                 </div>
-                                                <a href="{{ route('tickets.downloadAttachment', $attachment->id) }}"
+                                                <a href="{{ route('ticket-attachments.download', $attachment->id) }}"
                                                     class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip"
                                                     title="Muat turun {{ $attachment->doc_name }}">
                                                     <i class="bx bx-download"></i>
@@ -257,6 +257,8 @@
                             <div class="col-sm-9 text-secondary">
                                 <select class="form-select">
                                     <option selected>{{ $ticket->status->st_name ?? 'Tidak Diketahui' }}</option>
+
+                                    {{-- paparkan semua status --}}
                                 </select>
                             </div>
                         </div>
@@ -288,7 +290,11 @@
                             </div>
                             <div class="col-sm-9 text-secondary">
                                 <select class="form-select">
-                                    <option selected></option> {{-- tarik dari table sla: sla_severity (High, Medium, Low --}}
+                                    <option>- Sila Pilih -</option>
+                                    <option> High</option>
+                                    <option>Medium</option>
+                                    <option>Low</option>
+                                    {{-- tarik dari table sla: sla_severity (High, Medium, Low --}}
                                 </select>
                             </div>
                         </div>
@@ -409,7 +415,13 @@
                                             </small>
 
                                             <small class="timeline-time d-block ps-5">
-                                                {!! nl2br(e($history['notes'] ?? "ABsxcsddsvfvv\nsfsdffffgsgfdg\nsafdfdgfdgggggggggggdf")) !!}
+                                                @if (isset($history['notes']) && $history['notes'])
+                                                    {!! nl2br(e($history['notes'])) !!}
+                                                @elseif(isset($history['type']) && $history['type'] === 'comment')
+                                                    <em>Komen telah ditambahkan.</em>
+                                                @else
+                                                    <em>Tiada catatan untuk tindakan ini.</em>
+                                                @endif
                                             </small>
                                         </div>
                                         <small class="timeline-time mt-3">
@@ -435,108 +447,9 @@
                 </div>
             </div>
         </div>
-
-        <!-- Right Column - Comments -->
-        {{-- <div class="col-xl-3 col-lg-3 col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="bx bx-chat me-2"></i>Maklum Balas Aduan
-                    </h5>
-                    <small class="text-muted">Komen dan maklum balas berkaitan aduan ini.</small>
-                </div>
-                <div class="card-body p-0">
-                    @if ($ticket->comments && $ticket->comments->count() > 0)
-                        <div class="chat-container">
-                            @foreach ($ticket->comments as $comment)
-                                @php
-                                    // Check if the comment is from the original complainant or the person who created the ticket
-                                    $isFromComplainant =
-                                        $comment->user_id == $ticket->user_id ||
-                                        $comment->user_id == $ticket->created_by;
-                                    $isFromCurrentUser = $comment->user_id == auth()->id();
-                                @endphp
-
-                                <div
-                                    class="chat-message {{ $isFromComplainant ? 'complainant-message' : 'officer-message' }}">
-                                    <div class="message-content">
-                                        <div
-                                            class="message-bubble {{ $isFromComplainant ? 'bubble-complainant' : 'bubble-officer' }}">
-                                            <p class="message-text">{{ $comment->comment }}</p>
-                                        </div>
-                                        <div class="message-header">
-                                            <div class="user-info">
-                                                <div class="user-details">
-                                                    <h6 class="user-name">{{ $comment->user->nama ?? 'Tidak Diketahui' }}<br>
-                                                        <small class="message-time">
-                                                           [{{ $comment->created_at->format('d/m/Y, H:i a') }}]
-                                                        </small>
-                                                    </h6>
-
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="empty-chat">
-                            <div class="text-center py-1">
-                                <i class="bx bx-chat empty-chat-icon mb-2"></i>
-                                <h6 class="text-muted mb-2">Tiada Komen Tersedia</h6>
-                                <p class="text-muted small mb-0">Komen akan dipaparkan di sini apabila terdapat maklum
-                                    balas.</p>
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Inline Chat Input -->
-                    <div class="chat-input-container">
-                        @if (session('success'))
-                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                {{ session('success') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
-
-                        @if (session('error'))
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                {{ session('error') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
-
-                        @if ($errors->any())
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <ul class="mb-0">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
-
-                        <form method="POST" action="{{ route('tickets.add-comment', $ticket->id) }}"
-                            class="chat-input-form">
-                            @csrf
-                            <div class="chat-input-wrapper">
-                                <textarea class="form-control chat-input" name="comment" placeholder="Taip mesej anda..." rows="1" required>{{ old('comment') }}</textarea>
-                                <button type="submit" class="chat-send-btn">
-                                    <i class="bx bx-send"></i>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div> --}}
     </div>
 
     @include('tickets.partials.comment-modal')
-
 
 
     <style>
@@ -629,10 +542,10 @@
         }
 
         /* Badge colors to match timeline markers
-                                                                                                        .badge.bg-purple {
-                                                                                                            background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
-                                                                                                            color: white;
-                                                                                                        } */
+                                                                                                            .badge.bg-purple {
+                                                                                                                background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
+                                                                                                                color: white;
+                                                                                                            } */
 
         .badge.badge-sm {
             font-size: 0.7rem;
