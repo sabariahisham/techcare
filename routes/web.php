@@ -10,13 +10,13 @@ use App\Http\Controllers\extended_ui\SweetAlert;
 use App\Http\Controllers\configuration\ModuleController;
 use App\Http\Controllers\dashboard\DashboardController;
 use App\Http\Controllers\ticket\TicketController;
-use App\Http\Controllers\ticket\TicketAttachmentController;
+use App\Http\Controllers\Ticket\TicketAttachmentController;
 use App\Http\Controllers\Ticket\TicketSearchController;
-use App\Http\Controllers\ticket\TicketEmailController;
+use App\Http\Controllers\Ticket\TicketEmailController;
 use App\Http\Controllers\ticket\TicketChronologyController;
 use App\Http\Controllers\ticket\TicketCommentController;
-use App\Http\Controllers\ticket\TicketAssignmentController;
-use App\Http\Controllers\ticket\TicketSLAController;
+use App\Http\Controllers\Ticket\TicketAssignmentController;
+use App\Http\Controllers\Ticket\TicketSLAController;
 use App\Http\Controllers\Ticket\TicketCronJobController;
 use App\Http\Controllers\configuration\UserManagementController;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
@@ -245,9 +245,9 @@ Route::middleware(['auth'])->group(function () {
 
   //Route untuk audit trail - senarai audit trail
   route::middleware(['auth'])->group(function () {
-  Route::get('/audit-trail', [App\Http\Controllers\audit\AuditTrailController::class, 'index'])->name('audit.index');
-  Route::get('/audit-trail/data', [App\Http\Controllers\audit\AuditTrailController::class, 'getAuditData'])->name('audit.data');
-  Route::get('/audit-trail/detail/{audit}', [App\Http\Controllers\audit\AuditTrailController::class, 'getAuditDetail'])->name('audit.detail');
+    Route::get('/audit-trail', [App\Http\Controllers\audit\AuditTrailController::class, 'index'])->name('audit.index');
+    Route::get('/audit-trail/data', [App\Http\Controllers\audit\AuditTrailController::class, 'getAuditData'])->name('audit.data');
+    Route::get('/audit-trail/detail/{audit}', [App\Http\Controllers\audit\AuditTrailController::class, 'getAuditDetail'])->name('audit.detail');
   });
 
   //route untuk  modul audit trails -log keseluruhan
@@ -255,35 +255,33 @@ Route::middleware(['auth'])->group(function () {
 
     // Senarai fail log harian
     Route::get('/', [AuditLogController::class, 'index'])
-        ->name('audit.logs.index');
+      ->name('audit.logs.index');
 
     // Papar log mengikut tarikh
     Route::get('/view/{date}', [AuditLogController::class, 'show'])
-        ->name('audit.logs.show');
+      ->name('audit.logs.show');
 
     // Download log
     Route::get('/download/{date}', [AuditLogController::class, 'download'])
-        ->name('audit.logs.download');
+      ->name('audit.logs.download');
   });
-
 });
 
-// Tickets Routes Group: Listing, Filtering, CRUD, Status Management
-// Route::resource('tickets', TicketController::class);
+// Tickets Routes Group: Core ticket operations (TicketController only)
 Route::middleware(['auth'])->prefix('tickets')->group(function () {
   Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
-  Route::get('/data', [TicketController::class, 'getData'])->name('tickets.data');
+  Route::get('/data', [TicketSearchController::class, 'getData'])->name('tickets.data');
   Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
   Route::get('/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
-  // Edit, update and delete functionality removed - complainants should only log and submit tickets
   Route::post('/{ticket}/update-status', [TicketController::class, 'updateTicketStatus'])->name('tickets.update-status');
-  Route::post('/{ticket}/add-comment', [TicketController::class, 'addComment'])->name('tickets.add-comment');
 });
 
-// Searching user by name or email (Bagi Pihak Pengguna)
-Route::middleware(['auth'])->post('/search-user-by-name', [TicketSearchController::class, 'searchUserByName'])->name('search.user.by.name');
-Route::middleware(['auth'])->post('/search-user-by-email', [TicketSearchController::class, 'searchUserByEmail'])->name('search.user.by.email');
-Route::middleware(['auth'])->post('/search-user-autocomplete', [TicketSearchController::class, 'searchUserAutocomplete'])->name('search.user.autocomplete');
+// Ticket Search Routes Group
+Route::middleware(['auth'])->prefix('ticket-search')->group(function () {
+  Route::post('/user-by-name', [TicketSearchController::class, 'searchUserByName'])->name('search.user.by.name');
+  Route::post('/user-by-email', [TicketSearchController::class, 'searchUserByEmail'])->name('search.user.by.email');
+  Route::post('/user-autocomplete', [TicketSearchController::class, 'searchUserAutocomplete'])->name('search.user.autocomplete');
+});
 
 // Subcategories by category (ticket form)
 Route::get('/get-subcategory/{categoryId}', [RefCategoryManagementController::class, 'getSubcategories'])->name('get.subcategory');
@@ -304,6 +302,7 @@ Route::middleware(['auth'])->prefix('ticket-chronology')->group(function () {
 
 // Ticket Comment Routes Group
 Route::middleware(['auth'])->prefix('ticket-comments')->group(function () {
+  Route::post('/{ticket}/add-comment', [TicketCommentController::class, 'store'])->name('tickets.add-comment');
   Route::post('/{ticket}/store', [TicketCommentController::class, 'store'])->name('ticket-comments.store');
   Route::get('/{ticket}/data', [TicketCommentController::class, 'getComments'])->name('ticket-comments.data');
 });
@@ -321,15 +320,11 @@ Route::middleware(['auth'])->prefix('ticket-emails')->group(function () {
 
 // Ticket SLA Monitoring Routes Group
 Route::middleware(['auth'])->prefix('ticket-sla')->group(function () {
-  Route::get('/overdue', [TicketSlaController::class, 'getOverdueTickets'])->name('ticket-sla.overdue');
-  Route::get('/statistics', [TicketSlaController::class, 'getSlaStatistics'])->name('ticket-sla.statistics');
+  Route::get('/overdue', [TicketSLAController::class, 'getOverdueTickets'])->name('ticket-sla.overdue');
+  Route::get('/statistics', [TicketSLAController::class, 'getSlaStatistics'])->name('ticket-sla.statistics');
 });
 
 // Ticket Cron Jobs Routes Group
 Route::middleware(['auth'])->prefix('ticket-cron')->group(function () {
   Route::post('/check-sla', [TicketCronJobController::class, 'checkSla'])->name('ticket-cron.check-sla');
 });
-
-
-
-
