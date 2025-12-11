@@ -1,5 +1,12 @@
 <?php
 
+/*
+ * Function TicketController.php:
+ *  - Manage ticket listing and filtering for Pengadu and Pegawai Tugasan.
+ *  - CRUD main ticket (create, read, update, delete)
+ *  - status management (open, pending, closed).
+ */
+
 namespace App\Http\Controllers\Ticket;
 
 use id;
@@ -14,7 +21,6 @@ use App\Models\RefTicketStatus;
 use App\Models\TicketChronology;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use App\Http\Requests\Ticket\StoreTicketRequest;
@@ -238,16 +244,7 @@ class TicketController extends Controller
    */
   private function getAssignedOfficer($ticket)
   {
-    // Get the latest chronology entry with escalation
-    $latestEscalation = $ticket->chronologies()
-      ->whereNotNull('escalate_to')
-      ->with('escalatedTo')
-      ->latest()
-      ->first();
-
-    return $latestEscalation && $latestEscalation->escalatedTo
-      ? e($latestEscalation->escalatedTo->nama)
-      : '-';
+    return TicketAssignmentController::getAssignedOfficer($ticket);
   }
 
   /**
@@ -338,7 +335,7 @@ class TicketController extends Controller
 
     // Handle file attachments if any
     if ($request->hasFile('attachments')) {
-      $this->handleFileAttachments($request->file('attachments'), $ticket->id);
+      TicketAttachmentController::handleFileAttachments($request->file('attachments'), $ticket->id);
     }
 
     return response()->json([
@@ -384,7 +381,7 @@ class TicketController extends Controller
       ->get();
 
     // Get ticket history/audit trail if available
-    $ticketHistory = $this->getTicketHistory($ticket);
+    $ticketHistory = TicketChronologyController::getTicketHistory($ticket);
 
     // Get other relevant data
     $allStatuses = RefTicketStatus::all();
@@ -403,198 +400,8 @@ class TicketController extends Controller
 
   // Delete functionality removed - complainants should only log and submit tickets
 
-  public function searchUserByName(Request $request)
-  {
-    $request->validate([
-      'name' => 'required|string|min:2'
-    ]);
 
-    $name = $request->input('name');
 
-    // Search for user by name with relationships
-    $user = User::with(['sektor', 'bahagian', 'seksyen', 'unit', 'jawatan', 'skim'])
-      ->where('nama', 'like', '%' . $name . '%')
-      ->where('id', '!=', Auth::id()) // Exclude current user
-      ->first();
-
-    if (!$user) {
-      return response()->json([
-        'success' => false,
-        'message' => 'Pengguna tidak ditemui dengan nama tersebut.'
-      ], 404);
-    }
-
-    // Prepare user data with related information
-    $userData = [
-      'id' => $user->id,
-      'nama' => $user->nama,
-      'name' => $user->nama, // fallback
-      'email' => $user->email,
-      'kod_sektor' => $user->kod_sektor,
-      'kod_bah' => $user->kod_bah,
-      'kod_sec' => $user->kod_sec,
-      'kod_unit' => $user->kod_unit,
-      'kod_skim' => $user->kod_skim,
-      'nama_gred' => $user->nama_gred,
-      'tel_no_p' => $user->tel_no_p,
-      'tel_no_hp' => $user->tel_no_hp,
-    ];
-
-    // Get related names if relationships exist
-    if ($user->sektor) {
-      $userData['nama_sektor'] = $user->sektor->nama_sektor;
-    }
-
-    if ($user->bahagian) {
-      $userData['nama_bah'] = $user->bahagian->nama_bah;
-    }
-
-    if ($user->seksyen) {
-      $userData['nama_sec'] = $user->seksyen->nama_sec;
-    }
-
-    if ($user->unit) {
-      $userData['nama_unit'] = $user->unit->nama_unit;
-    }
-
-    if ($user->jawatan) {
-      $userData['nama_jawatan'] = $user->jawatan->nama_jawatan;
-    }
-
-    if ($user->skim) {
-      $userData['nama_skim'] = $user->skim->nama_skim;
-    }
-
-    return response()->json([
-      'success' => true,
-      'message' => 'Pengguna berjaya ditemui.',
-      'user' => $userData
-    ]);
-  }
-
-  public function searchUserByEmail(Request $request)
-  {
-    $request->validate([
-      'email' => 'required|email'
-    ]);
-
-    $email = $request->input('email');
-
-    // Search for user by exact email with relationships
-    $user = User::with(['sektor', 'bahagian', 'seksyen', 'unit', 'jawatan', 'skim'])
-      ->where('email', $email)
-      ->where('id', '!=', Auth::id()) // Exclude current user
-      ->first();
-
-    if (!$user) {
-      return response()->json([
-        'success' => false,
-        'message' => 'Pengguna tidak ditemui dengan email tersebut.'
-      ], 404);
-    }
-
-    // Prepare user data with related information
-    $userData = [
-      'id' => $user->id,
-      'nama' => $user->nama,
-      'name' => $user->nama, // fallback
-      'email' => $user->email,
-      'kod_sektor' => $user->kod_sektor,
-      'kod_bah' => $user->kod_bah,
-      'kod_sec' => $user->kod_sec,
-      'kod_unit' => $user->kod_unit,
-      'kod_skim' => $user->kod_skim,
-      'nama_gred' => $user->nama_gred,
-      'tel_no_p' => $user->tel_no_p,
-      'tel_no_hp' => $user->tel_no_hp,
-    ];
-
-    // Get related names if relationships exist
-    if ($user->sektor) {
-      $userData['nama_sektor'] = $user->sektor->nama_sektor;
-    }
-
-    if ($user->bahagian) {
-      $userData['nama_bah'] = $user->bahagian->nama_bah;
-    }
-
-    if ($user->seksyen) {
-      $userData['nama_sec'] = $user->seksyen->nama_sec;
-    }
-
-    if ($user->unit) {
-      $userData['nama_unit'] = $user->unit->nama_unit;
-    }
-
-    if ($user->jawatan) {
-      $userData['nama_jawatan'] = $user->jawatan->nama_jawatan;
-    }
-
-    if ($user->skim) {
-      $userData['nama_skim'] = $user->skim->nama_skim;
-    }
-
-    return response()->json([
-      'success' => true,
-      'message' => 'Pengguna berjaya ditemui.',
-      'user' => $userData
-    ]);
-  }
-
-  public function searchUserAutocomplete(Request $request)
-  {
-    $request->validate([
-      'query' => 'required|string|min:2'
-    ]);
-
-    $query = $request->input('query');
-
-    // Search for users primarily by name (with some email support for edge cases)
-    $users = User::select('id', 'nama', 'email')
-      ->where(function ($q) use ($query) {
-        // Primary search: by name (case insensitive)
-        $q->where('nama', 'like', '%' . $query . '%');
-        // Secondary search: by email username part (before @)
-        $q->orWhere('email', 'like', $query . '%@%');
-      })
-      ->where('id', '!=', Auth::id()) // Exclude current user
-      ->whereNotNull('nama') // Ensure nama is not null
-      ->where('nama', '!=', '') // Ensure nama is not empty
-      ->where('nama', 'not like', '%@%') // Exclude email-like names
-      ->orderBy('nama', 'asc') // Order by name alphabetically
-      ->limit(8) // Limit results to prevent too many options
-      ->get()
-      ->filter(function ($user) {
-        // Additional filtering: exclude names that are just initials or codes
-        $name = trim($user->nama);
-
-        // Skip if name is just 1-2 characters (likely initials)
-        if (strlen($name) <= 2) {
-          return false;
-        }
-
-        // Skip if name contains only uppercase letters and spaces (likely codes)
-        if (preg_match('/^[A-Z\s]+$/', $name) && strlen($name) <= 5) {
-          return false;
-        }
-
-        return true;
-      })
-      ->values() // Reset array keys
-      ->map(function ($user) {
-        return [
-          'id' => $user->id,
-          'email' => $user->email,
-          'nama' => $user->nama,
-          'display' => $user->nama // Only show name in display
-        ];
-      });
-
-    return response()->json([
-      'success' => true,
-      'users' => $users
-    ]);
-  }
 
   /**
    * Generate sequential ticket number in format HELP-YYYY-MM-XXXX
@@ -623,106 +430,9 @@ class TicketController extends Controller
     return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
   }
 
-  /**
-   * Get ticket history/kronologi for display from tickets_chronologies table only
-   */
-  private function getTicketHistory($ticket)
-  {
-    $history = collect();
 
-    // Get chronology data from tickets_chronologies table only
-    if ($ticket->chronologies && $ticket->chronologies->count() > 0) {
-      foreach ($ticket->chronologies as $chronology) {
-        $statusName = $chronology->status ? $chronology->status->st_name : 'Status Tidak Diketahui';
 
-        // Build details array with available chronology information
-        $details = [];
 
-        // Add escalation information
-        if ($chronology->escalate_to && $chronology->escalatedTo) {
-          $details['Diserahkan kepada'] = $chronology->escalatedTo->nama;
-        }
-
-        // Add SLA information
-        if ($chronology->sla_duedate) {
-          $details['SLA Due Date'] = $chronology->sla_duedate->format('d/m/Y H:i:s');
-        }
-
-        // Add level pegtugas information
-        if ($chronology->level_pegtugas_id) {
-          $details['Level Pegtugas'] = "Level {$chronology->level_pegtugas_id}";
-        }
-
-        // Add processed by information
-        if ($chronology->fromUser) {
-          $details['Diproses oleh'] = $chronology->fromUser->nama;
-        }
-
-        // For "Aduan Baru" status, add ticket creation details
-        if ($statusName === 'Aduan Baru') {
-          $details['Kategori'] = $ticket->category ? $ticket->category->cat_name : '-';
-          $details['Sub Kategori'] = $ticket->subCategory ? $ticket->subCategory->subcat_name : '-';
-          $details['Jenis Tiket'] = $ticket->ticket_type == 1 ? 'Diri Sendiri' : 'Bagi Pihak';
-        }
-
-        $history->push([
-          'action' => $statusName,
-          'status' => $statusName,
-          'description' => $chronology->getTimelineDescription(),
-          'user' => $chronology->createdBy ? $chronology->createdBy->nama : 'Sistem',
-          'timestamp' => $chronology->created_at,
-          'details' => $details
-        ]);
-      }
-    } else {
-      // If no chronologies exist, show only current ticket status (fallback)
-      $currentStatus = $ticket->status ? $ticket->status->st_name : 'Aduan Baru';
-      $history->push([
-        'action' => $currentStatus,
-        'status' => $currentStatus,
-        'description' => $ticket->status ? $ticket->status->st_desc : 'Tiket telah dicipta dalam sistem.',
-        'user' => $ticket->createdBy ? $ticket->createdBy->nama : ($ticket->user ? $ticket->user->nama : 'Sistem'),
-        'timestamp' => $ticket->created_at,
-        'details' => [
-          'Kategori' => $ticket->category ? $ticket->category->cat_name : '-',
-          'Sub Kategori' => $ticket->subCategory ? $ticket->subCategory->subcat_name : '-',
-          'Jenis Tiket' => $ticket->ticket_type == 1 ? 'Diri Sendiri' : 'Bagi Pihak'
-        ]
-      ]);
-    }
-
-    // Sort chronologically by timestamp
-    return $history->sortBy('timestamp');
-  }
-
-  /**
-   * Add chronology entry when ticket status changes
-   * Also updates the ticket's current status to reflect the latest status
-   */
-  public function addChronologyEntry($ticketId, $newStatusId, $escalateTo = null, $slaDueDate = null, $levelPegtugasId = null)
-  {
-    // Create chronology entry
-    $chronology = TicketChronology::create([
-      'ticket_id' => $ticketId,
-      'frm_user_id' => Auth::id(),
-      'level_pegtugas_id' => $levelPegtugasId,
-      'tick_status' => $newStatusId,
-      'escalate_to' => $escalateTo,
-      'sla_duedate' => $slaDueDate,
-      'created_by' => Auth::id(),
-    ]);
-
-    // Update ticket's current status to reflect the latest status change
-    $ticket = Ticket::find($ticketId);
-    if ($ticket) {
-      $ticket->update([
-        'tick_status' => $newStatusId,
-        'updated_by' => Auth::id()
-      ]);
-    }
-
-    return $chronology;
-  }
 
   /**
    * Update ticket status and create chronology entry
@@ -738,7 +448,7 @@ class TicketController extends Controller
 
     try {
       // Add chronology entry and update ticket status
-      $chronology = $this->addChronologyEntry(
+      $chronology = TicketChronologyController::addChronologyEntry(
         $ticket->id,
         $request->tick_status,
         $request->escalate_to,
@@ -764,128 +474,6 @@ class TicketController extends Controller
     }
   }
 
-  /**
-   * Handle file attachments for ticket
-   *
-   * Stores uploaded files and creates Document records with:
-   * - Files saved to storage/app/public/ticket_attachments/
-   * - doc_jenis = 'TICKET'
-   * - doc_id = ticket ID
-   *
-   * @param array|\Illuminate\Http\UploadedFile $files
-   * @param int $ticketId
-   * @return void
-   */
-  private function handleFileAttachments($files, $ticketId)
-  {
-    if (!is_array($files)) {
-      $files = [$files];
-    }
 
-    foreach ($files as $file) {
-      if ($file && $file->isValid()) {
-        // Generate unique filename
-        $originalName = $file->getClientOriginalName();
-        $extension = $file->getClientOriginalExtension();
-        $filename = time() . '_' . uniqid() . '.' . $extension;
 
-        // Store file
-        $path = $file->storeAs('ticket_attachments', $filename, 'public');
-
-        // Create document record
-        Document::create([
-          'doc_id' => $ticketId,
-          'uuid' => Str::uuid(),
-          'doc_mime' => $file->getMimeType(),
-          'doc_name' => $originalName,
-          'doc_storage_nm' => $filename,
-          'doc_jenis' => 'TICKET',
-          'created_by' => Auth::id(),
-          'updated_by' => Auth::id(),
-        ]);
-      }
-    }
-  }
-
-  /**
-   * Download ticket attachment file
-   *
-   * Downloads a specific attachment file by document ID.
-   * Only allows downloads of documents with doc_jenis = 'TICKET'
-   *
-   * @param int $documentId
-   * @return \\Symfony\\Component\\HttpFoundation\\BinaryFileResponse
-   * @throws \\Symfony\\Component\\HttpKernel\\Exception\\NotFoundHttpException
-   */
-  public function downloadAttachment($documentId)
-  {
-    $document = Document::where('id', $documentId)
-      ->where('doc_jenis', 'TICKET')
-      ->firstOrFail();
-
-    $filePath = storage_path('app/public/ticket_attachments/' . $document->doc_storage_nm);
-
-    if (!file_exists($filePath)) {
-      abort(404, 'File tidak dijumpai');
-    }
-
-    return response()->download($filePath, $document->doc_name, [
-      'Content-Type' => $document->doc_mime,
-    ]);
-  }
-
-  /**
-   * Add a comment to a ticket
-   *
-   * @param \Illuminate\Http\Request $request
-   * @param \App\Models\Ticket $ticket
-   * @return \Illuminate\Http\RedirectResponse
-   */
-  public function addComment(Request $request, Ticket $ticket)
-  {
-    Log::info('addComment method called', [
-      'ticket_id' => $ticket->id,
-      'user_id' => Auth::id(),
-      'request_data' => $request->all()
-    ]);
-
-    $request->validate([
-      'comment' => 'required|string|min:1|max:1000',
-    ], [
-      'comment.required' => 'Komen diperlukan.',
-      'comment.min' => 'Komen mestilah sekurang-kurangnya 1 aksara.',
-      'comment.max' => 'Komen tidak boleh melebihi 1000 aksara.',
-    ]);
-
-    try {
-      // Create the comment using Eloquent
-      $comment = Comment::create([
-        'user_id' => Auth::id(),
-        'ticket_id' => $ticket->id,
-        'comment_text' => $request->comment,
-        'created_by' => Auth::id(),
-        'updated_by' => Auth::id(),
-      ]);
-
-      Log::info('Comment created successfully', [
-        'comment_id' => $comment->id,
-        'ticket_id' => $ticket->id,
-        'user_id' => Auth::id()
-      ]);
-
-      return redirect()->back()->with('success', 'Komen berjaya ditambah!');
-    } catch (\Exception $e) {
-      Log::error('Error creating comment', [
-        'error' => $e->getMessage(),
-        'trace' => $e->getTraceAsString(),
-        'request_data' => $request->all(),
-        'ticket_id' => $ticket->id,
-        'user_id' => Auth::id(),
-      ]);
-
-      return redirect()->back()
-        ->with('error', 'Ralat semasa menambah komen: ' . $e->getMessage())
-        ->withInput();
-    }
-  }
 }
