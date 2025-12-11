@@ -8,10 +8,12 @@
                         <h4 class="mb-0 me-2">{{ number_format($newTickets) + number_format($newTicketsOnBehalf) }}</h4>
                     </div>
                 </div>
-                <div class="avatar flex-shrink-0">
-                    <span class="avatar-initial rounded bg-label-primary">
-                        <i class="bx bx-plus-circle bx-lg"></i>
-                    </span>
+                <div class="avatar flex-shrink-0" data-bs-toggle="tooltip" data-bs-title="Aduan Baru">
+                    <a href="{{ route('tickets.index') }}">
+                        <span class="avatar-initial rounded bg-label-primary">
+                            <i class="bx bx-plus-circle bx-lg"></i>
+                        </span>
+                    </a>
                 </div>
             </div>
             <small class="text-muted mt-auto">Termasuk aduan yang dicipta untuk anda</small>
