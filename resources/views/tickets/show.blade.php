@@ -165,15 +165,17 @@
                             {{ $ticket->subCategory->subcat_name ?? '-' }}
                         </div>
                     </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-sm-3">
-                            <h6 class="mb-0">No. Siri <br> <small>(Aset / Sewaan)</small></h6>
+                    @if ($ticket->category && $ticket->category->cat_name === 'Sewaan')
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">No. Siri <br> <small>(Sewaan)</small></h6>
+                            </div>
+                            <div class="col-sm-9 text-secondary">
+                                {{ $ticket->serial_number ?? '-' }}
+                            </div>
                         </div>
-                        <div class="col-sm-9 text-secondary">
-                            {{ $ticket->serial_number ?? '-' }}
-                        </div>
-                    </div>
+                    @endif
                     <hr>
                     <div class="row">
                         <div class="col-sm-3">
@@ -276,7 +278,7 @@
                             </div>
                             <div class="col-sm-9 text-secondary">
                                 <select class="form-select" name="cat_id" id="cat_id">
-                                    <option value="">--Pilih Kategori--</option>
+                                    <option value="">Pilih Kategori</option>
                                     @foreach ($allCategories as $category)
                                         <option value="{{ $category->id }}"
                                             {{ $ticket->cat_id == $category->id ? 'selected' : '' }}>
@@ -292,7 +294,7 @@
                             </div>
                             <div class="col-sm-9 text-secondary">
                                 <select class="form-select" name="subcat_id" id="subcat_id">
-                                    <option value="">--Pilih Sub Kategori--</option>
+                                    <option value="">Pilih Sub Kategori</option>
                                     @foreach ($allSubCategories as $subCategory)
                                         <option value="{{ $subCategory->id }}" data-cat-id="{{ $subCategory->cat_id }}"
                                             {{ $ticket->subcat_id == $subCategory->id ? 'selected' : '' }}>
@@ -565,10 +567,10 @@
         }
 
         /* Badge colors to match timeline markers
-                                                                                                                                                                                                .badge.bg-purple {
-                                                                                                                                                                                                    background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
-                                                                                                                                                                                                    color: white;
-                                                                                                                                                                                                } */
+                                                                                                                                                                                                    .badge.bg-purple {
+                                                                                                                                                                                                        background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
+                                                                                                                                                                                                        color: white;
+                                                                                                                                                                                                    } */
 
         .badge.badge-sm {
             font-size: 0.7rem;
