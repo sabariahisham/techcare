@@ -179,23 +179,23 @@ class TicketAssignmentController extends Controller
       $assignees = $assigneesQuery
         ->select('id', 'nama', 'email')
         ->orderByRaw("
-                    CASE 
+                    CASE
                         WHEN EXISTS (
-                            SELECT 1 FROM model_has_roles mhr 
-                            INNER JOIN roles r ON mhr.role_id = r.id 
-                            WHERE mhr.model_id = users.id 
+                            SELECT 1 FROM model_has_roles mhr
+                            INNER JOIN roles r ON mhr.role_id = r.id
+                            WHERE mhr.model_id = users.id
                             AND r.name IN ('Administrator', 'Pentadbir Sistem')
                         ) THEN 1
                         WHEN EXISTS (
-                            SELECT 1 FROM model_has_roles mhr 
-                            INNER JOIN roles r ON mhr.role_id = r.id 
-                            WHERE mhr.model_id = users.id 
+                            SELECT 1 FROM model_has_roles mhr
+                            INNER JOIN roles r ON mhr.role_id = r.id
+                            WHERE mhr.model_id = users.id
                             AND r.name = 'Penyelia Helpdesk'
                         ) THEN 2
                         WHEN EXISTS (
-                            SELECT 1 FROM model_has_roles mhr 
-                            INNER JOIN roles r ON mhr.role_id = r.id 
-                            WHERE mhr.model_id = users.id 
+                            SELECT 1 FROM model_has_roles mhr
+                            INNER JOIN roles r ON mhr.role_id = r.id
+                            WHERE mhr.model_id = users.id
                             AND r.name = 'Helpdesk On Duty'
                         ) THEN 3
                         ELSE 4

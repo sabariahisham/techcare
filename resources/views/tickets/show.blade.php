@@ -163,13 +163,14 @@
                         </div>
                         <div class="col-sm-9 text-secondary">
                             {{ $ticket->subCategory->subcat_name ?? '-' }}
-                            @if($currentSLA && $currentSLA->count() > 0)
+                            @if ($currentSLA && $currentSLA->count() > 0)
                                 <div class="mt-2">
                                     <small class="text-info fw-bold">
                                         <i class="bx bx-info-circle me-1"></i>
-                                        SLA Tersedia: 
-                                        @foreach($currentSLA as $sla)
-                                            <span class="badge bg-info ms-1">{{ ucfirst(strtolower($sla->sla_severity)) }} ({{ $sla->sla_days }} hari)</span>
+                                        SLA Tersedia:
+                                        @foreach ($currentSLA as $sla)
+                                            <span class="badge bg-info ms-1">{{ ucfirst(strtolower($sla->sla_severity)) }}
+                                                ({{ $sla->sla_days }} hari)</span>
                                         @endforeach
                                     </small>
                                 </div>
@@ -576,10 +577,10 @@
         }
 
         /* Badge colors to match timeline markers
-                                                                                                                                                                                        .badge.bg-purple {
-                                                                                                                                                                                            background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
-                                                                                                                                                                                            color: white;
-                                                                                                                                                                                        } */
+                                                                                                                                                                                            .badge.bg-purple {
+                                                                                                                                                                                                background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
+                                                                                                                                                                                                color: white;
+                                                                                                                                                                                            } */
 
         .badge.badge-sm {
             font-size: 0.7rem;
