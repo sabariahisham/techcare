@@ -14,6 +14,8 @@ use App\Models\Ticket;
 use App\Models\Comment;
 use App\Models\Document;
 use App\Models\RefCategory;
+use App\Models\RefSubCategory;
+use App\Models\Sla;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\RefTicketStatus;
@@ -135,13 +137,29 @@ class TicketController extends Controller
 
     // Get other relevant data
     $allStatuses = RefTicketStatus::all();
+    $allCategories = RefCategory::all();
+    $allSubCategories = RefSubCategory::all();
+
+    // Get SLA data for the current ticket
+    $currentSLA = null;
+    if ($ticket->cat_id && $ticket->subcat_id) {
+      $currentSLA = Sla::where('cat_id', $ticket->cat_id)
+        ->where('subcat_id', $ticket->subcat_id)
+        ->with(['category', 'subCategory'])
+        ->get();
+    }
+
+    // Get officers with helpdesk roles
+    $officers = User::whereHas('roles', function ($query) {
+      $query->whereIn('name', ['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty', 'Pegawai Tugasan']);
+    })->select('id', 'nama', 'email')->get();
 
     Log::info('Showing ticket with comments', [
       'ticket_id' => $ticket->id,
       'comments_count' => $ticket->comments->count()
     ]);
 
-    return view('tickets.show', compact('ticket', 'ticketHistory', 'allStatuses'));
+    return view('tickets.show', compact('ticket', 'ticketHistory', 'allStatuses', 'allCategories', 'allSubCategories', 'officers', 'currentSLA'));
   }
 
   /**
