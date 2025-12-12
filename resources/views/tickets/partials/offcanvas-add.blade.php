@@ -228,7 +228,7 @@
                 <div class="mb-3">
                     <label class="form-label">Kategori</label>
                     <select name="cat_id" id="cat_id" class="form-select" data-validation="custom">
-                        <option value="">-- Pilih Kategori --</option>
+                        <option value="">Pilih Kategori</option>
                         @if (isset($categories))
                             @foreach ($categories as $cat)
                                 <option value="{{ $cat->id }}">{{ $cat->cat_name }}</option>
@@ -241,13 +241,13 @@
                 <div class="mb-3">
                     <label class="form-label">Sub Kategori</label>
                     <select name="subcat_id" id="subcat_id" class="form-select" data-validation="custom">
-                        <option value="">-- Pilih Sub Kategori --</option>
+                        <option value="">Pilih Sub Kategori</option>
                     </select>
                 </div>
 
                 <!-- No Siri -->
                 <div class="mb-3" id="serialNumberField" style="display: none;">
-                    <label class="form-label">No. Siri <small>(Aset / Sewaan)</small></label>
+                    <label class="form-label">No. Siri <small>(Sewaan)</small></label>
                     <input type="text" name="no_siri" class="form-control">
                 </div>
 

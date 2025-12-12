@@ -122,10 +122,15 @@ $(function () {
   // Handle category change for subcategory (ADD FORM)
   $('#cat_id').change(function () {
     var catID = $(this).val();
-    console.log('Add category changed:', catID);
+    var catText = $('#cat_id option:selected').text();
+    console.log('Add category changed:', catID, catText);
 
-    // Hide serial number field when category changes
-    hideSerialNumberField();
+    // Show/hide serial number field based on category selection
+    if (catText === 'Sewaan') {
+      showSerialNumberField();
+    } else {
+      hideSerialNumberField();
+    }
 
     if (catID) {
       $.ajax({
@@ -159,30 +164,6 @@ $(function () {
       $('#subcat_id').append('<option value="">-- Pilih Sub Kategori --</option>');
     }
   });
-
-  // Handle subcategory change to show/hide Serial Number field (ADD FORM)
-  $('#subcat_id').change(function () {
-    var selectedText = $('#subcat_id option:selected').text();
-    console.log('Subcategory changed:', selectedText);
-
-    // Check if serial number should be shown
-    if (shouldShowSerialNumber(selectedText)) {
-      showSerialNumberField();
-    } else {
-      hideSerialNumberField();
-    }
-  });
-
-  // Function to check if Serial Number field should be shown
-  function shouldShowSerialNumber(subcategoryName) {
-    const ictHardwareSubcategories = [
-      'Komputer Desktop/Laptop',
-      'Peralatan Komputer (Monitor/Mouse/Keyboard/etc)',
-      'Pencetak'
-    ];
-
-    return ictHardwareSubcategories.includes(subcategoryName);
-  }
 
   // Function to show Serial Number field
   function showSerialNumberField() {
