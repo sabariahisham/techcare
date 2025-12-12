@@ -2,6 +2,14 @@
 
 @section('title', 'Lihat Tiket - ' . $ticket->ticket_nolog)
 
+@section('vendor-style')
+    @vite(['resources/assets/vendor/libs/select2/select2.scss'])
+@endsection
+
+@section('vendor-script')
+    @vite(['resources/assets/vendor/libs/select2/select2.js'])
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-12">
@@ -24,7 +32,8 @@
             </div>
         </div>
     </div>
-    {{-- @include('tickets.partials.comment-modal') --}}
+
+    @include('tickets.partials.comment-modal')
 
     <div class="row">
         <div class="col-12">
@@ -126,11 +135,6 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="bx bx-file-blank me-2"></i>Maklumat Aduan Tiket
-                        {{-- @if ($ticket->ticket_type == 1)
-                            <span class="badge bg-info">Diri Sendiri</span>
-                        @else
-                            <span class="badge bg-warning">Bagi Pihak</span>
-                        @endif --}}
                         <span class="badge bg-primary fs-6 float-end">{{ $ticket->ticket_nolog }}</span>
                     </h5>
                 </div>
@@ -159,6 +163,18 @@
                         </div>
                         <div class="col-sm-9 text-secondary">
                             {{ $ticket->subCategory->subcat_name ?? '-' }}
+                            @if ($currentSLA && $currentSLA->count() > 0)
+                                <div class="mt-2">
+                                    <small class="text-info fw-bold">
+                                        <i class="bx bx-info-circle me-1"></i>
+                                        SLA Tersedia:
+                                        @foreach ($currentSLA as $sla)
+                                            <span class="badge bg-info ms-1">{{ ucfirst(strtolower($sla->sla_severity)) }}
+                                                ({{ $sla->sla_days }} hari)</span>
+                                        @endforeach
+                                    </small>
+                                </div>
+                            @endif
                         </div>
                     </div>
                     <hr>
@@ -255,10 +271,14 @@
                                 <h6 class="mb-0">Status Tiket</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                <select class="form-select">
-                                    <option selected>{{ $ticket->status->st_name ?? 'Tidak Diketahui' }}</option>
-
-                                    {{-- paparkan semua status --}}
+                                <select class="form-select" name="tick_status" id="tick_status">
+                                    <option value="">--Pilih Status--</option>
+                                    @foreach ($allStatuses as $status)
+                                        <option value="{{ $status->id }}"
+                                            {{ $ticket->tick_status == $status->id ? 'selected' : '' }}>
+                                            {{ $status->st_name }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -267,9 +287,14 @@
                                 <h6 class="mb-0">Kategori</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                <select class="form-select">
-                                    <option selected>{{ $ticket->category->cat_name ?? '-' }}</option>
-                                    {{-- paparkan semua kategori --}}
+                                <select class="form-select" name="cat_id" id="cat_id">
+                                    <option value="">--Pilih Kategori--</option>
+                                    @foreach ($allCategories as $category)
+                                        <option value="{{ $category->id }}"
+                                            {{ $ticket->cat_id == $category->id ? 'selected' : '' }}>
+                                            {{ $category->cat_name }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -278,24 +303,28 @@
                                 <h6 class="mb-0">Sub Kategori</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                <select class="form-select">
-                                    <option selected>{{ $ticket->subCategory->subcat_name ?? '-' }}</option>
-                                    {{-- paparkan semua sub kategori --}}
+                                <select class="form-select" name="subcat_id" id="subcat_id">
+                                    <option value="">--Pilih Sub Kategori--</option>
+                                    @foreach ($allSubCategories as $subCategory)
+                                        <option value="{{ $subCategory->id }}" data-cat-id="{{ $subCategory->cat_id }}"
+                                            {{ $ticket->subcat_id == $subCategory->id ? 'selected' : '' }}>
+                                            {{ $subCategory->subcat_name }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-sm-3">
-                                <h6 class="mb-0">Severity Level</h6>
+                                <h6 class="mb-0">Tahap Keparahan</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                <select class="form-select">
-                                    <option>- Sila Pilih -</option>
-                                    <option> High</option>
-                                    <option>Medium</option>
-                                    <option>Low</option>
-                                    {{-- tarik dari table sla: sla_severity (High, Medium, Low --}}
+                                <select class="form-select" name="sla_severity" id="sla_severity">
+                                    <option value="">--Pilih Tahap Keparahan--</option>
+                                    <!-- Options will be populated via AJAX based on category and subcategory -->
                                 </select>
+                                <small class="text-muted">Tahap keparahan akan dipaparkan berdasarkan kategori dan sub
+                                    kategori yang dipilih.</small>
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -303,7 +332,18 @@
                                 <h6 class="mb-0">Pegawai Tugasan</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                {{-- searching name pegawai, multi select2 --}}
+                                <select class="form-select" name="assigned_officers[]" id="assigned_officers" multiple>
+                                    @foreach ($officers as $officer)
+                                        @php
+                                            $isCurrentUser = $officer->id === auth()->user()->id;
+                                        @endphp
+                                        <option value="{{ $officer->id }}"
+                                            data-current-user="{{ $isCurrentUser ? 'true' : 'false' }}"
+                                            {{ $isCurrentUser ? 'selected' : '' }}>
+                                            {{ $officer->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -319,9 +359,7 @@
                                 <h6 class="mb-0">Tindakan Oleh</h6>
                             </div>
                             <div class="col-sm-9 text-secondary">
-                                <select class="form-select">
-                                    <option selected></option> {{-- tarik dari table ticket_chronologies: sla_severity --}}
-                                </select>
+                                {{ auth()->user()->nama }}
                             </div>
                         </div>
                         <hr>
@@ -449,9 +487,6 @@
         </div>
     </div>
 
-    @include('tickets.partials.comment-modal')
-
-
     <style>
         /* Enhanced Timeline Styles */
         .timeline {
@@ -542,10 +577,10 @@
         }
 
         /* Badge colors to match timeline markers
-                                                                                                            .badge.bg-purple {
-                                                                                                                background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
-                                                                                                                color: white;
-                                                                                                            } */
+                                                                                                                                                                                            .badge.bg-purple {
+                                                                                                                                                                                                background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
+                                                                                                                                                                                                color: white;
+                                                                                                                                                                                            } */
 
         .badge.badge-sm {
             font-size: 0.7rem;
@@ -1056,6 +1091,63 @@
                 font-size: 0.75rem;
             }
         }
+
+        /* Select2 Custom Styling for Current User */
+        .select2-container .select2-results__option[data-current-user="true"] {
+            background-color: #28a745 !important;
+            color: white !important;
+            font-weight: bold !important;
+        }
+
+        .select2-container .select2-results__option[data-current-user="true"]:hover {
+            background-color: #218838 !important;
+            color: white !important;
+        }
+
+        .select2-container .select2-results__option[data-current-user="true"][aria-selected="true"] {
+            background-color: #1e7e34 !important;
+            color: white !important;
+        }
+
+        /* Alternative approach using class */
+        .select2-container .select2-results__option.current-user-option {
+            background-color: #28a745 !important;
+            color: white !important;
+            font-weight: bold !important;
+        }
+
+        .select2-container .select2-results__option.current-user-option:hover {
+            background-color: #218838 !important;
+            color: white !important;
+        }
+
+        .select2-container .select2-results__option.current-user-option[aria-selected="true"] {
+            background-color: #1e7e34 !important;
+            color: white !important;
+        }
+
+        /* Styling for selected items (chips/tags) */
+        .select2-container--default .select2-selection__choice[data-current-user="true"] {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: white !important;
+        }
+
+        .select2-container--default .select2-selection__choice.current-user-choice {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: white !important;
+        }
+
+        .select2-container--default .select2-selection__choice__remove[data-current-user="true"] {
+            color: white !important;
+            border-right-color: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .select2-container--default .select2-selection__choice__remove[data-current-user="true"]:hover {
+            color: white !important;
+            background-color: rgba(255, 255, 255, 0.2) !important;
+        }
     </style>
 
     <script>
@@ -1093,6 +1185,265 @@
                         return false;
                     }
                     console.log('Comment text:', commentText);
+                });
+            }
+
+            // Category and subcategory filtering functionality with SLA integration
+            const categorySelect = document.querySelector('#cat_id');
+            const subcategorySelect = document.querySelector('#subcat_id');
+            const severitySelect = document.querySelector('#sla_severity');
+            const assignedOfficersSelect = document.querySelector('#assigned_officers');
+
+            if (categorySelect && subcategorySelect) {
+                // Store all subcategory options
+                const allSubcategoryOptions = Array.from(subcategorySelect.options);
+
+                // Function to load SLA data and update severity options
+                function loadSLAData(categoryId, subcategoryId) {
+                    if (categoryId && subcategoryId) {
+                        fetch(`/api/sla-data/${categoryId}/${subcategoryId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    // Update severity options
+                                    severitySelect.innerHTML =
+                                        '<option value="">--Pilih Tahap Keparahan--</option>';
+                                    data.severities.forEach(severity => {
+                                        const option = document.createElement('option');
+                                        option.value = severity.value;
+                                        option.textContent = severity.label;
+                                        option.dataset.slaId = severity.sla_id;
+                                        severitySelect.appendChild(option);
+                                    });
+
+                                    // Clear severity selection when SLA changes
+                                    severitySelect.value = '';
+
+                                    // Trigger officer filtering
+                                    filterOfficersBySLA();
+                                } else {
+                                    // Clear severity options if no SLA found
+                                    severitySelect.innerHTML =
+                                        '<option value="">Tiada tahap keparahan ditetapkan</option>';
+                                    resetOfficersList();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error loading SLA data:', error);
+                                severitySelect.innerHTML = '<option value="">Ralat memuat data SLA</option>';
+                                resetOfficersList();
+                            });
+                    } else {
+                        // Clear severity options when category or subcategory not selected
+                        severitySelect.innerHTML = '<option value="">--Pilih Tahap Keparahan--</option>';
+                        resetOfficersList();
+                    }
+                }
+
+                // Function to filter officers based on SLA criteria
+                function filterOfficersBySLA() {
+                    const categoryId = categorySelect.value;
+                    const subcategoryId = subcategorySelect.value;
+                    const severity = severitySelect.value;
+
+                    if (categoryId && subcategoryId && severity) {
+                        fetch(`/api/officers-by-sla/${categoryId}/${subcategoryId}/${severity}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success && data.officers.length > 0) {
+                                    updateOfficersList(data.officers);
+                                } else {
+                                    // Show all officers if no specific SLA officers found
+                                    resetOfficersList();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error loading SLA officers:', error);
+                                resetOfficersList();
+                            });
+                    } else {
+                        resetOfficersList();
+                    }
+                }
+
+                // Function to update officers list
+                function updateOfficersList(officers) {
+                    if ($('#assigned_officers').data('select2')) {
+                        $('#assigned_officers').empty();
+                    }
+
+                    officers.forEach(officer => {
+                        const isCurrentUser = officer.id === {{ auth()->user()->id }};
+                        const option = new Option(officer.nama, officer.id, false, isCurrentUser);
+                        $(option).attr('data-current-user', isCurrentUser ? 'true' : 'false');
+                        $('#assigned_officers').append(option);
+                    });
+
+                    if ($('#assigned_officers').data('select2')) {
+                        $('#assigned_officers').trigger('change');
+                    }
+                }
+
+                // Function to reset officers list to original state
+                function resetOfficersList() {
+                    if ($('#assigned_officers').data('select2')) {
+                        $('#assigned_officers').empty();
+                    }
+
+                    // Restore original officers list
+                    @foreach ($officers as $officer)
+                        @php
+                            $isCurrentUser = $officer->id === auth()->user()->id;
+                        @endphp
+                        const option{{ $officer->id }} = new Option('{{ $officer->nama }}', {{ $officer->id }},
+                            false, {{ $isCurrentUser ? 'true' : 'false' }});
+                        $(option{{ $officer->id }}).attr('data-current-user',
+                            '{{ $isCurrentUser ? 'true' : 'false' }}');
+                        $('#assigned_officers').append(option{{ $officer->id }});
+                    @endforeach
+
+                    if ($('#assigned_officers').data('select2')) {
+                        $('#assigned_officers').trigger('change');
+                    }
+                }
+
+                // Category change event
+                categorySelect.addEventListener('change', function() {
+                    const selectedCategoryId = this.value;
+
+                    // Clear current subcategory options except the first one
+                    subcategorySelect.innerHTML = '<option value="">--Pilih Sub Kategori--</option>';
+
+                    if (selectedCategoryId) {
+                        // Filter and add relevant subcategories
+                        allSubcategoryOptions.forEach(option => {
+                            if (option.dataset.catId === selectedCategoryId) {
+                                subcategorySelect.appendChild(option.cloneNode(true));
+                            }
+                        });
+                    } else {
+                        // If no category selected, show all subcategories
+                        allSubcategoryOptions.forEach(option => {
+                            if (option.value !== '') {
+                                subcategorySelect.appendChild(option.cloneNode(true));
+                            }
+                        });
+                    }
+
+                    // Clear severity and reset officers when category changes
+                    severitySelect.innerHTML = '<option value="">--Pilih Tahap Keparahan--</option>';
+                    resetOfficersList();
+                });
+
+                // Subcategory change event
+                subcategorySelect.addEventListener('change', function() {
+                    const categoryId = categorySelect.value;
+                    const subcategoryId = this.value;
+                    loadSLAData(categoryId, subcategoryId);
+                });
+
+                // Severity change event
+                if (severitySelect) {
+                    severitySelect.addEventListener('change', function() {
+                        filterOfficersBySLA();
+                    });
+                }
+
+                // Trigger category change on page load to filter subcategories
+                if (categorySelect.value) {
+                    categorySelect.dispatchEvent(new Event('change'));
+
+                    // If subcategory is also selected, load SLA data
+                    if (subcategorySelect.value) {
+                        loadSLAData(categorySelect.value, subcategorySelect.value);
+                    }
+                }
+            }
+
+            // Initialize Select2 for assigned officers
+            if ($('#assigned_officers').length) {
+                $('#assigned_officers').select2({
+                    placeholder: 'Pilih Pegawai Tugasan (boleh pilih lebih dari satu)',
+                    width: '100%',
+                    multiple: true,
+                    templateResult: function(option) {
+                        if (!option.id) {
+                            return option.text;
+                        }
+
+                        var $option = $(option.element);
+                        var isCurrentUser = $option.data('current-user') === 'true';
+
+                        var $result = $('<div class="select2-result-option">').text(option.text);
+
+                        if (isCurrentUser) {
+                            $result.attr('data-current-user', 'true');
+                        }
+
+                        return $result;
+                    },
+                    templateSelection: function(option) {
+                        if (!option.id) {
+                            return option.text;
+                        }
+
+                        var $option = $(option.element);
+                        var isCurrentUser = $option.data('current-user') === 'true';
+
+                        var $result = $('<span>');
+                        if (isCurrentUser) {
+                            $result.addClass('text-white fw-bold').attr('data-current-user', 'true');
+                        }
+                        $result.text(option.text);
+
+                        return $result;
+                    }
+                });
+
+                // Add data attributes to Select2 result options after initialization
+                $('#assigned_officers').on('select2:open', function() {
+                    setTimeout(function() {
+                        $('.select2-results__option').each(function() {
+                            var optionId = $(this).attr('id');
+                            if (optionId) {
+                                var optionValue = optionId.split('-').pop();
+                                var originalOption = $('#assigned_officers option[value="' +
+                                    optionValue + '"]');
+                                if (originalOption.length && originalOption.data(
+                                        'current-user') === 'true') {
+                                    $(this).attr('data-current-user', 'true');
+                                    $(this).addClass('current-user-option');
+                                }
+                            }
+                        });
+                    }, 50);
+                });
+
+                // Handle styling of selected items (chips)
+                $('#assigned_officers').on('select2:select', function(e) {
+                    setTimeout(function() {
+                        var selectedValue = e.params.data.id;
+                        var originalOption = $('#assigned_officers option[value="' + selectedValue +
+                            '"]');
+
+                        if (originalOption.data('current-user') === 'true') {
+                            // Find the newly created selection chip and style it
+                            $('.select2-selection__choice').each(function() {
+                                var choiceText = $(this).find(
+                                    '.select2-selection__choice__display').text().trim();
+                                var optionText = originalOption.text().trim();
+
+                                if (choiceText === optionText) {
+                                    $(this).addClass('current-user-choice');
+                                    $(this).css({
+                                        'background-color': '#28a745 !important',
+                                        'color': 'white !important',
+                                        'border-color': '#28a745 !important'
+                                    });
+                                }
+                            });
+                        }
+                    }, 100);
                 });
             }
         });

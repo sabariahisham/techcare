@@ -7,21 +7,22 @@ use App\Http\Controllers\apps\AccessRoles;
 use App\Http\Controllers\apps\AccessPermission;
 use App\Http\Controllers\user_interface\Toasts;
 use App\Http\Controllers\extended_ui\SweetAlert;
-use App\Http\Controllers\configuration\ModuleController;
-use App\Http\Controllers\dashboard\DashboardController;
 use App\Http\Controllers\ticket\TicketController;
-use App\Http\Controllers\Ticket\TicketAttachmentController;
-use App\Http\Controllers\Ticket\TicketSearchController;
-use App\Http\Controllers\Ticket\TicketEmailController;
-use App\Http\Controllers\ticket\TicketChronologyController;
-use App\Http\Controllers\ticket\TicketCommentController;
-use App\Http\Controllers\Ticket\TicketAssignmentController;
+use App\Http\Controllers\audit\AuditLogController;
 use App\Http\Controllers\Ticket\TicketSLAController;
+use App\Http\Controllers\Ticket\TicketEmailController;
+use App\Http\Controllers\dashboard\DashboardController;
+use App\Http\Controllers\Ticket\TicketSearchController;
+use App\Http\Controllers\configuration\ModuleController;
+use App\Http\Controllers\ticket\TicketCommentController;
 use App\Http\Controllers\Ticket\TicketCronJobController;
+use App\Http\Controllers\Ticket\TicketEmailLogController;
+use App\Http\Controllers\Ticket\TicketAssignmentController;
+use App\Http\Controllers\Ticket\TicketAttachmentController;
+use App\Http\Controllers\ticket\TicketChronologyController;
 use App\Http\Controllers\configuration\UserManagementController;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
-use App\Http\Controllers\audit\AuditLogController;
 
 Route::get('/', function () {
   if (Auth::check()) {
@@ -68,6 +69,11 @@ Route::prefix('api')->middleware([
   config('jetstream.auth_session'),
 ])->group(function () {
   Route::get('/subcategories/{categoryId}', [DashboardController::class, 'getSubcategories'])->name('api.subcategories');
+
+  // SLA-based filtering routes
+  Route::get('/sla-data/{categoryId}/{subcategoryId}', [App\Http\Controllers\Api\SlaApiController::class, 'getSlaData'])->name('api.sla-data');
+  Route::get('/officers-by-sla/{categoryId}/{subcategoryId}/{severity}', [App\Http\Controllers\Api\SlaApiController::class, 'getOfficersBySla'])->name('api.officers-by-sla');
+  Route::get('/officers', [App\Http\Controllers\Api\SlaApiController::class, 'getAllOfficers'])->name('api.officers');
 });
 
 // Legacy dashboard route (redirect to new grouped route)
@@ -311,6 +317,8 @@ Route::middleware(['auth'])->prefix('ticket-comments')->group(function () {
 Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
   Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assignTicket'])->name('ticket-assignments.assign');
   Route::get('/{ticket}/assignees', [TicketAssignmentController::class, 'getAssignees'])->name('ticket-assignments.assignees');
+  Route::get('/available-assignees', [TicketAssignmentController::class, 'getAvailableAssignees'])->name('ticket-assignments.available-assignees');
+  Route::get('/available-assignees-by-sla', [TicketAssignmentController::class, 'getAvailableAssigneesBySLA'])->name('ticket-assignments.available-assignees-by-sla');
 });
 
 // Ticket Email Notification Routes Group
