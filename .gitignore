@@ -27,3 +27,4 @@ yarn-error.log
 /public/css
 /public/js
 /.github/copilot-instructions.md
+yarn.lock

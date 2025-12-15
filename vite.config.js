@@ -55,12 +55,12 @@ const JsKnowledge = GetFilesArray('resources/assets/js/knowledgebase/!(_)*.js');
 const JsModules = GetFilesArray('resources/assets/js/modules/!(_)*.js');
 const JsOfficer = GetFilesArray('resources/assets/js/officers/!(_)*.js');
 const JsPermission = GetFilesArray('resources/assets/js/permissions/!(_)*.js');
-const JsReport = GetFilesArray('resources/assets/js/reports/!(_)*.js');
+const JsReport = GetFilesArray('resources/assets/js/report/!(_)*.js');
 const JsRole = GetFilesArray('resources/assets/js/roles/!(_)*.js');
 const JsSla = GetFilesArray('resources/assets/js/sla/!(_)*.js');
 const JsSubCat = GetFilesArray('resources/assets/js/subcategories/!(_)*.js');
 const JsTicket = GetFilesArray('resources/assets/js/ticket/!(_)*.js');
-const JsUser = GetFilesArray('resources/assets/js/users/!(_)*.js');
+const JsUser = GetFilesArray('resources/assets/js/user/*.js');
 
 const LibsJsFilesCustom = [
     ...JsAudit,
@@ -108,7 +108,7 @@ export default defineConfig({
         ...LibsCssFiles,
         ...FontsScssFiles,
         ...CssFiles,
-        ...LibsJsFilesCustom
+        ...LibsJsFilesCustom 
       ],
       refresh: true
     }),
