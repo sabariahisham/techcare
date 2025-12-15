@@ -707,20 +707,32 @@
     window.removeAllEditFiles = function() {
       selectedFiles.length = 0;
       updateFilesPreview();
-      dropZone.classList.remove('dragover', 'error');
+      if (dropZone) {
+        dropZone.classList.remove('dragover', 'error');
+      }
       clearValidationError();
     };
 
     function showError(message) {
+      if (!dropZone) return;
       dropZone.classList.add('error');
-      const feedback = dropZone.closest('.file-upload-wrapper').querySelector('.invalid-feedback');
-      feedback.textContent = message;
-      feedback.style.display = 'block';
+      const wrapper = dropZone.closest('.file-upload-wrapper');
+      if (!wrapper) return;
+      const feedback = wrapper.querySelector('.invalid-feedback');
+      if (feedback) {
+        feedback.textContent = message;
+        feedback.style.display = 'block';
+      }
     }
 
     function clearValidationError() {
-      const feedback = dropZone.closest('.file-upload-wrapper').querySelector('.invalid-feedback');
-      feedback.style.display = 'none';
+      if (!dropZone) return;
+      const wrapper = dropZone.closest('.file-upload-wrapper');
+      if (!wrapper) return;
+      const feedback = wrapper.querySelector('.invalid-feedback');
+      if (feedback) {
+        feedback.style.display = 'none';
+      }
     }
 
     function formatFileSize(bytes) {

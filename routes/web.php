@@ -7,20 +7,20 @@ use App\Http\Controllers\apps\AccessRoles;
 use App\Http\Controllers\apps\AccessPermission;
 use App\Http\Controllers\user_interface\Toasts;
 use App\Http\Controllers\extended_ui\SweetAlert;
-use App\Http\Controllers\ticket\TicketController;
-use App\Http\Controllers\audit\AuditLogController;
+use App\Http\Controllers\Ticket\TicketController;
+use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Ticket\TicketSLAController;
 use App\Http\Controllers\Ticket\TicketEmailController;
-use App\Http\Controllers\dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Ticket\TicketSearchController;
-use App\Http\Controllers\configuration\ModuleController;
-use App\Http\Controllers\ticket\TicketCommentController;
+use App\Http\Controllers\Configuration\ModuleController;
+use App\Http\Controllers\Ticket\TicketCommentController;
 use App\Http\Controllers\Ticket\TicketCronJobController;
 use App\Http\Controllers\Ticket\TicketEmailLogController;
 use App\Http\Controllers\Ticket\TicketAssignmentController;
 use App\Http\Controllers\Ticket\TicketAttachmentController;
-use App\Http\Controllers\ticket\TicketChronologyController;
-use App\Http\Controllers\configuration\UserManagementController;
+use App\Http\Controllers\Ticket\TicketChronologyController;
+use App\Http\Controllers\Configuration\UserManagementController;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 
@@ -176,17 +176,17 @@ Route::get('/app/user/list', [UserList::class, 'index'])->name('app-user-list');
 
 // knowledgebase
 Route::middleware(['auth'])->prefix('knowledgebase')->group(function () {
-  Route::get('/', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'index'])->name('knowledgebase.index');
-  Route::get('/data', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'getData'])->name('knowledgebase.data');
-  Route::post('/', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'store'])->name('knowledgebase.store');
-  Route::get('/{article}/details', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'getDetails'])->name('knowledgebase.details');
-  Route::post('/{article}/soft-delete', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'softDelete'])->name('knowledgebase.soft-delete');
-  Route::get('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'show'])->name('knowledgebase.show');
-  Route::get('/{article}/edit', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'edit'])->name('knowledgebase.edit');
-  Route::put('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'update'])->name('knowledgebase.update');
-  Route::delete('/{article}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'destroy'])->name('knowledgebase.destroy');
-  Route::delete('/document/{document}', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'deleteDocument'])->name('knowledgebase.document.delete');
-  Route::get('/document/{document}/download', [App\Http\Controllers\knowledgebase\KnowledgeBaseController::class, 'downloadDocument'])->name('knowledgebase.document.download');
+  Route::get('/', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'index'])->name('knowledgebase.index');
+  Route::get('/data', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'getData'])->name('knowledgebase.data');
+  Route::post('/', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'store'])->name('knowledgebase.store');
+  Route::get('/{article}/details', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'getDetails'])->name('knowledgebase.details');
+  Route::post('/{article}/soft-delete', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'softDelete'])->name('knowledgebase.soft-delete');
+  Route::get('/{article}', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'show'])->name('knowledgebase.show');
+  Route::get('/{article}/edit', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'edit'])->name('knowledgebase.edit');
+  Route::put('/{article}', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'update'])->name('knowledgebase.update');
+  Route::delete('/{article}', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'destroy'])->name('knowledgebase.destroy');
+  Route::delete('/document/{document}', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'deleteDocument'])->name('knowledgebase.document.delete');
+  Route::get('/document/{document}/download', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'downloadDocument'])->name('knowledgebase.document.download');
 });
 
 // Main Admin Management Routes (Users, Roles, Permissions)
@@ -200,27 +200,27 @@ Route::middleware(['auth'])->group(function () {
 
   // Role Management Routes (actively used)
   Route::prefix('admin/roles')->name('admin.roles.')->group(function () {
-    Route::get('/', [App\Http\Controllers\configuration\RoleController::class, 'index'])->name('index');
-    Route::get('/data', [App\Http\Controllers\configuration\RoleController::class, 'getData'])->name('data');
-    Route::get('/statistics', [App\Http\Controllers\configuration\RoleController::class, 'getStatistics'])->name('statistics');
-    Route::post('/', [App\Http\Controllers\configuration\RoleController::class, 'store'])->name('store');
-    Route::get('/{role}/edit', [App\Http\Controllers\configuration\RoleController::class, 'edit'])->name('edit');
-    Route::put('/{role}', [App\Http\Controllers\configuration\RoleController::class, 'update'])->name('update');
-    Route::delete('/{role}', [App\Http\Controllers\configuration\RoleController::class, 'destroy'])->name('destroy');
-    Route::post('/bulk-delete', [App\Http\Controllers\configuration\RoleController::class, 'bulkDelete'])->name('bulk-delete');
-    Route::get('/{role}/permissions', [App\Http\Controllers\configuration\RoleController::class, 'getRolePermissions'])->name('permissions');
-    Route::delete('/{role}/users/{user}', [App\Http\Controllers\configuration\RoleController::class, 'removeUserFromRole'])->name('remove-user');
-    Route::post('/{role}/users', [App\Http\Controllers\configuration\RoleController::class, 'addUserToRole'])->name('add-user');
+    Route::get('/', [App\Http\Controllers\Configuration\RoleController::class, 'index'])->name('index');
+    Route::get('/data', [App\Http\Controllers\Configuration\RoleController::class, 'getData'])->name('data');
+    Route::get('/statistics', [App\Http\Controllers\Configuration\RoleController::class, 'getStatistics'])->name('statistics');
+    Route::post('/', [App\Http\Controllers\Configuration\RoleController::class, 'store'])->name('store');
+    Route::get('/{role}/edit', [App\Http\Controllers\Configuration\RoleController::class, 'edit'])->name('edit');
+    Route::put('/{role}', [App\Http\Controllers\Configuration\RoleController::class, 'update'])->name('update');
+    Route::delete('/{role}', [App\Http\Controllers\Configuration\RoleController::class, 'destroy'])->name('destroy');
+    Route::post('/bulk-delete', [App\Http\Controllers\Configuration\RoleController::class, 'bulkDelete'])->name('bulk-delete');
+    Route::get('/{role}/permissions', [App\Http\Controllers\Configuration\RoleController::class, 'getRolePermissions'])->name('permissions');
+    Route::delete('/{role}/users/{user}', [App\Http\Controllers\Configuration\RoleController::class, 'removeUserFromRole'])->name('remove-user');
+    Route::post('/{role}/users', [App\Http\Controllers\Configuration\RoleController::class, 'addUserToRole'])->name('add-user');
   });
 
   // Permission Management Routes (actively used)
   Route::prefix('admin/permissions')->name('admin.permissions.')->group(function () {
-    Route::get('/', [App\Http\Controllers\configuration\PermissionController::class, 'index'])->name('index');
-    Route::get('/data', [App\Http\Controllers\configuration\PermissionController::class, 'getData'])->name('data');
-    Route::post('/', [App\Http\Controllers\configuration\PermissionController::class, 'store'])->name('store');
-    Route::get('/{permission}/edit', [App\Http\Controllers\configuration\PermissionController::class, 'edit'])->name('edit');
-    Route::put('/{permission}', [App\Http\Controllers\configuration\PermissionController::class, 'update'])->name('update');
-    Route::delete('/{permission}', [App\Http\Controllers\configuration\PermissionController::class, 'destroy'])->name('destroy');
+    Route::get('/', [App\Http\Controllers\Configuration\PermissionController::class, 'index'])->name('index');
+    Route::get('/data', [App\Http\Controllers\Configuration\PermissionController::class, 'getData'])->name('data');
+    Route::post('/', [App\Http\Controllers\Configuration\PermissionController::class, 'store'])->name('store');
+    Route::get('/{permission}/edit', [App\Http\Controllers\Configuration\PermissionController::class, 'edit'])->name('edit');
+    Route::put('/{permission}', [App\Http\Controllers\Configuration\PermissionController::class, 'update'])->name('update');
+    Route::delete('/{permission}', [App\Http\Controllers\Configuration\PermissionController::class, 'destroy'])->name('destroy');
   });
 });
 
@@ -251,9 +251,9 @@ Route::middleware(['auth'])->group(function () {
 
   //Route untuk audit trail - senarai audit trail
   route::middleware(['auth'])->group(function () {
-    Route::get('/audit-trail', [App\Http\Controllers\audit\AuditTrailController::class, 'index'])->name('audit.index');
-    Route::get('/audit-trail/data', [App\Http\Controllers\audit\AuditTrailController::class, 'getAuditData'])->name('audit.data');
-    Route::get('/audit-trail/detail/{audit}', [App\Http\Controllers\audit\AuditTrailController::class, 'getAuditDetail'])->name('audit.detail');
+    Route::get('/audit-trail', [AuditTrailController::class, 'index'])->name('audit.index');
+    Route::get('/audit-trail/data', [AuditTrailController::class, 'getAuditData'])->name('audit.data');
+    Route::get('/audit-trail/detail/{audit}', [AuditTrailController::class, 'getAuditDetail'])->name('audit.detail');
   });
 
   //route untuk  modul audit trails -log keseluruhan
