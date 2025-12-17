@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Store Ticket Comment Request Validation
+ * Validates input data when storing a ticket comment
+ */
+
 namespace App\Http\Requests\Ticket;
 
 use Illuminate\Foundation\Http\FormRequest;

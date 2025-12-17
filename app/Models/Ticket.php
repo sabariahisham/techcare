@@ -176,6 +176,16 @@ class Ticket extends Model implements Auditable
     return $this->hasMany(TicketComment::class, 'ticket_id')->orderBy('created_at', 'asc');
   }
 
+  /**
+   * Get all action comments for this ticket (alias for comments)
+   *
+   * @return \Illuminate\Database\Eloquent\Relations\HasMany
+   */
+  public function actionComments()
+  {
+    return $this->comments();
+  }
+
 
   /**
    * Create a chronology entry when status changes

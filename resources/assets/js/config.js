@@ -48,5 +48,88 @@ window.config = {
 
 window.assetsPath = document.documentElement.getAttribute('data-assets-path');
 window.baseUrl = document.documentElement.getAttribute('data-base-url') + '/';
+
+// Global SweetAlert2 configuration to ensure only 2 buttons (Ya/Tidak)
+(function () {
+  // Wait for Swal to be available
+  function configureSweetAlert() {
+    if (typeof Swal !== 'undefined') {
+      // Store the original fire method
+      const originalFire = Swal.fire;
+
+      // Override Swal.fire to enforce our button configuration
+      Swal.fire = function () {
+        let options = {};
+
+        // Handle different parameter formats
+        if (arguments.length === 1 && typeof arguments[0] === 'object') {
+          options = arguments[0];
+        } else if (arguments.length >= 2) {
+          // Handle Swal.fire('title', 'text', 'icon') format
+          options = {
+            title: arguments[0],
+            text: arguments[1],
+            icon: arguments[2] || undefined
+          };
+        } else {
+          options = arguments[0] || {};
+        }
+
+        // Enforce our button configuration
+        if (typeof options === 'object' && options !== null) {
+          // Always disable the deny button (third button)
+          options.showDenyButton = false;
+
+          // If this is a confirmation dialog (has cancel button)
+          if (options.showCancelButton === true) {
+            // Set default button texts for Malay language
+            if (!options.confirmButtonText) {
+              if (options.icon === 'warning' || options.type === 'warning') {
+                options.confirmButtonText = 'Ya, padam!';
+              } else {
+                options.confirmButtonText = 'Ya';
+              }
+            }
+
+            if (!options.cancelButtonText) {
+              options.cancelButtonText = 'Tidak';
+            }
+
+            // Ensure proper styling
+            if (!options.customClass) {
+              options.customClass = {};
+            }
+
+            if (!options.customClass.confirmButton) {
+              options.customClass.confirmButton = 'btn btn-primary me-2';
+            }
+
+            if (!options.customClass.cancelButton) {
+              options.customClass.cancelButton = 'btn btn-label-secondary';
+            }
+
+            if (!options.hasOwnProperty('buttonsStyling')) {
+              options.buttonsStyling = false;
+            }
+          }
+        }
+
+        return originalFire.call(this, options);
+      };
+
+      console.log('SweetAlert2 global configuration applied - Only 2 buttons (Ya/Tidak) will be shown');
+    } else {
+      // Retry after a short delay if Swal is not yet available
+      setTimeout(configureSweetAlert, 100);
+    }
+  }
+
+  // Apply configuration when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', configureSweetAlert);
+  } else {
+    configureSweetAlert();
+  }
+})();
 window.templateName = document.documentElement.getAttribute('data-template');
 window.rtlSupport = true; // set true for rtl support (rtl + ltr), false for ltr only.

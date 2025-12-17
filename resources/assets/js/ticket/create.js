@@ -17,7 +17,7 @@ $(function () {
     }
 
     $('#cat_id').select2({
-      placeholder: '-- Pilih Kategori --',
+      placeholder: 'Pilih Kategori',
       allowClear: true,
       width: '100%',
       dropdownParent: $('#offcanvasAddTicket'),
@@ -25,7 +25,7 @@ $(function () {
     });
 
     $('#subcat_id').select2({
-      placeholder: '-- Pilih Sub Kategori --',
+      placeholder: 'Pilih Sub Kategori',
       allowClear: true,
       width: '100%',
       dropdownParent: $('#offcanvasAddTicket'),
@@ -140,7 +140,7 @@ $(function () {
           console.log('Add subcategories loaded:', response);
 
           $('#subcat_id').empty();
-          $('#subcat_id').append('<option value="">-- Pilih Sub Kategori --</option>');
+          $('#subcat_id').append('<option value="">Pilih Sub Kategori</option>');
 
           if (response.success && response.data && response.data.length > 0) {
             $.each(response.data, function (key, subcategory) {
@@ -161,7 +161,7 @@ $(function () {
       });
     } else {
       $('#subcat_id').empty();
-      $('#subcat_id').append('<option value="">-- Pilih Sub Kategori --</option>');
+      $('#subcat_id').append('<option value="">Pilih Sub Kategori</option>');
     }
   });
 
@@ -264,30 +264,11 @@ $(function () {
       isValid = false;
     }
 
-    // Validate file attachments from selectedAttachments array
-    if (window.selectedAttachments && window.selectedAttachments.length > 0) {
-      var allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
-      var maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
-
-      for (var i = 0; i < window.selectedAttachments.length; i++) {
-        var file = window.selectedAttachments[i];
-        var fileName = file.name.toLowerCase();
-        var fileExtension = fileName.split('.').pop();
-
-        // Check file extension
-        if (!allowedExtensions.includes(fileExtension)) {
-          errors['attachments'] = ['Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG.'];
-          isValid = false;
-          break;
-        }
-
-        // Check file size
-        if (file.size > maxFileSize) {
-          errors['attachments'] = ['Saiz fail lampiran tidak boleh melebihi 2MB.'];
-          isValid = false;
-          break;
-        }
-      }
+    // Validate file attachments using attachment.js function
+    var attachmentValidation = validateAttachments();
+    if (!attachmentValidation.isValid) {
+      Object.assign(errors, attachmentValidation.errors);
+      isValid = false;
     }
 
     if (!isValid) {
@@ -297,47 +278,7 @@ $(function () {
     return isValid;
   }
 
-  // Function to validate files immediately when selected
-  function validateFileInput(fileInput) {
-    var allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'];
-    var maxFileSize = 2 * 1024 * 1024; // 2MB in bytes
-    var wrapper = $(fileInput).closest('.form-field-wrapper');
-    var errorContainer = wrapper.find('.error-text');
-
-    // Clear previous errors
-    errorContainer.text('').hide();
-    $(fileInput).removeClass('is-invalid');
-    wrapper.find('.invalid-feedback').remove(); // Remove any old Bootstrap feedback
-
-    if (fileInput.files && fileInput.files.length > 0) {
-      for (var i = 0; i < fileInput.files.length; i++) {
-        var file = fileInput.files[i];
-        var fileName = file.name.toLowerCase();
-        var fileExtension = fileName.split('.').pop();
-
-        // Check file extension
-        if (!allowedExtensions.includes(fileExtension)) {
-          errorContainer.text('Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG.').show();
-          $(fileInput).addClass('is-invalid');
-          console.log('File validation failed - invalid extension. Added is-invalid class.');
-          return false;
-        }
-
-        // Check file size
-        if (file.size > maxFileSize) {
-          errorContainer.text('Saiz fail lampiran tidak boleh melebihi 2MB.').show();
-          $(fileInput).addClass('is-invalid');
-          console.log('File validation failed - file too large. Added is-invalid class.');
-          return false;
-        }
-      }
-    }
-
-    console.log('File validation passed.');
-    return true;
-  }
-
-  // Add file validation listeners
+  // Add file validation listeners (using attachment.js function)
   $(document).on('change', '[name="attachments[]"]', function () {
     validateFileInput(this);
   });
@@ -438,7 +379,7 @@ $(function () {
 
         // Reset form
         $('#addTicketForm')[0].reset();
-        $('#subcat_id').empty().append('<option value="">-- Pilih Sub Kategori --</option>');
+        $('#subcat_id').empty().append('<option value="">Pilih Sub Kategori</option>');
 
         // Hide Serial Number field on reset
         hideSerialNumberField();
@@ -457,45 +398,44 @@ $(function () {
           window.removeAllAttachments();
         }
 
-        // Close offcanvas first, then reload tables
-        $('#offcanvasAddTicket').offcanvas('hide');
+        // Close offcanvas and handle table reload on complete close
+        var $offcanvas = $('#offcanvasAddTicket');
 
-        // Reload tables after offcanvas is closed
-        setTimeout(function () {
-          // Try multiple approaches to reload tables
-          console.log('Reloading DataTables...');
+        // Set up one-time event listener for when offcanvas is fully closed
+        $offcanvas.one('hidden.bs.offcanvas', function () {
+          console.log('Offcanvas fully closed, reloading DataTables...');
 
-          // Method 1: Global instances
-          if (window.dt_my_tickets) {
-            window.dt_my_tickets.ajax.reload(null, false);
-            console.log('Reloaded dt_my_tickets');
-          }
-          if (window.dt_manage_tickets) {
-            window.dt_manage_tickets.ajax.reload(null, false);
-            console.log('Reloaded dt_manage_tickets');
-          }
-
-          // Method 2: Direct jQuery DataTable reload
-          $('.datatables-my-tickets').each(function () {
-            if ($.fn.DataTable.isDataTable(this)) {
-              $(this).DataTable().ajax.reload(null, false);
-              console.log('Reloaded my-tickets via jQuery');
-            }
-          });
-
-          $('.datatables-manage-tickets').each(function () {
-            if ($.fn.DataTable.isDataTable(this)) {
-              $(this).DataTable().ajax.reload(null, false);
-              console.log('Reloaded manage-tickets via jQuery');
-            }
-          });
-
-          // Method 3: Global reload function as fallback
+          // Call the global reload function which has comprehensive table detection
           if (typeof window.reloadAllTables === 'function') {
             window.reloadAllTables();
-            console.log('Called global reloadAllTables');
+          } else {
+            // Fallback: reload tables directly if global function not available
+            setTimeout(function () {
+              if (window.dt_my_tickets && window.dt_my_tickets.ajax) {
+                window.dt_my_tickets.ajax.reload(null, false);
+                console.log('Reloaded dt_my_tickets');
+              }
+              if (window.dt_manage_tickets && window.dt_manage_tickets.ajax) {
+                window.dt_manage_tickets.ajax.reload(null, false);
+                console.log('Reloaded dt_manage_tickets');
+              }
+
+              // Show brief success notification about table update
+              if (typeof toastr !== 'undefined') {
+                toastr.success('Senarai tiket dikemaskini dengan tiket baharu', '', {
+                  timeOut: 3000,
+                  positionClass: 'toast-bottom-right',
+                  closeButton: false,
+                  progressBar: true,
+                  preventDuplicates: true
+                });
+              }
+            }, 100);
           }
-        }, 300);
+        });
+
+        // Now close the offcanvas
+        $offcanvas.offcanvas('hide');
 
         // Log success for debugging
         if (response.ticket) {
@@ -578,10 +518,11 @@ $(function () {
       text: "Tiket ini akan dipadam secara kekal!",
       icon: 'warning',
       showCancelButton: true,
+      showDenyButton: false,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Ya, padam!',
-      cancelButtonText: 'Batal'
+      cancelButtonText: 'Tidak'
     }).then((result) => {
       if (result.isConfirmed) {
         $.ajax({

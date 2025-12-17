@@ -65,7 +65,7 @@ class TicketChronologyController extends Controller
    * Add chronology entry when ticket status changes
    * Also updates the ticket's current status to reflect the latest status
    */
-  public static function addChronologyEntry($ticketId, $newStatusId, $escalateTo = null, $slaDueDate = null, $levelPegtugasId = null)
+  public static function addChronologyEntry($ticketId, $newStatusId, $escalateTo = null, $slaDueDate = null, $levelPegtugasId = null, $notes = null)
   {
     // Create chronology entry
     $chronology = TicketChronology::create([
@@ -77,6 +77,16 @@ class TicketChronologyController extends Controller
       'sla_duedate' => $slaDueDate,
       'created_by' => Auth::id(),
     ]);
+
+    // If notes are provided, add them as a comment
+    if ($notes) {
+      TicketComment::create([
+        'ticket_id' => $ticketId,
+        'user_id' => Auth::id(),
+        'comment_text' => $notes,
+        'created_by' => Auth::id(),
+      ]);
+    }
 
     // Update ticket's current status to reflect the latest status change
     $ticket = Ticket::find($ticketId);

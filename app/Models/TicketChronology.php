@@ -21,6 +21,8 @@ class TicketChronology extends Model implements Auditable
     'tick_status',
     'escalate_to',
     'sla_duedate',
+    'sla_days',
+    'sla_severity',
     'created_by',
     'updated_by',
   ];

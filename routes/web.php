@@ -277,10 +277,23 @@ Route::middleware(['auth'])->group(function () {
 // Tickets Routes Group: Core ticket operations (TicketController only)
 Route::middleware(['auth'])->prefix('tickets')->group(function () {
   Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
-  Route::get('/data', [TicketSearchController::class, 'getData'])->name('tickets.data');
+  Route::get('/data', [TicketController::class, 'data'])->name('tickets.data');
   Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
   Route::get('/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+  Route::get('/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
+  Route::put('/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
+  Route::delete('/{ticket}', [TicketController::class, 'destroy'])->name('tickets.destroy');
   Route::post('/{ticket}/update-status', [TicketController::class, 'updateTicketStatus'])->name('tickets.update-status');
+});
+
+// Ticket Assignment Routes Group
+Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
+  Route::put('/{ticket}/update', [TicketAssignmentController::class, 'updateTicketAssignment'])->name('tickets.update');
+  Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assignTicket'])->name('tickets.assign');
+  Route::get('/{ticket}/assignees', [TicketAssignmentController::class, 'getAssignees'])->name('tickets.assignees');
+  Route::get('/available-assignees', [TicketAssignmentController::class, 'getAvailableAssignees'])->name('tickets.available-assignees');
+  Route::get('/available-assignees-by-sla', [TicketAssignmentController::class, 'getAvailableAssigneesBySLA'])->name('tickets.available-assignees-by-sla');
+  Route::get('/{ticket}/history-comments', [TicketAssignmentController::class, 'getHistoryComment'])->name('tickets.history-comments');
 });
 
 // Ticket Search Routes Group
@@ -296,7 +309,7 @@ Route::get('/get-subcategory/{categoryId}', [RefCategoryManagementController::cl
 // Ticket Attachment Routes Group
 Route::middleware(['auth'])->prefix('ticket-attachments')->group(function () {
   Route::post('/upload', [TicketAttachmentController::class, 'upload'])->name('ticket-attachments.upload');
-  Route::delete('/{attachment}', [TicketAttachmentController::class, 'destroy'])->name('ticket-attachments.destroy');
+  Route::delete('/{document}', [TicketAttachmentController::class, 'destroy'])->name('ticket-attachments.destroy');
   Route::get('/attachment/{document}/download', [TicketAttachmentController::class, 'download'])->name('ticket-attachments.download');
 });
 

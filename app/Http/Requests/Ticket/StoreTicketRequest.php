@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * Store Ticket Request Validation
+ * Validates input data when storing a new ticket
+ */
+
 namespace App\Http\Requests\Ticket;
 
 use Illuminate\Foundation\Http\FormRequest;
