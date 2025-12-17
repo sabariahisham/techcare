@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\audit;
+namespace App\Http\Controllers\Audit;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
