@@ -1,5 +1,7 @@
 /**
- * Page Ticket List - Role-based DataTables
+ * Handles DataTable initialization and interactions for ticket listing
+ * Includes "My Tickets" and "Tickets to Manage" tables with server-side processing
+ * Also manages ticket filtering, viewing, and deletion functionalities
  */
 
 'use strict';
@@ -89,7 +91,15 @@ $(function () {
       responsive: true,
       language: {
         search: '',
-        searchPlaceholder: 'Carian Tiket Saya'
+        searchPlaceholder: 'Carian Tiket Saya',
+        emptyTable: 'Tiada data tersedia dalam jadual',
+        info: 'Menunjukkan _START_ hingga _END_ daripada _TOTAL_ entri',
+        infoEmpty: 'Menunjukkan 0 hingga 0 daripada 0 entri',
+        infoFiltered: '(ditapis daripada _MAX_ jumlah entri)',
+        lengthMenu: 'Tunjuk _MENU_ entri',
+        loadingRecords: 'Memuatkan...',
+        processing: 'Memproses...',
+        zeroRecords: 'Tiada rekod yang sepadan dijumpai'
       }
     });
 
@@ -159,7 +169,15 @@ $(function () {
       responsive: true,
       language: {
         search: '',
-        searchPlaceholder: 'Carian Tiket untuk Diurus'
+        searchPlaceholder: 'Carian Tiket untuk Diurus',
+        emptyTable: 'Tiada data tersedia dalam jadual',
+        info: 'Menunjukkan _START_ hingga _END_ daripada _TOTAL_ entri',
+        infoEmpty: 'Menunjukkan 0 hingga 0 daripada 0 entri',
+        infoFiltered: '(ditapis daripada _MAX_ jumlah entri)',
+        lengthMenu: 'Tunjuk _MENU_ entri',
+        loadingRecords: 'Memuatkan...',
+        processing: 'Memproses...',
+        zeroRecords: 'Tiada rekod yang sepadan dijumpai'
       }
     });
 
@@ -168,7 +186,7 @@ $(function () {
     console.log('Manage Tickets DataTable initialized and exposed globally');
   }
 
-  // Global reloadAllTables function is defined in ticket-config.js
+  // Global reloadAllTables function is defined in config.js
   // It will automatically detect and reload the exposed DataTable instances
 
   // Edit and delete functionality removed - complainants should only log and submit tickets
@@ -195,6 +213,84 @@ $(function () {
     if (dt_my_tickets) {
       dt_my_tickets.ajax.reload(); // Reload the my tickets table with new filter
     }
+  });
+
+  // Handle delete ticket
+  $(document).on('click', '.delete-record', function () {
+    var ticketId = $(this).data('id');
+
+    Swal.fire({
+      title: 'Adakah anda pasti?',
+      text: "Tiket ini akan dipadam secara kekal!",
+      icon: 'warning',
+      showCancelButton: true,
+      showDenyButton: false,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, padam!',
+      cancelButtonText: 'Tidak'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Show loading
+        Swal.fire({
+          title: 'Memproses...',
+          text: 'Tiket sedang dipadam',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
+        $.ajax({
+          url: '/tickets/' + ticketId,
+          type: 'DELETE',
+          data: {
+            _token: $('meta[name="csrf-token"]').attr('content')
+          },
+          success: function (response) {
+            console.log('Ticket deleted successfully:', response);
+
+            Swal.fire({
+              title: 'Berjaya!',
+              text: response.message || 'Tiket berjaya dipadam.',
+              icon: 'success',
+              timer: 3000,
+              timerProgressBar: true
+            });
+
+            // Reload DataTables after successful deletion
+            setTimeout(function () {
+              if (typeof window.reloadAllTables === 'function') {
+                window.reloadAllTables();
+              } else {
+                // Fallback reload
+                if (window.dt_my_tickets) {
+                  window.dt_my_tickets.ajax.reload();
+                }
+                if (window.dt_manage_tickets) {
+                  window.dt_manage_tickets.ajax.reload();
+                }
+              }
+            }, 1000);
+          },
+          error: function (xhr) {
+            console.error('Delete ticket failed:', xhr);
+            var response = xhr.responseJSON;
+            var errorMessage = response && response.message
+              ? response.message
+              : 'Ralat tidak dijangka berlaku. Sila cuba lagi.';
+
+            Swal.fire({
+              title: 'Ralat!',
+              text: errorMessage,
+              icon: 'error'
+            });
+          }
+        });
+      }
+    });
   });
 
   setTimeout(() => {

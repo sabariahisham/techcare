@@ -266,7 +266,7 @@
                             <input type="file" id="ticket-attachments" name="attachments[]"
                                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple
                                 class="file-input position-absolute w-100 h-100 opacity-0"
-                                style="cursor: pointer; z-index: 2;">
+                                style="cursor: pointer; z-index: 2; top: 0; left: 0;">
                             <div class="drop-zone-content">
                                 <i class="bx bx-file-find display-4 text-muted mb-3"></i>
                                 <h6 class="text-muted mb-2">Seret & Letak fail di sini</h6>
@@ -316,6 +316,16 @@
         cursor: pointer !important;
     }
 
+    .file-drop-zone {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .drop-zone-content {
+        pointer-events: none;
+        user-select: none;
+    }
+
     .files-preview {
         max-height: 300px;
         overflow-y: auto;
@@ -335,5 +345,21 @@
 
     .drop-zone-content {
         pointer-events: none;
+    }
+
+    .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+
+    .invalid-feedback.d-block {
+        display: block !important;
+    }
+
+    .file-drop-zone.error+.files-preview+.invalid-feedback {
+        display: block !important;
     }
 </style>

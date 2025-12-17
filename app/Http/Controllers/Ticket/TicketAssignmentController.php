@@ -3,6 +3,7 @@
 /*
  * Function TicketAssignmentController.php:
  *  - Manage ticket assignments.
+ *  - CRUD ticket assignments (create, read, update)
  *  - Handle assigning tickets to Pengadu and Pegawai Tugasan.
  *  - Provide assignment functionalities for Pengadu and Pegawai Tugasan.
  */
@@ -15,10 +16,74 @@ use App\Models\TicketChronology;
 use App\Models\Sla;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Ticket\TicketChronologyController;
 use Illuminate\Support\Facades\Auth;
 
 class TicketAssignmentController extends Controller
 {
+  /**
+   * Update ticket details and assignment
+   */
+  public function updateTicketAssignment(Request $request, Ticket $ticket)
+  {
+    $request->validate([
+      'tick_status' => 'required|exists:ref_ticket_statuses,id',
+      'cat_id' => 'required|exists:ref_categories,id',
+      'subcat_id' => 'required|exists:ref_sub_categories,id',
+      'sla_severity' => 'nullable|string',
+      'assigned_officers' => 'array',
+      'assigned_officers.*' => 'exists:users,id',
+      'action_date' => 'nullable|date',
+      'notes' => 'nullable|string|max:1000'
+    ]);
+
+    try {
+      // Update ticket basic information
+      $ticket->update([
+        'tick_status' => $request->tick_status,
+        'cat_id' => $request->cat_id,
+        'subcat_id' => $request->subcat_id,
+        'updated_by' => Auth::id()
+      ]);
+
+      // Create chronology entry for the update
+      $chronology = TicketChronologyController::addChronologyEntry(
+        $ticket->id,
+        $request->tick_status,
+        null, // escalate_to will be handled separately for multiple officers
+        $request->action_date ? \Carbon\Carbon::parse($request->action_date) : null,
+        null, // level_pegtugas_id
+        $request->notes ?? 'Tiket dikemaskini oleh ' . Auth::user()->nama
+      );
+
+      // Handle officer assignments if provided
+      if ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
+        foreach ($request->assigned_officers as $officerId) {
+          // Create separate chronology entries for each officer assignment
+          TicketChronologyController::addChronologyEntry(
+            $ticket->id,
+            $request->tick_status,
+            $officerId,
+            $request->action_date ? \Carbon\Carbon::parse($request->action_date) : null,
+            null,
+            'Diserahkan kepada ' . \App\Models\User::find($officerId)->nama
+          );
+        }
+      }
+
+      // Reload ticket with latest data
+      $ticket->refresh();
+      $ticket->load(['status', 'category', 'subCategory', 'chronologies.status', 'chronologies.createdBy', 'chronologies.fromUser', 'chronologies.escalatedTo']);
+
+      return redirect()->route('tickets.show', $ticket)
+        ->with('success', 'Tiket berjaya dikemaskini!');
+    } catch (\Exception $e) {
+      return redirect()->back()
+        ->with('error', 'Ralat semasa mengemaskini tiket: ' . $e->getMessage())
+        ->withInput();
+    }
+  }
+
   /**
    * Assign ticket to a user
    *
@@ -248,6 +313,88 @@ class TicketAssignmentController extends Controller
         'success' => false,
         'message' => 'Ralat semasa mendapatkan senarai pegawai: ' . $e->getMessage()
       ], 500);
+    }
+  }
+
+  /**
+   * Get history comment from Pengadu and Pegawai Tugasan
+   *
+   * @return \Illuminate\Http\JsonResponse
+   */
+  public function getHistoryComment($ticketId)
+  {
+    try {
+      $ticket = Ticket::with(['comments.user', 'comments.createdBy', 'status'])->findOrFail($ticketId);
+
+      // Get all comments from pengadu (ticket creator) and pegawai tugasan (officers)
+      $comments = $ticket->comments->map(function ($comment) use ($ticket) {
+        return [
+          'id' => $comment->id,
+          'created_at' => $comment->created_at->format('d/m/Y H:i'),
+          'user_name' => $comment->user ? $comment->user->nama : 'Tidak diketahui',
+          'user_unit' => $comment->user ? ($comment->user->unit->nama_unit ?? $comment->user->kod_unit ?? '-') : '-',
+          'user_type' => $this->getUserType($comment->user, $ticket),
+          'comment' => $comment->comment_text,
+          'created_by' => $comment->createdBy ? $comment->createdBy->nama : 'Tidak diketahui',
+          'ticket_status' => $ticket->status ? $ticket->status->st_name : 'Tidak diketahui',
+          'status_class' => $this->getStatusBadgeClass($ticket->status ? $ticket->status->st_name : '')
+        ];
+      });
+
+      return response()->json([
+        'success' => true,
+        'comments' => $comments
+      ]);
+    } catch (\Exception $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Ralat semasa mendapatkan catatan tindakan: ' . $e->getMessage()
+      ], 500);
+    }
+  }
+
+  /**
+   * Determine user type (Pengadu or Pegawai Tugasan)
+   */
+  private function getUserType($user, $ticket)
+  {
+    if (!$user) {
+      return 'Tidak diketahui';
+    }
+
+    // Check if user is the ticket creator (Pengadu)
+    if ($user->id === $ticket->user_id) {
+      return 'Pengadu';
+    }
+
+    // Check if user has officer roles (Pegawai Tugasan)
+    if ($user->hasAnyRole(['Pegawai Tugasan', 'Penyelia Helpdesk', 'Helpdesk On Duty', 'Administrator', 'Pentadbir Sistem'])) {
+      return 'Pegawai Tugasan';
+    }
+
+    return 'Pengguna';
+  }
+
+  /**
+   * Get Bootstrap badge class for ticket status
+   */
+  private function getStatusBadgeClass($statusName)
+  {
+    switch ($statusName) {
+      case 'Aduan Baru':
+        return 'bg-primary';
+      case 'Aduan Diproses':
+        return 'bg-warning';
+      case 'Serahan Kepada':
+        return 'bg-info';
+      case 'Aduan Dirujuk':
+        return 'bg-danger';
+      case 'Aduan DiBatal':
+        return 'bg-secondary';
+      case 'Aduan Selesai':
+        return 'bg-success';
+      default:
+        return 'bg-secondary';
     }
   }
 }

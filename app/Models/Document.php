@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Document extends Model
 {
@@ -55,5 +56,29 @@ class Document extends Model
   public function knowledgeBase()
   {
     return $this->belongsTo(KnowledgeBase::class, 'doc_id');
+  }
+
+  /**
+   * Get the full file path for ticket attachments
+   *
+   * @return string|null
+   */
+  public function getTicketAttachmentPath()
+  {
+    if ($this->doc_jenis === 'TICKET' && $this->doc_storage_nm) {
+      return 'public/ticket_attachments/' . $this->doc_storage_nm;
+    }
+    return null;
+  }
+
+  /**
+   * Check if the attachment file exists in storage
+   *
+   * @return bool
+   */
+  public function attachmentExists()
+  {
+    $path = $this->getTicketAttachmentPath();
+    return $path && Storage::exists($path);
   }
 }

@@ -11,6 +11,35 @@
 @endsection
 
 @section('content')
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bx bx-check-circle me-2"></i>
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bx bx-x-circle me-2"></i>
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bx bx-error me-2"></i>
+            <strong>Ralat!</strong> Sila betulkan ralat berikut:
+            <ul class="mb-0 mt-2">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -22,9 +51,6 @@
                     <a href="{{ route('tickets.index') }}" class="btn btn-outline-secondary">
                         <i class="bx bx-arrow-back me-3"></i>Kembali ke Senarai
                     </a>
-                    {{-- <button type="button" class="btn btn-warning" onclick="$('#commentModal').modal('show')">
-                        <i class="bx bx-message me-3"></i>Komen
-                    </button> --}}
                     <button type="button" class="btn btn-primary" onclick="window.print()">
                         <i class="bx bx-printer me-3"></i>Cetak
                     </button>
@@ -32,8 +58,6 @@
             </div>
         </div>
     </div>
-
-    @include('tickets.partials.comment-modal')
 
     <div class="row">
         <div class="col-12">
@@ -239,9 +263,20 @@
                     <hr>
                     <div class="row mt-6 mb-1">
                         <div class="col-sm">
-                            <button type="button" class="btn btn-warning btn-sm "
-                                onclick="$('#commentModal').modal('show')">
-                                <i class="bx bx-message me-3"></i>Komen
+                            @if ($ticket->user_id == auth()->user()->id)
+                                <button type="button" class="btn btn-warning btn-sm"
+                                    onclick="$('#commentModal').modal('show')">
+                                    <i class="bx bx-message me-3"></i>Komen
+                                </button>
+                            @else
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                    onclick="$('#commentModal').modal('show')" disabled>
+                                    <i class="bx bx-message me-3"></i>Komen
+                                </button>
+                            @endif
+                            <button type="button" class="btn btn-primary btn-sm float-end"
+                                onclick="$('#actionComment').modal('show')">
+                                <i class="bx bx-save me-1"></i>Catatan Tindakan
                             </button>
                         </div>
                     </div>
@@ -256,117 +291,134 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Status Tiket</h6>
+                        <form id="updateTicketForm" action="{{ route('tickets.update', $ticket) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Status Tiket</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <select class="form-select" name="tick_status" id="tick_status" required>
+                                        <option value="">Pilih Status</option>
+                                        @foreach ($allStatuses as $status)
+                                            <option value="{{ $status->id }}"
+                                                {{ $ticket->tick_status == $status->id ? 'selected' : '' }}>
+                                                {{ $status->st_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col-sm-9 text-secondary">
-                                <select class="form-select" name="tick_status" id="tick_status">
-                                    <option value="">--Pilih Status--</option>
-                                    @foreach ($allStatuses as $status)
-                                        <option value="{{ $status->id }}"
-                                            {{ $ticket->tick_status == $status->id ? 'selected' : '' }}>
-                                            {{ $status->st_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Kategori</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <select class="form-select" name="cat_id" id="cat_id" required>
+                                        <option value="">Pilih Kategori</option>
+                                        @foreach ($allCategories as $category)
+                                            <option value="{{ $category->id }}"
+                                                {{ $ticket->cat_id == $category->id ? 'selected' : '' }}>
+                                                {{ $category->cat_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Kategori</h6>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Sub Kategori</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <select class="form-select" name="subcat_id" id="subcat_id" required>
+                                        <option value="">Pilih Sub Kategori</option>
+                                        @foreach ($allSubCategories as $subCategory)
+                                            <option value="{{ $subCategory->id }}"
+                                                data-cat-id="{{ $subCategory->cat_id }}"
+                                                {{ $ticket->subcat_id == $subCategory->id ? 'selected' : '' }}>
+                                                {{ $subCategory->subcat_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col-sm-9 text-secondary">
-                                <select class="form-select" name="cat_id" id="cat_id">
-                                    <option value="">Pilih Kategori</option>
-                                    @foreach ($allCategories as $category)
-                                        <option value="{{ $category->id }}"
-                                            {{ $ticket->cat_id == $category->id ? 'selected' : '' }}>
-                                            {{ $category->cat_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Tahap Severity</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <select class="form-select" name="sla_severity" id="sla_severity">
+                                        <option value="">Pilih Tahap Severity</option>
+                                        <!-- Options will be populated via AJAX based on category and subcategory -->
+                                    </select>
+                                    <small class="text-muted">Tahap keparahan akan dipaparkan berdasarkan kategori dan sub
+                                        kategori yang dipilih.</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Sub Kategori</h6>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Pegawai Tugasan</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <select class="form-select" name="assigned_officers[]" id="assigned_officers"
+                                        multiple>
+                                        @foreach ($officers as $officer)
+                                            @php
+                                                $isCurrentUser = $officer->id === auth()->user()->id;
+                                            @endphp
+                                            <option value="{{ $officer->id }}"
+                                                data-current-user="{{ $isCurrentUser ? 'true' : 'false' }}"
+                                                {{ $isCurrentUser ? 'selected' : '' }}>
+                                                {{ $officer->nama }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col-sm-9 text-secondary">
-                                <select class="form-select" name="subcat_id" id="subcat_id">
-                                    <option value="">Pilih Sub Kategori</option>
-                                    @foreach ($allSubCategories as $subCategory)
-                                        <option value="{{ $subCategory->id }}" data-cat-id="{{ $subCategory->cat_id }}"
-                                            {{ $ticket->subcat_id == $subCategory->id ? 'selected' : '' }}>
-                                            {{ $subCategory->subcat_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Tarikh Tindakan</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <input type="datetime-local" class="form-control" name="action_date"
+                                        id="action_date" value="{{ now()->format('Y-m-d\TH:i') }}" />
+                                </div>
                             </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Tahap Keparahan</h6>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Tindakan Oleh</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    {{ auth()->user()->nama }}
+                                </div>
                             </div>
-                            <div class="col-sm-9 text-secondary">
-                                <select class="form-select" name="sla_severity" id="sla_severity">
-                                    <option value="">--Pilih Tahap Keparahan--</option>
-                                    <!-- Options will be populated via AJAX based on category and subcategory -->
-                                </select>
-                                <small class="text-muted">Tahap keparahan akan dipaparkan berdasarkan kategori dan sub
-                                    kategori yang dipilih.</small>
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <h6 class="mb-0">Catatan</h6>
+                                </div>
+                                <div class="col-sm-9 text-secondary">
+                                    <textarea class="form-control" name="notes" id="notes" rows="3"
+                                        placeholder="Masukkan catatan tambahan (pilihan)"></textarea>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Pegawai Tugasan</h6>
+                            <hr>
+                            <div class="row mt-6 mb-1">
+                                <div class="col-sm">
+                                    <button type="button" class="btn btn-warning btn-sm "
+                                        onclick="$('#commentModal').modal('show')">
+                                        <i class="bx bx-message me-3"></i>Komen
+                                    </button>
+                                    <button type="submit" class="btn btn-primary btn-sm float-end">
+                                        <i class="bx bx-save me-1"></i>Kemaskini
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm float-end me-2"
+                                        onclick="cancelUpdate()">
+                                        <i class="bx bx-x me-1"></i>Batal
+                                    </button>
+                                </div>
                             </div>
-                            <div class="col-sm-9 text-secondary">
-                                <select class="form-select" name="assigned_officers[]" id="assigned_officers" multiple>
-                                    @foreach ($officers as $officer)
-                                        @php
-                                            $isCurrentUser = $officer->id === auth()->user()->id;
-                                        @endphp
-                                        <option value="{{ $officer->id }}"
-                                            data-current-user="{{ $isCurrentUser ? 'true' : 'false' }}"
-                                            {{ $isCurrentUser ? 'selected' : '' }}>
-                                            {{ $officer->nama }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Tarikh Tindakan</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                <input type="date" class="form-control" />
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-sm-3">
-                                <h6 class="mb-0">Tindakan Oleh</h6>
-                            </div>
-                            <div class="col-sm-9 text-secondary">
-                                {{ auth()->user()->nama }}
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="row mt-6 mb-1">
-                            <div class="col-sm">
-                                <button type="button" class="btn btn-warning btn-sm "
-                                    onclick="$('#commentModal').modal('show')">
-                                    <i class="bx bx-message me-3"></i>Komen
-                                </button>
-                                <button class="btn btn-primary btn-sm float-end">
-                                    <i class="bx bx-save me-1"></i>Kemaskini
-                                </button>
-                                <button class="btn btn-secondary btn-sm float-end me-2">
-                                    <i class="bx bx-save me-1"></i>Batal
-                                </button>
-                            </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
             @endif
@@ -379,7 +431,6 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="bx bx-time me-2"></i>Kronologi Tiket
-                        <small class="text-muted">[Jangka Siap:]</small>
                     </h5>
                 </div>
                 <div class="card-body">
@@ -566,11 +617,7 @@
             background: linear-gradient(135deg, #17a2b8, #138496);
         }
 
-        /* Badge colors to match timeline markers
-                                                                                                                                                                                                    .badge.bg-purple {
-                                                                                                                                                                                                        background: linear-gradient(135deg, #8e44ad, #6f42c1) !important;
-                                                                                                                                                                                                        color: white;
-                                                                                                                                                                                                    } */
+        /* Badge colors to match timeline markers                                                                                                                                                              } */
 
         .badge.badge-sm {
             font-size: 0.7rem;
@@ -1141,10 +1188,16 @@
     </style>
 
     <script>
+        // Make ticket data available globally for modals
+        window.ticketData = {
+            id: {{ $ticket->id ?? 'null' }}
+        };
+
         // Auto-resize textarea functionality
         document.addEventListener('DOMContentLoaded', function() {
             const chatInput = document.querySelector('.chat-input');
             const chatForm = document.querySelector('.chat-input-form');
+            const updateForm = document.querySelector('#updateTicketForm');
 
             if (chatInput) {
                 chatInput.addEventListener('input', function() {
@@ -1164,7 +1217,7 @@
                 });
             }
 
-            // Add form submission handling
+            // Add form submission handling for comments
             if (chatForm) {
                 chatForm.addEventListener('submit', function(e) {
                     console.log('Form submitted');
@@ -1175,6 +1228,51 @@
                         return false;
                     }
                     console.log('Comment text:', commentText);
+                });
+            }
+
+            // Form validation and submission handling for update form
+            if (updateForm) {
+                updateForm.addEventListener('submit', function(e) {
+                    // Basic validation
+                    const statusSelect = document.getElementById('tick_status');
+                    const categorySelect = document.getElementById('cat_id');
+                    const subcategorySelect = document.getElementById('subcat_id');
+
+                    if (!statusSelect.value) {
+                        e.preventDefault();
+                        alert('Sila pilih status tiket.');
+                        statusSelect.focus();
+                        return false;
+                    }
+
+                    if (!categorySelect.value) {
+                        e.preventDefault();
+                        alert('Sila pilih kategori.');
+                        categorySelect.focus();
+                        return false;
+                    }
+
+                    if (!subcategorySelect.value) {
+                        e.preventDefault();
+                        alert('Sila pilih sub kategori.');
+                        subcategorySelect.focus();
+                        return false;
+                    }
+
+                    // Show loading state
+                    const submitBtn = updateForm.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin me-1"></i>Mengemaskini...';
+
+                    // Re-enable button after 10 seconds (fallback)
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }, 10000);
+
+                    return true;
                 });
             }
 
@@ -1197,7 +1295,7 @@
                                 if (data.success) {
                                     // Update severity options
                                     severitySelect.innerHTML =
-                                        '<option value="">--Pilih Tahap Keparahan--</option>';
+                                        '<option value="">Pilih Tahap Severity</option>';
                                     data.severities.forEach(severity => {
                                         const option = document.createElement('option');
                                         option.value = severity.value;
@@ -1225,7 +1323,7 @@
                             });
                     } else {
                         // Clear severity options when category or subcategory not selected
-                        severitySelect.innerHTML = '<option value="">--Pilih Tahap Keparahan--</option>';
+                        severitySelect.innerHTML = '<option value="">Pilih Tahap Severity</option>';
                         resetOfficersList();
                     }
                 }
@@ -1302,7 +1400,7 @@
                     const selectedCategoryId = this.value;
 
                     // Clear current subcategory options except the first one
-                    subcategorySelect.innerHTML = '<option value="">--Pilih Sub Kategori--</option>';
+                    subcategorySelect.innerHTML = '<option value="">Pilih Sub Kategori</option>';
 
                     if (selectedCategoryId) {
                         // Filter and add relevant subcategories
@@ -1321,7 +1419,7 @@
                     }
 
                     // Clear severity and reset officers when category changes
-                    severitySelect.innerHTML = '<option value="">--Pilih Tahap Keparahan--</option>';
+                    severitySelect.innerHTML = '<option value="">Pilih Tahap Severity</option>';
                     resetOfficersList();
                 });
 
@@ -1437,5 +1535,16 @@
                 });
             }
         });
+
+        // Cancel update function
+        function cancelUpdate() {
+            if (confirm('Adakah anda pasti untuk membatalkan kemaskini? Semua perubahan akan hilang.')) {
+                // Reset form to original values
+                location.reload();
+            }
+        }
     </script>
 @endsection
+
+@include('tickets.partials.comment-modal')
+@include('tickets.partials.action-comment-modal')
