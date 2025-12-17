@@ -9,6 +9,7 @@ use App\Http\Controllers\user_interface\Toasts;
 use App\Http\Controllers\extended_ui\SweetAlert;
 use App\Http\Controllers\Ticket\TicketController;
 use App\Http\Controllers\Audit\AuditLogController;
+use App\Http\Controllers\Audit\AuditTrailController;
 use App\Http\Controllers\Ticket\TicketSLAController;
 use App\Http\Controllers\Ticket\TicketEmailController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -249,14 +250,14 @@ Route::middleware(['auth'])->group(function () {
     return redirect('/dashboard')->with('impersonate_leave', 'You have stopped impersonating.');
   })->name('impersonate.leave');
 
-  //Route untuk audit trail - senarai audit trail
+  //Route untuk modul audit trail - senarai audit trail
   route::middleware(['auth'])->group(function () {
     Route::get('/audit-trail', [AuditTrailController::class, 'index'])->name('audit.index');
     Route::get('/audit-trail/data', [AuditTrailController::class, 'getAuditData'])->name('audit.data');
     Route::get('/audit-trail/detail/{audit}', [AuditTrailController::class, 'getAuditDetail'])->name('audit.detail');
   });
 
-  //route untuk  modul audit trails -log keseluruhan
+  //route untuk  modul audit trail -log keseluruhan
   Route::prefix('audit/logs')->middleware('auth')->group(function () {
 
     // Senarai fail log harian

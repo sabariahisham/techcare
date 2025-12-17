@@ -51,6 +51,7 @@ npm run build - if ada perubahan fronted .js dan .css
 ## .env dev
 APP_ENV=local
 APP_DEBUG=true
+APP_TIMEZONE=Asia/Kuala_Lumpur
 
 ## 4. SOP Deployment – Staging Server
 cd /var/www/html/ehelp
@@ -64,6 +65,7 @@ php artisan optimize
 ## .env staging
 APP_ENV=staging
 APP_DEBUG=false
+APP_TIMEZONE=Asia/Kuala_Lumpur
 
 ## 5. SOP Deployment – Production Server ✅
 cd /var/www/html/ehelp
@@ -82,4 +84,6 @@ php artisan storage:link
 
 APP_ENV=production
 APP_DEBUG=false
+APP_TIMEZONE=Asia/Kuala_Lumpur
 LOG_LEVEL=error
+
