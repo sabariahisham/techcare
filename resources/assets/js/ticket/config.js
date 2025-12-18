@@ -91,56 +91,9 @@ window.reloadAllTables = function () {
     Promise.all(reloadPromises).then(function () {
       console.log('All DataTables reload completed. Tables reloaded:', tablesReloaded);
 
-      // Enhanced visual feedback for table updates
+      // Table reload completed without visual feedback
       setTimeout(function () {
-        // Add success highlight effect to all DataTable wrappers
-        var $tableWrappers = $('.dataTables_wrapper');
-
-        if ($tableWrappers.length > 0) {
-          $tableWrappers.addClass('table-updated table-reload-success');
-
-          // Show brief confirmation message
-          if (typeof toastr !== 'undefined') {
-            toastr.success('Senarai tiket telah dikemaskini', '', {
-              timeOut: 3000,
-              positionClass: 'toast-bottom-right',
-              iconClass: 'toast-success',
-              closeButton: false,
-              progressBar: true,
-              preventDuplicates: true
-            });
-          }
-
-          // Highlight the first row of each table (likely the newest ticket)
-          $tableWrappers.each(function () {
-            var $firstRow = $(this).find('tbody tr').first();
-            if ($firstRow.length > 0) {
-              $firstRow.addClass('new-ticket-highlight');
-              setTimeout(function () {
-                $firstRow.removeClass('new-ticket-highlight');
-              }, 3000);
-            }
-          });
-
-          // Gentle scroll to first visible table
-          var $firstVisibleTable = $tableWrappers.filter(':visible').first();
-          if ($firstVisibleTable.length > 0 && $firstVisibleTable.offset()) {
-            var scrollTop = $firstVisibleTable.offset().top - 120;
-            var currentScroll = $(window).scrollTop();
-
-            // Only scroll if we're not already near the table
-            if (Math.abs(currentScroll - scrollTop) > 200) {
-              $('html, body').animate({
-                scrollTop: scrollTop
-              }, 600, 'easeInOutQuad');
-            }
-          }
-
-          // Remove visual effects after animation
-          setTimeout(function () {
-            $tableWrappers.removeClass('table-updated table-reload-success');
-          }, 3500);
-        }
+        // Silent reload - no notifications or visual effects
       }, 200);
     });
   } else {
@@ -180,13 +133,7 @@ window.showTicketSuccessAlert = function (message, ticketData = null) {
     toastr.success(successMessage);
   }
 
-  // Add visual highlighting effect to indicate successful operation
-  setTimeout(function () {
-    $('body').addClass('operation-success');
-    setTimeout(function () {
-      $('body').removeClass('operation-success');
-    }, 3000);
-  }, 500);
+  // Removed visual highlighting effect - no longer needed
 };
 
 // Function to check if value is empty/null/undefined and return fallback
