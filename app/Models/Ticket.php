@@ -147,6 +147,35 @@ class Ticket extends Model implements Auditable
     return $this->belongsTo(User::class, 'updated_by');
   }
 
+  public function slaConfig()
+  {
+    // Get the latest chronology entry with SLA information
+    $latestChronology = $this->chronologies()
+      ->whereNotNull('sla_severity')
+      ->latest()
+      ->first();
+
+    if (!$latestChronology) {
+      return null;
+    }
+
+    return Sla::where('cat_id', $this->cat_id)
+      ->where('subcat_id', $this->subcat_id)
+      ->where('sla_severity', $latestChronology->sla_severity)
+      ->first();
+  }
+
+  public function getSlaSeverityAttribute()
+  {
+    // Get the latest SLA severity from chronology
+    $latestChronology = $this->chronologies()
+      ->whereNotNull('sla_severity')
+      ->latest()
+      ->first();
+
+    return $latestChronology ? $latestChronology->sla_severity : null;
+  }
+
   public function chronologies()
   {
     return $this->hasMany(TicketChronology::class, 'ticket_id')->orderBy('created_at', 'asc');
