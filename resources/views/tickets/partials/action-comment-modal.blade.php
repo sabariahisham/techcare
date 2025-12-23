@@ -2,11 +2,12 @@
 <div class="modal fade" id="actionComment" tabindex="-1" aria-labelledby="actionCommentLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="actionCommentLabel">
+            <div class="modal-header border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title text-white fw-bold" id="actionCommentLabel">
                     <i class="bx bx-message-dots me-2"></i>Catatan Tindakan
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 <div id="actionCommentContent">
@@ -30,8 +31,8 @@
 <style>
     /* Custom styles for responsive action comments modal */
     #actionComment .modal-dialog {
-        max-width: 700px;
-        width: 90%;
+        max-width: 800px;
+        width: 95%;
         margin: 1rem auto;
     }
 
@@ -72,7 +73,7 @@
     }
 
     .action-comments-container {
-        padding: 1rem;
+        padding: 0.75rem;
     }
 
     .action-comments-container::-webkit-scrollbar {
@@ -96,6 +97,7 @@
     .comment-card {
         transition: all 0.3s ease;
         border-left: 4px solid transparent;
+        margin-bottom: 0.75rem !important;
     }
 
     .comment-card:hover {
@@ -114,8 +116,8 @@
     }
 
     .user-avatar {
-        width: 45px;
-        height: 45px;
+        width: 38px;
+        height: 38px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 50%;
         display: flex;
@@ -123,7 +125,7 @@
         justify-content: center;
         color: white;
         font-weight: 600;
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         text-transform: uppercase;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
@@ -135,8 +137,8 @@
     .comment-meta {
         background: rgba(0, 0, 0, 0.02);
         border-radius: 8px;
-        padding: 8px 12px;
-        margin-top: 10px;
+        padding: 6px 10px;
+        margin-top: 8px;
     }
 
     .status-badge {
@@ -145,6 +147,48 @@
         border-radius: 12px;
         font-weight: 500;
         letter-spacing: 0.3px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* User type badge styling - positioned next to user name */
+    .badge.bg-info,
+    .badge.bg-primary,
+    .badge.bg-secondary {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Comment meta section improvements */
+    .comment-meta .d-flex.align-items-center.gap-2 {
+        flex-wrap: wrap;
+    }
+
+    .comment-meta .d-flex.align-items-center.gap-2 small {
+        white-space: nowrap;
+    }
+
+    /* Improved spacing and alignment */
+    .comment-card .d-flex.align-items-center.gap-2 {
+        margin-bottom: 0.1rem;
+    }
+
+    /* Compact text styling */
+    .comment-card h6 {
+        line-height: 1.2;
+        margin-bottom: 0 !important;
+    }
+
+    .comment-card .comment-text p {
+        line-height: 1.4;
+        margin-bottom: 0 !important;
+    }
+
+    .comment-card small {
+        line-height: 1.2;
     }
 
     /* Mobile responsive styles */
@@ -168,13 +212,13 @@
         }
 
         .action-comments-container {
-            padding: 0.75rem;
+            padding: 0.5rem;
         }
 
         .user-avatar {
-            width: 35px;
-            height: 35px;
-            font-size: 0.9rem;
+            width: 32px;
+            height: 32px;
+            font-size: 0.85rem;
         }
 
         .comment-text {
@@ -182,7 +226,7 @@
         }
 
         .comment-card .card-body {
-            padding: 0.75rem;
+            padding: 0.6rem;
         }
     }
 
@@ -198,17 +242,17 @@
         }
 
         .action-comments-container {
-            padding: 0.5rem;
+            padding: 0.4rem;
         }
 
         .comment-card .card-body {
-            padding: 0.5rem;
+            padding: 0.45rem;
         }
 
         .user-avatar {
-            width: 30px;
-            height: 30px;
-            font-size: 0.8rem;
+            width: 28px;
+            height: 28px;
+            font-size: 0.75rem;
         }
 
         .comment-text {
@@ -309,8 +353,8 @@
                 const statusBadge = getStatusBadge(comment.ticket_status, comment.status_class);
 
                 commentsHTML += `
-                <div class="comment-card ${userTypeClass} card mb-3 border-0 shadow-sm">
-                    <div class="card-body p-3">
+                <div class="comment-card ${userTypeClass} card border-0 shadow-sm">
+                    <div class="card-body p-2">
                         <div class="row">
                             <div class="col-auto">
                                 <div class="user-avatar ${avatarClass}">
@@ -318,43 +362,38 @@
                                 </div>
                             </div>
                             <div class="col">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 class="mb-1 fw-semibold">${comment.user_name}</h6>
-                                        <small class="text-muted">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <h6 class="mb-0 fw-semibold">${comment.user_name}</h6>
+                                            ${getUserTypeBadge(comment.user_type)}
+                                        </div>
+                                        <small class="text-muted d-block" style="margin-top: 2px;">
                                             <i class="bx bx-building-house me-1"></i>${comment.user_unit}
                                         </small>
                                     </div>
                                     <div class="text-end">
-                                        ${getUserTypeBadge(comment.user_type)}
-                                        <div class="mt-1">
-                                            <small class="text-muted">
-                                                <i class="bx bx-time me-1"></i>${comment.created_at}
-                                            </small>
+                                        <div class="mb-1">
+                                            ${statusBadge}
                                         </div>
+                                        <small class="text-muted">
+                                            <i class="bx bx-time me-1"></i>${comment.created_at}
+                                        </small>
                                     </div>
                                 </div>
 
-                                <div class="comment-text mb-3">
+                                <div class="comment-text mb-2">
                                     <p class="mb-0 text-dark">${comment.comment || '<em class="text-muted">Tiada catatan tersedia</em>'}</p>
                                 </div>
 
-                                <div class="comment-meta">
-                                    <div class="row align-items-center">
-                                        <div class="col-md-6">
-                                            <small class="text-muted fw-medium">
-                                                <i class="bx bx-flag me-1"></i>Status Semasa:
+                                ${comment.created_by && comment.created_by !== comment.user_name ?
+                                    `<div class="comment-meta">
+                                        <div class="text-center">
+                                            <small class="text-muted">
+                                                <i class="bx bx-user-plus me-1"></i>Dicipta oleh: <strong>${comment.created_by}</strong>
                                             </small>
-                                            ${statusBadge}
                                         </div>
-                                        ${comment.created_by && comment.created_by !== comment.user_name ?
-                                            `<div class="col-md-6 text-md-end mt-2 mt-md-0">
-                                                    <small class="text-muted">
-                                                        <i class="bx bx-user-plus me-1"></i>Dicipta oleh: <strong>${comment.created_by}</strong>
-                                                    </small>
-                                                </div>` : ''}
-                                    </div>
-                                </div>
+                                    </div>` : ''}
                             </div>
                         </div>
                     </div>

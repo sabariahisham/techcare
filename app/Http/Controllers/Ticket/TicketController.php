@@ -132,23 +132,21 @@ class TicketController extends Controller
         })
         ->addColumn('action', function ($ticket) {
           $user = Auth::user();
-          $actions = '<div class="dropdown">';
-          $actions .= '<button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">';
-          $actions .= '<i class="bx bx-dots-vertical-rounded"></i>';
-          $actions .= '</button>';
-          $actions .= '<div class="dropdown-menu">';
-          $actions .= '<a class="dropdown-item view-record" data-id="' . $ticket->id . '"><i class="bx bx-show me-1"></i> Lihat</a>';
+          $actions = '<div class="d-flex gap-1">';
+
+          // View button - always available
+          $actions .= '<a class="btn btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat"><i class="bx bx-show text-success"></i></a>';
 
           // Check if user can edit this ticket
           $canEdit = false;
           if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
             $canEdit = true;
-          } elseif (($ticket->user_id == $user->id || $ticket->created_by == $user->id) && !in_array($ticket->tick_status, [3, 4])) {
+          } elseif (($ticket->user_id == $user->id || $ticket->created_by == $user->id) && !in_array($ticket->tick_status, [5, 6])) {
             $canEdit = true;
           }
 
           if ($canEdit) {
-            $actions .= '<a class="dropdown-item edit-record" data-id="' . $ticket->id . '"><i class="bx bx-edit-alt me-1"></i> Edit</a>';
+            $actions .= '<a class="btn btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
           }
 
           // Check if user can delete this ticket
@@ -160,10 +158,9 @@ class TicketController extends Controller
           }
 
           if ($canDelete) {
-            $actions .= '<a class="dropdown-item delete-record" data-id="' . $ticket->id . '"><i class="bx bx-trash me-1"></i> Padam</a>';
+            $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
           }
 
-          $actions .= '</div>';
           $actions .= '</div>';
           return $actions;
         })
@@ -242,25 +239,24 @@ class TicketController extends Controller
         })
         ->addColumn('action', function ($ticket) {
           $user = Auth::user();
-          $actions = '<div class="dropdown">';
-          $actions .= '<button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">';
-          $actions .= '<i class="bx bx-dots-vertical-rounded"></i>';
-          $actions .= '</button>';
-          $actions .= '<div class="dropdown-menu">';
-          $actions .= '<a class="dropdown-item view-record" data-id="' . $ticket->id . '"><i class="bx bx-show me-1"></i> Lihat</a>';
-          $actions .= '<a class="dropdown-item manage-ticket" data-id="' . $ticket->id . '"><i class="bx bx-cog me-1"></i> Urus</a>';
+          $actions = '<div class="d-flex gap-1">';
+
+          // View button - always available
+          //$actions .= '<a class="btn btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat"><i class="bx bx-show text-success"></i></a>';
+
+          // Manage button - for helpdesk staff
+          $actions .= '<a class="btn btn-sm manage-ticket" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus"><i class="bx bx-cog text-primary"></i></a>';
 
           // Admin and helpdesk can edit any ticket
           if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
-            $actions .= '<a class="dropdown-item edit-record" data-id="' . $ticket->id . '"><i class="bx bx-edit-alt me-1"></i> Edit</a>';
+            $actions .= '<a class="btn btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
           }
 
           // Only Administrator and higher level roles can delete
           if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk'])) {
-            $actions .= '<a class="dropdown-item delete-record" data-id="' . $ticket->id . '"><i class="bx bx-trash me-1"></i> Padam</a>';
+            $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
           }
 
-          $actions .= '</div>';
           $actions .= '</div>';
           return $actions;
         })

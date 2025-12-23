@@ -20,6 +20,7 @@ use App\Http\Controllers\Ticket\TicketEmailLogController;
 use App\Http\Controllers\Ticket\TicketAssignmentController;
 use App\Http\Controllers\Ticket\TicketAttachmentController;
 use App\Http\Controllers\Ticket\TicketChronologyController;
+use App\Http\Controllers\audit\AuditTrailController;
 use App\Http\Controllers\Configuration\UserManagementController;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
@@ -287,7 +288,7 @@ Route::middleware(['auth'])->prefix('tickets')->group(function () {
 
 // Ticket Assignment Routes Group
 Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
-  Route::put('/{ticket}/update', [TicketAssignmentController::class, 'updateTicketAssignment'])->name('tickets.update');
+  Route::put('/{ticket}/update', [TicketAssignmentController::class, 'updateTicketAssignment'])->name('ticket-assignments.update');
   Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assignTicket'])->name('tickets.assign');
   Route::get('/{ticket}/assignees', [TicketAssignmentController::class, 'getAssignees'])->name('tickets.assignees');
   Route::get('/available-assignees', [TicketAssignmentController::class, 'getAvailableAssignees'])->name('tickets.available-assignees');
@@ -324,14 +325,6 @@ Route::middleware(['auth'])->prefix('ticket-comments')->group(function () {
   Route::post('/{ticket}/add-comment', [TicketCommentController::class, 'store'])->name('tickets.add-comment');
   Route::post('/{ticket}/store', [TicketCommentController::class, 'store'])->name('ticket-comments.store');
   Route::get('/{ticket}/data', [TicketCommentController::class, 'getComments'])->name('ticket-comments.data');
-});
-
-// Ticket Assignment Routes Group
-Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
-  Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assignTicket'])->name('ticket-assignments.assign');
-  Route::get('/{ticket}/assignees', [TicketAssignmentController::class, 'getAssignees'])->name('ticket-assignments.assignees');
-  Route::get('/available-assignees', [TicketAssignmentController::class, 'getAvailableAssignees'])->name('ticket-assignments.available-assignees');
-  Route::get('/available-assignees-by-sla', [TicketAssignmentController::class, 'getAvailableAssigneesBySLA'])->name('ticket-assignments.available-assignees-by-sla');
 });
 
 // Ticket Email Notification Routes Group

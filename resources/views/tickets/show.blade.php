@@ -153,7 +153,7 @@
 
     <div class="row">
         <!-- Left Column - Main Content -->
-        <div class="col-xl-6 col-lg-6 col-md-6">
+        <div class="col-xl-7 col-lg-7 col-md-6">
             <!-- Maklumat Aduan Tiket -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -291,7 +291,8 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form id="updateTicketForm" action="{{ route('tickets.update', $ticket) }}" method="POST">
+                        <form id="updateTicketForm" action="{{ route('ticket-assignments.update', $ticket) }}"
+                            method="POST">
                             @csrf
                             @method('PUT')
                             <div class="row mb-3">
@@ -315,7 +316,7 @@
                                     <h6 class="mb-0">Kategori</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    <select class="form-select" name="cat_id" id="cat_id" required>
+                                    <select class="form-select" name="cat_id" id="cat_id">
                                         <option value="">Pilih Kategori</option>
                                         @foreach ($allCategories as $category)
                                             <option value="{{ $category->id }}"
@@ -331,7 +332,7 @@
                                     <h6 class="mb-0">Sub Kategori</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    <select class="form-select" name="subcat_id" id="subcat_id" required>
+                                    <select class="form-select" name="subcat_id" id="subcat_id">
                                         <option value="">Pilih Sub Kategori</option>
                                         @foreach ($allSubCategories as $subCategory)
                                             <option value="{{ $subCategory->id }}"
@@ -350,7 +351,9 @@
                                 <div class="col-sm-9 text-secondary">
                                     <select class="form-select" name="sla_severity" id="sla_severity">
                                         <option value="">Pilih Tahap Severity</option>
-                                        <!-- Options will be populated via AJAX based on category and subcategory -->
+                                        <option value="High">Tingi</option>
+                                        <option value="Medium">Sederhana</option>
+                                        <option value="Low">Rendah</option>
                                     </select>
                                     <small class="text-muted">Tahap keparahan akan dipaparkan berdasarkan kategori dan sub
                                         kategori yang dipilih.</small>
@@ -425,7 +428,7 @@
         </div>
 
         <!-- Center Column - Kronologi -->
-        <div class="col-xl-6 col-lg-6 col-md-6">
+        <div class="col-xl-5 col-lg-5 col-md-6">
             <!-- Kronologi Tiket -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -434,84 +437,158 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if ($ticketHistory && $ticketHistory->count() > 0)
+                    @if ($ticket->status)
                         <div class="timeline">
-                            @foreach ($ticketHistory as $index => $history)
-                                @php
-                                    // Determine icon and color based on exact status names
-                                    $statusName = $history['status'] ?? ($history['action'] ?? '');
-                                    $iconClass = 'bx-edit';
-                                    $colorClass = 'bg-secondary';
+                            @php
+                                // Get current ticket status
+                                $currentStatus = $ticket->status->st_name;
+                                $iconClass = 'bx-edit';
+                                $colorClass = 'bg-secondary';
 
-                                    // Status color mapping based on your requirements
-                                    switch ($statusName) {
-                                        case 'Aduan Baru':
-                                            $iconClass = 'bx-plus-circle';
-                                            $colorClass = 'bg-primary'; // Biru
-                                            break;
-                                        case 'Aduan Diproses':
-                                            $iconClass = 'bx-cog';
-                                            $colorClass = 'bg-warning'; // Orange
-                                            break;
-                                        case 'Serahan Kepada':
-                                            $iconClass = 'bx-user-plus';
-                                            $colorClass = 'bg-info'; // Info
-                                            break;
-                                        case 'Aduan Dirujuk':
-                                            $iconClass = 'bx-share-alt';
-                                            $colorClass = 'bg-danger'; // Merah
-                                            break;
-                                        case 'Aduan DiBatal':
-                                            $iconClass = 'bx-x-circle';
-                                            $colorClass = 'bg-secondary'; // Kelabu
-                                            break;
-                                        case 'Aduan Selesai':
-                                            $iconClass = 'bx-check-circle';
-                                            $colorClass = 'bg-success'; // Hijau
-                                            break;
-                                    }
-                                @endphp
+                                // Status color mapping based on current status
+                                switch ($currentStatus) {
+                                    case 'Aduan Baru':
+                                        $iconClass = 'bx-plus-circle';
+                                        $colorClass = 'bg-primary'; // Biru
+                                        break;
+                                    case 'Aduan Diproses':
+                                        $iconClass = 'bx-cog';
+                                        $colorClass = 'bg-warning'; // Orange
+                                        break;
+                                    case 'Serahan Kepada':
+                                        $iconClass = 'bx-user-plus';
+                                        $colorClass = 'bg-info'; // Info
+                                        break;
+                                    case 'Aduan Dirujuk':
+                                        $iconClass = 'bx-share-alt';
+                                        $colorClass = 'bg-danger'; // Merah
+                                        break;
+                                    case 'Aduan DiBatal':
+                                        $iconClass = 'bx-x-circle';
+                                        $colorClass = 'bg-secondary'; // Kelabu
+                                        break;
+                                    case 'Aduan Selesai':
+                                        $iconClass = 'bx-check-circle';
+                                        $colorClass = 'bg-success'; // Hijau
+                                        break;
+                                }
 
-                                <div class="timeline-item">
-                                    <div class="timeline-marker">
-                                        <div class="timeline-marker-icon {{ $colorClass }}">
-                                            <i class="bx {{ $iconClass }}"></i>
-                                        </div>
-                                    </div>
-                                    <div class="timeline-content">
-                                        <div class="d-flex justify-content-between align-items-start mb-1">
-                                            <h6 class="timeline-title mb-0">
-                                                {{-- {{ $history['action'] ?? 'Tindakan Tiket' }} --}}</h6>
-                                            <span class="badge {{ $colorClass }} badge-sm">{{ $statusName }}</span>
-                                        </div>
-                                        <p class="timeline-text">
-                                            {{ $history['description'] ?? 'Tiada penerangan tersedia.' }}</p>
+                                // Get the latest chronology entry for notes if available
+                                $latestChronology = $ticket
+                                    ->chronologies()
+                                    ->where('tick_status', $ticket->tick_status)
+                                    ->whereNull('escalate_to')
+                                    ->latest()
+                                    ->first();
+                            @endphp
 
-                                        <div class="mt-2">
-                                            <small class="timeline-time d-block mb-1">
-                                                <i class="bx bx-edit"></i>
-                                                <strong>Catatan:</strong>
-                                            </small>
-
-                                            <small class="timeline-time d-block ps-5">
-                                                @if (isset($history['notes']) && $history['notes'])
-                                                    {!! nl2br(e($history['notes'])) !!}
-                                                @elseif(isset($history['type']) && $history['type'] === 'comment')
-                                                    <em>Komen telah ditambahkan.</em>
-                                                @else
-                                                    <em>Tiada catatan untuk tindakan ini.</em>
-                                                @endif
-                                            </small>
-                                        </div>
-                                        <small class="timeline-time mt-3">
-                                            <i class="bx bx-user"></i>
-                                            <strong>Oleh:</strong> {{ $history['user'] }} [ Tarikh:
-                                            {{ isset($history['timestamp']) ? $history['timestamp']->format('d/m/Y, H:i a') : now()->format('d/m/Y, H:i a') }}
-                                            ]<br>
-                                        </small>
+                            <div class="timeline-item">
+                                <div class="timeline-marker">
+                                    <div class="timeline-marker-icon {{ $colorClass }}">
+                                        <i class="bx {{ $iconClass }}"></i>
                                     </div>
                                 </div>
-                            @endforeach
+                                <div class="timeline-content">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <h6 class="timeline-title mb-0">Status Semasa Tiket</h6>
+                                        <span class="badge {{ $colorClass }} badge-sm">{{ $currentStatus }}</span>
+                                    </div>
+                                    <p class="timeline-text">
+                                        @switch($currentStatus)
+                                            @case('Aduan Baru')
+                                                Tiket baru diterima dan sedang menunggu untuk diproses.
+                                            @break
+
+                                            @case('Aduan Diproses')
+                                                Tiket sedang diproses oleh pegawai yang bertugas.
+                                            @break
+
+                                            @case('Serahan Kepada')
+                                                Tiket telah diserahkan kepada pegawai yang berkaitan.
+                                            @break
+
+                                            @case('Aduan Dirujuk')
+                                                Tiket dirujuk kepada unit/pegawai lain untuk tindakan lanjut.
+                                            @break
+
+                                            @case('Aduan DiBatal')
+                                                Tiket telah dibatalkan.
+                                            @break
+
+                                            @case('Aduan Selesai')
+                                                Tiket telah diselesaikan dengan jayanya.
+                                            @break
+
+                                            @default
+                                                Status tiket semasa.
+                                        @endswitch
+                                    </p>
+
+                                    {{-- <div class="mt-2">
+                                        <small class="timeline-time d-block mb-1">
+                                            <i class="bx bx-edit"></i>
+                                            <strong>Catatan:</strong>
+                                        </small>
+
+                                        <small class="timeline-time d-block ps-5">
+                                            @if ($latestChronology && $latestChronology->notes)
+                                                {!! nl2br(e($latestChronology->notes)) !!}
+                                            @else
+                                                <em>Tiada catatan untuk status ini.</em>
+                                            @endif
+                                        </small>
+                                    </div> --}}
+                                    <p class="timeline-text">
+                                        <small class="timeline-time mt-3 d-block">
+                                            <i class="bx bx-user"></i>
+                                            <strong>
+                                                @switch($currentStatus)
+                                                    @case('Aduan Baru')
+                                                        Dilaporkan oleh:
+                                                    @break
+
+                                                    @case('Aduan Diproses')
+                                                        Diproses oleh:
+                                                    @break
+
+                                                    @case('Serahan Kepada')
+                                                        Diserahkan oleh:
+                                                    @break
+
+                                                    @case('Aduan Dirujuk')
+                                                        Dirujuk oleh:
+                                                    @break
+
+                                                    @case('Aduan DiBatal')
+                                                        Dibatalkan oleh:
+                                                    @break
+
+                                                    @case('Aduan Selesai')
+                                                        Diselesaikan oleh:
+                                                    @break
+
+                                                    @default
+                                                        Dikemaskini oleh:
+                                                @endswitch
+                                            </strong>
+                                            {{ $latestChronology && $latestChronology->createdBy
+                                                ? $latestChronology->createdBy->nama
+                                                : ($ticket->updatedBy
+                                                    ? $ticket->updatedBy->nama
+                                                    : 'Sistem') }}
+                                        </small>
+
+                                        <small class="timeline-time mt-1 d-block">
+                                            <i class="bx bx-time"></i>
+                                            <strong>Tarikh & Masa:</strong>
+                                            {{ $latestChronology
+                                                ? $latestChronology->updated_at->format('d/m/Y, H:i a')
+                                                : $ticket->updated_at->format('d/m/Y, H:i a') }}
+                                        </small>
+                                    </p>
+
+                                </div>
+                            </div>
                         </div>
                     @else
                         <div class="text-center py-5">
@@ -1246,18 +1323,24 @@
                         return false;
                     }
 
-                    if (!categorySelect.value) {
-                        e.preventDefault();
-                        alert('Sila pilih kategori.');
-                        categorySelect.focus();
-                        return false;
-                    }
+                    // Only validate kategori and sub kategori if they are enabled (Aduan Dirujuk status)
+                    const selectedStatusText = statusSelect.selectedOptions[0]?.text.trim();
+                    const isAduanDirujuk = selectedStatusText === 'Aduan Dirujuk';
 
-                    if (!subcategorySelect.value) {
-                        e.preventDefault();
-                        alert('Sila pilih sub kategori.');
-                        subcategorySelect.focus();
-                        return false;
+                    if (isAduanDirujuk) {
+                        if (!categorySelect.value) {
+                            e.preventDefault();
+                            alert('Sila pilih kategori untuk status Aduan Dirujuk.');
+                            categorySelect.focus();
+                            return false;
+                        }
+
+                        if (!subcategorySelect.value) {
+                            e.preventDefault();
+                            alert('Sila pilih sub kategori untuk status Aduan Dirujuk.');
+                            subcategorySelect.focus();
+                            return false;
+                        }
                     }
 
                     // Show loading state
@@ -1277,10 +1360,52 @@
             }
 
             // Category and subcategory filtering functionality with SLA integration
+            const statusSelect = document.querySelector('#tick_status');
             const categorySelect = document.querySelector('#cat_id');
             const subcategorySelect = document.querySelector('#subcat_id');
             const severitySelect = document.querySelector('#sla_severity');
             const assignedOfficersSelect = document.querySelector('#assigned_officers');
+
+            // Function to handle status-based dropdown enabling/disabling
+            function handleStatusChange() {
+                if (!statusSelect || !categorySelect || !subcategorySelect) return;
+
+                const selectedStatusText = statusSelect.selectedOptions[0]?.text.trim();
+                const isAduanDirujuk = selectedStatusText === 'Aduan Dirujuk';
+
+                // Enable/disable kategori and sub kategori based on status
+                categorySelect.disabled = !isAduanDirujuk;
+                subcategorySelect.disabled = !isAduanDirujuk;
+
+                // Add/remove required attributes based on status
+                if (isAduanDirujuk) {
+                    categorySelect.setAttribute('required', 'required');
+                    subcategorySelect.setAttribute('required', 'required');
+                } else {
+                    categorySelect.removeAttribute('required');
+                    subcategorySelect.removeAttribute('required');
+                }
+
+                // Add visual styling for disabled state
+                if (!isAduanDirujuk) {
+                    categorySelect.style.backgroundColor = '#f8f9fa';
+                    categorySelect.style.color = '#6c757d';
+                    subcategorySelect.style.backgroundColor = '#f8f9fa';
+                    subcategorySelect.style.color = '#6c757d';
+                } else {
+                    categorySelect.style.backgroundColor = '';
+                    categorySelect.style.color = '';
+                    subcategorySelect.style.backgroundColor = '';
+                    subcategorySelect.style.color = '';
+                }
+            }
+
+            // Add status change event listener
+            if (statusSelect) {
+                statusSelect.addEventListener('change', handleStatusChange);
+                // Trigger on initial page load
+                handleStatusChange();
+            }
 
             if (categorySelect && subcategorySelect) {
                 // Store all subcategory options
@@ -1532,6 +1657,30 @@
                             });
                         }
                     }, 100);
+                });
+            }
+
+            // Auto-capitalize for sentence case in notes textarea
+            const notesTextarea = document.querySelector('#notes');
+            if (notesTextarea) {
+                notesTextarea.addEventListener('input', function() {
+                    let value = this.value;
+                    if (value.length > 0) {
+                        // Convert to sentence case: capitalize first letter and after sentence endings
+                        value = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+
+                        // Capitalize first letter after sentence endings (., !, ?) followed by space
+                        value = value.replace(/([.!?]\s+)([a-z])/g, function(match, p1, p2) {
+                            return p1 + p2.toUpperCase();
+                        });
+
+                        // Update the value only if it changed to avoid cursor jumping
+                        if (this.value !== value) {
+                            const cursorPosition = this.selectionStart;
+                            this.value = value;
+                            this.setSelectionRange(cursorPosition, cursorPosition);
+                        }
+                    }
                 });
             }
         });

@@ -13,6 +13,8 @@ namespace App\Http\Controllers\Ticket;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\TicketChronology;
+use App\Models\RefTicketStatus;
+use App\Models\TicketComment;
 use App\Models\Sla;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -26,49 +28,153 @@ class TicketAssignmentController extends Controller
    */
   public function updateTicketAssignment(Request $request, Ticket $ticket)
   {
-    $request->validate([
+    // First, get the status name to check if it's "Aduan Dirujuk"
+    $selectedStatus = \App\Models\RefTicketStatus::find($request->tick_status);
+    $isAduanDirujuk = $selectedStatus && $selectedStatus->st_name === 'Aduan Dirujuk';
+
+    // Dynamic validation rules based on status
+    $validationRules = [
       'tick_status' => 'required|exists:ref_ticket_statuses,id',
-      'cat_id' => 'required|exists:ref_categories,id',
-      'subcat_id' => 'required|exists:ref_sub_categories,id',
       'sla_severity' => 'nullable|string',
-      'assigned_officers' => 'array',
+      'assigned_officers' => 'nullable|array',
       'assigned_officers.*' => 'exists:users,id',
       'action_date' => 'nullable|date',
       'notes' => 'nullable|string|max:1000'
+    ];
+
+    // Add kategori and sub kategori validation only for "Aduan Dirujuk" status
+    if ($isAduanDirujuk) {
+      $validationRules['cat_id'] = 'required|exists:ref_categories,id';
+      $validationRules['subcat_id'] = 'required|exists:ref_sub_categories,id';
+    } else {
+      $validationRules['cat_id'] = 'nullable|exists:ref_categories,id';
+      $validationRules['subcat_id'] = 'nullable|exists:ref_sub_categories,id';
+    }
+
+    $request->validate($validationRules, [
+      'tick_status.required' => 'Sila pilih status tiket.',
+      'tick_status.exists' => 'Status tiket yang dipilih tidak sah.',
+      'cat_id.required' => 'Sila pilih jenis aduan untuk status Aduan Dirujuk.',
+      'cat_id.exists' => 'Kategori aduan yang dipilih tidak sah.',
+      'subcat_id.required' => 'Sila pilih sub kategori aduan untuk status Aduan Dirujuk.',
+      'subcat_id.exists' => 'Sub kategori aduan yang dipilih tidak sah.',
+      'assigned_officers.*.exists' => 'Pegawai tugasan yang dipilih tidak sah.',
+      'action_date.date' => 'Format tarikh tindakan tidak sah.',
+      'notes.max' => 'Catatan tidak boleh melebihi 1000 aksara.'
     ]);
 
     try {
-      // Update ticket basic information
-      $ticket->update([
-        'tick_status' => $request->tick_status,
-        'cat_id' => $request->cat_id,
-        'subcat_id' => $request->subcat_id,
-        'updated_by' => Auth::id()
-      ]);
+      // Get SLA information based on category, subcategory, and severity
+      $slaInfo = null;
+      $slaDays = null;
+      $levelPetugas = 1; // Default level
 
-      // Create chronology entry for the update
-      $chronology = TicketChronologyController::addChronologyEntry(
-        $ticket->id,
-        $request->tick_status,
-        null, // escalate_to will be handled separately for multiple officers
-        $request->action_date ? \Carbon\Carbon::parse($request->action_date) : null,
-        null, // level_pegtugas_id
-        $request->notes ?? 'Tiket dikemaskini oleh ' . Auth::user()->nama
-      );
+      if ($request->sla_severity && $request->cat_id && $request->subcat_id) {
+        $slaInfo = Sla::where('cat_id', $request->cat_id)
+          ->where('subcat_id', $request->subcat_id)
+          ->where('sla_severity', $request->sla_severity)
+          ->first();
+
+        if ($slaInfo) {
+          $slaDays = $slaInfo->sla_days;
+          $levelPetugas = $slaInfo->level_petugas_id ?? 1;
+        }
+      }
+
+      // Update ticket basic information (without sla_severity since it's in chronology)
+      $updateData = [
+        'tick_status' => $request->tick_status,
+        'updated_by' => Auth::id()
+      ];
+
+      // Only update category and subcategory for "Aduan Dirujuk" status
+      if ($isAduanDirujuk && $request->cat_id && $request->subcat_id) {
+        $updateData['cat_id'] = $request->cat_id;
+        $updateData['subcat_id'] = $request->subcat_id;
+      }
+
+      $ticket->update($updateData);
+
+      // Check if there's an existing chronology entry with the same status
+      $existingChronology = TicketChronology::where('ticket_id', $ticket->id)
+        ->where('tick_status', $request->tick_status)
+        ->whereNull('escalate_to') // Only main status entries, not assignment entries
+        ->latest()
+        ->first();
+
+      if ($existingChronology) {
+        // Update existing chronology entry
+        $chronology = $existingChronology;
+        $chronology->update([
+          'frm_user_id' => Auth::id(),
+          'sla_severity' => $request->sla_severity,
+          'sla_days' => $slaDays,
+          'level_pegtugas_id' => $levelPetugas,
+          'updated_by' => Auth::id(),
+          'updated_at' => $request->action_date ? \Carbon\Carbon::parse($request->action_date) : now(),
+        ]);
+      } else {
+        // Create new chronology entry for status change
+        $chronologyData = [
+          'ticket_id' => $ticket->id,
+          'frm_user_id' => Auth::id(),
+          'tick_status' => $request->tick_status,
+          'sla_severity' => $request->sla_severity,
+          'sla_days' => $slaDays,
+          'level_pegtugas_id' => $levelPetugas,
+          'escalate_to' => null, // Will be handled separately for multiple officers
+          'created_by' => Auth::id(),
+          'updated_by' => Auth::id(),
+          'created_at' => $request->action_date ? \Carbon\Carbon::parse($request->action_date) : now(),
+          'updated_at' => now()
+        ];
+
+        // Create the chronology entry
+        $chronology = TicketChronology::create($chronologyData);
+      }
 
       // Handle officer assignments if provided
       if ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
         foreach ($request->assigned_officers as $officerId) {
           // Create separate chronology entries for each officer assignment
-          TicketChronologyController::addChronologyEntry(
-            $ticket->id,
-            $request->tick_status,
-            $officerId,
-            $request->action_date ? \Carbon\Carbon::parse($request->action_date) : null,
-            null,
-            'Diserahkan kepada ' . \App\Models\User::find($officerId)->nama
-          );
+          TicketChronology::create([
+            'ticket_id' => $ticket->id,
+            'frm_user_id' => Auth::id(),
+            'tick_status' => $request->tick_status,
+            'escalate_to' => $officerId,
+            'sla_severity' => $request->sla_severity,
+            'sla_days' => $slaDays,
+            'level_pegtugas_id' => $levelPetugas,
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
+            'created_at' => $request->action_date ? \Carbon\Carbon::parse($request->action_date) : now(),
+            'updated_at' => now()
+          ]);
         }
+      }
+
+      // Add notes to chronology if provided
+      if ($request->notes) {
+        $chronology->update([
+          'notes' => $request->notes,
+          'updated_by' => Auth::id()
+        ]);
+
+        // Also create a comment entry for "Catatan Tindakan" display
+        TicketComment::create([
+          'user_id' => Auth::id(),
+          'ticket_id' => $ticket->id,
+          'comment_text' => $request->notes,
+          'created_by' => Auth::id(),
+          'updated_by' => Auth::id(),
+        ]);
+      } else {
+        // Add default notes
+        $chronology->update([
+          'notes' => 'Tiket dikemaskini oleh ' . Auth::user()->nama .
+            ($request->sla_severity ? '. Tahap Severity: ' . $request->sla_severity : ''),
+          'updated_by' => Auth::id()
+        ]);
       }
 
       // Reload ticket with latest data
