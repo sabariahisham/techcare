@@ -180,8 +180,7 @@ class TicketController extends Controller
       } elseif ($user->hasRole('Pegawai Tugasan')) {
         // Only tickets assigned to this officer
         $query->whereHas('chronologies', function ($q) use ($user) {
-          $q->where('escalated_to', $user->id)
-            ->whereNull('resolved_at');
+          $q->where('escalate_to', $user->id);
         });
       }
 
@@ -241,6 +240,7 @@ class TicketController extends Controller
           $user = Auth::user();
           $actions = '<div class="d-flex gap-1">';
 
+          // Manage button - always available for this section
           // View button - always available
           //$actions .= '<a class="btn btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat"><i class="bx bx-show text-success"></i></a>';
 
@@ -1271,7 +1271,7 @@ class TicketController extends Controller
       Log::info('Ticket status updated', [
         'ticket_id' => $ticket->id,
         'new_status' => $request->tick_status,
-        'escalated_to' => $escalateTo,
+        'escalate_to' => $escalateTo,
         'auto_assigned' => !$request->escalate_to && $escalateTo ? true : false,
         'updated_by' => $currentUser->id
       ]);

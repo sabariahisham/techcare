@@ -486,8 +486,10 @@ $(function () {
         // Clear any validation errors
         clearValidationErrors();
 
-        // Show success notification
-        toastr.success(response.message || 'Tiket berjaya dikemaskini!');
+        // Show success notification with ticket number
+        var ticketNumber = response.ticket && response.ticket.ticket_nolog ? response.ticket.ticket_nolog : 'N/A';
+        var successMessage = `Tiket ${ticketNumber} berjaya dikemaskini!`;
+        toastr.success(successMessage);
 
         // Close offcanvas
         $('#offcanvasEditTicket').offcanvas('hide');
