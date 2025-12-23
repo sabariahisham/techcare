@@ -141,7 +141,7 @@ class TicketController extends Controller
           $canEdit = false;
           if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
             $canEdit = true;
-          } elseif (($ticket->user_id == $user->id || $ticket->created_by == $user->id) && !in_array($ticket->tick_status, [3, 4])) {
+          } elseif (($ticket->user_id == $user->id || $ticket->created_by == $user->id) && !in_array($ticket->tick_status, [5, 6])) {
             $canEdit = true;
           }
 
@@ -241,6 +241,10 @@ class TicketController extends Controller
           $actions = '<div class="d-flex gap-1">';
 
           // Manage button - always available for this section
+          // View button - always available
+          //$actions .= '<a class="btn btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat"><i class="bx bx-show text-success"></i></a>';
+
+          // Manage button - for helpdesk staff
           $actions .= '<a class="btn btn-sm manage-ticket" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus"><i class="bx bx-cog text-primary"></i></a>';
 
           // Admin and helpdesk can edit any ticket
