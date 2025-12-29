@@ -4,6 +4,62 @@
 
 @section('vendor-style')
     @vite(['resources/assets/vendor/libs/select2/select2.scss'])
+    <style>
+        /* Custom styling for disabled dropdowns */
+        select.form-select.disabled,
+        select.form-select:disabled {
+            background-color: #f8f9fa !important;
+            color: #6c757d !important;
+            cursor: not-allowed !important;
+            opacity: 0.8 !important;
+        }
+
+        select.form-select.disabled:focus,
+        select.form-select:disabled:focus {
+            border-color: #ced4da !important;
+            box-shadow: none !important;
+        }
+
+        /* Ensure disabled state shows clearly */
+        .form-select[disabled] option,
+        .form-select[readonly] option {
+            color: #6c757d !important;
+        }
+
+        /* Custom styling for current user in Select2 */
+        .select2-container .select2-results__option .current-user {
+            background-color: #28a745 !important;
+            color: white !important;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+
+        .select2-container .select2-results__option:hover .current-user {
+            background-color: #218838 !important;
+            color: white !important;
+        }
+
+        /* Selected current user styling */
+        .select2-container .select2-selection__choice .current-user {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: white !important;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        /* Alternative approach - direct styling for current user */
+        .select2-container .current-user-option {
+            background-color: #28a745 !important;
+            color: white !important;
+        }
+
+        .select2-container .current-user-option:hover {
+            background-color: #218838 !important;
+            color: white !important;
+        }
+    </style>
 @endsection
 
 @section('vendor-script')
@@ -349,14 +405,36 @@
                                     <h6 class="mb-0">Tahap Severity</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
+                                    @php
+                                        // Get current severity from chronologies - same logic as display section
+                                        $currentSeverity =
+                                            $ticket
+                                                ->chronologies()
+                                                ->where('tick_status', $ticket->tick_status)
+                                                ->whereNull('escalate_to')
+                                                ->latest()
+                                                ->first()?->sla_severity ?? '';
+
+                                        // If no severity for current status, try any recent chronology
+                                        if (!$currentSeverity) {
+                                            $currentSeverity =
+                                                $ticket->chronologies()->whereNotNull('sla_severity')->latest()->first()
+                                                    ?->sla_severity ?? '';
+                                        }
+                                    @endphp
+
                                     <select class="form-select" name="sla_severity" id="sla_severity">
                                         <option value="">Pilih Tahap Severity</option>
-                                        <option value="High">Tingi</option>
-                                        <option value="Medium">Sederhana</option>
-                                        <option value="Low">Rendah</option>
+                                        <option value="High" {{ $currentSeverity === 'High' ? 'selected' : '' }}>Tinggi
+                                        </option>
+                                        <option value="Medium" {{ $currentSeverity === 'Medium' ? 'selected' : '' }}>
+                                            Sederhana</option>
+                                        <option value="Low" {{ $currentSeverity === 'Low' ? 'selected' : '' }}>Rendah
+                                        </option>
                                     </select>
-                                    <small class="text-muted">Tahap keparahan akan dipaparkan berdasarkan kategori dan sub
-                                        kategori yang dipilih.</small>
+
+                                    <small class="text-muted d-block mt-1">Tahap severity akan dipaparkan berdasarkan
+                                        kategori dan sub kategori yang dipilih.</small>
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -366,13 +444,68 @@
                                 <div class="col-sm-9 text-secondary">
                                     <select class="form-select" name="assigned_officers[]" id="assigned_officers"
                                         multiple>
-                                        @foreach ($officers as $officer)
-                                            @php
-                                                $isCurrentUser = $officer->id === auth()->user()->id;
-                                            @endphp
+                                        @php
+                                            // Get currently assigned officers from latest chronologies
+                                            $assignedOfficerIds = $ticket
+                                                ->chronologies()
+                                                ->whereNotNull('escalate_to')
+                                                ->where('tick_status', $ticket->tick_status)
+                                                ->latest()
+                                                ->pluck('escalate_to')
+                                                ->toArray();
+
+                                            // Keep original assigned officers for dropdown selection
+                                            // Don't add current user as fallback
+
+// Get currently assigned officers and their levels
+$currentAssignedOfficerData = \Illuminate\Support\Facades\DB::table(
+    'officers',
+)
+    ->whereIn('user_id', $assignedOfficerIds)
+    ->whereNull('deleted_at')
+    ->get(['user_id', 'level_tugasan']);
+
+// Determine what level officers to show based on assigned officers
+$showLevelTugasan = null; // Default to show all
+
+// If any assigned officer has level 1, show level 2 officers
+foreach ($currentAssignedOfficerData as $officerData) {
+    if ($officerData->level_tugasan == 1) {
+        $showLevelTugasan = 2;
+        break;
+    }
+}
+
+// Get current ticket category and subcategory
+$currentCatId = $ticket->cat_id;
+$currentSubcatId = $ticket->subcat_id;
+
+// Get officers from officers table with level, category and subcategory filtering
+$officersQuery = \Illuminate\Support\Facades\DB::table('officers')
+    ->join('users', 'officers.user_id', '=', 'users.id')
+    ->whereNull('officers.deleted_at');
+
+// Filter by category and subcategory if available
+if ($currentCatId) {
+    $officersQuery->where('officers.cat_id', $currentCatId);
+}
+if ($currentSubcatId) {
+    $officersQuery->where('officers.subcat_id', $currentSubcatId);
+}
+
+// Filter by level if required
+if ($showLevelTugasan !== null) {
+    $officersQuery->where('officers.level_tugasan', $showLevelTugasan);
+}
+
+$filteredOfficers = $officersQuery
+    ->select('users.id', 'users.nama', 'users.email')
+                                                ->get();
+                                        @endphp
+                                        @foreach ($filteredOfficers as $officer)
                                             <option value="{{ $officer->id }}"
-                                                data-current-user="{{ $isCurrentUser ? 'true' : 'false' }}"
-                                                {{ $isCurrentUser ? 'selected' : '' }}>
+                                                data-current-user="{{ $officer->id === auth()->user()->id ? 'true' : 'false' }}"
+                                                {{ in_array($officer->id, $assignedOfficerIds) ? 'selected' : '' }}>
                                                 {{ $officer->nama }}
                                             </option>
                                         @endforeach
@@ -393,7 +526,36 @@
                                     <h6 class="mb-0">Tindakan Oleh</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    {{ auth()->user()->nama }}
+                                    @php
+                                        // Get currently assigned officers from latest chronologies
+                                        $currentAssignedOfficerIds = $ticket
+                                            ->chronologies()
+                                            ->whereNotNull('escalate_to')
+                                            ->where('tick_status', $ticket->tick_status)
+                                            ->latest()
+                                            ->pluck('escalate_to')
+                                            ->toArray();
+
+                                        // Only show actually assigned officers from database, no fallback to current user
+                                        $assignedOfficerNames = [];
+                                        if (!empty($currentAssignedOfficerIds)) {
+                                            // Get assigned officer names directly from officers table joined with users
+                                            $assignedOfficerNames = \Illuminate\Support\Facades\DB::table('officers')
+                                                ->join('users', 'officers.user_id', '=', 'users.id')
+                                                ->whereIn('officers.user_id', $currentAssignedOfficerIds)
+                                                ->whereNull('officers.deleted_at')
+                                                ->pluck('users.nama')
+                                                ->toArray();
+                                        }
+
+                                        // Display assigned officers or empty if none assigned
+                                        $actionByText = !empty($assignedOfficerNames)
+                                            ? implode(', ', $assignedOfficerNames)
+                                            : '-';
+                                    @endphp
+                                    <span id="action_by_display">{{ $actionByText }}</span>
+                                    <input type="hidden" name="action_by" id="action_by"
+                                        value="{{ auth()->user()->id }}" />
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -437,158 +599,230 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if ($ticket->status)
+                    @if ($ticket->status || $ticket->chronologies->count() > 0)
                         <div class="timeline">
                             @php
-                                // Get current ticket status
-                                $currentStatus = $ticket->status->st_name;
-                                $iconClass = 'bx-edit';
-                                $colorClass = 'bg-secondary';
-
-                                // Status color mapping based on current status
-                                switch ($currentStatus) {
-                                    case 'Aduan Baru':
-                                        $iconClass = 'bx-plus-circle';
-                                        $colorClass = 'bg-primary'; // Biru
-                                        break;
-                                    case 'Aduan Diproses':
-                                        $iconClass = 'bx-cog';
-                                        $colorClass = 'bg-warning'; // Orange
-                                        break;
-                                    case 'Serahan Kepada':
-                                        $iconClass = 'bx-user-plus';
-                                        $colorClass = 'bg-info'; // Info
-                                        break;
-                                    case 'Aduan Dirujuk':
-                                        $iconClass = 'bx-share-alt';
-                                        $colorClass = 'bg-danger'; // Merah
-                                        break;
-                                    case 'Aduan DiBatal':
-                                        $iconClass = 'bx-x-circle';
-                                        $colorClass = 'bg-secondary'; // Kelabu
-                                        break;
-                                    case 'Aduan Selesai':
-                                        $iconClass = 'bx-check-circle';
-                                        $colorClass = 'bg-success'; // Hijau
-                                        break;
-                                }
-
-                                // Get the latest chronology entry for notes if available
-                                $latestChronology = $ticket
+                                // Get all chronologies for this ticket ordered by date (ascending for proper flow)
+                                $allChronologies = $ticket
                                     ->chronologies()
-                                    ->where('tick_status', $ticket->tick_status)
-                                    ->whereNull('escalate_to')
-                                    ->latest()
-                                    ->first();
+                                    ->with(['status', 'createdBy', 'escalatedTo'])
+                                    ->orderBy('created_at', 'asc')
+                                    ->get();
+
+                                // Check if "Aduan Baru" exists in chronologies
+                                $hasAduanBaru = $allChronologies->contains(function ($chron) {
+                                    return $chron->status && $chron->status->st_name === 'Aduan Baru';
+                                });
+
+                                // Function to get status description
+                                $getStatusDescription = function ($statusName) {
+                                    switch ($statusName) {
+                                        case 'Aduan Baru':
+                                            return 'Tiket baru dicipta dan dilog ke dalam sistem.';
+                                        case 'Aduan Diproses':
+                                            return 'Tiket sedang diproses oleh pegawai yang bertugas.';
+                                        case 'Serahan Kepada':
+                                            return 'Tiket telah diserahkan kepada pegawai yang berkaitan untuk tindakan.';
+                                        case 'Aduan Dirujuk':
+                                            return 'Tiket dirujuk kepada unit/pegawai lain untuk tindakan lanjut.';
+                                        case 'Aduan DiBatal':
+                                            return 'Tiket telah dibatalkan dan tidak akan diproses lagi.';
+                                        case 'Aduan Selesai':
+                                            return 'Tiket telah diselesaikan dengan jayanya dan ditutup.';
+                                        default:
+                                            return 'Status tiket dikemaskini.';
+                                    }
+                                };
+
+                                // Function to get status styling
+                                $getStatusStyling = function ($statusName) {
+                                    switch ($statusName) {
+                                        case 'Aduan Baru':
+                                            return ['icon' => 'bx-plus-circle', 'color' => 'bg-primary'];
+                                        case 'Aduan Diproses':
+                                            return ['icon' => 'bx-cog', 'color' => 'bg-warning'];
+                                        case 'Serahan Kepada':
+                                            return ['icon' => 'bx-user-plus', 'color' => 'bg-info'];
+                                        case 'Aduan Dirujuk':
+                                            return ['icon' => 'bx-share-alt', 'color' => 'bg-danger'];
+                                        case 'Aduan DiBatal':
+                                            return ['icon' => 'bx-x-circle', 'color' => 'bg-secondary'];
+                                        case 'Aduan Selesai':
+                                            return ['icon' => 'bx-check-circle', 'color' => 'bg-success'];
+                                        default:
+                                            return ['icon' => 'bx-edit', 'color' => 'bg-secondary'];
+                                    }
+                                };
+
+                                // Function to get action verb
+                                $getActionVerb = function ($statusName) {
+                                    switch ($statusName) {
+                                        case 'Aduan Baru':
+                                            return 'Dicipta oleh:';
+                                        case 'Aduan Diproses':
+                                            return 'Diproses oleh:';
+                                        case 'Serahan Kepada':
+                                            return 'Diserahkan oleh:';
+                                        case 'Aduan Dirujuk':
+                                            return 'Dirujuk oleh:';
+                                        case 'Aduan DiBatal':
+                                            return 'Dibatalkan oleh:';
+                                        case 'Aduan Selesai':
+                                            return 'Diselesaikan oleh:';
+                                        default:
+                                            return 'Dikemaskini oleh:';
+                                    }
+                                };
+
+                                // Build complete timeline array starting with "Aduan Baru"
+                                $timelineItems = collect();
+
+                                // Always add "Aduan Baru" as first item if it doesn't exist
+if (!$hasAduanBaru) {
+    $timelineItems->push(
+        (object) [
+            'status_name' => 'Aduan Baru',
+            'description' => $getStatusDescription('Aduan Baru'),
+            'created_by' => $ticket->user ? $ticket->user->nama : 'Pengguna',
+            'created_at' => $ticket->created_at,
+            'escalated_to' => null,
+            'is_current' => false,
+            'is_initial' => true,
+        ],
+    );
+}
+
+// Add all chronological entries
+foreach ($allChronologies as $chron) {
+    if ($chron->status) {
+        $timelineItems->push(
+            (object) [
+                'status_name' => $chron->status->st_name,
+                'description' => $getStatusDescription($chron->status->st_name),
+                'created_by' => $chron->createdBy ? $chron->createdBy->nama : 'Sistem',
+                'created_at' => $chron->created_at,
+                'escalated_to' => $chron->escalatedTo
+                    ? $chron->escalatedTo->nama
+                    : null,
+                'is_current' => $chron->tick_status == $ticket->tick_status,
+                'is_initial' => false,
+            ],
+        );
+    }
+}
+
+// Remove duplicates and ensure proper ordering (from oldest to newest)
+$timelineItems = $timelineItems
+    ->unique(function ($item) {
+        return $item->status_name . '-' . $item->created_at->format('Y-m-d H:i:s');
+    })
+    ->sortBy('created_at'); // Remove reverse() to show chronological order
                             @endphp
 
-                            <div class="timeline-item">
-                                <div class="timeline-marker">
-                                    <div class="timeline-marker-icon {{ $colorClass }}">
-                                        <i class="bx {{ $iconClass }}"></i>
+                            {{-- Display complete timeline from oldest to newest (Aduan Baru to current status) --}}
+                            @foreach ($timelineItems as $index => $item)
+                                @php
+                                    $styling = $getStatusStyling($item->status_name);
+                                    $isFirst = $index === 0; // First item is now "Aduan Baru"
+                                    $isLast = $index === count($timelineItems) - 1; // Last item is current status
+                                @endphp
+
+                                <div
+                                    class="timeline-item {{ $item->is_current ? 'current-status' : '' }} {{ $isFirst ? 'first-item' : '' }} {{ $isLast ? 'last-item' : '' }}">
+                                    <div class="timeline-marker">
+                                        <div
+                                            class="timeline-marker-icon {{ $styling['color'] }} {{ $item->is_current ? 'current-marker' : '' }}">
+                                            <i class="bx {{ $styling['icon'] }}"></i>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="timeline-content">
-                                    <div class="d-flex justify-content-between align-items-start mb-1">
-                                        <h6 class="timeline-title mb-0">Status Semasa Tiket</h6>
-                                        <span class="badge {{ $colorClass }} badge-sm">{{ $currentStatus }}</span>
-                                    </div>
-                                    <p class="timeline-text">
-                                        @switch($currentStatus)
-                                            @case('Aduan Baru')
-                                                Tiket baru diterima dan sedang menunggu untuk diproses.
-                                            @break
+                                    <div class="timeline-content {{ $item->is_current ? 'current-content' : '' }}">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <h6 class="timeline-title mb-0">
+                                                @if ($item->is_current)
+                                                    <span class="text-muted small">(Semasa)</span>
+                                                @elseif ($item->is_initial)
+                                                    <span class="text-muted small">(Permulaan)</span>
+                                                @endif
+                                            </h6>
+                                            <span class="badge {{ $styling['color'] }} badge-sm">
+                                                {{ $item->status_name }}
+                                            </span>
+                                        </div>
+                                        <p class="timeline-text">{{ $item->description }}</p>
 
-                                            @case('Aduan Diproses')
-                                                Tiket sedang diproses oleh pegawai yang bertugas.
-                                            @break
+                                        {{-- Show escalation/assignment info --}}
+                                        @if ($item->escalated_to)
+                                            <div class="timeline-details mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar avatar-sm me-2">
+                                                        <span class="avatar-initial rounded-circle bg-label-success">
+                                                            {{ strtoupper(substr($item->escalated_to, 0, 2)) }}
+                                                        </span>
+                                                    </div>
+                                                    <small class="timeline-time">
+                                                        <i class="bx bx-user-plus text-success"></i>
+                                                        <strong>Diserahkan kepada:</strong>
+                                                        <span
+                                                            class="text-success fw-bold">{{ $item->escalated_to }}</span>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        @endif
 
-                                            @case('Serahan Kepada')
-                                                Tiket telah diserahkan kepada pegawai yang berkaitan.
-                                            @break
+                                        {{-- Show action details --}}
+                                        <div class="timeline-meta">
+                                            <small class="timeline-time d-block mb-1">
+                                                <i class="bx bx-user text-primary"></i>
+                                                <strong>{{ $getActionVerb($item->status_name) }}</strong>
+                                                <span class="text-primary">{{ $item->created_by }}</span>
+                                            </small>
 
-                                            @case('Aduan Dirujuk')
-                                                Tiket dirujuk kepada unit/pegawai lain untuk tindakan lanjut.
-                                            @break
+                                            <small class="timeline-time d-block">
+                                                <i class="bx bx-time text-muted"></i>
+                                                <strong>Tarikh & Masa:</strong>
+                                                {{ \Carbon\Carbon::parse($item->created_at)->format('d/m/Y, H:i a') }}
+                                                <span class="text-muted ms-2">
+                                                    ({{ \Carbon\Carbon::parse($item->created_at)->diffForHumans() }})
+                                                </span>
+                                            </small>
 
-                                            @case('Aduan DiBatal')
-                                                Tiket telah dibatalkan.
-                                            @break
+                                            {{-- Show duration from previous step --}}
+                                            @if (!$isFirst && isset($timelineItems[$index - 1]))
+                                                @php
+                                                    $prevItem = $timelineItems[$index - 1];
+                                                    $duration = \Carbon\Carbon::parse(
+                                                        $prevItem->created_at,
+                                                    )->diffInMinutes(\Carbon\Carbon::parse($item->created_at));
+                                                    $durationText = '';
 
-                                            @case('Aduan Selesai')
-                                                Tiket telah diselesaikan dengan jayanya.
-                                            @break
+                                                    if ($duration < 60) {
+                                                        $durationText = $duration . ' minit';
+                                                    } elseif ($duration < 1440) {
+                                                        $hours = floor($duration / 60);
+                                                        $mins = $duration % 60;
+                                                        $durationText =
+                                                            $hours . ' jam' . ($mins > 0 ? ' ' . $mins . ' minit' : '');
+                                                    } else {
+                                                        $days = floor($duration / 1440);
+                                                        $hours = floor(($duration % 1440) / 60);
+                                                        $durationText =
+                                                            $days . ' hari' . ($hours > 0 ? ' ' . $hours . ' jam' : '');
+                                                    }
+                                                @endphp
 
-                                            @default
-                                                Status tiket semasa.
-                                        @endswitch
-                                    </p>
-
-                                    {{-- <div class="mt-2">
-                                        <small class="timeline-time d-block mb-1">
-                                            <i class="bx bx-edit"></i>
-                                            <strong>Catatan:</strong>
-                                        </small>
-
-                                        <small class="timeline-time d-block ps-5">
-                                            @if ($latestChronology && $latestChronology->notes)
-                                                {!! nl2br(e($latestChronology->notes)) !!}
-                                            @else
-                                                <em>Tiada catatan untuk status ini.</em>
+                                                @if ($duration > 0)
+                                                    <small class="timeline-time d-block mt-1">
+                                                        <i class="bx bx-stopwatch text-warning"></i>
+                                                        <strong>Tempoh:</strong>
+                                                        <span class="text-warning">{{ $durationText }}</span>
+                                                        <span class="text-muted">dari status sebelum</span>
+                                                    </small>
+                                                @endif
                                             @endif
-                                        </small>
-                                    </div> --}}
-                                    <p class="timeline-text">
-                                        <small class="timeline-time mt-3 d-block">
-                                            <i class="bx bx-user"></i>
-                                            <strong>
-                                                @switch($currentStatus)
-                                                    @case('Aduan Baru')
-                                                        Dilaporkan oleh:
-                                                    @break
-
-                                                    @case('Aduan Diproses')
-                                                        Diproses oleh:
-                                                    @break
-
-                                                    @case('Serahan Kepada')
-                                                        Diserahkan oleh:
-                                                    @break
-
-                                                    @case('Aduan Dirujuk')
-                                                        Dirujuk oleh:
-                                                    @break
-
-                                                    @case('Aduan DiBatal')
-                                                        Dibatalkan oleh:
-                                                    @break
-
-                                                    @case('Aduan Selesai')
-                                                        Diselesaikan oleh:
-                                                    @break
-
-                                                    @default
-                                                        Dikemaskini oleh:
-                                                @endswitch
-                                            </strong>
-                                            {{ $latestChronology && $latestChronology->createdBy
-                                                ? $latestChronology->createdBy->nama
-                                                : ($ticket->updatedBy
-                                                    ? $ticket->updatedBy->nama
-                                                    : 'Sistem') }}
-                                        </small>
-
-                                        <small class="timeline-time mt-1 d-block">
-                                            <i class="bx bx-time"></i>
-                                            <strong>Tarikh & Masa:</strong>
-                                            {{ $latestChronology
-                                                ? $latestChronology->updated_at->format('d/m/Y, H:i a')
-                                                : $ticket->updated_at->format('d/m/Y, H:i a') }}
-                                        </small>
-                                    </p>
-
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            @endforeach
                         </div>
                     @else
                         <div class="text-center py-5">
@@ -625,12 +859,35 @@
 
         .timeline-item {
             position: relative;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
             padding-left: 1rem;
+            transition: all 0.3s ease;
         }
 
         .timeline-item:last-child {
             margin-bottom: 0;
+        }
+
+        .timeline-item.current-status {
+            transform: scale(1.02);
+        }
+
+        .timeline-item.first-item .timeline-content {
+            border: 2px solid rgba(105, 108, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(105, 108, 255, 0.15);
+        }
+
+        .timeline-item.first-item .timeline-marker-icon {
+            box-shadow: 0 0 15px rgba(105, 108, 255, 0.4);
+        }
+
+        .timeline-item.last-item .timeline-content {
+            border: 2px solid rgba(113, 221, 55, 0.2);
+            box-shadow: 0 4px 20px rgba(113, 221, 55, 0.15);
+        }
+
+        .timeline-item.last-item .timeline-marker-icon {
+            box-shadow: 0 0 15px rgba(113, 221, 55, 0.4);
         }
 
         .timeline-marker {
@@ -653,6 +910,11 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             position: relative;
+        }
+
+        .timeline-marker-icon.current-marker {
+            animation: currentPulse 2s infinite;
+            box-shadow: 0 0 20px rgba(105, 108, 255, 0.5);
         }
 
         .timeline-marker-icon::after {
@@ -694,11 +956,129 @@
             background: linear-gradient(135deg, #17a2b8, #138496);
         }
 
-        /* Badge colors to match timeline markers                                                                                                                                                              } */
-
+        /* Badge colors to match timeline markers */
         .badge.badge-sm {
             font-size: 0.7rem;
             padding: 0.25rem 0.5rem;
+        }
+
+        .timeline-content {
+            background: #ffffff;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid #e3e6f0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-content.current-content {
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+            border-color: rgba(105, 108, 255, 0.2);
+        }
+
+        .timeline-content::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 1rem;
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 8px solid #ffffff;
+            filter: drop-shadow(-1px 0 1px rgba(0, 0, 0, 0.1));
+        }
+
+        .timeline-content:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .timeline-title {
+            margin-bottom: 0.25rem;
+            color: #5a5c69;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .timeline-text {
+            margin-bottom: 0.75rem;
+            color: #6c757d;
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        .timeline-details {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-details:hover {
+            background: #e9ecef;
+        }
+
+        .timeline-meta {
+            padding-top: 0.5rem;
+            border-top: 1px solid #f1f3f4;
+        }
+
+        .timeline-time {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #8592a3;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .timeline-time i {
+            font-size: 0.875rem;
+            width: 16px;
+            text-align: center;
+        }
+
+        /* Enhanced Avatar Styles */
+        .avatar.avatar-sm {
+            width: 1.75rem;
+            height: 1.75rem;
+            font-size: 0.7rem;
+        }
+
+        /* Pulse animation for current status */
+        @keyframes currentPulse {
+            0% {
+                box-shadow: 0 0 20px rgba(105, 108, 255, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(105, 108, 255, 0.8);
+            }
+
+            100% {
+                box-shadow: 0 0 20px rgba(105, 108, 255, 0.5);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.7;
+            }
+
+            70% {
+                transform: scale(1);
+                opacity: 0.1;
+            }
+
+            100% {
+                transform: scale(0.95);
+                opacity: 0.7;
+            }
         }
 
         .timeline-content {
@@ -1205,63 +1585,6 @@
                 font-size: 0.75rem;
             }
         }
-
-        /* Select2 Custom Styling for Current User */
-        .select2-container .select2-results__option[data-current-user="true"] {
-            background-color: #28a745 !important;
-            color: white !important;
-            font-weight: bold !important;
-        }
-
-        .select2-container .select2-results__option[data-current-user="true"]:hover {
-            background-color: #218838 !important;
-            color: white !important;
-        }
-
-        .select2-container .select2-results__option[data-current-user="true"][aria-selected="true"] {
-            background-color: #1e7e34 !important;
-            color: white !important;
-        }
-
-        /* Alternative approach using class */
-        .select2-container .select2-results__option.current-user-option {
-            background-color: #28a745 !important;
-            color: white !important;
-            font-weight: bold !important;
-        }
-
-        .select2-container .select2-results__option.current-user-option:hover {
-            background-color: #218838 !important;
-            color: white !important;
-        }
-
-        .select2-container .select2-results__option.current-user-option[aria-selected="true"] {
-            background-color: #1e7e34 !important;
-            color: white !important;
-        }
-
-        /* Styling for selected items (chips/tags) */
-        .select2-container--default .select2-selection__choice[data-current-user="true"] {
-            background-color: #28a745 !important;
-            border-color: #28a745 !important;
-            color: white !important;
-        }
-
-        .select2-container--default .select2-selection__choice.current-user-choice {
-            background-color: #28a745 !important;
-            border-color: #28a745 !important;
-            color: white !important;
-        }
-
-        .select2-container--default .select2-selection__choice__remove[data-current-user="true"] {
-            color: white !important;
-            border-right-color: rgba(255, 255, 255, 0.3) !important;
-        }
-
-        .select2-container--default .select2-selection__choice__remove[data-current-user="true"]:hover {
-            color: white !important;
-            background-color: rgba(255, 255, 255, 0.2) !important;
-        }
     </style>
 
     <script>
@@ -1366,12 +1689,26 @@
             const severitySelect = document.querySelector('#sla_severity');
             const assignedOfficersSelect = document.querySelector('#assigned_officers');
 
+            // Set severity dropdown value explicitly to ensure it displays correctly
+            const currentSeverityValue = '{{ $currentSeverity ?? '' }}';
+            if (severitySelect && currentSeverityValue) {
+                console.log('Setting severity dropdown to:', currentSeverityValue);
+                setTimeout(() => {
+                    severitySelect.value = currentSeverityValue;
+                    console.log('Severity dropdown set to:', severitySelect.value);
+                }, 100);
+            }
+
             // Function to handle status-based dropdown enabling/disabling
             function handleStatusChange() {
-                if (!statusSelect || !categorySelect || !subcategorySelect) return;
+                if (!statusSelect || !categorySelect || !subcategorySelect) {
+                    return;
+                }
 
                 const selectedStatusText = statusSelect.selectedOptions[0]?.text.trim();
                 const isAduanDirujuk = selectedStatusText === 'Aduan Dirujuk';
+
+                console.log('Status change - Text:', selectedStatusText, 'IsAduanDirujuk:', isAduanDirujuk);
 
                 // Enable/disable kategori and sub kategori based on status
                 categorySelect.disabled = !isAduanDirujuk;
@@ -1400,11 +1737,13 @@
                 }
             }
 
-            // Add status change event listener
+            // Add status change event listener - MUST be first!
             if (statusSelect) {
                 statusSelect.addEventListener('change', handleStatusChange);
-                // Trigger on initial page load
-                handleStatusChange();
+                // Trigger on initial page load with slight delay to ensure DOM is ready
+                setTimeout(() => {
+                    handleStatusChange();
+                }, 50);
             }
 
             if (categorySelect && subcategorySelect) {
@@ -1443,12 +1782,41 @@
                             })
                             .catch(error => {
                                 console.error('Error loading SLA data:', error);
-                                severitySelect.innerHTML = '<option value="">Ralat memuat data SLA</option>';
+                                severitySelect.innerHTML =
+                                    '<option value="">Ralat memuat data SLA</option>';
                                 resetOfficersList();
                             });
                     } else {
                         // Clear severity options when category or subcategory not selected
                         severitySelect.innerHTML = '<option value="">Pilih Tahap Severity</option>';
+                        resetOfficersList();
+                    }
+                }
+
+                // Function to update officers based on category and subcategory
+                function updateOfficersByCategory() {
+                    const categoryId = categorySelect.value;
+                    const subcategoryId = subcategorySelect.value;
+
+                    if (categoryId && subcategoryId) {
+                        // Call API to get officers filtered by category and subcategory
+                        fetch(
+                                `/api/available-officers?cat_id=${categoryId}&subcat_id=${subcategoryId}&level_tugasan=2`
+                            )
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success && data.officers && data.officers.length > 0) {
+                                    updateOfficersList(data.officers);
+                                } else {
+                                    // Show original filtered officers if no specific officers found
+                                    resetOfficersList();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error loading officers by category:', error);
+                                resetOfficersList();
+                            });
+                    } else {
                         resetOfficersList();
                     }
                 }
@@ -1503,12 +1871,20 @@
                         $('#assigned_officers').empty();
                     }
 
-                    // Restore original officers list
-                    @foreach ($officers as $officer)
+                    // Restore filtered officers list (only from officers table)
+                    @php
+                        // Get officer user IDs from officers table in database
+                        $officerUserIdsForJS = \Illuminate\Support\Facades\DB::table('officers')->whereNull('deleted_at')->pluck('user_id')->toArray();
+
+                        // Filter officers to show only those in officers table
+                        $filteredOfficersForJS = $officers->whereIn('id', $officerUserIdsForJS);
+                    @endphp
+                    @foreach ($filteredOfficersForJS as $officer)
                         @php
                             $isCurrentUser = $officer->id === auth()->user()->id;
                         @endphp
-                        const option{{ $officer->id }} = new Option('{{ $officer->nama }}', {{ $officer->id }},
+                        const option{{ $officer->id }} = new Option('{{ $officer->nama }}',
+                            {{ $officer->id }},
                             false, {{ $isCurrentUser ? 'true' : 'false' }});
                         $(option{{ $officer->id }}).attr('data-current-user',
                             '{{ $isCurrentUser ? 'true' : 'false' }}');
@@ -1522,6 +1898,11 @@
 
                 // Category change event
                 categorySelect.addEventListener('change', function() {
+                    // Check if dropdown is disabled first
+                    if (this.disabled || this.hasAttribute('readonly')) {
+                        return false;
+                    }
+
                     const selectedCategoryId = this.value;
 
                     // Clear current subcategory options except the first one
@@ -1550,9 +1931,34 @@
 
                 // Subcategory change event
                 subcategorySelect.addEventListener('change', function() {
+                    // Check if dropdown is disabled first
+                    if (this.disabled || this.hasAttribute('readonly')) {
+                        return false;
+                    }
+
                     const categoryId = categorySelect.value;
                     const subcategoryId = this.value;
                     loadSLAData(categoryId, subcategoryId);
+
+                    // Update officers list based on selected category and subcategory
+                    updateOfficersByCategory();
+                });
+
+                // Add click prevention for disabled dropdowns
+                [categorySelect, subcategorySelect].forEach(select => {
+                    select.addEventListener('mousedown', function(e) {
+                        if (this.disabled || this.hasAttribute('readonly')) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    });
+
+                    select.addEventListener('focus', function() {
+                        if (this.disabled || this.hasAttribute('readonly')) {
+                            this.blur();
+                            return false;
+                        }
+                    });
                 });
 
                 // Severity change event
@@ -1563,100 +1969,74 @@
                 }
 
                 // Trigger category change on page load to filter subcategories
-                if (categorySelect.value) {
-                    categorySelect.dispatchEvent(new Event('change'));
+                // Only trigger if dropdown is not disabled AND with delay to ensure handleStatusChange runs first
+                setTimeout(() => {
+                    if (categorySelect.value && !categorySelect.disabled) {
+                        categorySelect.dispatchEvent(new Event('change'));
 
-                    // If subcategory is also selected, load SLA data
-                    if (subcategorySelect.value) {
-                        loadSLAData(categorySelect.value, subcategorySelect.value);
+                        // If subcategory is also selected, load SLA data
+                        if (subcategorySelect.value && !subcategorySelect.disabled) {
+                            loadSLAData(categorySelect.value, subcategorySelect.value);
+                        }
                     }
-                }
+                }, 100);
             }
 
-            // Initialize Select2 for assigned officers
+            // Initialize Select2 for assigned officers (following officers page pattern)
             if ($('#assigned_officers').length) {
                 $('#assigned_officers').select2({
-                    placeholder: 'Pilih Pegawai Tugasan (boleh pilih lebih dari satu)',
+                    placeholder: 'Pilih Pegawai (boleh pilih lebih dari satu)',
                     width: '100%',
                     multiple: true,
+                    allowClear: false,
+                    closeOnSelect: false,
                     templateResult: function(option) {
                         if (!option.id) {
                             return option.text;
                         }
 
-                        var $option = $(option.element);
-                        var isCurrentUser = $option.data('current-user') === 'true';
+                        console.log('Template Result - Option:', option);
+                        const $option = $(option.element);
+                        console.log('Data current-user:', $option.data('current-user'));
+                        console.log('Auth user ID:', {{ auth()->user()->id }});
+                        console.log('Option ID:', option.id);
 
-                        var $result = $('<div class="select2-result-option">').text(option.text);
+                        const isCurrentUser = $option.data('current-user') === 'true' || option.id ==
+                            {{ auth()->user()->id }};
+                        console.log('Is current user:', isCurrentUser);
 
                         if (isCurrentUser) {
-                            $result.attr('data-current-user', 'true');
+                            return $(
+                                '<div style="background-color: #28a745 !important; color: white !important; padding: 6px 12px; border-radius: 4px; font-weight: 500; margin: 2px 0;">' +
+                                option.text + '</div>');
                         }
 
-                        return $result;
+                        return $('<div>' + option.text + '</div>');
                     },
                     templateSelection: function(option) {
                         if (!option.id) {
                             return option.text;
                         }
 
-                        var $option = $(option.element);
-                        var isCurrentUser = $option.data('current-user') === 'true';
+                        const $option = $(option.element);
+                        const isCurrentUser = $option.data('current-user') === 'true' || option.id ==
+                            {{ auth()->user()->id }};
 
-                        var $result = $('<span>');
                         if (isCurrentUser) {
-                            $result.addClass('text-white fw-bold').attr('data-current-user', 'true');
+                            return $(
+                                '<span style="background-color: #28a745 !important; color: white !important; padding: 2px 8px; border-radius: 3px; font-weight: 500;">' +
+                                option.text + '</span>');
                         }
-                        $result.text(option.text);
 
-                        return $result;
+                        return option.text;
                     }
                 });
 
-                // Add data attributes to Select2 result options after initialization
-                $('#assigned_officers').on('select2:open', function() {
-                    setTimeout(function() {
-                        $('.select2-results__option').each(function() {
-                            var optionId = $(this).attr('id');
-                            if (optionId) {
-                                var optionValue = optionId.split('-').pop();
-                                var originalOption = $('#assigned_officers option[value="' +
-                                    optionValue + '"]');
-                                if (originalOption.length && originalOption.data(
-                                        'current-user') === 'true') {
-                                    $(this).attr('data-current-user', 'true');
-                                    $(this).addClass('current-user-option');
-                                }
-                            }
-                        });
-                    }, 50);
-                });
-
-                // Handle styling of selected items (chips)
-                $('#assigned_officers').on('select2:select', function(e) {
-                    setTimeout(function() {
-                        var selectedValue = e.params.data.id;
-                        var originalOption = $('#assigned_officers option[value="' + selectedValue +
-                            '"]');
-
-                        if (originalOption.data('current-user') === 'true') {
-                            // Find the newly created selection chip and style it
-                            $('.select2-selection__choice').each(function() {
-                                var choiceText = $(this).find(
-                                    '.select2-selection__choice__display').text().trim();
-                                var optionText = originalOption.text().trim();
-
-                                if (choiceText === optionText) {
-                                    $(this).addClass('current-user-choice');
-                                    $(this).css({
-                                        'background-color': '#28a745 !important',
-                                        'color': 'white !important',
-                                        'border-color': '#28a745 !important'
-                                    });
-                                }
-                            });
-                        }
-                    }, 100);
+                // Update "Tindakan Oleh" when assigned officers change - but only show database assigned officers
+                $('#assigned_officers').on('change', function() {
+                    // Don't update "Tindakan Oleh" based on dropdown selection
+                    // It should only show officers assigned from database in chronologies
+                    // The display is already set correctly in PHP based on database records
                 });
             }
 
