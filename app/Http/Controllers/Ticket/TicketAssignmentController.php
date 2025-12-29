@@ -432,8 +432,18 @@ class TicketAssignmentController extends Controller
     try {
       $ticket = Ticket::with(['comments.user', 'comments.createdBy', 'status'])->findOrFail($ticketId);
 
+      // Get all chronologies to determine the status at the time each comment was made
+      $chronologies = $ticket->chronologies()
+        ->with('status')
+        ->whereNull('escalate_to') // Only status changes, not assignments
+        ->orderBy('created_at', 'asc')
+        ->get();
+
       // Get all comments from pengadu (ticket creator) and pegawai tugasan (officers)
-      $comments = $ticket->comments->map(function ($comment) use ($ticket) {
+      $comments = $ticket->comments->map(function ($comment) use ($ticket, $chronologies) {
+        // Find the status that was active when this comment was created
+        $commentStatus = $this->getStatusAtTime($comment->created_at, $chronologies);
+
         return [
           'id' => $comment->id,
           'created_at' => $comment->created_at->format('d/m/Y H:i'),
@@ -442,8 +452,8 @@ class TicketAssignmentController extends Controller
           'user_type' => $this->getUserType($comment->user, $ticket),
           'comment' => $comment->comment_text,
           'created_by' => $comment->createdBy ? $comment->createdBy->nama : 'Tidak diketahui',
-          'ticket_status' => $ticket->status ? $ticket->status->st_name : 'Tidak diketahui',
-          'status_class' => $this->getStatusBadgeClass($ticket->status ? $ticket->status->st_name : '')
+          'ticket_status' => $commentStatus['status_name'],
+          'status_class' => $commentStatus['status_class']
         ];
       });
 
@@ -457,6 +467,47 @@ class TicketAssignmentController extends Controller
         'message' => 'Ralat semasa mendapatkan catatan tindakan: ' . $e->getMessage()
       ], 500);
     }
+  }
+
+  /**
+   * Determine the ticket status that was active at a specific time
+   */
+  private function getStatusAtTime($commentTime, $chronologies)
+  {
+    // Default to "Aduan Baru" if no chronology found
+    $defaultStatus = [
+      'status_name' => 'Aduan Baru',
+      'status_class' => $this->getStatusBadgeClass('Aduan Baru')
+    ];
+
+    // If no chronologies exist, return default
+    if ($chronologies->isEmpty()) {
+      return $defaultStatus;
+    }
+
+    // Find the chronology that was active at the comment time
+    $activeChronology = null;
+
+    foreach ($chronologies as $chronology) {
+      // If chronology was created before or at the comment time, it was active
+      if ($chronology->created_at <= $commentTime) {
+        $activeChronology = $chronology;
+      } else {
+        // Once we find a chronology created after the comment time, stop
+        break;
+      }
+    }
+
+    // If we found an active chronology, use its status
+    if ($activeChronology && $activeChronology->status) {
+      return [
+        'status_name' => $activeChronology->status->st_name,
+        'status_class' => $this->getStatusBadgeClass($activeChronology->status->st_name)
+      ];
+    }
+
+    // Return default status if no matching chronology found
+    return $defaultStatus;
   }
 
   /**
