@@ -1,0 +1,54 @@
+/* Audit Trail CSS */
+/* Model Color Coding */
+.model-ticket { 
+    background-color: #28a745 !important; 
+    color: white !important; 
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.model-chronology { 
+    background-color: #dc3545 !important; 
+    color: white !important; 
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.model-knowledgebase { 
+    background-color: #fd7e14 !important; 
+    color: white !important; 
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.json-display {
+    max-width: 200px;
+    max-height: 100px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.activity-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+
+.activity-created { background-color: #198754 !important; }
+.activity-updated { background-color: #ffc107 !important; color: #000 !important; }
+.activity-deleted { background-color: #dc3545 !important; }
+.activity-restored { background-color: #0dcaf0 !important; }
+
+

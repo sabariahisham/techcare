@@ -1,0 +1,384 @@
+
+
+'use strict';
+
+// Form Validation for Edit Permission (Offcanvas style)
+$(document).ready(function () {
+  console.log('Edit Permission JS loaded');
+  console.log('FormValidation available:', typeof FormValidation !== 'undefined');
+  console.log('jQuery available:', typeof $ !== 'undefined');
+  console.log('Toastr available:', typeof toastr !== 'undefined');
+
+  // Edit Permission form
+  const editPermissionForm = document.getElementById('editPermissionForm');
+  let editFormValidator = null;
+  let currentPermissionId = null;
+
+  // Initialize form validation for edit form
+  function initializeEditFormValidation() {
+    if (editPermissionForm && typeof FormValidation !== 'undefined') {
+      console.log('Initializing edit form validation');
+
+      // Destroy existing validator if any
+      if (editFormValidator) {
+        editFormValidator.destroy();
+      }
+
+      editFormValidator = FormValidation.formValidation(editPermissionForm, {
+        fields: {
+          name: {
+            validators: {
+              notEmpty: {
+                message: 'Sila masukkan nama capaian'
+              }
+            }
+          },
+          // Module field validation is completely skipped for edit form
+          // since module should not be changed for existing permissions
+          description: {
+            validators: {
+              notEmpty: {
+                message: 'Sila masukkan deskripsi capaian'
+              }
+            }
+          }
+        },
+        plugins: {
+          trigger: new FormValidation.plugins.Trigger(),
+          bootstrap5: new FormValidation.plugins.Bootstrap5({
+            eleValidClass: '',
+            rowSelector: function (field, ele) {
+              return '.mb-6';
+            }
+          }),
+          submitButton: new FormValidation.plugins.SubmitButton(),
+          autoFocus: new FormValidation.plugins.AutoFocus()
+        }
+      }).on('core.form.valid', function() {
+        // Submit form data for update
+        updatePermission();
+      });
+    }
+  }
+
+  // Function to load permission data for editing
+  function loadPermissionData(permissionId) {
+    console.log('Loading permission data for ID:', permissionId);
+    currentPermissionId = permissionId;
+
+    $.ajax({
+      url: `/admin/permissions/${permissionId}/edit`,
+      type: 'GET',
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      },
+      success: function(response) {
+        console.log('Permission data loaded:', response);
+        if (response.success) {
+          populateEditForm(response.permission, response.assigned_roles);
+        } else {
+          showError('Ralat memuat data permission');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error loading permission data:', error);
+        const errorMessage = xhr.responseJSON?.message || 'Ralat memuat data capaian';
+        showError(errorMessage);
+      }
+    });
+  }
+
+  // Function to populate the edit form with permission data
+  function populateEditForm(permission, assignedRoles) {
+    console.log('Populating edit form with data:', permission);
+
+    // Reset form validation first
+    if (editFormValidator) {
+      editFormValidator.resetForm();
+    }
+
+    // Populate basic fields using correct IDs
+    $('#edit-permission-name').val(permission.name || '');
+    $('#edit-permission-module').val(permission.module || '');
+    $('#edit-permission-description').val(permission.description || '');
+
+    // Disable the module dropdown since the permission is already assigned to this module
+    // and show it as read-only to prevent accidental changes
+    if (permission.module) {
+      $('#edit-permission-module').prop('disabled', true);
+
+      // Add visual indicators that the field is disabled and read-only
+      $('#edit-permission-module').addClass('bg-light text-muted');
+
+      // Update the label to indicate it's read-only
+      $('label[for="edit-permission-module"]').html('Modul <small class="text-muted">(Read-only)</small>');
+
+      // Add a note under the select to explain why it's disabled
+      const moduleSelectContainer = $('#edit-permission-module').closest('.mb-6');
+      if (!moduleSelectContainer.find('.module-disabled-note').length) {
+        moduleSelectContainer.append(
+          '<small class="form-text text-muted module-disabled-note">' +
+          '<i class="bx bx-lock-alt me-1"></i>' +
+          'Modul tidak boleh ditukar kerana capaian sudah ditetapkan kepada modul ini.' +
+          '</small>'
+        );
+      }
+    }
+
+    // Handle role assignments if role selection exists
+    if (assignedRoles && assignedRoles.length > 0) {
+      $('#editPermissionForm [name="roles[]"]').each(function() {
+        const roleValue = $(this).val();
+        $(this).prop('checked', assignedRoles.includes(roleValue));
+      });
+    } else {
+      // Uncheck all roles if none assigned
+      $('#editPermissionForm [name="roles[]"]').prop('checked', false);
+    }
+
+    // Refresh any select2 dropdowns if they exist
+    $('#editPermissionForm select').trigger('change');
+  }
+
+  // Function to update permission
+  function updatePermission() {
+    if (!currentPermissionId) {
+      showError('ID capaian tidak dijumpai');
+      return;
+    }
+
+    console.log('Updating capaian ID:', currentPermissionId);
+
+    // Prepare form data - exclude disabled module field to prevent validation errors
+    var formElements = $(editPermissionForm).find('input, select, textarea').not(':disabled');
+    var formData = formElements.serialize();
+    formData += '&_method=PUT';
+
+    // Explicitly exclude module field since it should not be updated for existing permissions
+    console.log('Form data being sent (module excluded):', formData);
+
+    $.ajax({
+      url: `/admin/permissions/${currentPermissionId}`,
+      type: 'POST',
+      data: formData,
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      },
+      success: function(response) {
+        console.log('Update success response:', response);
+        if (response.success) {
+          // Close offcanvas
+          $('#offcanvasEditPermission').offcanvas('hide');
+
+          // Clear form
+          editPermissionForm.reset();
+
+          // Reset form validation
+          if (editFormValidator) {
+            editFormValidator.resetForm();
+          }
+
+          // Show success message
+          showSuccess('Capaian berjaya dikemaskini');
+
+          // Refresh the datatable
+          refreshDataTable();
+        } else {
+          showError(response.message || 'Ralat berlaku semasa mengemaskini capaian');
+        }
+      },
+      error: function(xhr, status, error) {
+        console.log('Update error response:', xhr.responseJSON);
+        handleUpdateErrors(xhr);
+      }
+    });
+  }
+
+  // Function to handle update errors
+  function handleUpdateErrors(xhr) {
+    // Handle validation errors (422 status)
+    if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+      const errors = xhr.responseJSON.errors;
+      console.log('Validation errors:', errors);
+
+      // Handle name field specifically for uniqueness errors
+      if (errors.name && errors.name.length > 0) {
+        const nameError = errors.name[0];
+        console.log('Name validation error:', nameError);
+
+        // Check if it's a uniqueness error
+        if (nameError.includes('already') || nameError.includes('unique') || nameError.includes('exists') ||
+            nameError.includes('sudah wujud') || nameError.includes('sudah ada')) {
+          showError('Nama capaian ini sudah wujud. Sila gunakan nama lain.', 'Nama Sudah Wujud!');
+        } else {
+          showError(nameError, 'Ralat Nama Capaian');
+        }
+
+        // Update form validation for name field
+        if (editFormValidator) {
+          editFormValidator.updateFieldStatus('name', 'Invalid', 'notEmpty');
+          editFormValidator.updateMessage('name', 'notEmpty', nameError);
+        }
+      }
+
+      // Display validation errors on other form fields
+      for (const field in errors) {
+        if (field !== 'name' && editFormValidator) {
+          const fieldElement = editPermissionForm.querySelector(`[name="${field}"]`);
+          if (fieldElement) {
+            console.log(`Setting error for field: ${field}`, errors[field][0]);
+
+            editFormValidator.updateFieldStatus(field, 'Invalid', 'notEmpty');
+            editFormValidator.updateMessage(field, 'notEmpty', errors[field][0]);
+          }
+        }
+      }
+    } else {
+      // Handle other errors
+      const errorMessage = xhr.responseJSON?.message || 'Ralat berlaku semasa mengemaskini capaian';
+      showError(errorMessage);
+    }
+  }
+
+  // Event handlers for edit buttons
+  $(document).on('click', '.edit-permission', function(e) {
+    e.preventDefault();
+    const permissionId = $(this).data('id');
+    console.log('Edit button clicked for permission ID:', permissionId);
+
+    if (permissionId) {
+      // Initialize form validation if not already done
+      if (!editFormValidator) {
+        console.log('Initializing form validation...');
+        initializeEditFormValidation();
+      }
+
+      // Load permission data
+      loadPermissionData(permissionId);
+
+      // Show the edit offcanvas
+      $('#offcanvasEditPermission').offcanvas('show');
+    } else {
+      showError('ID capaian tidak dijumpai');
+    }
+  });
+
+  // Form submit handler (fallback for manual form submission)
+  $(document).on('submit', '#editPermissionForm', function(e) {
+    e.preventDefault();
+    console.log('Form submitted manually');
+
+    // Check if we have a current permission ID
+    if (currentPermissionId) {
+      updatePermission();
+    } else {
+      showError('ID capaian tidak dijumpai');
+    }
+  });
+
+  // Reset form when offcanvas is closed
+  $('#offcanvasEditPermission').on('hidden.bs.offcanvas', function () {
+    console.log('Edit form container closed, resetting form');
+
+    // Clear form
+    if (editPermissionForm) {
+      editPermissionForm.reset();
+    }
+
+    // Reset form validation
+    if (editFormValidator) {
+      editFormValidator.resetForm();
+    }
+
+    // Clear any validation messages and classes
+    $(editPermissionForm).find('.is-invalid').removeClass('is-invalid');
+    $(editPermissionForm).find('.invalid-feedback').remove();
+    $(editPermissionForm).find('.fv-plugins-message-container').empty();
+
+    // Reset module select field - remove disabled state and styling
+    resetModuleFieldState();
+
+    // Reset current permission ID
+    currentPermissionId = null;
+  });
+
+  // Helper function to reset module field state
+  function resetModuleFieldState() {
+    $('#edit-permission-module').prop('disabled', false);
+    $('#edit-permission-module').removeClass('bg-light text-muted');
+    $('.module-disabled-note').remove();
+
+    // Restore original label text
+    $('label[for="edit-permission-module"]').html('Pilih Modul');
+  }
+
+  // Utility functions
+  function showSuccess(message, title = 'Berjaya!') {
+    if (typeof toastr !== 'undefined') {
+      toastr.success(message, title, {
+        closeButton: true,
+        tapToDismiss: false,
+        progressBar: true,
+        rtl: false
+      });
+    } else {
+      alert(message);
+    }
+  }
+
+  function showError(message, title = 'Ralat!') {
+    if (typeof toastr !== 'undefined') {
+      toastr.error(message, title, {
+        closeButton: true,
+        tapToDismiss: false,
+        progressBar: true,
+        rtl: false,
+        timeOut: 5000
+      });
+    } else {
+      alert('Error: ' + message);
+    }
+  }
+
+  function refreshDataTable() {
+    if ($('.datatables-permissions').length && $('.datatables-permissions').DataTable()) {
+      $('.datatables-permissions').DataTable().ajax.reload();
+    }
+  }
+
+  // Initialize form validation on document ready if form exists
+  if (editPermissionForm) {
+    initializeEditFormValidation();
+  }
+
+  // Global test functions for debugging (can be called from browser console)
+  window.testEditButton = function(permissionId) {
+    if (permissionId) {
+      console.log('Testing edit for permission ID:', permissionId);
+      loadPermissionData(permissionId);
+      $('#offcanvasEditPermission').offcanvas('show');
+    } else {
+      console.log('Available edit buttons:');
+      $('.edit-permission').each(function(index) {
+        console.log(`Button ${index + 1}: data-id=${$(this).data('id')}`);
+      });
+    }
+  };
+
+  window.testEditButtonEvents = function() {
+    const editButtons = $('.edit-permission');
+    console.log('Total edit buttons:', editButtons.length);
+
+    editButtons.each(function(index) {
+      const button = $(this);
+      const events = $._data(this, 'events') || {};
+      console.log(`Button ${index + 1}:`, {
+        'data-id': button.data('id'),
+        'class': button.attr('class'),
+        'events': Object.keys(events)
+      });
+    });
+  };
+
+  console.log('Edit Permission JS initialization completed');
+});

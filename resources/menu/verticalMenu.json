@@ -1,0 +1,143 @@
+{
+  "menu": [
+    {
+      "url": "home",
+      "icon": "menu-icon tf-icons bx bx-home-smile",
+      "name": "Dashboard",
+      "slug": "index"
+
+    },
+    {
+      "url": "tickets",
+      "name": "Log Tiket",
+      "icon": "menu-icon tf-icons bx bx-task",
+      "slug": "ticket"
+    },
+    {
+      "url": "knowledgebase",
+      "icon": "menu-icon icon-base bx bx-book-open",
+      "name": "Knowledge Base",
+      "slug": "knowledgebase-index"
+    },
+    {
+      "url": "report/index",
+      "icon": "menu-icon icon-base bx bx-spreadsheet",
+      "name": "Laporan",
+      "slug": "report-index",
+      "permission": "laporan.view"
+    },
+
+    {
+      "menuHeader": "Pengurusan"
+    },
+
+    {
+      "name": "Pentadbir",
+      "icon": "menu-icon tf-icons bx bx-check-shield",
+      "slug": "acl",
+      "permission": "admin.view",
+      "submenu": [
+        {
+          "name": "Pengurusan Pengguna",
+          "slug": "user-management",
+          "permission": "pengguna.view",
+          "submenu": [
+            {
+              "url": "user-management/index",
+              "name": "Pengguna",
+              "slug": "user-management-index",
+              "permission": "pengguna.view"
+            },
+
+            {
+              "url": "acl/permissions/index",
+              "name": "Modul & Capaian",
+              "slug": "acl-permissions-index",
+              "permission": "capaian.view"
+            },
+            {
+              "url": "acl/roles/index",
+              "name": "Peranan",
+              "slug": "acl-roles-index",
+              "permission": "peranan.view"
+            }
+          ]
+        },
+        {
+          "name": "Konfigurasi",
+          "slug": "configuration",
+          "permission": "konfigurasi.view",
+          "submenu": [
+            {
+              "url": "ref-category-management/index",
+              "name": "Kategori",
+              "slug": "ref-category-management-index",
+              "permission": "konfigurasi.view"
+            },
+            {
+              "url": "ref-sub-category-management/index",
+              "name": "Sub-kategori",
+              "slug": "ref-sub-category-management-index",
+              "permission": "konfigurasi.view"
+            },
+            {
+              "url": "sla-severity/index",
+              "name": "SLA",
+              "slug": "sla-severity-index",
+              "permission": "konfigurasi.view"
+            },
+            {
+              "url": "officer/index",
+              "name": "Pegawai Tugasan",
+              "slug": "officer-index",
+              "permission": "konfigurasi.view"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "menuHeader": "Super Admin"
+    },
+    {
+          "name": "Audit Trail",
+          "slug": "audit-trail",
+          "icon": "menu-icon icon-base bx bx-list-check",
+          "permission" : "konfigurasi.view",
+          "submenu": [
+            {
+              "url": "audit-trail",
+              "name": "Senarai Audit Trail",
+              "slug": "audit-trail-index",
+              "permission": "konfigurasi.view"
+            },
+            {
+              "url": "audit/logs",
+              "name": "Log Keseluruhan",
+              "slug": "log-index",
+              "permission": "konfigurasi.view"
+            }
+          ]
+    },
+
+    {
+      "menuHeader": "#(rujukan developer)"
+    },
+    {
+      "url": "https://themeselection.com/support/",
+      "icon": "menu-icon tf-icons bx bx-support",
+      "name": "Support",
+      "slug": "support",
+      "permission": "admin.view",
+      "target": "_blank"
+    },
+    {
+      "url": "https://themeselection.com/demo/sneat-bootstrap-html-admin-template/documentation/laravel-introduction.html",
+      "icon": "menu-icon tf-icons bx bx-file",
+      "name": "Documentation",
+      "slug": "documentation",
+      "permission": "admin.view",
+      "target": "_blank"
+    }
+  ]
+}
