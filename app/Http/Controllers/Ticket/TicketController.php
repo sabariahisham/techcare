@@ -41,11 +41,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\TicketStatusChangedNotification;
 use Yajra\DataTables\Facades\DataTables;
 use App\Http\Requests\Ticket\StoreTicketRequest;
 use App\Http\Requests\Ticket\UpdateTicketRequest;
 use App\Http\Controllers\Ticket\TicketAttachmentController;
 use App\Http\Controllers\Ticket\TicketChronologyController;
+use App\Helpers\Helpers;
 
 class TicketController extends Controller
 {
@@ -305,6 +307,10 @@ class TicketController extends Controller
         // Generate unique ticket number with retry logic
         $ticketNumber = $this->generateTicketNumber();
 
+        // Calculate due date: created_at + 3 working days (excluding weekends and Malaysian public holidays)
+        $createdAt = Carbon::now();
+        $tickDuedate = Helpers::addWorkingDays($createdAt, 3);
+
         $data = [
           'uuid' => Str::uuid(),
           'ticket_nolog' => $ticketNumber,
@@ -316,7 +322,7 @@ class TicketController extends Controller
           'ticket_desc' => $validated['tick_desc'],
           'ticket_type' => $validated['ticket_type'],
           'tick_status' => $defaultStatus ? $defaultStatus->id : 1,
-          'tick_duedate' => null,
+          'tick_duedate' => $tickDuedate,
           'created_by' => Auth::id(),
         ];
 
@@ -1248,11 +1254,42 @@ class TicketController extends Controller
 
       $chronology = TicketChronology::create($chronologyData);
 
+      // Store old status before update
+      $oldStatus = $ticket->tick_status;
+
       // Update ticket status
       $ticket->update([
         'tick_status' => $request->tick_status,
         'updated_by' => $currentUser->id
       ]);
+
+      // Send status change notification to ticket owner/complainant
+      try {
+        $ticketOwner = $ticket->user;
+        if ($ticketOwner && $ticketOwner->email) {
+          $ticketOwner->notify(new TicketStatusChangedNotification(
+            $ticket,
+            $oldStatus,
+            $request->tick_status,
+            $currentUser,
+            $request->notes
+          ));
+
+          Log::info('Status change notification sent', [
+            'ticket_id' => $ticket->id,
+            'ticket_nolog' => $ticket->ticket_nolog,
+            'old_status' => $oldStatus,
+            'new_status' => $request->tick_status,
+            'sent_to' => $ticketOwner->email
+          ]);
+        }
+      } catch (\Exception $e) {
+        Log::error('Failed to send status change notification', [
+          'ticket_id' => $ticket->id,
+          'error' => $e->getMessage()
+        ]);
+        // Don't fail the status update if notification fails
+      }
 
       // Add notes as comment if provided
       if ($request->notes) {
