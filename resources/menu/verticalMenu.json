@@ -1,10 +1,10 @@
 {
-  "menu": [
+    "menu": [
     {
-      "url": "home",
+      "url": "dashboard",
       "icon": "menu-icon tf-icons bx bx-home-smile",
       "name": "Dashboard",
-      "slug": "index"
+      "slug": "dashboard"
 
     },
     {

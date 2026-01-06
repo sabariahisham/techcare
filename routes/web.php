@@ -26,12 +26,8 @@ use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 
 Route::get('/', function () {
-  if (Auth::check()) {
-    return redirect()->route('dashboard.index'); // Redirect to dashboard if authenticated
-  } else {
-    return view('auth.login');
-  }
-})->middleware(['auth']);
+  return redirect('/dashboard');
+})->middleware('cas.auth');
 
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
   ->middleware(['auth'])
@@ -41,9 +37,19 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
   ->middleware(['auth'])
   ->name('two-factor.login.store');
 
+// CAS Logout Route 123
+Route::get('/cas-logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    
+    // Redirect to SATUID logout
+    return redirect(config('cas.cas_logout_url'));
+})->name('cas.logout');
+
 // Dashboard Routes Group
 Route::middleware([
-  'auth',
+  'cas.auth',
   config('jetstream.auth_session'),
 ])->prefix('dashboard')->name('dashboard.')->group(function () {
   // Main dashboard page
@@ -66,7 +72,7 @@ Route::middleware([
 
 // API Routes for AJAX calls
 Route::prefix('api')->middleware([
-  'auth',
+  'cas.auth',
   config('jetstream.auth_session'),
 ])->group(function () {
   Route::get('/subcategories/{categoryId}', [DashboardController::class, 'getSubcategories'])->name('api.subcategories');
@@ -78,15 +84,15 @@ Route::prefix('api')->middleware([
 });
 
 // Legacy dashboard route (redirect to new grouped route)
-Route::middleware([
-  'auth',
-  config('jetstream.auth_session'),
-])->get('/home', function () {
-  return redirect()->route('dashboard.index');
-})->name('index');
+// Route::middleware([
+//   'auth',
+//   config('jetstream.auth_session'),
+// ])->get('/home', function () {
+//   return redirect()->route('dashboard.index');
+// })->name('home');
 
 // ACL (Access Control List) Routes - Modules only (Users, Roles, Permissions use /admin/* routes below)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['cas.auth'])->group(function () {
   // modules (actively used by JavaScript)
   Route::get('/acl/module-list/index', [ModuleController::class, 'index'])->name('acl-module-list-index');
   Route::get('/modules', [ModuleController::class, 'getModules'])->name('modules.data');
@@ -250,14 +256,14 @@ Route::middleware(['auth'])->group(function () {
     return redirect('/dashboard')->with('impersonate_leave', 'You have stopped impersonating.');
   })->name('impersonate.leave');
 
-  //Route untuk modul audit trail - senarai audit trail
+  //Route untuk audit trail - senarai audit trail
   route::middleware(['auth'])->group(function () {
     Route::get('/audit-trail', [AuditTrailController::class, 'index'])->name('audit.index');
     Route::get('/audit-trail/data', [AuditTrailController::class, 'getAuditData'])->name('audit.data');
     Route::get('/audit-trail/detail/{audit}', [AuditTrailController::class, 'getAuditDetail'])->name('audit.detail');
   });
 
-  //route untuk  modul audit trail -log keseluruhan
+  //route untuk  modul audit trails -log keseluruhan
   Route::prefix('audit/logs')->middleware('auth')->group(function () {
 
     // Senarai fail log harian
@@ -327,6 +333,14 @@ Route::middleware(['auth'])->prefix('ticket-comments')->group(function () {
   Route::get('/{ticket}/data', [TicketCommentController::class, 'getComments'])->name('ticket-comments.data');
 });
 
+// Ticket Assignment Routes Group
+Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
+  Route::post('/{ticket}/assign', [TicketAssignmentController::class, 'assignTicket'])->name('ticket-assignments.assign');
+  Route::get('/{ticket}/assignees', [TicketAssignmentController::class, 'getAssignees'])->name('ticket-assignments.assignees');
+  Route::get('/available-assignees', [TicketAssignmentController::class, 'getAvailableAssignees'])->name('ticket-assignments.available-assignees');
+  Route::get('/available-assignees-by-sla', [TicketAssignmentController::class, 'getAvailableAssigneesBySLA'])->name('ticket-assignments.available-assignees-by-sla');
+});
+
 // Ticket Email Notification Routes Group
 Route::middleware(['auth'])->prefix('ticket-emails')->group(function () {
   Route::post('/send-notification/{ticket}', [TicketEmailController::class, 'sendNotification'])->name('ticket-emails.send-notification');
@@ -341,4 +355,10 @@ Route::middleware(['auth'])->prefix('ticket-sla')->group(function () {
 // Ticket Cron Jobs Routes Group
 Route::middleware(['auth'])->prefix('ticket-cron')->group(function () {
   Route::post('/check-sla', [TicketCronJobController::class, 'checkSla'])->name('ticket-cron.check-sla');
+});
+
+//CAS Protected Routes Group
+Route::middleware('cas.auth')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+    // Add other protected routes here
 });
