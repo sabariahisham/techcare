@@ -27,7 +27,7 @@ use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 
 Route::get('/', function () {
   return redirect('/dashboard');
-})->middleware('cas.auth');
+})->middleware('auth');
 
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
   ->middleware(['auth'])
@@ -37,19 +37,20 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
   ->middleware(['auth'])
   ->name('two-factor.login.store');
 
-// CAS Logout Route 123
-Route::get('/cas-logout', function () {
-    Auth::logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
-    
-    // Redirect to SATUID logout
-    return redirect(config('cas.cas_logout_url'));
-})->name('cas.logout');
+// CAS Logout Route - DISABLED for local development
+// Uncomment this block when deploying to production with SATUID
+// Route::get('/cas-logout', function () {
+//     Auth::logout();
+//     request()->session()->invalidate();
+//     request()->session()->regenerateToken();
+//
+//     // Redirect to SATUID logout
+//     return redirect(config('cas.cas_logout_url'));
+// })->name('cas.logout');
 
 // Dashboard Routes Group
 Route::middleware([
-  'cas.auth',
+  'auth',
   config('jetstream.auth_session'),
 ])->prefix('dashboard')->name('dashboard.')->group(function () {
   // Main dashboard page
@@ -72,7 +73,7 @@ Route::middleware([
 
 // API Routes for AJAX calls
 Route::prefix('api')->middleware([
-  'cas.auth',
+  'auth',
   config('jetstream.auth_session'),
 ])->group(function () {
   Route::get('/subcategories/{categoryId}', [DashboardController::class, 'getSubcategories'])->name('api.subcategories');
@@ -92,7 +93,7 @@ Route::prefix('api')->middleware([
 // })->name('home');
 
 // ACL (Access Control List) Routes - Modules only (Users, Roles, Permissions use /admin/* routes below)
-Route::middleware(['cas.auth'])->group(function () {
+Route::middleware(['auth'])->group(function () {
   // modules (actively used by JavaScript)
   Route::get('/acl/module-list/index', [ModuleController::class, 'index'])->name('acl-module-list-index');
   Route::get('/modules', [ModuleController::class, 'getModules'])->name('modules.data');
@@ -357,8 +358,10 @@ Route::middleware(['auth'])->prefix('ticket-cron')->group(function () {
   Route::post('/check-sla', [TicketCronJobController::class, 'checkSla'])->name('ticket-cron.check-sla');
 });
 
-//CAS Protected Routes Group
-Route::middleware('cas.auth')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-    // Add other protected routes here
-});
+// CAS Protected Routes Group - DISABLED for local development
+// These routes are already covered by the Dashboard Routes Group above
+// Uncomment and use cas.auth when deploying to production with SATUID
+// Route::middleware('cas.auth')->group(function () {
+//     Route::get('/dashboard', [DashboardController::class, 'index']);
+//     // Add other protected routes here
+// });
