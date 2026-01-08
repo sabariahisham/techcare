@@ -27,8 +27,8 @@
     <div class="card mb-4">
         <div class="card-header">
             <div>
-                <h5 class="card-title mb-0">Rekod Log Tiket {{ auth()->user()->nama }}</h5>
-                <p class="text-muted small mb-0">Senarai tiket yang didaftarkan / dicipta / dilaporkan oleh anda</p>
+                <h5 class="card-title mb-0">Tiket Saya -  Dilog oleh :  {{ auth()->user()->nama }}</h5>
+                <p class="text-muted small mb-0">Senarai semua tiket yang dilog oleh anda</p>
             </div>
         </div>
         <div class="card-datatable table-responsive">
@@ -60,16 +60,16 @@
                     @elseif(auth()->user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
                         Tiket Untuk Tindakan ({{ auth()->user()->roles->first()->name }})
                     @elseif(auth()->user()->hasRole('Pegawai Tugasan'))
-                        Tiket Ditugaskan Kepada Saya
+                        Tiket Tugasan Anda - Ditugaskan kepada : {{ auth()->user()->nama }}
                     @endif
                 </h5>
                 <p class="text-muted small mb-0">
                     @if (auth()->user()->hasRole('Administrator'))
-                        Senarai semua tiket yang direkodkan dalam sistem
+                        Paparan keseluruhan tiket yang direkodkan dalam sistem
                     @elseif(auth()->user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
-                        Senarai tiket yang memerlukan pemantauan dan tindakan
+                        Senarai tiket yang memerlukan pemantauan dan tindakan lanjut
                     @elseif(auth()->user()->hasRole('Pegawai Tugasan'))
-                        Senarai tiket yang ditugaskan kepada anda untuk tindakan lanjut 
+                        Senarai tiket yang ditugaskan kepada anda untuk tindakan lanjut
                     @endif
                 </p>
             </div>
