@@ -194,7 +194,7 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-officer-user">Pegawai <span class="text-danger">*</span></label>
+          <label class="form-label" for="add-officer-user">Pegawai Tugasan <span class="text-danger">*</span></label>
           <select class="form-select" id="add-officer-user" name="user_id[]" multiple required>
             @foreach($users as $user)
               <option value="{{ $user->id }}">{{ $user->nama }}</option>
@@ -250,7 +250,7 @@
         </select>
       </div>
       <div class="mb-6">
-        <label class="form-label" for="edit-officer-user">Pegawai <span class="text-danger">*</span></label>
+        <label class="form-label" for="edit-officer-user">Pegawai Tugasan <span class="text-danger">*</span></label>
         <select class="form-select" id="edit-officer-user" name="user_id[]" multiple required>
           @foreach($users as $user)
             <option value="{{ $user->id }}">{{ $user->nama }}</option>
