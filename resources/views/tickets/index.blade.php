@@ -27,7 +27,7 @@
     <div class="card mb-4">
         <div class="card-header">
             <div>
-                <h5 class="card-title mb-0">Tiket Saya -  Dilog oleh :  {{ auth()->user()->nama }}</h5>
+                <h5 class="card-title mb-0">Tiket Saya [<strong class="text-primary">Dilog oleh:  {{ auth()->user()->nama }}</strong>]</h5>
                 <p class="text-muted small mb-0">Senarai semua tiket yang dilog oleh anda</p>
             </div>
         </div>
@@ -56,11 +56,11 @@
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     @if (auth()->user()->hasRole('Administrator'))
-                        Semua Tiket (Administrator)
+                        Semua Tiket (<strong class="text-danger">Administrator</strong>)
                     @elseif(auth()->user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
-                        Tiket Untuk Tindakan ({{ auth()->user()->roles->first()->name }})
+                        Tiket Untuk Tindakan [<strong class="text-warning">{{ auth()->user()->roles->first()->name }}</strong>]
                     @elseif(auth()->user()->hasRole('Pegawai Tugasan'))
-                        Tiket Tugasan Anda - Ditugaskan kepada : {{ auth()->user()->nama }}
+                        Tiket Tugasan Anda [<strong class="text-primary">Ditugaskan kepada: </strong> <strong class="text-primary">{{ auth()->user()->nama }}</strong>]
                     @endif
                 </h5>
                 <p class="text-muted small mb-0">
