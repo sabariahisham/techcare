@@ -188,9 +188,9 @@
           </label>
           <select class="form-select" id="add-officer-level" name="level_tugasan" required>
             <option value="">Pilih Tahap Tugasan</option>
-            <option value="1">Tahap 1 - Rendah</option>
-            <option value="2">Tahap 2 - Sederhana</option>
-            <option value="3">Tahap 3 - Tinggi</option>
+            <option value="1">Tahap 1 </option>
+            <option value="2">Tahap 2 </option>
+            <option value="3">Tahap 3 </option>
           </select>
         </div>
         <div class="mb-6">
@@ -244,9 +244,9 @@
         </label>
         <select class="form-select" id="edit-officer-level" name="level_tugasan" required>
           <option value="">Pilih Tahap Tugasan</option>
-          <option value="1">Tahap 1 - Rendah</option>
-          <option value="2">Tahap 2 - Sederhana</option>
-          <option value="3">Tahap 3 - Tinggi</option>
+          <option value="1">Tahap 1 </option>
+          <option value="2">Tahap 2 </option>
+          <option value="3">Tahap 3 </option>
         </select>
       </div>
       <div class="mb-6">
