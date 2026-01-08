@@ -139,29 +139,29 @@ class TicketController extends Controller
           // View button - always available
           $actions .= '<a class="btn btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat"><i class="bx bx-show text-success"></i></a>';
 
-          // Check if user can edit this ticket
-          $canEdit = false;
-          if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
-            $canEdit = true;
-          } elseif (($ticket->user_id == $user->id || $ticket->created_by == $user->id) && !in_array($ticket->tick_status, [5, 6])) {
-            $canEdit = true;
-          }
+          // Edit button - commented out for "Tiket Saya" section
+          // $canEdit = false;
+          // if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
+          //   $canEdit = true;
+          // } elseif (($ticket->user_id == $user->id || $ticket->created_by == $user->id) && !in_array($ticket->tick_status, [5, 6])) {
+          //   $canEdit = true;
+          // }
+          //
+          // if ($canEdit) {
+          //   $actions .= '<a class="btn btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
+          // }
 
-          if ($canEdit) {
-            $actions .= '<a class="btn btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
-          }
-
-          // Check if user can delete this ticket
-          $canDelete = false;
-          if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk'])) {
-            $canDelete = true;
-          } elseif ($ticket->created_by == $user->id && $ticket->tick_status == 1) {
-            $canDelete = true;
-          }
-
-          if ($canDelete) {
-            $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
-          }
+          // Delete button - commented out for "Tiket Saya" section
+          // $canDelete = false;
+          // if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk'])) {
+          //   $canDelete = true;
+          // } elseif ($ticket->created_by == $user->id && $ticket->tick_status == 1) {
+          //   $canDelete = true;
+          // }
+          //
+          // if ($canDelete) {
+          //   $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
+          // }
 
           $actions .= '</div>';
           return $actions;
@@ -440,8 +440,16 @@ class TicketController extends Controller
       ], 403);
     }
 
-    // Load ticket with relationships
-    $ticket->load(['user', 'category', 'subCategory', 'status', 'attachments']);
+    // Load ticket with relationships including additional user fields
+    $ticket->load(['user.skim', 'category', 'subCategory', 'status', 'attachments']);
+
+    // Enhance user data with additional fields
+    if ($ticket->user) {
+      $ticket->user->jawatan_name = $ticket->user->jawatan_name ?? '-';
+      $ticket->user->kod_skim = $ticket->user->kod_skim ?? '-';
+      $ticket->user->nama_skim = $ticket->user->skim?->nama_skim ?? null;
+      $ticket->user->nama_gred = $ticket->user->nama_gred ?? '-';
+    }
 
     // Get categories and subcategories
     $categories = RefCategory::all();
@@ -510,6 +518,15 @@ class TicketController extends Controller
 
     if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
       $canEdit = true;
+    } elseif ($user->hasRole('Pegawai Tugasan')) {
+      // Pegawai Tugasan can only edit if assigned to this ticket
+      $isAssigned = $ticket->chronologies()
+        ->where('escalate_to', $user->id)
+        ->where('tick_status', $ticket->tick_status)
+        ->exists();
+      if ($isAssigned) {
+        $canEdit = true;
+      }
     } elseif ($ticket->user_id == $user->id || $ticket->created_by == $user->id) {
       if (!in_array($ticket->tick_status, [3, 4])) {
         $canEdit = true;

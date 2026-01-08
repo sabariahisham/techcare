@@ -17,13 +17,19 @@
             @csrf
 
             <input type="hidden" id="editTicketId" name="ticket_id">
-            <input type="hidden" name="_method" value="PUT"> <!-- Jenis Aduan -->
+            <input type="hidden" name="_method" value="PUT">
+
+            <!-- Jenis Aduan - Disabled for edit -->
             <div class="mb-3">
                 <label class="form-label">Jenis Aduan</label>
-                <select id="editTicketType" name="ticket_type" class="form-select" required>
+                <select id="editTicketType" name="ticket_type" class="form-select" disabled>
                     <option value="1">Diri Sendiri</option>
                     <option value="0">Bagi Pihak</option>
                 </select>
+                <input type="hidden" id="editTicketTypeHidden" name="ticket_type">
+                <small class="text-muted d-block mt-1">
+                    <i class="bx bx-info-circle"></i> Jenis aduan tidak boleh diubah selepas tiket dicipta
+                </small>
             </div>
 
             <!-- Auto papar jika Diri Sendiri -->

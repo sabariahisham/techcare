@@ -226,6 +226,7 @@ $(function () {
     $('#editTicketTitle').val(ticket.ticket_title);
     $('#editTicketDesc').val(ticket.ticket_desc);
     $('#editTicketType').val(ticket.ticket_type);
+    $('#editTicketTypeHidden').val(ticket.ticket_type); // Set hidden input for form submission
     $('#editNoSiri').val(ticket.serial_number);
 
     // Populate categories dropdown
@@ -260,10 +261,32 @@ $(function () {
       populateEditOtherUserData(ticket.user);
       $('#editFoundUserInfo').show();
       $('#editTicketFormFields').show();
+    } else if (ticket.ticket_type == 1 && ticket.user) {
+      // Diri Sendiri - populate authenticated user data in self info section
+      populateEditSelfUserData(ticket.user);
     }
 
     // Display existing attachments if any
     displayExistingAttachments(ticket.attachments || []);
+  }
+
+  // Populate self user data for "Diri Sendiri" tickets
+  function populateEditSelfUserData(user) {
+    // Update the self info fields with actual ticket owner data
+    $('#editSelfInfo input[name="name"]').val(user.nama || '');
+    $('#editSelfInfo input[name="jawatan"]').val(user.jawatan_name || '-');
+
+    // Handle skim display
+    var skimDisplay = '-';
+    if (user.nama_skim && user.kod_skim) {
+      skimDisplay = user.nama_skim + ' (' + user.kod_skim + ')';
+    } else if (user.kod_skim) {
+      skimDisplay = user.kod_skim;
+    }
+    $('#editSelfInfo input[name="skim"]').val(skimDisplay);
+
+    $('#editSelfInfo input[name="gred"]').val(user.nama_gred || '-');
+    $('#editSelfInfo input[name="email"]').val(user.email || '');
   }
 
   // Populate other user data for \"Bagi Pihak\" tickets
