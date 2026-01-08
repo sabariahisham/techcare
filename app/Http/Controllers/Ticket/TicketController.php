@@ -249,15 +249,29 @@ class TicketController extends Controller
           // Manage button - for helpdesk staff
           $actions .= '<a class="btn btn-sm manage-ticket" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus"><i class="bx bx-cog text-primary"></i></a>';
 
-          // Admin and helpdesk can edit any ticket
-          if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
+          // Admin can edit any ticket
+          $canEdit = false;
+          if ($user->hasRole('Administrator')) {
+            $canEdit = true;
+          } elseif ($user->hasRole('Pegawai Tugasan')) {
+            // Pegawai Tugasan can only edit if assigned to this ticket
+            $isAssigned = $ticket->chronologies()
+              ->where('escalate_to', $user->id)
+              ->where('tick_status', $ticket->tick_status)
+              ->exists();
+            if ($isAssigned) {
+              $canEdit = true;
+            }
+          }
+
+          if ($canEdit) {
             $actions .= '<a class="btn btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
           }
 
           // Only Administrator and higher level roles can delete
-          if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk'])) {
-            $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
-          }
+          // if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem'])) {
+          //   $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
+          // }
 
           $actions .= '</div>';
           return $actions;
@@ -403,6 +417,15 @@ class TicketController extends Controller
     // Check if user can edit this ticket
     if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
       $canEdit = true;
+    } elseif ($user->hasRole('Pegawai Tugasan')) {
+      // Pegawai Tugasan can only edit if assigned to this ticket
+      $isAssigned = $ticket->chronologies()
+        ->where('escalate_to', $user->id)
+        ->where('tick_status', $ticket->tick_status)
+        ->exists();
+      if ($isAssigned) {
+        $canEdit = true;
+      }
     } elseif ($ticket->user_id == $user->id || $ticket->created_by == $user->id) {
       // Only allow editing if ticket is not closed/completed
       if (!in_array($ticket->tick_status, [3, 4])) {

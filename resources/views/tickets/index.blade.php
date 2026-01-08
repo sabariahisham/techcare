@@ -27,8 +27,8 @@
     <div class="card mb-4">
         <div class="card-header">
             <div>
-                <h5 class="card-title mb-0">Tiket Saya</h5>
-                <p class="text-muted small mb-0">Senarai tiket yang berkaitan dengan {{ auth()->user()->nama }}</p>
+                <h5 class="card-title mb-0">Rekod Log Tiket {{ auth()->user()->nama }}</h5>
+                <p class="text-muted small mb-0">Senarai tiket yang didaftarkan / dicipta / dilaporkan oleh anda</p>
             </div>
         </div>
         <div class="card-datatable table-responsive">
@@ -58,18 +58,18 @@
                     @if (auth()->user()->hasRole('Administrator'))
                         Semua Tiket (Administrator)
                     @elseif(auth()->user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
-                        Tiket untuk Diurus ({{ auth()->user()->roles->first()->name }})
+                        Tiket Untuk Tindakan ({{ auth()->user()->roles->first()->name }})
                     @elseif(auth()->user()->hasRole('Pegawai Tugasan'))
-                        Tiket Tugasan Saya
+                        Tiket Ditugaskan Kepada Saya
                     @endif
                 </h5>
                 <p class="text-muted small mb-0">
                     @if (auth()->user()->hasRole('Administrator'))
-                        Senarai semua tiket dalam sistem
+                        Senarai semua tiket yang direkodkan dalam sistem
                     @elseif(auth()->user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
-                        Senarai semua tiket untuk diproses dan diurus
+                        Senarai tiket yang memerlukan pemantauan dan tindakan
                     @elseif(auth()->user()->hasRole('Pegawai Tugasan'))
-                        Senarai tiket yang diserahkan kepada anda
+                        Senarai tiket yang ditugaskan kepada anda untuk tindakan lanjut 
                     @endif
                 </p>
             </div>

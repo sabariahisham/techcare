@@ -339,7 +339,37 @@
                 </div>
             </div>
 
-            @if (auth()->user()->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty', 'Pegawai Tugasan']))
+            @php
+                // Get currently assigned officers from latest chronologies for permission check
+                $assignedOfficerIdsForPermission = $ticket
+                    ->chronologies()
+                    ->whereNotNull('escalate_to')
+                    ->where('tick_status', $ticket->tick_status)
+                    ->latest()
+                    ->pluck('escalate_to')
+                    ->toArray();
+
+                // Check if user can see this section
+                $canSeeTindakanPegawai = false;
+
+                // Admins, Pentadbir Sistem, Penyelia Helpdesk, and Helpdesk On Duty can always see
+                if (
+                    auth()
+                        ->user()
+                        ->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])
+                ) {
+                    $canSeeTindakanPegawai = true;
+                }
+                // Pegawai Tugasan can only see if they are assigned to this ticket
+                elseif (
+                    auth()->user()->hasRole('Pegawai Tugasan') &&
+                    in_array(auth()->user()->id, $assignedOfficerIdsForPermission)
+                ) {
+                    $canSeeTindakanPegawai = true;
+                }
+            @endphp
+
+            @if ($canSeeTindakanPegawai)
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
@@ -425,11 +455,11 @@
 
                                     <select class="form-select" name="sla_severity" id="sla_severity">
                                         <option value="">Pilih Tahap Severity</option>
-                                        <option value="High" {{ $currentSeverity === 'High' ? 'selected' : '' }}>Tinggi
+                                        <option value="High" {{ $currentSeverity === 'High' ? 'selected' : '' }}>High
                                         </option>
                                         <option value="Medium" {{ $currentSeverity === 'Medium' ? 'selected' : '' }}>
-                                            Sederhana</option>
-                                        <option value="Low" {{ $currentSeverity === 'Low' ? 'selected' : '' }}>Rendah
+                                            Medium</option>
+                                        <option value="Low" {{ $currentSeverity === 'Low' ? 'selected' : '' }}>Low
                                         </option>
                                     </select>
 
@@ -570,10 +600,10 @@ $filteredOfficers = $officersQuery
                             <hr>
                             <div class="row mt-6 mb-1">
                                 <div class="col-sm">
-                                    <button type="button" class="btn btn-warning btn-sm "
+                                    {{-- <button type="button" class="btn btn-warning btn-sm "
                                         onclick="$('#commentModal').modal('show')">
                                         <i class="bx bx-message me-3"></i>Komen
-                                    </button>
+                                    </button> --}}
                                     <button type="submit" class="btn btn-primary btn-sm float-end">
                                         <i class="bx bx-save me-1"></i>Kemaskini
                                     </button>
