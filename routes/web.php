@@ -48,6 +48,28 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
 //     return redirect(config('cas.cas_logout_url'));
 // })->name('cas.logout');
 
+// Session Management Routes (for session timeout handling)
+Route::middleware(['auth', config('jetstream.auth_session')])->group(function () {
+  // Ping endpoint to extend session and check authentication status
+  Route::post('/session/ping', function () {
+    return response()->json([
+      'authenticated' => Auth::check(),
+      'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
+      'timestamp' => now()->toISOString()
+    ]);
+  })->name('session.ping');
+
+  // Check session status without extending
+  Route::get('/session/check', function () {
+    $user = Auth::user();
+    return response()->json([
+      'authenticated' => Auth::check(),
+      'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
+      'timestamp' => now()->toISOString()
+    ]);
+  })->name('session.check');
+});
+
 // Dashboard Routes Group
 Route::middleware([
   'auth',
