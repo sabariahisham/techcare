@@ -16,6 +16,14 @@
 @vite(['resources/assets/js/main.js'])
 
 <!-- END: Theme JS-->
+
+<!-- BEGIN: Session Timeout Handler -->
+@include('_partials._session-config')
+@auth
+@vite(['resources/assets/js/session-timeout.js'])
+@endauth
+<!-- END: Session Timeout Handler -->
+
 <!-- Pricing Modal JS-->
 @stack('pricing-script')
 <!-- END: Pricing Modal JS-->
