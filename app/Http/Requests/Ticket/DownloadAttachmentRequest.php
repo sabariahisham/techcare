@@ -24,7 +24,7 @@ class DownloadAttachmentRequest extends FormRequest
       return false;
     }
 
-    $documentId = $this->route('documentId');
+    $documentId = $this->route('document');
     $document = Document::where('id', $documentId)
       ->where('doc_jenis', 'TICKET')
       ->first();
@@ -39,11 +39,30 @@ class DownloadAttachmentRequest extends FormRequest
       return false;
     }
 
-    // Allow download if user is admin, helpdesk, ticket owner, assignee, or attachment creator
-    return $user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']) ||
-      $ticket->user_id == $user->id ||
-      $ticket->pegtugas_id == $user->id ||
-      $document->created_by == $user->id;
+    // Allow download if user is admin, helpdesk, ticket owner, or attachment creator
+    // Also check if user is assigned to the ticket (via chronologies)
+    if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
+      return true;
+    }
+
+    if ($ticket->user_id == $user->id) {
+      return true;
+    }
+
+    if ($document->created_by == $user->id) {
+      return true;
+    }
+
+    // Check if user is assigned to this ticket via chronologies
+    $isAssigned = $ticket->chronologies()
+      ->where('escalate_to', $user->id)
+      ->exists();
+
+    if ($isAssigned) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
