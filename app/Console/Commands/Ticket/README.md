@@ -1,7 +1,7 @@
 # Test Ticket Scripts - Usage Guide
 
 ## 📂 Location
-All test scripts are located in: `resources/views/tickets/test-ticket/`
+All test scripts are located in: `Console/Commands/Ticket/`
 
 ## 📝 Available Scripts
 
@@ -10,7 +10,7 @@ Creates a test ticket with due date tomorrow for testing email reminders.
 
 **Run:**
 ```bash
-php resources/views/tickets/test-ticket/create-test-ticket.php
+php Console/Commands/Ticket/create-test-ticket.php
 ```
 
 **What it does:**
@@ -27,7 +27,7 @@ Verifies the ticket reminder system is working correctly.
 
 **Run:**
 ```bash
-php resources/views/tickets/test-ticket/test-ticket-reminder.php
+php Console/Commands/Ticket/test-ticket-reminder.php
 ```
 
 **What it does:**
@@ -43,7 +43,7 @@ Tests status change notifications for all ticket statuses.
 
 **Run:**
 ```bash
-php resources/views/tickets/test-ticket/test-status-notification.php
+php Console/Commands/Ticket/test-status-notification.php
 ```
 
 **What it does:**
@@ -68,10 +68,10 @@ php resources/views/tickets/test-ticket/test-status-notification.php
 ### Test Email Reminder System:
 ```bash
 # Step 1: Create test ticket
-php resources/views/tickets/test-ticket/create-test-ticket.php
+php Console/Commands/Ticket/create-test-ticket.php
 
 # Step 2: Verify ticket setup
-php resources/views/tickets/test-ticket/test-ticket-reminder.php
+php Console/Commands/Ticket/test-ticket-reminder.php
 
 # Step 3: Send reminder email
 php artisan tickets:send-duedate-reminders
@@ -80,7 +80,7 @@ php artisan tickets:send-duedate-reminders
 ### Test Status Change Notifications:
 ```bash
 # Run interactive test
-php resources/views/tickets/test-ticket/test-status-notification.php
+php Console/Commands/Ticket/test-status-notification.php
 ```
 
 ---
