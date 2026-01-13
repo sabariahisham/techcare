@@ -62,30 +62,56 @@ class TicketAttachmentController extends Controller
           // Store file with the new naming convention
           $path = $file->storeAs('ticket_attachments', $storageFileName, 'public');
 
-          // Create document record
-          $document = Document::create([
-            'doc_id' => $request->ticket_id,
-            'uuid' => Str::uuid(),
-            'doc_mime' => $file->getMimeType(),
-            'doc_name' => $originalName,
-            'doc_storage_nm' => $storageFileName,
-            'doc_jenis' => 'TICKET',
-            'created_by' => Auth::id(),
-            'updated_by' => Auth::id(),
+          Log::info('File saved to storage', [
+            'path' => $path,
+            'storage_filename' => $storageFileName,
+            'ticket_id' => $request->ticket_id
           ]);
 
-          // Store the first document ID to update ticket
-          if ($firstDocumentId === null) {
-            $firstDocumentId = $document->id;
-          }
+          // Create document record
+          try {
+            $document = Document::create([
+              'doc_id' => $request->ticket_id,
+              'uuid' => Str::uuid(),
+              'doc_mime' => $file->getMimeType(),
+              'doc_name' => $originalName,
+              'doc_storage_nm' => $storageFileName,
+              'doc_jenis' => 'TICKET',
+              'created_by' => Auth::id(),
+              'updated_by' => Auth::id(),
+            ]);
 
-          $uploadedFiles[] = [
-            'id' => $document->id,
-            'name' => $originalName,
-            'storage_name' => $storageFileName,
-            'size' => $file->getSize(),
-            'type' => $file->getMimeType()
-          ];
+            Log::info('Document record created', [
+              'document_id' => $document->id,
+              'doc_name' => $originalName,
+              'doc_storage_nm' => $storageFileName
+            ]);
+
+            // Store the first document ID to update ticket
+            if ($firstDocumentId === null) {
+              $firstDocumentId = $document->id;
+            }
+
+            $uploadedFiles[] = [
+              'id' => $document->id,
+              'name' => $originalName,
+              'storage_name' => $storageFileName,
+              'size' => $file->getSize(),
+              'type' => $file->getMimeType()
+            ];
+          } catch (\Exception $docException) {
+            Log::error('Failed to create document record', [
+              'ticket_id' => $request->ticket_id,
+              'storage_filename' => $storageFileName,
+              'error' => $docException->getMessage(),
+              'trace' => $docException->getTraceAsString()
+            ]);
+
+            // Delete the file from storage if database insert fails
+            Storage::delete('public/ticket_attachments/' . $storageFileName);
+
+            throw $docException; // Re-throw to be caught by outer try-catch
+          }
         }
       }
 
@@ -247,7 +273,7 @@ class TicketAttachmentController extends Controller
    *
    * @param \App\Http\Requests\Ticket\DownloadAttachmentRequest $request
    * @param string $documentId
-   * @return \Illuminate\Http\Response
+   * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
    */
   public function download(DownloadAttachmentRequest $request, $documentId)
   {
@@ -256,15 +282,30 @@ class TicketAttachmentController extends Controller
       ->where('doc_jenis', 'TICKET')
       ->firstOrFail();
 
-    $filePath = storage_path('app/public/ticket_attachments/' . $document->doc_storage_nm);
+    $storagePath = 'public/ticket_attachments/' . $document->doc_storage_nm;
 
-    if (!file_exists($filePath)) {
+    if (!Storage::exists($storagePath)) {
       abort(404, 'Fail tidak dijumpai');
     }
 
-    return response()->download($filePath, $document->doc_name, [
-      'Content-Type' => $document->doc_mime,
-    ]);
+    // Get the full path from storage
+    $filePath = Storage::path($storagePath);
+
+    // Check if user wants to view inline (in browser) or download
+    $isView = $request->query('view') === '1' || $request->query('view') === 1;
+
+    if ($isView) {
+      // Return file for inline viewing in browser
+      return response()->file($filePath, [
+        'Content-Type' => $document->doc_mime,
+        'Content-Disposition' => 'inline; filename="' . $document->doc_name . '"'
+      ]);
+    } else {
+      // Return file as download
+      return response()->download($filePath, $document->doc_name, [
+        'Content-Type' => $document->doc_mime,
+      ]);
+    }
   }
 
   /**
@@ -314,21 +355,46 @@ class TicketAttachmentController extends Controller
         // Store file with the new naming convention
         $path = $file->storeAs('ticket_attachments', $storageFileName, 'public');
 
-        // Create document record
-        $document = Document::create([
-          'doc_id' => $ticketId,
-          'uuid' => Str::uuid(),
-          'doc_mime' => $file->getMimeType(),
-          'doc_name' => $originalName,
-          'doc_storage_nm' => $storageFileName,
-          'doc_jenis' => 'TICKET',
-          'created_by' => Auth::id(),
-          'updated_by' => Auth::id(),
+        Log::info('Attachment file stored', [
+          'ticket_id' => $ticketId,
+          'storage_path' => $path,
+          'storage_filename' => $storageFileName,
+          'original_name' => $originalName
         ]);
 
-        // Store the first document ID to update ticket
-        if ($firstDocumentId === null) {
-          $firstDocumentId = $document->id;
+        // Create document record
+        try {
+          $document = Document::create([
+            'doc_id' => $ticketId,
+            'uuid' => Str::uuid(),
+            'doc_mime' => $file->getMimeType(),
+            'doc_name' => $originalName,
+            'doc_storage_nm' => $storageFileName,
+            'doc_jenis' => 'TICKET',
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
+          ]);
+
+          Log::info('Attachment document record created', [
+            'document_id' => $document->id,
+            'ticket_id' => $ticketId,
+            'doc_storage_nm' => $storageFileName
+          ]);
+
+          // Store the first document ID to update ticket
+          if ($firstDocumentId === null) {
+            $firstDocumentId = $document->id;
+          }
+        } catch (\Exception $e) {
+          Log::error('Failed to create attachment document record', [
+            'ticket_id' => $ticketId,
+            'storage_filename' => $storageFileName,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+          ]);
+
+          // Don't throw exception, just log it and continue with other files
+          // The file is already stored, so the issue is with database only
         }
       }
     }

@@ -444,9 +444,9 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
     filesPreview.innerHTML = '';
     clearValidationError();
 
-    if (fileCount > 0) {
-      showToastr.info(`Semua fail (${fileCount}) telah dibuang`);
-    }
+    // if (fileCount > 0) {
+    //   showToastr.info(`Semua fail (${fileCount}) telah dibuang`);
+    // }
   }
 
   // Make removeAllAttachments globally accessible with unique names
@@ -526,7 +526,10 @@ function displayExistingAttachments(attachments) {
       attachmentsList += '<div class="attachment-size">' + formatFileSize(attachment.doc_size) + '</div>';
       attachmentsList += '</div>';
       attachmentsList += '<div class="attachment-actions">';
-      attachmentsList += '<a href="' + attachment.doc_url + '" class="btn btn-sm btn-outline-primary btn-attachment" target="_blank">';
+      attachmentsList += '<a href="' + attachment.doc_url + '?view=1" class="btn btn-sm btn-outline-info btn-attachment" target="_blank" title="Lihat">';
+      attachmentsList += '<i class="bx bx-show"></i> Lihat';
+      attachmentsList += '</a>';
+      attachmentsList += '<a href="' + attachment.doc_url + '" class="btn btn-sm btn-outline-primary btn-attachment" target="_blank" title="Muat Turun">';
       attachmentsList += '<i class="bx bx-download"></i> Muat Turun';
       attachmentsList += '</a>';
       attachmentsList += '<button type="button" class="btn btn-sm btn-outline-danger btn-attachment delete-attachment" data-id="' + attachment.id + '">';

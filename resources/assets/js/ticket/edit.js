@@ -58,7 +58,7 @@ $(function () {
 
     // Add conditional required fields based on ticket type
     var ticketType = $('#editTicketType').val();
-    if (ticketType == '0') {
+    if (ticketType == '2') {
       // Bagi Pihak - require other_email
       requiredFields.push({ name: 'other_email', label: 'Emel pengadu' });
     }
@@ -72,7 +72,7 @@ $(function () {
     });
 
     // Validate email format if provided
-    var emailField = ticketType == '0' ? 'other_email' : 'email';
+    var emailField = ticketType == '2' ? 'other_email' : 'email';
     var emailValue = $('#editTicketForm [name="' + emailField + '"]').val();
     if (emailValue && !isValidEmail(emailValue)) {
       errors[emailField] = ['Format emel tidak sah.'];
@@ -219,6 +219,11 @@ $(function () {
 
   // Populate edit form with ticket data
   function populateEditForm(ticket, categories, subCategories) {
+    // Reset attachments before populating form
+    $('#editTicketAttachments').val(''); // Clear file input
+    window.editSelectedAttachments = []; // Reset global array
+    $('#editAttachmentsPreview').empty(); // Clear preview
+
     // Set ticket ID
     $('#editTicketId').val(ticket.id);
 
@@ -256,10 +261,9 @@ $(function () {
     }
 
     // Populate user data based on ticket type
-    if (ticket.ticket_type == 0 && ticket.user) {
+    if (ticket.ticket_type == 2 && ticket.user) {
       // Bagi Pihak - populate other user data
       populateEditOtherUserData(ticket.user);
-      $('#editFoundUserInfo').show();
       $('#editTicketFormFields').show();
     } else if (ticket.ticket_type == 1 && ticket.user) {
       // Diri Sendiri - populate authenticated user data in self info section
@@ -289,10 +293,22 @@ $(function () {
     $('#editSelfInfo input[name="email"]').val(user.email || '');
   }
 
-  // Populate other user data for \"Bagi Pihak\" tickets
+  // Populate other user data for "Bagi Pihak" tickets
   function populateEditOtherUserData(user) {
-    $('#editOtherName').val(user.nama);
-    $('#editOtherEmail').val(user.email);
+    $('#editOtherName').val(user.nama || '');
+    $('#editOtherJawatan').val(user.jawatan_name || '-');
+
+    // Handle skim display
+    var skimDisplay = '-';
+    if (user.nama_skim && user.kod_skim) {
+      skimDisplay = user.nama_skim + ' (' + user.kod_skim + ')';
+    } else if (user.kod_skim) {
+      skimDisplay = user.kod_skim;
+    }
+    $('#editOtherSkim').val(skimDisplay);
+
+    $('#editOtherGred').val(user.nama_gred || '-');
+    $('#editOtherEmail').val(user.email || '');
   }
 
   // Handle ticket type change for edit form
@@ -303,17 +319,10 @@ $(function () {
   function handleEditTicketTypeChange() {
     var ticketType = $('#editTicketType').val();
 
-    if (ticketType == '0') {
+    if (ticketType == '2') {
       $('#editSelfInfo').addClass('d-none');
       $('#editOtherInfo').removeClass('d-none');
-
-      // Check if user is already selected
-      var otherEmail = $('#editOtherEmail').val();
-      if (otherEmail) {
-        $('#editTicketFormFields').removeClass('d-none');
-      } else {
-        $('#editTicketFormFields').addClass('d-none');
-      }
+      $('#editTicketFormFields').removeClass('d-none');
     } else {
       $('#editSelfInfo').removeClass('d-none');
       $('#editOtherInfo').addClass('d-none');
@@ -455,7 +464,10 @@ $(function () {
     // Clear validation errors
     clearValidationErrors();
 
-    // Clear attachment files
+    // Clear attachment files and reset global array
+    $('#editTicketAttachments').val(''); // Clear file input
+    window.editSelectedAttachments = []; // Reset global array
+
     if (window.removeAllEditAttachments) {
       window.removeAllEditAttachments();
     }
@@ -482,11 +494,12 @@ $(function () {
 
     var formData = new FormData(this);
 
-    // Add selected attachments to form data
-    if (selectedAttachments.length > 0) {
-      // Remove existing attachment entries to avoid duplication
-      formData.delete('attachments[]');
+    // Always remove existing attachment entries from FormData to avoid conflicts
+    // between file input and managed attachments array
+    formData.delete('attachments[]');
 
+    // Add selected attachments to form data (only from our managed array)
+    if (selectedAttachments.length > 0) {
       selectedAttachments.forEach(function (file, index) {
         formData.append('attachments[]', file);
       });
