@@ -58,7 +58,7 @@ class TicketSearchController extends Controller
         // Show all "bagi pihak" tickets where I'm involved:
         // 1. Tickets I created on behalf of others (I'm Wakil)
         // 2. Tickets others created on behalf of me (I'm Pengadu)
-        $query->where('ticket_type', 0)
+        $query->where('ticket_type', 2)
           ->where(function ($q) use ($user) {
             $q->where('created_by', $user->id) // I created for others (Wakil)
               ->orWhere('user_id', $user->id); // Others created for me (Pengadu)
@@ -410,38 +410,15 @@ class TicketSearchController extends Controller
 
     $query = $request->input('query');
 
-    // Search for users primarily by name (with some email support for edge cases)
-    $users = User::select('id', 'nama', 'email')
-      ->where(function ($q) use ($query) {
-        // Primary search: by name (case insensitive)
-        $q->where('nama', 'like', '%' . $query . '%');
-        // Secondary search: by email username part (before @)
-        $q->orWhere('email', 'like', $query . '%@%');
-      })
+    // Search for users by name, excluding the current user
+    $users = User::select('id', 'nama', 'email', 'kod_sektor', 'kod_bah')
+      ->where('nama', 'like', '%' . $query . '%')
       ->where('id', '!=', Auth::id()) // Exclude current user
       ->whereNotNull('nama') // Ensure nama is not null
       ->where('nama', '!=', '') // Ensure nama is not empty
-      ->where('nama', 'not like', '%@%') // Exclude email-like names
       ->orderBy('nama', 'asc') // Order by name alphabetically
-      ->limit(8) // Limit results to prevent too many options
+      ->limit(10) // Limit results to prevent too many options
       ->get()
-      ->filter(function ($user) {
-        // Additional filtering: exclude names that are just initials or codes
-        $name = trim($user->nama);
-
-        // Skip if name is just 1-2 characters (likely initials)
-        if (strlen($name) <= 2) {
-          return false;
-        }
-
-        // Skip if name contains only uppercase letters and spaces (likely codes)
-        if (preg_match('/^[A-Z\s]+$/', $name) && strlen($name) <= 5) {
-          return false;
-        }
-
-        return true;
-      })
-      ->values() // Reset array keys
       ->map(function ($user) {
         return [
           'id' => $user->id,

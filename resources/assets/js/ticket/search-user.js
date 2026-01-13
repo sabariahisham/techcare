@@ -79,7 +79,7 @@ $(function () {
     searchBtn.prop('disabled', true);
 
     // Use name-based search endpoint
-    var searchUrl = fromAutocomplete ? '/search-user-by-email' : '/search-user-by-name';
+    var searchUrl = fromAutocomplete ? '/ticket-search/user-by-email' : '/ticket-search/user-by-name';
     var searchField = fromAutocomplete ? 'email' : 'name';
     var searchData = {
       _token: $('meta[name="csrf-token"]').attr('content')
@@ -283,7 +283,7 @@ $(function () {
     showAutocompleteLoading();
 
     $.ajax({
-      url: '/search-user-autocomplete',
+      url: '/ticket-search/user-autocomplete',
       type: 'POST',
       data: {
         query: query,

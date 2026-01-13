@@ -302,6 +302,11 @@
                                                         Dimuat naik: {{ $attachment->created_at->format('d M Y, H:i') }}
                                                     </small>
                                                 </div>
+                                                <a href="{{ route('ticket-attachments.download', ['document' => $attachment->id, 'view' => 1]) }}"
+                                                    class="btn btn-sm btn-outline-info me-1" data-bs-toggle="tooltip"
+                                                    title="Lihat {{ $attachment->doc_name }}" target="_blank">
+                                                    <i class="bx bx-show"></i>
+                                                </a>
                                                 <a href="{{ route('ticket-attachments.download', $attachment->id) }}"
                                                     class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip"
                                                     title="Muat turun {{ $attachment->doc_name }}">
@@ -347,6 +352,7 @@
                     ->where('tick_status', $ticket->tick_status)
                     ->latest()
                     ->pluck('escalate_to')
+                    ->unique()
                     ->toArray();
 
                 // Check if user can see this section
@@ -435,32 +441,11 @@
                                     <h6 class="mb-0">Tahap Severity</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    @php
-                                        // Get current severity from chronologies - same logic as display section
-                                        $currentSeverity =
-                                            $ticket
-                                                ->chronologies()
-                                                ->where('tick_status', $ticket->tick_status)
-                                                ->whereNull('escalate_to')
-                                                ->latest()
-                                                ->first()?->sla_severity ?? '';
-
-                                        // If no severity for current status, try any recent chronology
-                                        if (!$currentSeverity) {
-                                            $currentSeverity =
-                                                $ticket->chronologies()->whereNotNull('sla_severity')->latest()->first()
-                                                    ?->sla_severity ?? '';
-                                        }
-                                    @endphp
-
                                     <select class="form-select" name="sla_severity" id="sla_severity">
                                         <option value="">Pilih Tahap Severity</option>
-                                        <option value="High" {{ $currentSeverity === 'High' ? 'selected' : '' }}>High
-                                        </option>
-                                        <option value="Medium" {{ $currentSeverity === 'Medium' ? 'selected' : '' }}>
-                                            Medium</option>
-                                        <option value="Low" {{ $currentSeverity === 'Low' ? 'selected' : '' }}>Low
-                                        </option>
+                                        <option value="High">High</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="Low">Low</option>
                                     </select>
 
                                     <small class="text-muted d-block mt-1">Tahap severity akan dipaparkan berdasarkan
@@ -482,6 +467,7 @@
                                                 ->where('tick_status', $ticket->tick_status)
                                                 ->latest()
                                                 ->pluck('escalate_to')
+                                                ->unique()
                                                 ->toArray();
 
                                             // Keep original assigned officers for dropdown selection
@@ -564,6 +550,7 @@ $filteredOfficers = $officersQuery
                                             ->where('tick_status', $ticket->tick_status)
                                             ->latest()
                                             ->pluck('escalate_to')
+                                            ->unique()
                                             ->toArray();
 
                                         // Only show actually assigned officers from database, no fallback to current user
@@ -575,6 +562,7 @@ $filteredOfficers = $officersQuery
                                                 ->whereIn('officers.user_id', $currentAssignedOfficerIds)
                                                 ->whereNull('officers.deleted_at')
                                                 ->pluck('users.nama')
+                                                ->unique()
                                                 ->toArray();
                                         }
 
@@ -1719,16 +1707,6 @@ $timelineItems = $timelineItems
             const severitySelect = document.querySelector('#sla_severity');
             const assignedOfficersSelect = document.querySelector('#assigned_officers');
 
-            // Set severity dropdown value explicitly to ensure it displays correctly
-            const currentSeverityValue = '{{ $currentSeverity ?? '' }}';
-            if (severitySelect && currentSeverityValue) {
-                console.log('Setting severity dropdown to:', currentSeverityValue);
-                setTimeout(() => {
-                    severitySelect.value = currentSeverityValue;
-                    console.log('Severity dropdown set to:', severitySelect.value);
-                }, 100);
-            }
-
             // Function to handle status-based dropdown enabling/disabling
             function handleStatusChange() {
                 if (!statusSelect || !categorySelect || !subcategorySelect) {
@@ -1858,18 +1836,21 @@ $timelineItems = $timelineItems
                     const severity = severitySelect.value;
 
                     if (categoryId && subcategoryId && severity) {
-                        fetch(`/api/officers-by-sla/${categoryId}/${subcategoryId}/${severity}`)
+                        // Load officers from officers table based on category, subcategory, and severity
+                        fetch(
+                                `/api/officers-by-category-severity?cat_id=${categoryId}&subcat_id=${subcategoryId}&severity=${severity}`
+                                )
                             .then(response => response.json())
                             .then(data => {
-                                if (data.success && data.officers.length > 0) {
+                                if (data.success && data.officers && data.officers.length > 0) {
                                     updateOfficersList(data.officers);
                                 } else {
-                                    // Show all officers if no specific SLA officers found
+                                    // Show all officers if no specific officers found
                                     resetOfficersList();
                                 }
                             })
                             .catch(error => {
-                                console.error('Error loading SLA officers:', error);
+                                console.error('Error loading officers by severity:', error);
                                 resetOfficersList();
                             });
                     } else {
