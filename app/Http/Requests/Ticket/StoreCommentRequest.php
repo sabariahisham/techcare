@@ -23,7 +23,7 @@ class StoreCommentRequest extends FormRequest
   /**
    * Prepare the data for validation.
    * Cleans the 'comment' input to prevent XSS attacks.
-   * Preserves plain text formatting including line breaks, numbers, and symbols
+   * Accepts rich text HTML from Quill editor
    */
 
   public function prepareForValidation()
@@ -31,19 +31,12 @@ class StoreCommentRequest extends FormRequest
     if ($this->has('comment')) {
       $comment = $this->input('comment');
 
-      // If comment doesn't contain HTML tags, convert plain text to HTML
-      if (strip_tags($comment) === $comment) {
-        // Simply convert line breaks to <br> tags
-        // This preserves numbers (1., 2., 3.) and symbols (-, •) exactly as typed
-        $comment = nl2br($comment, false);
-      }
-
-      // Configure Purifier to allow safe HTML tags for formatting
+      // Configure Purifier to allow safe HTML tags from Quill editor
       $config = [
-        'HTML.Allowed' => 'p,br,strong,em,u,ol,ul,li,h1,h2,h3,h4,h5,h6,blockquote,pre,code,a[href|target],span[style],div',
+        'HTML.Allowed' => 'p,br,strong,em,u,s,ol,ul,li,h1,h2,h3,h4,h5,h6,blockquote,pre,code,a[href|target],span[style],div',
         'CSS.AllowedProperties' => 'font-weight,font-style,text-decoration,color,background-color',
         'AutoFormat.AutoParagraph' => false,
-        'AutoFormat.RemoveEmpty' => true,
+        'AutoFormat.RemoveEmpty' => false,
       ];
 
       $cleanedComment = Purifier::clean($comment, $config);

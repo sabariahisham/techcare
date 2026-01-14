@@ -3,7 +3,7 @@
 @section('title', 'Lihat Tiket - ' . $ticket->ticket_nolog)
 
 @section('vendor-style')
-    @vite(['resources/assets/vendor/libs/select2/select2.scss'])
+    @vite(['resources/assets/vendor/libs/select2/select2.scss', 'resources/assets/js/quill-editor.js'])
     <style>
         /* Custom styling for disabled dropdowns */
         select.form-select.disabled,
@@ -1839,7 +1839,7 @@ $timelineItems = $timelineItems
                         // Load officers from officers table based on category, subcategory, and severity
                         fetch(
                                 `/api/officers-by-category-severity?cat_id=${categoryId}&subcat_id=${subcategoryId}&severity=${severity}`
-                                )
+                            )
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success && data.officers && data.officers.length > 0) {
