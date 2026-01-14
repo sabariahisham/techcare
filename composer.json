@@ -15,6 +15,7 @@
     "laravel/sanctum": "^4.0",
     "laravel/tinker": "^2.9",
     "livewire/livewire": "^3.0",
+    "mews/purifier": "^3.4",
     "opcodesio/log-viewer": "^3.19",
     "owen-it/laravel-auditing": "^14.0",
     "spatie/laravel-permission": "^6.10",

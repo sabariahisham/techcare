@@ -64,7 +64,8 @@ class TicketCommentController extends Controller
         return $comment->user ? e($comment->user->nama) : 'Unknown User';
       })
       ->addColumn('comment_text', function ($comment) {
-        return e($comment->comment_text);
+        //return e($comment->comment_text);
+        return $comment->comment_text;
       })
       ->addColumn('created_date', function ($comment) {
         return $comment->created_at ? $comment->created_at->format('d/m/Y H:i:s') : '-';
@@ -80,7 +81,8 @@ class TicketCommentController extends Controller
 
         return '<div class="d-inline-block text-nowrap">' . implode(' ', $buttons) . '</div>';
       })
-      ->rawColumns(['action'])
+      //->rawColumns(['action'])
+      ->rawColumns(['comment_text', 'action'])
       ->make(true);
   }
 }
