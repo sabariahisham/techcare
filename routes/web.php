@@ -103,6 +103,7 @@ Route::prefix('api')->middleware([
   // SLA-based filtering routes
   Route::get('/sla-data/{categoryId}/{subcategoryId}', [App\Http\Controllers\Api\SlaApiController::class, 'getSlaData'])->name('api.sla-data');
   Route::get('/officers-by-sla/{categoryId}/{subcategoryId}/{severity}', [App\Http\Controllers\Api\SlaApiController::class, 'getOfficersBySla'])->name('api.officers-by-sla');
+  Route::get('/officers-by-category-severity', [App\Http\Controllers\Api\SlaApiController::class, 'getOfficersByCategorySeverity'])->name('api.officers-by-category-severity');
   Route::get('/officers', [App\Http\Controllers\Api\SlaApiController::class, 'getAllOfficers'])->name('api.officers');
 });
 
@@ -339,7 +340,7 @@ Route::get('/get-subcategory/{categoryId}', [RefCategoryManagementController::cl
 Route::middleware(['auth'])->prefix('ticket-attachments')->group(function () {
   Route::post('/upload', [TicketAttachmentController::class, 'upload'])->name('ticket-attachments.upload');
   Route::delete('/{document}', [TicketAttachmentController::class, 'destroy'])->name('ticket-attachments.destroy');
-  Route::get('/attachment/{document}/download', [TicketAttachmentController::class, 'download'])->name('ticket-attachments.download');
+  Route::get('/{document}/download', [TicketAttachmentController::class, 'download'])->name('ticket-attachments.download');
 });
 
 // Ticket Chronology Routes Group
