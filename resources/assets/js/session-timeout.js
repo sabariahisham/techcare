@@ -11,7 +11,7 @@
 
 (function () {
   // Configuration - sync with Laravel session lifetime (in minutes)
-  const SESSION_LIFETIME = window.sessionConfig ? .lifetime || 120; // minutes
+  const SESSION_LIFETIME = window.sessionConfig ? window.sessionConfig.lifetime || 120 : 120; // minutes
   const WARNING_TIME = 5; // Show warning 5 minutes before expiry
   const PING_INTERVAL = 5; // Ping server every 5 minutes to extend session
 
