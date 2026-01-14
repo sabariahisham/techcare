@@ -41,3 +41,7 @@ class AssignTicketRequest extends FormRequest
             'assignee_id.exists' => 'Pengguna yang dipilih tidak wujud.',
         ];
 
+      }
+
+    }
+
