@@ -3,18 +3,20 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="knowledgeBaseModalLabel">Komen</h5>
+                <div>
+                    <h5 class="modal-title" id="commentModalLabel">Komen</h5>
+                    <small class="text-muted">Masukkan komen anda di bawah</small>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" action="{{ route('tickets.add-comment', $ticket->id) }}" id="commentForm">
                     @csrf
                     <div class="mb-3">
-                        <label for="comment-editor" class="form-label">Masukkan Komen Anda</label>
                         <div id="comment-editor" style="min-height: 200px; background-color: white;"></div>
                         <input type="hidden" id="comment" name="comment" required>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer py-0">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                         <button type="submit" class="btn btn-primary">Hantar Komen</button>
                     </div>

@@ -327,12 +327,12 @@
                             @if ($ticket->user_id == auth()->user()->id)
                                 <button type="button" class="btn btn-warning btn-sm"
                                     onclick="$('#commentModal').modal('show')">
-                                    <i class="bx bx-message me-3"></i>Komen
+                                    <i class="bx bx-message me-1"></i>Komen
                                 </button>
                             @else
                                 <button type="button" class="btn btn-secondary btn-sm"
                                     onclick="$('#commentModal').modal('show')" disabled>
-                                    <i class="bx bx-message me-3"></i>Komen
+                                    <i class="bx bx-message me-1"></i>Komen
                                 </button>
                             @endif
                             <button type="button" class="btn btn-primary btn-sm float-end"
