@@ -24,6 +24,7 @@ use App\Http\Controllers\Ticket\TicketChronologyController;
 use App\Http\Controllers\Configuration\UserManagementController;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
+use App\Http\Controllers\Reports\AduanTahunanController;
 
 Route::get('/', function () {
   return redirect('/dashboard');
@@ -195,6 +196,12 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/report/prestasi-pegawai-tugasan/data', [App\Http\Controllers\Reports\PrestasiPegtugasController::class, 'data'])->name('report-prestasi-pegtugas-data');
   Route::get('/report/prestasi-pegawai-tugasan/export-excel', [App\Http\Controllers\Reports\PrestasiPegtugasController::class, 'exportExcel'])->name('report-prestasi-pegtugas-export-excel');
   Route::get('/report/prestasi-pegawai-tugasan/export-pdf', [App\Http\Controllers\Reports\PrestasiPegtugasController::class, 'exportPdf'])->name('report-prestasi-pegtugas-export-pdf');
+
+  //Laporan Aduan Tahunan
+  Route::get('/report/aduan-tahunan', [App\Http\Controllers\Reports\AduanTahunanController::class, 'index'])->name('report-aduan-tahunan');
+  Route::post('/report/aduan-tahunan/data', [App\Http\Controllers\Reports\AduanTahunanController::class, 'data'])->name('report-aduan-tahunan-data');
+  Route::get('/report/aduan-tahunan/export-excel', [App\Http\Controllers\Reports\AduanTahunanController::class, 'exportExcel'])->name('report-aduan-tahunan-export-excel');
+  Route::get('/report/aduan-tahunan/export-pdf', [App\Http\Controllers\Reports\AduanTahunanController::class, 'exportPdf'])->name('report-aduan-tahunan-export-pdf');
 });
 
 // references

@@ -45,7 +45,14 @@ $(function () {
           name: 'Prestasi Pegawai Tugasan',
           description: 'Laporan prestasi pegawai berdasarkan tiket yang ditugaskan',
           updated_at: currentDateTime
+        },
+        {
+          id: 3,
+          name: 'Laporan Bulanan Aduan',
+          description: 'Laporan bulanan aduan yang diterima mengikut kategori dan tahunan',
+          updated_at: currentDateTime
         }
+
       ],
       columns: [
         // columns according to JSON
@@ -120,6 +127,9 @@ $(function () {
             } else if ($id === 2) {
               // Route for Prestasi Pegawai Tugasan
               viewUrl = '/report/prestasi-pegawai-tugasan';
+            } else if ($id === 3) {
+              // Route for Laporan Bulanan Aduan
+              viewUrl = '/report/aduan-tahunan';
             }
 
             return (
