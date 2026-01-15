@@ -77,11 +77,54 @@ class TicketController extends Controller
       if ($ticketFilter === 'diri_sendiri') {
         $query->where('ticket_type', 1);
       } elseif ($ticketFilter === 'bagi_pihak') {
-        $query->where('ticket_type', 0);
+        $query->where('ticket_type', 2);
       }
 
-      return DataTables::of($query)
+      return DataTables::eloquent($query)
         ->addIndexColumn()
+        ->filterColumn('no_log_tiket', function ($query, $keyword) {
+          $query->where('ticket_nolog', 'like', "%{$keyword}%");
+        })
+        ->filterColumn('tarikh_aduan', function ($query, $keyword) {
+          $query->whereRaw("DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') like ?", ["%{$keyword}%"]);
+        })
+        ->filterColumn('jenis_tiket', function ($query, $keyword) {
+          if (stripos('Diri Sendiri', $keyword) !== false) {
+            $query->where('ticket_type', 1);
+          } elseif (stripos('Bagi Pihak', $keyword) !== false) {
+            $query->where('ticket_type', 2);
+          }
+        })
+        ->filterColumn('kategori', function ($query, $keyword) {
+          $query->whereHas('category', function ($q) use ($keyword) {
+            $q->where('cat_name', 'like', "%{$keyword}%");
+          });
+        })
+        ->filterColumn('sub_kategori', function ($query, $keyword) {
+          $query->whereHas('subCategory', function ($q) use ($keyword) {
+            $q->where('subcat_name', 'like', "%{$keyword}%");
+          });
+        })
+        ->filterColumn('status', function ($query, $keyword) {
+          $statusMap = [
+            'Aduan Baru' => 1,
+            'Aduan Diproses' => 2,
+            'Serahan Kepada' => 3,
+            'Aduan Dirujuk' => 4,
+            'Aduan Dibatal' => 5,
+            'Aduan Selesai' => 6
+          ];
+          foreach ($statusMap as $statusName => $statusValue) {
+            if (stripos($statusName, $keyword) !== false) {
+              $query->orWhere('tick_status', $statusValue);
+            }
+          }
+        })
+        ->filterColumn('pegawai_tugasan', function ($query, $keyword) {
+          $query->whereHas('chronologies.escalatedTo', function ($q) use ($keyword) {
+            $q->where('nama', 'like', "%{$keyword}%");
+          });
+        })
         ->addColumn('no_log_tiket', function ($ticket) {
           return $ticket->ticket_nolog ?? 'N/A';
         })
@@ -89,7 +132,13 @@ class TicketController extends Controller
           return $ticket->created_at ? $ticket->created_at->format('d/m/Y H:i') : '-';
         })
         ->addColumn('jenis_tiket', function ($ticket) {
-          return $ticket->ticket_type == 1 ? 'Diri Sendiri' : 'Bagi Pihak';
+          if ($ticket->ticket_type == 1) {
+            return 'Diri Sendiri';
+          } elseif ($ticket->ticket_type == 2) {
+            return 'Bagi Pihak';
+          } else {
+            return '-';
+          }
         })
         ->addColumn('kategori', function ($ticket) {
           return $ticket->category->cat_name ?? 'N/A';
@@ -186,8 +235,49 @@ class TicketController extends Controller
         });
       }
 
-      return DataTables::of($query)
+      return DataTables::eloquent($query)
         ->addIndexColumn()
+        ->filterColumn('no_log_tiket', function ($query, $keyword) {
+          $query->where('ticket_nolog', 'like', "%{$keyword}%");
+        })
+        ->filterColumn('tarikh_aduan', function ($query, $keyword) {
+          $query->whereRaw("DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') like ?", ["%{$keyword}%"]);
+        })
+        ->filterColumn('nama_pengadu', function ($query, $keyword) {
+          $query->whereHas('user', function ($q) use ($keyword) {
+            $q->where('nama', 'like', "%{$keyword}%");
+          });
+        })
+        ->filterColumn('kategori', function ($query, $keyword) {
+          $query->whereHas('category', function ($q) use ($keyword) {
+            $q->where('cat_name', 'like', "%{$keyword}%");
+          });
+        })
+        ->filterColumn('sub_kategori', function ($query, $keyword) {
+          $query->whereHas('subCategory', function ($q) use ($keyword) {
+            $q->where('subcat_name', 'like', "%{$keyword}%");
+          });
+        })
+        ->filterColumn('status', function ($query, $keyword) {
+          $statusMap = [
+            'Aduan Baru' => 1,
+            'Aduan Diproses' => 2,
+            'Serahan Kepada' => 3,
+            'Aduan Dirujuk' => 4,
+            'Aduan Dibatal' => 5,
+            'Aduan Selesai' => 6
+          ];
+          foreach ($statusMap as $statusName => $statusValue) {
+            if (stripos($statusName, $keyword) !== false) {
+              $query->orWhere('tick_status', $statusValue);
+            }
+          }
+        })
+        ->filterColumn('pegawai_tugasan', function ($query, $keyword) {
+          $query->whereHas('chronologies.escalatedTo', function ($q) use ($keyword) {
+            $q->where('nama', 'like', "%{$keyword}%");
+          });
+        })
         ->addColumn('no_log_tiket', function ($ticket) {
           return $ticket->ticket_nolog ?? 'N/A';
         })
@@ -242,10 +332,6 @@ class TicketController extends Controller
           $user = Auth::user();
           $actions = '<div class="d-flex gap-1">';
 
-          // Manage button - always available for this section
-          // View button - always available
-          //$actions .= '<a class="btn btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat"><i class="bx bx-show text-success"></i></a>';
-
           // Manage button - for helpdesk staff
           $actions .= '<a class="btn btn-sm manage-ticket" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus"><i class="bx bx-cog text-primary"></i></a>';
 
@@ -281,6 +367,18 @@ class TicketController extends Controller
     }
   }
 
+  /**
+   * Store a new ticket
+   *
+   * Logic untuk penyimpanan:
+   * 1. Diri Sendiri (ticket_type = 1):
+   *    - user_id = Auth::id() (ID pengguna yang login)
+   *    - created_by = Auth::id() (ID pengguna yang buat tiket)
+   *
+   * 2. Bagi Pihak (ticket_type = 2):
+   *    - user_id = ID pengguna yang dipilih (pengadu)
+   *    - created_by = Auth::id() (ID pengguna yang log tiket untuk orang lain)
+   */
   public function store(StoreTicketRequest $request)
   {
     $validated = $request->validated();
@@ -290,7 +388,7 @@ class TicketController extends Controller
       // Diri Sendiri - use authenticated user
       $user_id = Auth::id();
     } else {
-      // Bagi Pihak - find user by email from search
+      // Bagi Pihak (ticket_type == 2) - find user by email from search
       $other_email = $validated['other_email'] ?? null;
       if ($other_email) {
         $otherUser = User::where('email', $other_email)->first();
@@ -403,14 +501,11 @@ class TicketController extends Controller
 
   /**
    * Show the form for editing the specified ticket
+   * Only Administrator and Pegawai Tugasan can edit tickets
    */
   public function edit(Ticket $ticket)
   {
-    // Check authorization - only allow editing if:
-    // 1. User is the ticket creator or the complainant
-    // 2. Ticket status allows editing (not closed/completed)
-    // 3. User has admin/helpdesk roles
-
+    // Check authorization - ONLY Administrator or Pegawai Tugasan can edit
     $user = Auth::user();
     $canEdit = false;
 
@@ -426,17 +521,12 @@ class TicketController extends Controller
       if ($isAssigned) {
         $canEdit = true;
       }
-    } elseif ($ticket->user_id == $user->id || $ticket->created_by == $user->id) {
-      // Only allow editing if ticket is not closed/completed
-      if (!in_array($ticket->tick_status, [3, 4])) {
-        $canEdit = true;
-      }
     }
 
     if (!$canEdit) {
       return response()->json([
         'success' => false,
-        'message' => 'Anda tidak dibenarkan untuk mengedit tiket ini.'
+        'message' => 'Anda tidak dibenarkan untuk mengedit tiket ini. Hanya Administrator atau Pegawai Tugasan boleh mengedit tiket.'
       ], 403);
     }
 
@@ -509,10 +599,12 @@ class TicketController extends Controller
 
   /**
    * Update the specified ticket
+   * Only Administrator and Pegawai Tugasan can update tickets
+   * Only these fields can be edited: tajuk, kategori, sub kategori, keterangan aduan, lampiran
    */
   public function update(UpdateTicketRequest $request, Ticket $ticket)
   {
-    // Check authorization - same as edit method
+    // Check authorization - ONLY Administrator or Pegawai Tugasan can update
     $user = Auth::user();
     $canEdit = false;
 
@@ -527,57 +619,25 @@ class TicketController extends Controller
       if ($isAssigned) {
         $canEdit = true;
       }
-    } elseif ($ticket->user_id == $user->id || $ticket->created_by == $user->id) {
-      if (!in_array($ticket->tick_status, [3, 4])) {
-        $canEdit = true;
-      }
     }
 
     if (!$canEdit) {
       return response()->json([
         'success' => false,
-        'message' => 'Anda tidak dibenarkan untuk mengemaskini tiket ini.'
+        'message' => 'Anda tidak dibenarkan untuk mengemaskini tiket ini. Hanya Administrator atau Pegawai Tugasan boleh mengedit tiket.'
       ], 403);
     }
 
     $validated = $request->validated();
 
-    // Determine user_id based on ticket_type (similar to store method)
-    if ($validated['ticket_type'] == 1) {
-      // Diri Sendiri - use authenticated user
-      $user_id = Auth::id();
-    } else {
-      // Bagi Pihak - find user by email from search
-      $other_email = $validated['other_email'] ?? null;
-      if ($other_email) {
-        $otherUser = User::where('email', $other_email)->first();
-        if ($otherUser) {
-          $user_id = $otherUser->id;
-        } else {
-          return response()->json([
-            'success' => false,
-            'message' => 'Pengguna tidak dijumpai. Sila pastikan email yang dicari adalah betul.',
-            'errors' => ['other_email' => ['Pengguna dengan email ini tidak dijumpai dalam sistem.']]
-          ], 422);
-        }
-      } else {
-        return response()->json([
-          'success' => false,
-          'message' => 'Email pengguna diperlukan untuk aduan bagi pihak.',
-          'errors' => ['other_email' => ['Sila cari dan pilih pengguna terlebih dahulu.']]
-        ], 422);
-      }
-    }
-
-    // Update ticket data
+    // Update ONLY allowed fields: tajuk, kategori, sub kategori, keterangan, no_siri
+    // DO NOT update: user_id, ticket_type, created_by, ticket_nolog, uuid, tick_status, etc.
     $updateData = [
-      'user_id' => $user_id,
+      'ticket_title' => $validated['tick_title'],
       'cat_id' => $validated['cat_id'],
       'subcat_id' => $validated['subcat_id'],
-      'serial_number' => $validated['no_siri'] ?? null,
-      'ticket_title' => $validated['tick_title'],
       'ticket_desc' => $validated['tick_desc'],
-      'ticket_type' => $validated['ticket_type'],
+      'serial_number' => $validated['no_siri'] ?? null,
       'updated_by' => Auth::id(),
     ];
 

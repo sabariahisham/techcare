@@ -24,6 +24,8 @@ class Document extends Model
     'updated_by',
   ];
 
+  protected $appends = ['doc_url', 'doc_size'];
+
   public function tickets()
   {
     return $this->hasMany(Ticket::class, 'doc_id');
@@ -80,5 +82,34 @@ class Document extends Model
   {
     $path = $this->getTicketAttachmentPath();
     return $path && Storage::exists($path);
+  }
+
+  /**
+   * Get the download URL for the attachment
+   *
+   * @return string|null
+   */
+  public function getDocUrlAttribute()
+  {
+    if ($this->doc_jenis === 'TICKET' && $this->id) {
+      return route('ticket-attachments.download', ['document' => $this->id]);
+    }
+    return null;
+  }
+
+  /**
+   * Get the file size from storage
+   *
+   * @return int
+   */
+  public function getDocSizeAttribute()
+  {
+    if ($this->doc_jenis === 'TICKET' && $this->doc_storage_nm) {
+      $path = 'public/ticket_attachments/' . $this->doc_storage_nm;
+      if (Storage::exists($path)) {
+        return Storage::size($path);
+      }
+    }
+    return 0;
   }
 }

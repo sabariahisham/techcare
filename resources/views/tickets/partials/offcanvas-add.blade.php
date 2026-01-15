@@ -22,7 +22,7 @@
                 <label class="form-label">Jenis Aduan</label>
                 <select id="ticketType" name="ticket_type" class="form-select" required>
                     <option value="1">Diri Sendiri</option>
-                    <option value="0">Bagi Pihak</option>
+                    <option value="2">Bagi Pihak</option>
                 </select>
             </div>
 
@@ -261,32 +261,32 @@
                 <div class="form-field-wrapper mb-3">
                     <label class="form-label">Lampiran</label>
                     <div class="file-upload-wrapper">
+                        <input type="file" id="ticket-attachments" name="attachments[]"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple class="file-input d-none">
                         <div id="attachment-drop-zone"
-                            class="file-drop-zone border-2 border-dashed border-secondary rounded-3 p-4 text-center position-relative">
-                            <input type="file" id="ticket-attachments" name="attachments[]"
-                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple
-                                class="file-input position-absolute w-100 h-100 opacity-0"
-                                style="cursor: pointer; z-index: 2; top: 0; left: 0;">
+                            class="file-drop-zone border-2 border-dashed border-secondary rounded-3 p-4 text-center"
+                            style="cursor: pointer;">
                             <div class="drop-zone-content">
-                                <i class="bx bx-file-find display-4 text-muted mb-3"></i>
-                                <h6 class="text-muted mb-2">Seret & Letak fail di sini</h6>
-                                <p class="text-muted mb-2">atau <span class="text-primary fw-semibold"
-                                        style="cursor: pointer;">telusuri (browse) fail</span></p>
+                                <i class="bx bx-file-find display-4 text-muted mb-3 d-block"></i>
+                                <h6 class="text-muted mb-2">Seret dan lepaskan fail di sini </h6>
+                                <p class="text-muted mb-2">atau <span class="text-primary fw-semibold">Muat naik
+                                        fail</span></p>
                                 <small class="text-muted">Format yang dibenarkan: PDF, DOC, DOCX, JPG, JPEG, PNG (Maks:
                                     2MB setiap fail, maksimum 5 fail)</small>
                             </div>
                         </div>
                         <div id="attachments-preview" class="files-preview mt-3"></div>
                         <div class="invalid-feedback"></div>
+                        </input>
+                    </div>
+
+                    <!-- Butang -->
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">Simpan & Hantar</button>
+                        <button type="button" class="btn btn-label-danger"
+                            data-bs-dismiss="offcanvas">Batal</button>
                     </div>
                 </div>
-
-                <!-- Butang -->
-                <div class="text-end">
-                    <button type="submit" class="btn btn-primary">Simpan & Hantar</button>
-                    <button type="button" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
-                </div>
-            </div>
 
         </form>
     </div>
@@ -300,6 +300,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        cursor: pointer;
     }
 
     .file-drop-zone.dragover {
@@ -316,13 +317,7 @@
         cursor: pointer !important;
     }
 
-    .file-drop-zone {
-        position: relative;
-        cursor: pointer;
-    }
-
     .drop-zone-content {
-        pointer-events: none;
         user-select: none;
     }
 

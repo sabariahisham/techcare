@@ -27,11 +27,11 @@ class StoreTicketRequest extends FormRequest
   public function rules(): array
   {
     return [
-      'ticket_type' => 'required|in:0,1',
+      'ticket_type' => 'required|in:1,2',
       'name' => 'required_if:ticket_type,1|nullable|string|max:255',
       'email' => 'required_if:ticket_type,1|nullable|email|max:255',
-      'other_name' => 'required_if:ticket_type,0|nullable|string|max:255',
-      'other_email' => 'required_if:ticket_type,0|nullable|email|max:255',
+      'other_name' => 'required_if:ticket_type,2|nullable|string|max:255',
+      'other_email' => 'required_if:ticket_type,2|nullable|email|max:255',
       'other_sektor' => 'nullable|string|max:255',
       'other_agency' => 'nullable|string|max:255',
       'other_seksyen' => 'nullable|string|max:255',

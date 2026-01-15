@@ -102,7 +102,7 @@ $(function () {
 
   // Handle ticket type change (ADD FORM)
   $('#ticketType').on('change', function () {
-    if ($(this).val() == '0') {
+    if ($(this).val() == '2') {
       $('#selfInfo').addClass('d-none');
       $('#otherInfo').removeClass('d-none');
       // Hide form fields until user is found

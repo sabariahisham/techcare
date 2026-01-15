@@ -56,7 +56,7 @@
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     @if (auth()->user()->hasRole('Administrator'))
-                        Semua Tiket (<strong class="text-danger">Administrator</strong>)
+                        Semua Tiket [<strong class="text-danger">Administrator</strong>]
                     @elseif(auth()->user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
                         Tiket Untuk Tindakan [<strong class="text-warning">{{ auth()->user()->roles->first()->name }}</strong>]
                     @elseif(auth()->user()->hasRole('Pegawai Tugasan'))

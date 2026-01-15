@@ -24,7 +24,7 @@
                 <label class="form-label">Jenis Aduan</label>
                 <select id="editTicketType" name="ticket_type" class="form-select" disabled>
                     <option value="1">Diri Sendiri</option>
-                    <option value="0">Bagi Pihak</option>
+                    <option value="2">Bagi Pihak</option>
                 </select>
                 <input type="hidden" id="editTicketTypeHidden" name="ticket_type">
                 <small class="text-muted d-block mt-1">
@@ -38,29 +38,23 @@
                 <div class="row g-3">
                     <div class="col-12">
                         <label class="form-label">Nama Pengadu</label>
-                        <input type="text" class="form-control" name="name" value="{{ auth()->user()->nama }}"
-                            readonly>
+                        <input type="text" class="form-control" name="name" readonly>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Jawatan</label>
-                        <input type="text" class="form-control" name="jawatan"
-                            value="{{ auth()->user()->jawatan_name }}" readonly>
+                        <input type="text" class="form-control" name="jawatan" readonly>
                     </div>
                     <div class="col-6">
                         <label class="form-label">Skim Perkhidmatan</label>
-                        <input type="text" class="form-control" name="skim"
-                            value="{{ auth()->user()->skim?->nama_skim ? auth()->user()->skim->nama_skim . ' (' . auth()->user()->kod_skim . ')' : auth()->user()->kod_skim ?? '-' }}"
-                            readonly>
+                        <input type="text" class="form-control" name="skim" readonly>
                     </div>
                     <div class="col-6">
                         <label class="form-label">Gred</label>
-                        <input type="text" class="form-control" name="gred"
-                            value="{{ auth()->user()->nama_gred ?? '-' }}" readonly>
+                        <input type="text" class="form-control" name="gred" readonly>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Emel</label>
-                        <input type="email" class="form-control" name="email" value="{{ auth()->user()->email }}"
-                            readonly>
+                        <input type="email" class="form-control" name="email" readonly>
                     </div>
                 </div>
             </div>
@@ -69,51 +63,25 @@
             <div id="editOtherInfo" class="d-none mb-4">
                 <h6>Maklumat Pengadu (Bagi Pihak)</h6>
                 <div class="row g-3">
-                    <!-- Username search field -->
                     <div class="col-12">
-                        <label class="form-label">Cari Nama Pengguna</label>
-                        <small class="text-muted d-block mb-2">Masukkan nama penuh atau sebahagian nama pengguna</small>
-                        <div class="position-relative">
-                            <div class="input-group">
-                                <input type="text" class="form-control username-search-input" id="editSearchName"
-                                    placeholder="Contoh: Ahmad Bin Ali atau ahmad.ali" autocomplete="off">
-                                <button class="btn btn-outline-primary" type="button" id="editSearchUserBtn">
-                                    <i class="bx bx-search"></i> Cari
-                                </button>
-                            </div>
-
-                            <!-- Autocomplete dropdown with Bootstrap 5 styling -->
-                            <div id="editAutocompleteDropdown"
-                                class="autocomplete-dropdown position-absolute w-100 mt-1"
-                                style="display: none; z-index: 1050;">
-                                <div class="card shadow-sm border">
-                                    <div class="card-body p-0">
-                                        <div class="list-group list-group-flush" id="editAutocompleteResults"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <label class="form-label">Nama Pengadu</label>
+                        <input type="text" class="form-control" id="editOtherName" name="other_name" readonly>
                     </div>
-
-                    <!-- User info fields (hidden by default) -->
-                    <div id="editFoundUserInfo" style="display: none;">
-                        <div class="row g-3">
-                            <div class="col-12 text-end">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="editClearSearchBtn">
-                                    <i class="bx bx-refresh"></i> Cari Pengguna Lain
-                                </button>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Nama Pengadu</label>
-                                <input type="text" class="form-control" id="editOtherName" name="other_name"
-                                    readonly>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Emel</label>
-                                <input type="email" class="form-control" id="editOtherEmail" name="other_email"
-                                    readonly>
-                            </div>
-                        </div>
+                    <div class="col-12">
+                        <label class="form-label">Jawatan</label>
+                        <input type="text" class="form-control" id="editOtherJawatan" name="other_jawatan" readonly>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Skim Perkhidmatan</label>
+                        <input type="text" class="form-control" id="editOtherSkim" name="other_skim" readonly>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Gred</label>
+                        <input type="text" class="form-control" id="editOtherGred" name="other_gred" readonly>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Emel</label>
+                        <input type="email" class="form-control" id="editOtherEmail" name="other_email" readonly>
                     </div>
                 </div>
             </div>
@@ -170,32 +138,32 @@
                 <div class="form-field-wrapper mb-3">
                     <label class="form-label">Lampiran Baharu</label>
                     <div class="file-upload-wrapper">
+                        <input type="file" id="editTicketAttachments" name="attachments[]"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple class="file-input d-none">
                         <div id="editAttachmentDropZone"
-                            class="file-drop-zone border-2 border-dashed border-secondary rounded-3 p-4 text-center position-relative">
-                            <input type="file" id="editTicketAttachments" name="attachments[]"
-                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple
-                                class="file-input position-absolute w-100 h-100 opacity-0"
-                                style="cursor: pointer; z-index: 2; top: 0; left: 0;">
+                            class="file-drop-zone border-2 border-dashed border-secondary rounded-3 p-4 text-center"
+                            style="cursor: pointer;">
                             <div class="drop-zone-content">
-                                <i class="bx bx-file-find display-4 text-muted mb-3"></i>
-                                <h6 class="text-muted mb-2">Seret & Letak fail di sini</h6>
-                                <p class="text-muted mb-2">atau <span class="text-primary fw-semibold"
-                                        style="cursor: pointer;">telusuri (browse) fail</span></p>
+                                <i class="bx bx-file-find display-4 text-muted mb-3 d-block"></i>
+                                <h6 class="text-muted mb-2">Seret dan lepaskan fail di sini</h6>
+                                <p class="text-muted mb-2">atau <span class="text-primary fw-semibold">Muat naik
+                                        fail</span></p>
                                 <small class="text-muted">Format yang dibenarkan: PDF, DOC, DOCX, JPG, JPEG, PNG (Maks:
                                     2MB setiap fail, maksimum 5 fail)</small>
                             </div>
                         </div>
                         <div id="editAttachmentsPreview" class="files-preview mt-3"></div>
                         <div class="invalid-feedback"></div>
+                        </input>
+                    </div>
+
+                    <!-- Butang -->
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">Kemaskini</button>
+                        <button type="button" class="btn btn-label-danger"
+                            data-bs-dismiss="offcanvas">Batal</button>
                     </div>
                 </div>
-
-                <!-- Butang -->
-                <div class="text-end">
-                    <button type="submit" class="btn btn-primary">Kemaskini</button>
-                    <button type="button" class="btn btn-label-danger" data-bs-dismiss="offcanvas">Batal</button>
-                </div>
-            </div>
 
         </form>
     </div>
@@ -253,7 +221,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        position: relative;
         cursor: pointer;
     }
 
@@ -289,7 +256,6 @@
     }
 
     .drop-zone-content {
-        pointer-events: none;
         user-select: none;
     }
 

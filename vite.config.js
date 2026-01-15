@@ -62,20 +62,24 @@ const JsSubCat = GetFilesArray('resources/assets/js/subcategories/!(_)*.js');
 const JsTicket = GetFilesArray('resources/assets/js/ticket/!(_)*.js');
 const JsUser = GetFilesArray('resources/assets/js/user/*.js');
 
+// Quill Rich Text Editor
+const JsQuill = GetFilesArray('resources/assets/js/quill-editor.js');
+
 const LibsJsFilesCustom = [
-    ...JsAudit,
-    ...JsCategories,
-    ...JsKnowledge,
-    ...JsModules,
-    ...JsOfficer,
-    ...JsPermission,
-    ...JsReport,
-    ...JsRole,
-    ...JsSla,
-    ...JsSubCat,
-    ...JsTicket,
-    ...JsUser
-];  
+  ...JsAudit,
+  ...JsCategories,
+  ...JsKnowledge,
+  ...JsModules,
+  ...JsOfficer,
+  ...JsPermission,
+  ...JsReport,
+  ...JsRole,
+  ...JsSla,
+  ...JsSubCat,
+  ...JsTicket,
+  ...JsUser,
+  ...JsQuill
+];
 
 
 // Merging all Js Files that need window assignment
@@ -108,7 +112,7 @@ export default defineConfig({
         ...LibsCssFiles,
         ...FontsScssFiles,
         ...CssFiles,
-        ...LibsJsFilesCustom 
+        ...LibsJsFilesCustom
       ],
       refresh: true
     }),
