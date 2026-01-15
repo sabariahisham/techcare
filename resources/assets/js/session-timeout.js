@@ -11,7 +11,8 @@
 
 (function () {
   // Configuration - sync with Laravel session lifetime (in minutes)
-  const SESSION_LIFETIME = window.sessionConfig ? .lifetime || 120; // minutes
+  // prettier-ignore
+  const SESSION_LIFETIME = (window.sessionConfig && window.sessionConfig.lifetime) ? window.sessionConfig.lifetime : 120; // minutes
   const WARNING_TIME = 5; // Show warning 5 minutes before expiry
   const PING_INTERVAL = 5; // Ping server every 5 minutes to extend session
 
@@ -30,6 +31,7 @@
   let logoutTimer = null;
   let countdownInterval = null;
   let pingInterval = null;
+  let displayInterval = null;
   let lastActivity = Date.now();
   let isWarningShown = false;
   let broadcastChannel = null;
@@ -57,6 +59,12 @@
 
     // Start session ping
     startSessionPing();
+
+    // Start digital timer display
+    startTimerDisplay();
+
+    // Setup refresh button
+    setupRefreshButton();
 
     // Update last activity in storage
     updateLastActivity();
@@ -184,6 +192,85 @@
     pingInterval = setInterval(function () {
       pingSession();
     }, PING_INTERVAL_MS);
+  }
+
+  /**
+   * Start the digital timer display
+   */
+  function startTimerDisplay() {
+    updateTimerDisplay();
+    displayInterval = setInterval(updateTimerDisplay, 1000);
+  }
+
+  /**
+   * Update the digital timer display
+   */
+  function updateTimerDisplay() {
+    const hoursEl = document.getElementById('timerHours');
+    const minutesEl = document.getElementById('timerMinutes');
+    const secondsEl = document.getElementById('timerSeconds');
+    const progressEl = document.getElementById('sessionTimerProgress');
+    const widgetEl = document.getElementById('sessionTimerWidget');
+
+    if (!hoursEl || !minutesEl || !secondsEl) return;
+
+    const elapsed = Date.now() - lastActivity;
+    const remaining = Math.max(0, SESSION_TIMEOUT - elapsed);
+    const remainingSeconds = Math.floor(remaining / 1000);
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    const seconds = remainingSeconds % 60;
+
+    // Format time display
+    hoursEl.textContent = (hours < 10 ? '0' : '') + hours;
+    minutesEl.textContent = (minutes < 10 ? '0' : '') + minutes;
+    secondsEl.textContent = (seconds < 10 ? '0' : '') + seconds;
+
+    // Update progress bar
+    if (progressEl) {
+      const progressPercent = (remaining / SESSION_TIMEOUT) * 100;
+      progressEl.style.width = progressPercent + '%';
+
+      // Change colors based on remaining time
+      const totalMinutes = Math.floor(remainingSeconds / 60);
+      if (totalMinutes < 1) {
+        progressEl.className = 'progress-bar bg-danger';
+        hoursEl.className = 'fs-3 fw-bold text-danger';
+        minutesEl.className = 'fs-3 fw-bold text-danger';
+        secondsEl.className = 'fs-3 fw-bold text-danger';
+        widgetEl.classList.add('animate__animated', 'animate__pulse', 'animate__infinite');
+      } else if (totalMinutes < WARNING_TIME) {
+        progressEl.className = 'progress-bar bg-warning';
+        hoursEl.className = 'fs-3 fw-bold text-warning';
+        minutesEl.className = 'fs-3 fw-bold text-warning';
+        secondsEl.className = 'fs-3 fw-bold text-warning';
+        widgetEl.classList.remove('animate__animated', 'animate__pulse', 'animate__infinite');
+      } else {
+        progressEl.className = 'progress-bar bg-primary';
+        hoursEl.className = 'fs-3 fw-bold text-primary';
+        minutesEl.className = 'fs-3 fw-bold text-primary';
+        secondsEl.className = 'fs-3 fw-bold text-primary';
+        widgetEl.classList.remove('animate__animated', 'animate__pulse', 'animate__infinite');
+      }
+    }
+
+    // If time is up
+    if (remaining <= 0) {
+      clearInterval(displayInterval);
+      performLogout(true);
+    }
+  }
+
+  /**
+   * Setup refresh session button
+   */
+  function setupRefreshButton() {
+    const refreshBtn = document.getElementById('btnRefreshSession');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function () {
+        extendSession();
+      });
+    }
   }
 
   /**
