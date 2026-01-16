@@ -5,11 +5,11 @@
  * Validates input data when sending a ticket email
  */
 
-namespace App\Http\Requests\Ticket;
+namespace App\Http\Requests\Notifications;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SendTicketEmailRequest extends FormRequest
+class SendTicketNotificationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\TicketStatusChangedNotification;
+use App\Services\TicketNotificationService;
 use Yajra\DataTables\Facades\DataTables;
 use App\Http\Requests\Ticket\StoreTicketRequest;
 use App\Http\Requests\Ticket\UpdateTicketRequest;
@@ -51,6 +52,13 @@ use App\Helpers\Helpers;
 
 class TicketController extends Controller
 {
+  protected $notificationService;
+
+  public function __construct(TicketNotificationService $notificationService)
+  {
+    $this->notificationService = $notificationService;
+  }
+
   public function index()
   {
     $categories = RefCategory::all();
@@ -484,6 +492,9 @@ class TicketController extends Controller
     if ($request->hasFile('attachments')) {
       TicketAttachmentController::handleFileAttachments($request->file('attachments'), $ticket->id);
     }
+
+    // Send email notifications using service
+    $this->notificationService->sendNewTicketNotifications($ticket, Auth::user());
 
     return response()->json([
       'success' => true,

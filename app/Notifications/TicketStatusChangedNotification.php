@@ -1,5 +1,12 @@
 <?php
 
+/*
+  * Function TicketStatusChangedNotification.php:
+  *  - Notification: Ticket Status Changed to inform Pengadu and Pegawai Tugasan about ticket status changes.
+  *  - Sends email with ticket details and status update information.
+  * - run command: php test_notification_detail.php 14[ticket_id] to test email notification for ticket status "Aduan Baru"(1)
+  */
+
 namespace App\Notifications;
 
 use App\Models\Ticket;
@@ -46,43 +53,59 @@ class TicketStatusChangedNotification extends Notification
    */
   public function toMail(object $notifiable): MailMessage
   {
-    $statusName = $this->getStatusName($this->newStatus);
-    $oldStatusName = $this->getStatusName($this->oldStatus);
-    $statusColor = $this->getStatusColor($this->newStatus);
+    // Skip email for "Aduan Diproses"
+    if ($this->newStatus == 2) {
+      return new MailMessage();
+    }
+
+    $statusName     = $this->getStatusName($this->newStatus);
+    $oldStatusName  = $this->getStatusName($this->oldStatus);
 
     $message = (new MailMessage)
-      ->subject("Status Tiket {$this->ticket->ticket_nolog} Dikemaskini: {$statusName}")
-      ->greeting("Assalamualaikum {$notifiable->nama},")
-      ->line("Status tiket anda telah dikemaskini.");
+      ->subject("[{$statusName}] {$this->ticket->ticket_nolog} – {$this->ticket->ticket_title}")
+      ->greeting('Assalamualaikum dan Salam Sejahtera,')
+      ->line("**{$this->getGelaran($notifiable)}**")
+      ->line("Dimaklumkan bahawa status tiket aduan anda adalah seperti berikut:");
 
-    // Add status-specific messages
-    $message = $this->addStatusSpecificMessage($message, $this->newStatus);
+    // Status-specific info
+    $message->line($this->getStatusMessage($this->newStatus));
 
+    // Ticket info (padat)
     $message->line("**No. Log Tiket:** {$this->ticket->ticket_nolog}")
-      ->line("**Tajuk:** {$this->ticket->ticket_title}")
-      ->line("**Status Lama:** {$oldStatusName}")
-      ->line("**Status Baru:** {$statusName}")
-      ->line("**Dikemaskini Oleh:** {$this->changedBy->nama}");
+      ->line("**Tajuk Aduan:** {$this->ticket->ticket_title}")
+      //->line("**Status Terdahulu:** {$oldStatusName}")
+      ->line("**Status Semasa:** {$statusName}")
+      ->line("**Dilog Oleh:** {$this->changedBy->nama}");
 
-    // Add notes if provided
-    if ($this->notes) {
-      $message->line("**Catatan:** {$this->notes}");
+    // Catatan
+    if (!empty($this->notes)) {
+      $message->line("**Catatan Pegawai:**")
+        ->line($this->notes);
     }
 
-    // Add action button based on status
-    if (in_array($this->newStatus, [1, 2, 3, 4])) {
-      $message->action('Lihat Tiket', url('/tickets/' . $this->ticket->id));
-    } else {
-      $message->line("Anda boleh melihat tiket untuk maklumat lanjut.");
-      $message->action('Lihat Tiket', url('/tickets/' . $this->ticket->id));
-    }
+    // Action button
+    $message->action(
+      'Lihat Tiket',
+      url('/tickets/' . $this->ticket->id)
+    );
 
+    // Closing
     $message->line($this->getStatusClosingMessage($this->newStatus))
-      ->salutation('Terima kasih,  
-Sistem eHelp');
+      ->salutation("Sekian, terima kasih.\n\nSistem eHelp");
 
     return $message;
   }
+
+  /**
+   * Get the gelaran (title) of the notifiable user
+   */
+
+  protected function getGelaran($notifiable)
+{
+    $gelaran = $notifiable->gelaran ?? 'Tuan / Puan';
+
+    return "Y.Bhg. {$gelaran} {$notifiable->nama}";
+}
 
   /**
    * Get status name in Malay
@@ -96,58 +119,24 @@ Sistem eHelp');
       4 => 'Aduan Dirujuk',
       5 => 'Aduan Dibatal',
       6 => 'Aduan Selesai',
-      default => 'Status Tidak Diketahui'
+      default => ''
     };
   }
 
   /**
-   * Get status color for email styling
+   * Get status message in Malay
    */
-  private function getStatusColor($statusId)
+
+  private function getStatusMessage($statusId)
   {
     return match ($statusId) {
-      1 => 'primary',
-      2 => 'warning',
-      3 => 'info',
-      4 => 'secondary',
-      5 => 'danger',
-      6 => 'success',
-      default => 'secondary'
+      1 => 'Tiket aduan anda telah berjaya direkodkan dan akan diproses.',
+      3 => 'Tiket aduan ini telah diserahkan kepada pegawai berkaitan untuk tindakan lanjut.',
+      4 => 'Tiket aduan ini telah dirujuk kepada bahagian berkaitan untuk tindakan selanjutnya.',
+      5 => 'Tiket aduan ini telah dibatalkan.',
+      6 => 'Tiket aduan ini telah selesai diproses.',
+      default => '',
     };
-  }
-
-  /**
-   * Add status-specific message
-   */
-  private function addStatusSpecificMessage(MailMessage $message, $statusId)
-  {
-    switch ($statusId) {
-      case 1: // Aduan Baru
-        $message->line("🆕 Tiket anda telah dilog dan akan diproses dalam masa terdekat.");
-        break;
-
-      case 2: // Aduan Diproses
-        $message->line("⚙️ Tiket anda sedang dalam proses penyelesaian oleh pegawai kami.");
-        break;
-
-      case 3: // Serahan Kepada
-        $message->line("📤 Tiket anda telah diserahkan kepada pegawai lain untuk tindakan selanjutnya.");
-        break;
-
-      case 4: // Aduan Dirujuk
-        $message->line("📋 Tiket anda telah dirujuk kepada pihak berkenaan untuk tindakan lanjut.");
-        break;
-
-      case 5: // Aduan Dibatal
-        $message->line("❌ Tiket anda telah dibatalkan. Sila hubungi helpdesk jika anda memerlukan penjelasan lanjut.");
-        break;
-
-      case 6: // Aduan Selesai
-        $message->line("✅ Tiket anda telah selesai diproses. Terima kasih atas kesabaran anda.");
-        break;
-    }
-
-    return $message;
   }
 
   /**
@@ -157,11 +146,10 @@ Sistem eHelp');
   {
     return match ($statusId) {
       1 => 'Kami akan menghubungi anda sekiranya memerlukan maklumat tambahan.',
-      2 => 'Kami akan memberitahu anda sebaik sahaja tiket selesai diproses.',
-      3, 4 => 'Anda akan menerima kemaskini seterusnya tidak lama lagi.',
-      5 => 'Sekiranya anda tidak bersetuju dengan pembatalan ini, sila hubungi helpdesk.',
-      6 => 'Kami harap perkhidmatan kami memuaskan hati. Jika ada sebarang pertanyaan, sila hubungi kami.',
-      default => 'Terima kasih atas maklum balas anda.'
+      3, 4 => 'Makluman lanjut akan dimaklumkan dari semasa ke semasa.',
+      5 => 'Sekiranya terdapat sebarang pertanyaan, sila hubungi helpdesk.',
+      6 => 'Terima kasih atas kerjasama anda.',
+      default => '',
     };
   }
 

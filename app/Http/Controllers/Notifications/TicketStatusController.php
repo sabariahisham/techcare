@@ -1,14 +1,14 @@
 <?php
 
 /*
- * Function TicketEmailController.php:
+ * Function TicketStatusController.php:
  *  - Manage email notifications related to tickets for Pengadu and Pegawai Tugasan.
  *  - Configure email settings and templates.
- *  - Send alerts for ticket status: Baru(1), Selesai(6) and Dirujuk(4).
+ *  - Send alerts for ticket status: Baru(1), Serahan Kepada(3),Dirujuk(4), Aduan Dibatal(5), Selesai(6) and .
  *  - Provide email templates for Pengadu and Pegawai Tugasan.
  */
 
-namespace App\Http\Controllers\Ticket;
+namespace App\Http\Controllers\Notifications;
 
 use App\Models\Ticket;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 
-class TicketEmailController extends Controller
+class TicketStatusController extends Controller
 {
     /**
      * Send notification email for ticket

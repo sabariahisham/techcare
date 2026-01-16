@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * Function TicketDueDateReminderNotification.php:
+ *  - Notification class to remind Pegawai Tugasan about tickets due tomorrow.
+ *  - Sends email with ticket details and due date information.
+ */
+
 namespace App\Notifications;
 
 use App\Models\Ticket;
