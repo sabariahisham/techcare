@@ -5,7 +5,8 @@ namespace App\Services;
 use App\Models\Ticket;
 use App\Models\TicketChronology;
 use App\Models\User;
-use App\Notifications\TicketStatusChangedNotification;
+use App\Notifications\Ticket\PengaduStatusChangedNotification;
+use App\Notifications\Ticket\PegawaiTugasanStatusChangedNotification;
 use Illuminate\Support\Facades\Log;
 
 class TicketNotificationService
@@ -80,7 +81,7 @@ class TicketNotificationService
 
       $notificationMessage = $notes ?? 'Tiket anda telah berjaya dicipta dan akan diproses dalam masa terdekat.';
 
-      $ticketOwner->notify(new TicketStatusChangedNotification(
+      $ticketOwner->notify(new PengaduStatusChangedNotification(
         $ticket,
         null, // No old status (new ticket)
         1, // Status "Aduan Baru"
@@ -142,12 +143,13 @@ class TicketNotificationService
         return false;
       }
 
-      $assignedOfficer->notify(new TicketStatusChangedNotification(
+      $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
         $ticket,
         null,
         1,
         $changedBy,
-        'Tiket baru telah ditugaskan kepada anda. Sila ambil tindakan yang sewajarnya.'
+        'Tiket baru telah ditugaskan kepada anda. Sila ambil tindakan yang sewajarnya.',
+        1 // Level 1
       ));
 
       Log::info('New ticket notification sent to assigned Level 1 officer', [
@@ -201,7 +203,7 @@ class TicketNotificationService
         return false;
       }
 
-      $ticketOwner->notify(new TicketStatusChangedNotification(
+      $ticketOwner->notify(new PengaduStatusChangedNotification(
         $ticket,
         $oldStatus,
         $newStatus,

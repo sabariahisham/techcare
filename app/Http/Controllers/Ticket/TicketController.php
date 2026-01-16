@@ -41,7 +41,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-use App\Notifications\TicketStatusChangedNotification;
+use App\Notifications\Ticket\PengaduStatusChangedNotification;
 use App\Services\TicketNotificationService;
 use Yajra\DataTables\Facades\DataTables;
 use App\Http\Requests\Ticket\StoreTicketRequest;
@@ -1378,7 +1378,7 @@ class TicketController extends Controller
       try {
         $ticketOwner = $ticket->user;
         if ($ticketOwner && $ticketOwner->email) {
-          $ticketOwner->notify(new TicketStatusChangedNotification(
+          $ticketOwner->notify(new PengaduStatusChangedNotification(
             $ticket,
             $oldStatus,
             $request->tick_status,
