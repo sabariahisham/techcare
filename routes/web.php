@@ -11,19 +11,31 @@ use App\Http\Controllers\Ticket\TicketController;
 use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Audit\AuditTrailController;
 use App\Http\Controllers\Ticket\TicketSLAController;
-use App\Http\Controllers\Ticket\TicketEmailController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Ticket\TicketSearchController;
 use App\Http\Controllers\Configuration\ModuleController;
 use App\Http\Controllers\Ticket\TicketCommentController;
-use App\Http\Controllers\Ticket\TicketCronJobController;
-use App\Http\Controllers\Ticket\TicketEmailLogController;
 use App\Http\Controllers\Ticket\TicketAssignmentController;
 use App\Http\Controllers\Ticket\TicketAttachmentController;
 use App\Http\Controllers\Ticket\TicketChronologyController;
+use App\Http\Controllers\Notifications\TicketDueDateController;
+use App\Http\Controllers\Notifications\TicketStatusController;
 use App\Http\Controllers\Configuration\UserManagementController;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
+
+// Test email route using Mailtrap
+// run at browser: ../test-email
+use Illuminate\Support\Facades\Mail;
+
+Route::get('/test-email', function () {
+    Mail::raw('Test email from Laravel', function ($message) {
+        $message->to('test@example.com')
+                ->subject('Test Mailtrap');
+    });
+
+    return 'Email sent!';
+});
 
 Route::get('/', function () {
   return redirect('/dashboard');
@@ -367,7 +379,7 @@ Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
 
 // Ticket Email Notification Routes Group
 Route::middleware(['auth'])->prefix('ticket-emails')->group(function () {
-  Route::post('/send-notification/{ticket}', [TicketEmailController::class, 'sendNotification'])->name('ticket-emails.send-notification');
+  Route::post('/send-notification/{ticket}', [TicketStatusController::class, 'sendNotification'])->name('ticket-emails.send-notification');
 });
 
 // Ticket SLA Monitoring Routes Group
@@ -377,8 +389,8 @@ Route::middleware(['auth'])->prefix('ticket-sla')->group(function () {
 });
 
 // Ticket Cron Jobs Routes Group
-Route::middleware(['auth'])->prefix('ticket-cron')->group(function () {
-  Route::post('/check-sla', [TicketCronJobController::class, 'checkSla'])->name('ticket-cron.check-sla');
+Route::middleware(['auth'])->prefix('ticket-duedate')->group(function () {
+  Route::post('/check-sla', [TicketDueDateController::class, 'checkSla'])->name('ticket-duedate.check-sla');
 });
 
 // CAS Protected Routes Group - DISABLED for local development

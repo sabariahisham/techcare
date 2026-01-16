@@ -2,9 +2,9 @@
 
 /*
  * Function TicketSLAController.php:
- *  - Manage Service Level Agreements (SLA) for tickets.
- *  - Track and calculate response and resolution times.
- *  - Provide SLA compliance reports for Pengadu and Pegawai Tugasan.
+  * - Manage SLA related functionalities for tickets.
+  * - Report overdue tickets based on SLA due dates.
+  * - Provide SLA statistics and compliance reports.
  */
 
 namespace App\Http\Controllers\Ticket;
@@ -41,8 +41,8 @@ class TicketSLAController extends Controller
                         ->latest()
                         ->first();
 
-                    $overdueHours = $latestSLA && $latestSLA->sla_duedate 
-                        ? $currentTime->diffInHours($latestSLA->sla_duedate) 
+                    $overdueHours = $latestSLA && $latestSLA->sla_duedate
+                        ? $currentTime->diffInHours($latestSLA->sla_duedate)
                         : 0;
 
                     return [

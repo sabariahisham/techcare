@@ -1,21 +1,23 @@
 <?php
 
 /*
- * Function TicketCronJobController.php:
- *  - Manage scheduled tasks related to tickets.
- *  - Automate routine ticket processing and maintenance.
- *  - Provide cron job functionalities for Pengadu and Pegawai Tugasan.
- */
+  * Function TicketDueDateController.php:
+  *  - Manage due date email notifications for Pegawai Tugasan (Level 1) 1 day before due date for status Aduan Baru only.
+  *  - Configure email settings and templates.
+  *  - Send alerts for ticket Due date approaching and overdue.
+  */
 
-namespace App\Http\Controllers\Ticket;
+namespace App\Http\Controllers\Notifications;
 
 use App\Models\Ticket;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 
-class TicketCronJobController extends Controller
+class TicketDueDateController extends Controller
 {
   /**
    * Check SLA compliance and send alerts
@@ -100,7 +102,7 @@ class TicketCronJobController extends Controller
     ]);
 
     // Placeholder for email notification
-    // You can integrate with TicketEmailController here
+    // You can integrate with TicketStatusController here
   }
 
   /**
@@ -188,3 +190,4 @@ class TicketCronJobController extends Controller
     }
   }
 }
+
