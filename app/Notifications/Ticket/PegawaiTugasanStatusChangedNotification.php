@@ -1,13 +1,16 @@
 <?php
 
 /*
-  * Function TicketStatusChangedNotification.php:
-  *  - Notification: Ticket Status Changed to inform Pengadu and Pegawai Tugasan about ticket status changes.
-  *  - Sends email with ticket details and status update information.
-  * - run command: php test_notification_detail.php 14[ticket_id] to test email notification for ticket status "Aduan Baru"(1)
-  */
+* Function PegawaiTugasanStatusChangedNotification.php:
+*  - Notification: Ticket Status Changed to inform Pegawai Tugasan.
+*  - Ticket status changes:
+*     1. Level 1: Aduan Baru(1), Dirujuk(4), Selesai(6)-after Level 2 submits
+*     2. Level 2: Serahan Kepada(3)
+*  - Sends email with ticket details and status update information.
+*  - run command: php test_notification_detail.php 14[ticket_id] to test email notification for ticket status "Aduan Baru"(1)
+*/
 
-namespace App\Notifications;
+namespace App\Notifications\Ticket;
 
 use App\Models\Ticket;
 use App\Models\User;
@@ -16,7 +19,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class TicketStatusChangedNotification extends Notification
+class PegawaiTugasanStatusChangedNotification extends Notification
 {
   use Queueable;
 
@@ -25,17 +28,19 @@ class TicketStatusChangedNotification extends Notification
   protected $newStatus;
   protected $changedBy;
   protected $notes;
+  protected $level;
 
   /**
    * Create a new notification instance.
    */
-  public function __construct(Ticket $ticket, $oldStatus, $newStatus, User $changedBy, $notes = null)
+  public function __construct(Ticket $ticket, $oldStatus, $newStatus, User $changedBy, $notes = null, $level = 1)
   {
     $this->ticket = $ticket;
     $this->oldStatus = $oldStatus;
     $this->newStatus = $newStatus;
     $this->changedBy = $changedBy;
     $this->notes = $notes;
+    $this->level = $level;
   }
 
   /**
@@ -53,8 +58,8 @@ class TicketStatusChangedNotification extends Notification
    */
   public function toMail(object $notifiable): MailMessage
   {
-    // Skip email for "Aduan Diproses"
-    if ($this->newStatus == 2) {
+    // Skip email for "Aduan Diproses" (status 2) and "Aduan Dibatal" (status 5)
+    if (in_array($this->newStatus, [2, 5])) {
       return new MailMessage();
     }
 
@@ -65,32 +70,34 @@ class TicketStatusChangedNotification extends Notification
       ->subject("[{$statusName}] {$this->ticket->ticket_nolog} – {$this->ticket->ticket_title}")
       ->greeting('Assalamualaikum dan Salam Sejahtera,')
       ->line("**{$this->getGelaran($notifiable)}**")
-      ->line("Dimaklumkan bahawa status tiket aduan anda adalah seperti berikut:");
+      ->line("Dimaklumkan bahawa tiket berikut memerlukan tindakan anda:");
 
     // Status-specific info
-    $message->line($this->getStatusMessage($this->newStatus));
+    $message->line($this->getStatusMessage($this->newStatus, $this->level));
 
-    // Ticket info (padat)
+    // Ticket info
     $message->line("**No. Log Tiket:** {$this->ticket->ticket_nolog}")
       ->line("**Tajuk Aduan:** {$this->ticket->ticket_title}")
-      //->line("**Status Terdahulu:** {$oldStatusName}")
+      ->line("**Kategori:** " . ($this->ticket->category->cat_name ?? 'N/A'))
+      ->line("**Sub Kategori:** " . ($this->ticket->subCategory->subcat_name ?? 'N/A'))
+      ->line("**Nama Pengadu:** " . ($this->ticket->user->nama ?? 'N/A'))
       ->line("**Status Semasa:** {$statusName}")
       ->line("**Dilog Oleh:** {$this->changedBy->nama}");
 
     // Catatan
     if (!empty($this->notes)) {
-      $message->line("**Catatan Pegawai:**")
+      $message->line("**Catatan:**")
         ->line($this->notes);
     }
 
     // Action button
     $message->action(
-      'Lihat Tiket',
+      'Lihat & Urus Tiket',
       url('/tickets/' . $this->ticket->id)
     );
 
     // Closing
-    $message->line($this->getStatusClosingMessage($this->newStatus))
+    $message->line($this->getStatusClosingMessage($this->newStatus, $this->level))
       ->salutation("Sekian, terima kasih.\n\nSistem eHelp");
 
     return $message;
@@ -99,13 +106,12 @@ class TicketStatusChangedNotification extends Notification
   /**
    * Get the gelaran (title) of the notifiable user
    */
-
   protected function getGelaran($notifiable)
-{
-    $gelaran = $notifiable->gelaran ?? 'Tuan / Puan';
+  {
+    $gelaran = $notifiable->gelaran ?? 'Tuan/Puan';
 
     return "Y.Bhg. {$gelaran} {$notifiable->nama}";
-}
+  }
 
   /**
    * Get status name in Malay
@@ -124,31 +130,36 @@ class TicketStatusChangedNotification extends Notification
   }
 
   /**
-   * Get status message in Malay
+   * Get status message in Malay based on level
    */
-
-  private function getStatusMessage($statusId)
+  private function getStatusMessage($statusId, $level)
   {
-    return match ($statusId) {
-      1 => 'Tiket aduan anda telah berjaya direkodkan dan akan diproses.',
-      3 => 'Tiket aduan ini telah diserahkan kepada pegawai berkaitan untuk tindakan lanjut.',
-      4 => 'Tiket aduan ini telah dirujuk kepada bahagian berkaitan untuk tindakan selanjutnya.',
-      5 => 'Tiket aduan ini telah dibatalkan.',
-      6 => 'Tiket aduan ini telah selesai diproses.',
-      default => '',
-    };
+    if ($level == 1) {
+      return match ($statusId) {
+        1 => 'Tiket baru telah ditugaskan kepada anda. Sila ambil tindakan yang sewajarnya.',
+        4 => 'Tiket ini telah dirujuk kepada bahagian lain. Sila semak dan ambil tindakan jika perlu.',
+        6 => 'Tiket ini telah diselesaikan. Terima kasih atas tindakan anda.',
+        default => '',
+      };
+    } else {
+      return match ($statusId) {
+        3 => 'Tiket ini telah diserahkan kepada anda untuk tindakan lanjut.',
+        6 => 'Tiket ini telah diselesaikan. Terima kasih atas tindakan anda.',
+        default => '',
+      };
+    }
   }
 
   /**
-   * Get closing message based on status
+   * Get closing message based on status and level
    */
-  private function getStatusClosingMessage($statusId)
+  private function getStatusClosingMessage($statusId, $level)
   {
     return match ($statusId) {
-      1 => 'Kami akan menghubungi anda sekiranya memerlukan maklumat tambahan.',
-      3, 4 => 'Makluman lanjut akan dimaklumkan dari semasa ke semasa.',
-      5 => 'Sekiranya terdapat sebarang pertanyaan, sila hubungi helpdesk.',
-      6 => 'Terima kasih atas kerjasama anda.',
+      1 => 'Sila ambil tindakan segera untuk memproses tiket ini.',
+      3 => 'Sila semak dan ambil tindakan yang bersesuaian.',
+      4 => 'Makluman lanjut akan dimaklumkan sekiranya diperlukan.',
+      6 => 'Tiket ini telah ditutup.',
       default => '',
     };
   }
@@ -166,6 +177,7 @@ class TicketStatusChangedNotification extends Notification
       'old_status' => $this->oldStatus,
       'new_status' => $this->newStatus,
       'changed_by' => $this->changedBy->id,
+      'level' => $this->level,
     ];
   }
 }

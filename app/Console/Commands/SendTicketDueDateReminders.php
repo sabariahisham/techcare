@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Ticket;
 use App\Models\TicketChronology;
 use App\Models\User;
-use App\Notifications\TicketDueDateReminderNotification;
+use App\Notifications\Ticket\DueDateNotification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -80,7 +80,7 @@ class SendTicketDueDateReminders extends Command
                     }
 
                     // Send notification reminder
-                    $officer->notify(new TicketDueDateReminderNotification($ticket));
+                    $officer->notify(new DueDateNotification($ticket));
 
                     $sentCount++;
                     $this->info("✓ Sent reminder for ticket {$ticket->ticket_nolog} to {$officer->nama} ({$officer->email})");
