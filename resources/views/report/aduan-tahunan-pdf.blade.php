@@ -105,7 +105,7 @@
         <thead>
             <tr>
                 <th rowspan="2" class="category-col">Kategori Aduan</th>
-                <th colspan="3" class="month-header">Jan</th>
+                {{-- <th colspan="3" class="month-header">Jan</th>
                 <th colspan="3" class="month-header">Feb</th>
                 <th colspan="3" class="month-header">Mac</th>
                 <th colspan="3" class="month-header">Apr</th>
@@ -116,23 +116,57 @@
                 <th colspan="3" class="month-header">Sep</th>
                 <th colspan="3" class="month-header">Okt</th>
                 <th colspan="3" class="month-header">Nov</th>
-                <th colspan="3" class="month-header">Dis</th>
+                <th colspan="3" class="month-header">Dis</th> --}}
+                 @foreach($months as $num => $name)
+                    <th colspan="3" class="month-header">
+                        {{ ucfirst($name) }}
+                    </th>
+                @endforeach
                 <th colspan="3" class="total-header">Jumlah Keseluruhan</th>
             </tr>
             <tr>
-                @for($i = 0; $i < 12; $i++)
+                {{-- @for($i = 0; $i < 12; $i++) --}}
+                @foreach($months as $name)
                     <th>Bil.<br>Aduan</th>
                     <th>Aduan<br>Selesai</th>
                     <th>%<br>Selesai</th>
-                @endfor
+                @endforeach
                 <th>Bil.<br>Aduan</th>
                 <th>Aduan<br>Selesai</th>
                 <th>%<br>Selesai</th>
             </tr>
         </thead>
         <tbody>
-            @php
+            {{-- @php
                 $months = ['jan', 'feb', 'mac', 'apr', 'mei', 'jun', 'jul', 'ogos', 'sep', 'okt', 'nov', 'dis'];
+            @endphp --}}
+            @php
+                $allMonths = [
+                    1 => 'jan',
+                    2 => 'feb',
+                    3 => 'mac',
+                    4 => 'apr',
+                    5 => 'mei',
+                    6 => 'jun',
+                    7 => 'jul',
+                    8 => 'ogos',
+                    9 => 'sep',
+                    10 => 'okt',
+                    11 => 'nov',
+                    12 => 'dis'
+                ];
+
+                // Jika user pilih bulan → guna bulan itu sahaja
+                $selected = isset($monthsFilter) && count($monthsFilter)
+                    ? $monthsFilter
+                    : array_keys($allMonths);
+
+                $months = [];
+                foreach ($selected as $m) {
+                    if (isset($allMonths[$m])) {
+                        $months[$m] = $allMonths[$m];
+                    }
+                }
             @endphp
             @foreach($data as $row)
             <tr>

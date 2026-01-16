@@ -51,6 +51,24 @@ $(function () {
           name: 'Laporan Bulanan Aduan',
           description: 'Laporan bulanan aduan yang diterima mengikut kategori dan tahunan',
           updated_at: currentDateTime
+        },
+        {
+          id: 4,
+          name: 'Senarai Rekod Laporan Helpdesk (Dalam Pembangunan)',
+          description: 'Senarai Rekod Laporan Helpdesk ',
+          updated_at: currentDateTime
+        },
+        {
+          id: 5,
+          name: 'Statistik Log Aduan (Dalam Pembangunan)',
+          description: 'Statistik Log Aduan Helpdesk Mengikut Kategori ',
+          updated_at: currentDateTime
+        },
+        {
+          id: 6,
+          name: 'Laporan Bulanan Aduan Mengikut Status Aduan (Dalam Pembangunan)',
+          description: 'Laporan bulanan aduan yang diterima mengikut status aduan',
+          updated_at: currentDateTime
         }
 
       ],
@@ -90,6 +108,10 @@ $(function () {
           responsivePriority: 1,
           render: function (data, type, full, meta) {
             var $name = full['name'];
+            // Make "(under development)" blink
+            if ($name.includes('(Dalam Pembangunan)')) {
+              $name = $name.replace('(Dalam Pembangunan)', '<span class="blink-text text-warning fw-bold">(Dalam Pembangunan)</span>');
+            }
             return '<span class="fw-medium">' + $name + '</span>';
           }
         },
@@ -131,6 +153,18 @@ $(function () {
               // Route for Laporan Bulanan Aduan
               viewUrl = '/report/aduan-tahunan';
             }
+            else if ($id === 4) {
+              // Route for Senarai Rekod Laporan Helpdesk
+              viewUrl = '/report/senarai-rekod-laporan-helpdesk';
+            }
+            else if ($id === 5) {
+              // Route for Statistik Log Aduan
+              viewUrl = '/report/statistik-log-aduan';
+            }
+            else if ($id === 6) {
+              // Route for Laporan Bulanan Aduan Mengikut Status Aduan
+              viewUrl = '/report/aduan-mengikut-status';
+            } 
 
             return (
               '<div class="d-flex align-items-center">' +
@@ -206,6 +240,23 @@ $(function () {
     });
 
     $('.dataTables_length').addClass('my-0');
+  }
+
+  // Add blinking animation CSS
+  if (!document.getElementById('blink-animation-style')) {
+    var style = document.createElement('style');
+    style.id = 'blink-animation-style';
+    style.innerHTML = `
+      @keyframes blink-animation {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+      }
+      .blink-text {
+        animation: blink-animation 1.5s ease-in-out infinite;
+        display: inline-block;
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   // Initialize tooltips

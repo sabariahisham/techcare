@@ -168,7 +168,28 @@ class AduanTahunanController extends Controller
 
         $filename = 'laporan_aduan_tahunan_' . $year . '_' . date('YmdHis') . '.csv';
 
-        return response()->streamDownload(function () use ($data, $totals, $year) {
+        // Month mapping
+        $allMonthsMap = [
+            1 => ['name' => 'Jan', 'field' => 'jan'],
+            2 => ['name' => 'Feb', 'field' => 'feb'],
+            3 => ['name' => 'Mac', 'field' => 'mac'],
+            4 => ['name' => 'Apr', 'field' => 'apr'],
+            5 => ['name' => 'Mei', 'field' => 'mei'],
+            6 => ['name' => 'Jun', 'field' => 'jun'],
+            7 => ['name' => 'Jul', 'field' => 'jul'],
+            8 => ['name' => 'Ogos', 'field' => 'ogos'],
+            9 => ['name' => 'Sep', 'field' => 'sep'],
+            10 => ['name' => 'Okt', 'field' => 'okt'],
+            11 => ['name' => 'Nov', 'field' => 'nov'],
+            12 => ['name' => 'Dis', 'field' => 'dis']
+        ];
+
+        // Determine which months to display
+        $displayMonths = empty($monthsFilter) 
+            ? range(1, 12) 
+            : $monthsFilter;
+
+        return response()->streamDownload(function () use ($data, $totals, $year, $displayMonths, $allMonthsMap) {
             $handle = fopen('php://output', 'w');
 
             // Add BOM for UTF-8
@@ -179,62 +200,53 @@ class AduanTahunanController extends Controller
             fputcsv($handle, ['Tarikh: ' . date('d-m-Y')]);
             fputcsv($handle, []);
 
-            // Add column headers
-            $headers = [
-                'Kategori Aduan',
-                'Jan Bil', 'Jan Selesai', 'Jan %',
-                'Feb Bil', 'Feb Selesai', 'Feb %',
-                'Mac Bil', 'Mac Selesai', 'Mac %',
-                'Apr Bil', 'Apr Selesai', 'Apr %',
-                'Mei Bil', 'Mei Selesai', 'Mei %',
-                'Jun Bil', 'Jun Selesai', 'Jun %',
-                'Jul Bil', 'Jul Selesai', 'Jul %',
-                'Ogos Bil', 'Ogos Selesai', 'Ogos %',
-                'Sep Bil', 'Sep Selesai', 'Sep %',
-                'Okt Bil', 'Okt Selesai', 'Okt %',
-                'Nov Bil', 'Nov Selesai', 'Nov %',
-                'Dis Bil', 'Dis Selesai', 'Dis %',
-                'Jumlah Bil', 'Jumlah Selesai', 'Jumlah %'
-            ];
+            // Build dynamic headers based on selected months
+            $headers = ['Kategori Aduan'];
+            foreach ($displayMonths as $monthNum) {
+                $monthName = $allMonthsMap[$monthNum]['name'];
+                $headers[] = $monthName . ' Bil';
+                $headers[] = $monthName . ' Selesai';
+                $headers[] = $monthName . ' %';
+            }
+            $headers[] = 'Jumlah Bil';
+            $headers[] = 'Jumlah Selesai';
+            $headers[] = 'Jumlah %';
+            
             fputcsv($handle, $headers);
 
-            // Add data rows
+            // Add data rows dynamically
             foreach ($data as $row) {
-                fputcsv($handle, [
-                    $row->cat_name,
-                    $row->jan_aduan, $row->jan_selesai, $this->calculatePersen($row->jan_selesai, $row->jan_aduan),
-                    $row->feb_aduan, $row->feb_selesai, $this->calculatePersen($row->feb_selesai, $row->feb_aduan),
-                    $row->mac_aduan, $row->mac_selesai, $this->calculatePersen($row->mac_selesai, $row->mac_aduan),
-                    $row->apr_aduan, $row->apr_selesai, $this->calculatePersen($row->apr_selesai, $row->apr_aduan),
-                    $row->mei_aduan, $row->mei_selesai, $this->calculatePersen($row->mei_selesai, $row->mei_aduan),
-                    $row->jun_aduan, $row->jun_selesai, $this->calculatePersen($row->jun_selesai, $row->jun_aduan),
-                    $row->jul_aduan, $row->jul_selesai, $this->calculatePersen($row->jul_selesai, $row->jul_aduan),
-                    $row->ogos_aduan, $row->ogos_selesai, $this->calculatePersen($row->ogos_selesai, $row->ogos_aduan),
-                    $row->sep_aduan, $row->sep_selesai, $this->calculatePersen($row->sep_selesai, $row->sep_aduan),
-                    $row->okt_aduan, $row->okt_selesai, $this->calculatePersen($row->okt_selesai, $row->okt_aduan),
-                    $row->nov_aduan, $row->nov_selesai, $this->calculatePersen($row->nov_selesai, $row->nov_aduan),
-                    $row->dis_aduan, $row->dis_selesai, $this->calculatePersen($row->dis_selesai, $row->dis_aduan),
-                    $row->jumlah_aduan, $row->jumlah_selesai, $this->calculatePersen($row->jumlah_selesai, $row->jumlah_aduan),
-                ]);
+                $rowData = [$row->cat_name];
+                
+                foreach ($displayMonths as $monthNum) {
+                    $field = $allMonthsMap[$monthNum]['field'];
+                    $rowData[] = $row->{$field . '_aduan'};
+                    $rowData[] = $row->{$field . '_selesai'};
+                    $rowData[] = $this->calculatePersen($row->{$field . '_selesai'}, $row->{$field . '_aduan'});
+                }
+                
+                $rowData[] = $row->jumlah_aduan;
+                $rowData[] = $row->jumlah_selesai;
+                $rowData[] = $this->calculatePersen($row->jumlah_selesai, $row->jumlah_aduan);
+                
+                fputcsv($handle, $rowData);
             }
 
-            // Add totals row
-            fputcsv($handle, [
-                'JUMLAH KESELURUHAN',
-                $totals['jan_aduan'], $totals['jan_selesai'], $this->calculatePersen($totals['jan_selesai'], $totals['jan_aduan']),
-                $totals['feb_aduan'], $totals['feb_selesai'], $this->calculatePersen($totals['feb_selesai'], $totals['feb_aduan']),
-                $totals['mac_aduan'], $totals['mac_selesai'], $this->calculatePersen($totals['mac_selesai'], $totals['mac_aduan']),
-                $totals['apr_aduan'], $totals['apr_selesai'], $this->calculatePersen($totals['apr_selesai'], $totals['apr_aduan']),
-                $totals['mei_aduan'], $totals['mei_selesai'], $this->calculatePersen($totals['mei_selesai'], $totals['mei_aduan']),
-                $totals['jun_aduan'], $totals['jun_selesai'], $this->calculatePersen($totals['jun_selesai'], $totals['jun_aduan']),
-                $totals['jul_aduan'], $totals['jul_selesai'], $this->calculatePersen($totals['jul_selesai'], $totals['jul_aduan']),
-                $totals['ogos_aduan'], $totals['ogos_selesai'], $this->calculatePersen($totals['ogos_selesai'], $totals['ogos_aduan']),
-                $totals['sep_aduan'], $totals['sep_selesai'], $this->calculatePersen($totals['sep_selesai'], $totals['sep_aduan']),
-                $totals['okt_aduan'], $totals['okt_selesai'], $this->calculatePersen($totals['okt_selesai'], $totals['okt_aduan']),
-                $totals['nov_aduan'], $totals['nov_selesai'], $this->calculatePersen($totals['nov_selesai'], $totals['nov_aduan']),
-                $totals['dis_aduan'], $totals['dis_selesai'], $this->calculatePersen($totals['dis_selesai'], $totals['dis_aduan']),
-                $totals['jumlah_aduan'], $totals['jumlah_selesai'], $this->calculatePersen($totals['jumlah_selesai'], $totals['jumlah_aduan']),
-            ]);
+            // Add totals row dynamically
+            $totalsRow = ['JUMLAH KESELURUHAN'];
+            
+            foreach ($displayMonths as $monthNum) {
+                $field = $allMonthsMap[$monthNum]['field'];
+                $totalsRow[] = $totals[$field . '_aduan'];
+                $totalsRow[] = $totals[$field . '_selesai'];
+                $totalsRow[] = $this->calculatePersen($totals[$field . '_selesai'], $totals[$field . '_aduan']);
+            }
+            
+            $totalsRow[] = $totals['jumlah_aduan'];
+            $totalsRow[] = $totals['jumlah_selesai'];
+            $totalsRow[] = $this->calculatePersen($totals['jumlah_selesai'], $totals['jumlah_aduan']);
+            
+            fputcsv($handle, $totalsRow);
 
             fclose($handle);
         }, $filename, [
@@ -268,12 +280,26 @@ class AduanTahunanController extends Controller
         $totals = $this->calculateTotals($data);
         $generatedDate = now()->format('d/m/Y H:i:s');
 
-        $html = view('report.aduan-tahunan-pdf', compact(
-            'data',
-            'totals',
-            'year',
-            'generatedDate'
-        ))->render();
+        // Define month names mapping
+        $allMonths = [
+            1 => 'Jan', 2 => 'Feb', 3 => 'Mac', 4 => 'Apr',
+            5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Ogos',
+            9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Dis'
+        ];
+
+        // If month filter exists, use only selected months, otherwise use all
+        $months = empty($monthsFilter) 
+            ? $allMonths 
+            : array_intersect_key($allMonths, array_flip($monthsFilter));
+
+        $html = view('report.aduan-tahunan-pdf', [
+            'data'         => $data,
+            'totals'       => $totals,
+            'year'         => $year,
+            'generatedDate'=> $generatedDate,
+            'monthsFilter' => $monthsFilter,
+            'months'       => $months
+        ])->render();
 
         return response($html)
             ->header('Content-Type', 'text/html; charset=UTF-8');
