@@ -19,7 +19,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class PegawaiTugasanStatusChangedNotification extends Notification
+class PegawaiTugasanStatusChangedNotification extends Notification implements ShouldQueue
 {
   use Queueable;
 
@@ -63,44 +63,18 @@ class PegawaiTugasanStatusChangedNotification extends Notification
       return new MailMessage();
     }
 
-    $statusName     = $this->getStatusName($this->newStatus);
-    $oldStatusName  = $this->getStatusName($this->oldStatus);
+    $statusName = $this->getStatusName($this->newStatus);
 
-    $message = (new MailMessage)
-      ->subject("[{$statusName}] {$this->ticket->ticket_nolog} – {$this->ticket->ticket_title}")
-      ->greeting('Assalamualaikum dan Salam Sejahtera,')
-      ->line("**{$this->getGelaran($notifiable)}**")
-      ->line("Dimaklumkan bahawa tiket berikut memerlukan tindakan anda:");
-
-    // Status-specific info
-    $message->line($this->getStatusMessage($this->newStatus, $this->level));
-
-    // Ticket info
-    $message->line("**No. Log Tiket:** {$this->ticket->ticket_nolog}")
-      ->line("**Tajuk Aduan:** {$this->ticket->ticket_title}")
-      ->line("**Kategori:** " . ($this->ticket->category->cat_name ?? 'N/A'))
-      ->line("**Sub Kategori:** " . ($this->ticket->subCategory->subcat_name ?? 'N/A'))
-      ->line("**Nama Pengadu:** " . ($this->ticket->user->nama ?? 'N/A'))
-      ->line("**Status Semasa:** {$statusName}")
-      ->line("**Dilog Oleh:** {$this->changedBy->nama}");
-
-    // Catatan
-    if (!empty($this->notes)) {
-      $message->line("**Catatan:**")
-        ->line($this->notes);
-    }
-
-    // Action button
-    $message->action(
-      'Lihat & Urus Tiket',
-      url('/tickets/' . $this->ticket->id)
-    );
-
-    // Closing
-    $message->line($this->getStatusClosingMessage($this->newStatus, $this->level))
-      ->salutation("Sekian, terima kasih.\n\nSistem eHelp");
-
-    return $message;
+    return (new MailMessage)
+      ->subject("[{$statusName}] {$this->ticket->ticket_nolog}: {$this->ticket->ticket_title}")
+      ->markdown('emails.ticket.pegawai-tugasan-status', [
+        'ticket' => $this->ticket,
+        'assignedUser' => $notifiable,
+        'statusName' => $statusName,
+        'changedBy' => $this->changedBy,
+        'notes' => $this->notes,
+        'level' => $this->level,
+      ]);
   }
 
   /**
