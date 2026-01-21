@@ -37,17 +37,54 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
   ->middleware(['auth'])
   ->name('two-factor.login.store');
 
-// CAS Logout Route - DISABLED for local development
-// Uncomment this block when deploying to production with SATUID
+// ============================================================================
+// CAS/SATUID ROUTES - FOR PRODUCTION
+// ============================================================================
+// PRODUCTION: Uncomment this entire block and comment out the "LOCAL DEVELOPMENT"
+// session routes below when deploying to production with SATUID
+// ============================================================================
+// Route::middleware('cas.auth')->group(function () {
+//     // Dashboard
+//     Route::get('/dashboard', [DashboardController::class, 'index']);
+//
+//     // Session Management Routes (for session timeout handling with CAS)
+//     Route::post('/session/ping', function () {
+//         return response()->json([
+//             'authenticated' => Auth::check(),
+//             'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
+//             'timestamp' => now()->toISOString()
+//         ]);
+//     })->name('session.ping');
+//
+//     Route::get('/session/check', function () {
+//         $user = Auth::user();
+//         return response()->json([
+//             'authenticated' => Auth::check(),
+//             'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
+//             'timestamp' => now()->toISOString()
+//         ]);
+//     })->name('session.check');
+//
+//     // Add other CAS protected routes here as needed
+// });
+//
+// // CAS Logout Route
 // Route::get('/cas-logout', function () {
 //     Auth::logout();
 //     request()->session()->invalidate();
 //     request()->session()->regenerateToken();
-//
 //     // Redirect to SATUID logout
 //     return redirect(config('cas.cas_logout_url'));
 // })->name('cas.logout');
+// ============================================================================
+// END CAS/SATUID ROUTES
+// ============================================================================
 
+// ============================================================================
+// LOCAL DEVELOPMENT ROUTES
+// ============================================================================
+// PRODUCTION: Comment out this entire block when deploying to production with SATUID
+// ============================================================================
 // Session Management Routes (for session timeout handling)
 Route::middleware(['auth', config('jetstream.auth_session')])->group(function () {
   // Ping endpoint to extend session and check authentication status
@@ -69,6 +106,9 @@ Route::middleware(['auth', config('jetstream.auth_session')])->group(function ()
     ]);
   })->name('session.check');
 });
+// ============================================================================
+// END LOCAL DEVELOPMENT ROUTES
+// ============================================================================
 
 // Dashboard Routes Group
 Route::middleware([
@@ -380,11 +420,3 @@ Route::middleware(['auth'])->prefix('ticket-sla')->group(function () {
 Route::middleware(['auth'])->prefix('ticket-cron')->group(function () {
   Route::post('/check-sla', [TicketCronJobController::class, 'checkSla'])->name('ticket-cron.check-sla');
 });
-
-// CAS Protected Routes Group - DISABLED for local development
-// These routes are already covered by the Dashboard Routes Group above
-// Uncomment and use cas.auth when deploying to production with SATUID
-// Route::middleware('cas.auth')->group(function () {
-//     Route::get('/dashboard', [DashboardController::class, 'index']);
-//     // Add other protected routes here
-// });

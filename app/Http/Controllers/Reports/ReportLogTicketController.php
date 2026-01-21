@@ -122,6 +122,15 @@ class ReportLogTicketController extends Controller
             ->addColumn('bahagian', function ($ticket) {
                 return $ticket->user && $ticket->user->bahagian ? $ticket->user->bahagian->nama_bah : '-';
             })
+            ->addColumn('tarikh_tiket', function ($ticket) {
+                if (!$ticket->created_at) return '-';
+                $bulan = [
+                    1 => 'JANUARI', 2 => 'FEBRUARI', 3 => 'MAC', 4 => 'APRIL',
+                    5 => 'MEI', 6 => 'JUN', 7 => 'JULAI', 8 => 'OGOS',
+                    9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DISEMBER'
+                ];
+                return $ticket->created_at->format('d') . ' ' . $bulan[$ticket->created_at->month] . ' ' . $ticket->created_at->format('Y');
+            })
             ->addColumn('status_badge', function ($ticket) {
                 $status = $ticket->status;
                 if (!$status) return '<span class="badge bg-label-secondary">-</span>';
@@ -281,11 +290,11 @@ class ReportLogTicketController extends Controller
                     'No. Log Tiket',
                     'Pengadu',
                     'Bahagian',
+                    'Tarikh Tiket',
                     'Status',
                     'Kategori',
                     'Sub Kategori',
                     'Pegawai Tugasan',
-                    'Tarikh Aduan',
                     'Hari SLA'
                 ]);
 
@@ -315,15 +324,26 @@ class ReportLogTicketController extends Controller
                         $slaDays = round($daysDiff) . ' hari';
                     }
 
+                    // Format Tarikh Tiket in Malay
+                    $tarikhTiket = '-';
+                    if ($ticket->created_at) {
+                        $bulan = [
+                            1 => 'JANUARI', 2 => 'FEBRUARI', 3 => 'MAC', 4 => 'APRIL',
+                            5 => 'MEI', 6 => 'JUN', 7 => 'JULAI', 8 => 'OGOS',
+                            9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DISEMBER'
+                        ];
+                        $tarikhTiket = $ticket->created_at->format('d') . ' ' . $bulan[$ticket->created_at->month] . ' ' . $ticket->created_at->format('Y');
+                    }
+
                     fputcsv($file, [
                         $ticket->ticket_nolog,
                         $ticket->user ? $ticket->user->nama : '-',
                         $ticket->user && $ticket->user->bahagian ? $ticket->user->bahagian->nama_bah : '-',
+                        $tarikhTiket,
                         $ticket->status ? $ticket->status->st_name : '-',
                         $ticket->category ? $ticket->category->cat_name : '-',
                         $ticket->subCategory ? $ticket->subCategory->subcat_name : '-',
                         $officerNames,
-                        $ticket->created_at ? $ticket->created_at->format('d-m-Y') : '-',
                         $slaDays
                     ]);
                 }
@@ -403,7 +423,7 @@ class ReportLogTicketController extends Controller
     <meta charset="UTF-8">
     <title>Senarai Log Tiket</title>
     <style>
-        @page { margin: 20px; }
+@page{ size: landscape; margin: 20px; }
         body {
             font-family: Arial, sans-serif;
             font-size: 10px;
@@ -517,14 +537,14 @@ class ReportLogTicketController extends Controller
         <thead>
             <tr>
                 <th style="width: 5%;">Bil</th>
-                <th style="width: 12%;">No. Log Tiket</th>
-                <th style="width: 15%;">Pengadu</th>
-                <th style="width: 12%;">Bahagian</th>
-                <th style="width: 10%;">Status</th>
+                <th style="width: 10%;">No. Log Tiket</th>
+                <th style="width: 12%;">Pengadu</th>
+                <th style="width: 10%;">Bahagian</th>
+                <th style="width: 12%;">Tarikh Tiket</th>
+                <th style="width: 8%;">Status</th>
                 <th style="width: 12%;">Kategori</th>
                 <th style="width: 12%;">Sub Kategori</th>
                 <th style="width: 12%;">Pegawai Tugasan</th>
-                <th style="width: 10%;">Tarikh Aduan</th>
             </tr>
         </thead>
         <tbody>';
@@ -548,17 +568,28 @@ class ReportLogTicketController extends Controller
                 }
                 $officerNames = $officers->isEmpty() ? '-' : $officers->map(fn($o) => $o->user->nama)->implode(', ');
 
+                // Format Tarikh Tiket in Malay
+                $tarikhTiket = '-';
+                if ($ticket->created_at) {
+                    $bulan = [
+                        1 => 'JANUARI', 2 => 'FEBRUARI', 3 => 'MAC', 4 => 'APRIL',
+                        5 => 'MEI', 6 => 'JUN', 7 => 'JULAI', 8 => 'OGOS',
+                        9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DISEMBER'
+                    ];
+                    $tarikhTiket = $ticket->created_at->format('d') . ' ' . $bulan[$ticket->created_at->month] . ' ' . $ticket->created_at->format('Y');
+                }
+
                 $html .= '
             <tr>
                 <td>' . $bil++ . '</td>
                 <td>' . htmlspecialchars($ticket->ticket_nolog) . '</td>
                 <td>' . htmlspecialchars($ticket->user ? $ticket->user->nama : '-') . '</td>
                 <td>' . htmlspecialchars($ticket->user && $ticket->user->bahagian ? $ticket->user->bahagian->nama_bah : '-') . '</td>
+                <td>' . htmlspecialchars($tarikhTiket) . '</td>
                 <td>' . htmlspecialchars($ticket->status ? $ticket->status->st_name : '-') . '</td>
                 <td>' . htmlspecialchars($ticket->category ? $ticket->category->cat_name : '-') . '</td>
                 <td>' . htmlspecialchars($ticket->subCategory ? $ticket->subCategory->subcat_name : '-') . '</td>
                 <td>' . htmlspecialchars($officerNames) . '</td>
-                <td>' . ($ticket->created_at ? $ticket->created_at->format('d/m/Y') : '-') . '</td>
             </tr>';
             }
 

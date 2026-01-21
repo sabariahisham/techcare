@@ -187,30 +187,29 @@
          <div class="col-md-4">
             <label for="filter-month" class="form-label">BULAN</label>
             <select id="filter-month" class="form-select select2">
+              @php
+                $currentMonth = date('n');
+                $bulanList = [
+                  1 => 'Januari', 2 => 'Februari', 3 => 'Mac', 4 => 'April',
+                  5 => 'Mei', 6 => 'Jun', 7 => 'Julai', 8 => 'Ogos',
+                  9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Disember'
+                ];
+              @endphp
               <option value="">Semua</option>
-              <option value="1">Januari</option>
-              <option value="2">Februari</option>
-              <option value="3">Mac</option>
-              <option value="4">April</option>
-              <option value="5">Mei</option>
-              <option value="6">Jun</option>
-              <option value="7">Julai</option>
-              <option value="8">Ogos</option>
-              <option value="9">September</option>
-              <option value="10">Oktober</option>
-              <option value="11">November</option>
-              <option value="12">Disember</option>
+              @foreach($bulanList as $num => $nama)
+                <option value="{{ $num }}" {{ $num == $currentMonth ? 'selected' : '' }}>{{ $nama }}</option>
+              @endforeach
             </select>
           </div>
             <div class="col-md-4">
             <label for="filter-year" class="form-label">TAHUN</label>
             <select id="filter-year" class="form-select select2">
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
-              <option value="2022">2022</option>
-              <option value="2021">2021</option>
-              <option value="2020">2020</option>
+              @php
+                $currentYear = date('Y');
+              @endphp
+              @for($year = $currentYear; $year >= $currentYear - 10; $year--)
+                <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>{{ $year }}</option>
+              @endfor
             </select>
           </div>
           </div>
@@ -225,6 +224,7 @@
                 <th>NO LOG TIKET</th>
                 <th>PENGADU</th>
                 <th>BAHAGIAN</th>
+                <th>TARIKH TIKET</th>
                 <th>STATUS TIKET</th>
                 <th>KATEGORI</th>
                 <th>SUB KATEGORI</th>

@@ -28,10 +28,49 @@
     @include('dashboard/partials/impersonate-card')
 
     <!-- Dashboard Content -->
-    <div class="card mb-6">
-        <div class="card-body">
-            <h4 class="text-primary mb-1">Selamat datang, {{ Auth::user()->nama }}!</h4>
-            <p>Paparan ini memaparkan rumusan aktiviti, statistik dan prestasi semasa sistem untuk rujukan pantas anda.</p>
+    <div class="row g-4 mb-6">
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h4 class="text-primary mb-1">Selamat datang, {{ Auth::user()->nama }}!</h4>
+                    <p class="mb-0">Paparan ini memaparkan rumusan aktiviti, statistik dan prestasi semasa sistem untuk rujukan pantas anda.</p>
+                </div>
+            </div>
+        </div>
+        <!-- Session Timer Display -->
+        <div class="col-md-4">
+            <div id="sessionTimerWidget" class="h-100">
+                <div class="card shadow-sm border-warning h-100">
+                    <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <i class="bx bx-time-five text-primary fs-4 me-2"></i>
+                            <small class="text-muted fw-semibold">Masa Sesi</small>
+                        </div>
+                        <div id="sessionTimerDisplay" class="d-flex justify-content-center gap-3">
+                            <div class="text-center">
+                                <div id="timerHours" class="fs-3 fw-bold text-primary">00</div>
+                                <small class="text-muted">JAM</small>
+                            </div>
+                            <div class="fs-3 fw-bold text-primary">:</div>
+                            <div class="text-center">
+                                <div id="timerMinutes" class="fs-3 fw-bold text-primary">00</div>
+                                <small class="text-muted">MINIT</small>
+                            </div>
+                            <div class="fs-3 fw-bold text-primary">:</div>
+                            <div class="text-center">
+                                <div id="timerSeconds" class="fs-3 fw-bold text-primary">00</div>
+                                <small class="text-muted">SAAT</small>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 4px;">
+                            <div id="sessionTimerProgress" class="progress-bar bg-primary" role="progressbar" style="width: 100%;"></div>
+                        </div>
+                        <button id="btnRefreshSession" class="btn btn-sm btn-outline-primary mt-2 w-100">
+                            <i class="bx bx-refresh me-1"></i>Lanjutkan Sesi
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -56,8 +95,8 @@
     @if (config('app.debug', false))
         <div class="row g-4 mb-4">
             <!-- Debug Role Info -->
-            <div class="col-md-8">
-                <div class="alert alert-warning mb-0 h-100">
+            <div class="col-12">
+                <div class="alert alert-warning mb-0">
                     <h6><i class="fas fa-bug"></i> Debug Role Information:</h6>
                     <strong>Current User:</strong> {{ Auth::user()->nama }}<br>
                     <strong>User Roles:</strong> {{ Auth::user()->getRoleNames()->implode(', ') ?: 'No roles assigned' }}<br>
@@ -67,41 +106,6 @@
                                 dashboard.</small>
                         </div>
                     @endif
-                </div>
-            </div>
-            <!-- Session Timer Display -->
-            <div class="col-md-4">
-                <div id="sessionTimerWidget" class="h-100">
-                    <div class="card shadow-sm border-warning h-100">
-                        <div class="card-body p-3 text-center d-flex flex-column justify-content-center">
-                            <div class="d-flex align-items-center justify-content-center mb-2">
-                                <i class="bx bx-time-five text-primary fs-4 me-2"></i>
-                                <small class="text-muted fw-semibold">Masa Sesi</small>
-                            </div>
-                            <div id="sessionTimerDisplay" class="d-flex justify-content-center gap-3">
-                                <div class="text-center">
-                                    <div id="timerHours" class="fs-3 fw-bold text-primary">00</div>
-                                    <small class="text-muted">JAM</small>
-                                </div>
-                                <div class="fs-3 fw-bold text-primary">:</div>
-                                <div class="text-center">
-                                    <div id="timerMinutes" class="fs-3 fw-bold text-primary">00</div>
-                                    <small class="text-muted">MINIT</small>
-                                </div>
-                                <div class="fs-3 fw-bold text-primary">:</div>
-                                <div class="text-center">
-                                    <div id="timerSeconds" class="fs-3 fw-bold text-primary">00</div>
-                                    <small class="text-muted">SAAT</small>
-                                </div>
-                            </div>
-                            <div class="progress mt-2" style="height: 4px;">
-                                <div id="sessionTimerProgress" class="progress-bar bg-primary" role="progressbar" style="width: 100%;"></div>
-                            </div>
-                            <button id="btnRefreshSession" class="btn btn-sm btn-outline-primary mt-2 w-100">
-                                <i class="bx bx-refresh me-1"></i>Lanjutkan Sesi
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
