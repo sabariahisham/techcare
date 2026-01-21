@@ -27,7 +27,7 @@ $(function () {
 
   // Store all subcategory options for filtering
   var allSubCategories = [];
-  $('#filter-subcategory option').each(function() {
+  $('#filter-subcategory option').each(function () {
     allSubCategories.push({
       id: $(this).val(),
       text: $(this).text(),
@@ -36,7 +36,7 @@ $(function () {
   });
 
   // Filter Sub Kategori based on Kategori selection
-  $('#filter-category').on('change', function() {
+  $('#filter-category').on('change', function () {
     var categoryId = $(this).val();
     var $subCategorySelect = $('#filter-subcategory');
 
@@ -51,14 +51,14 @@ $(function () {
       // Add "Semua" option
       $subCategorySelect.append('<option value="">Semua</option>');
       // Add only subcategories matching the selected category
-      allSubCategories.forEach(function(item) {
+      allSubCategories.forEach(function (item) {
         if (item.id !== '' && item.category == categoryId) {
           $subCategorySelect.append('<option value="' + item.id + '" data-category="' + item.category + '">' + item.text + '</option>');
         }
       });
     } else {
       // Add all subcategories
-      allSubCategories.forEach(function(item) {
+      allSubCategories.forEach(function (item) {
         var dataAttr = item.category ? ' data-category="' + item.category + '"' : '';
         $subCategorySelect.append('<option value="' + item.id + '"' + dataAttr + '>' + item.text + '</option>');
       });
@@ -104,20 +104,41 @@ $(function () {
           d.year = $('#filter-year').val();
         }
       },
-      columns: [
-        { data: '' },
-        { data: 'ticket_nolog' },
-        { data: 'pengadu' },
-        { data: 'bahagian' },
-        { data: 'status_badge' },
-        { data: 'kategori' },
-        { data: 'sub_kategori' },
-        { data: 'pegawai_tugasan' },
-        { data: 'severity' },
-        { data: 'sla_days' }
-      ],
-      columnDefs: [
+      columns: [{
+          data: ''
+        },
         {
+          data: 'ticket_nolog'
+        },
+        {
+          data: 'pengadu'
+        },
+        {
+          data: 'bahagian'
+        },
+        {
+          data: 'tarikh_tiket'
+        },
+        {
+          data: 'status_badge'
+        },
+        {
+          data: 'kategori'
+        },
+        {
+          data: 'sub_kategori'
+        },
+        {
+          data: 'pegawai_tugasan'
+        },
+        {
+          data: 'severity'
+        },
+        {
+          data: 'sla_days'
+        }
+      ],
+      columnDefs: [{
           // For Responsive
           className: 'control',
           searchable: false,
@@ -145,35 +166,41 @@ $(function () {
           targets: 3
         },
         {
+          // Tarikh Tiket
+          targets: 4
+        },
+        {
           // Status Tiket
-          targets: 4,
+          targets: 5,
           orderable: false
         },
         {
           // Kategori
-          targets: 5
-        },
-        {
-          // Sub Kategori
           targets: 6
         },
         {
-          // Pegawai Tugasan
+          // Sub Kategori
           targets: 7
         },
         {
-          // Severity
+          // Pegawai Tugasan
           targets: 8,
+          width: '200px'
+        },
+        {
+          // Severity
+          targets: 9,
           orderable: false
         },
         {
           // Jumlah Hari SLA
-          targets: 9
+          targets: 10
         }
       ],
-      order: [[1, 'desc']], // Sort by ticket number descending
-      dom:
-        '<"row"' +
+      order: [
+        [1, 'desc']
+      ], // Sort by ticket number descending
+      dom: '<"row"' +
         '<"col-md-2"<"me-3"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-4"fB>>' +
         '>t' +
@@ -193,8 +220,7 @@ $(function () {
         infoEmpty: 'Tiada rekod',
         infoFiltered: '(ditapis daripada _MAX_ jumlah rekod)'
       },
-      buttons: [
-        {
+      buttons: [{
           text: '<i class="bx bx-file me-1"></i>EXCEL',
           className: 'btn btn-success btn-sm mb-6 mb-md-0 waves-effect waves-light me-2',
           action: function (e, dt, button, config) {
@@ -220,7 +246,7 @@ $(function () {
                 title: 'Memproses...',
                 text: 'Sila tunggu sebentar',
                 allowOutsideClick: false,
-                didOpen: function() {
+                didOpen: function () {
                   Swal.showLoading();
                 }
               });
@@ -229,7 +255,7 @@ $(function () {
               window.location.href = exportUrl;
 
               // Close loading after a short delay
-              setTimeout(function() {
+              setTimeout(function () {
                 Swal.close();
               }, 2000);
             } else {
@@ -264,7 +290,7 @@ $(function () {
                 title: 'Memproses PDF...',
                 text: 'Sila tunggu sebentar',
                 allowOutsideClick: false,
-                didOpen: function() {
+                didOpen: function () {
                   Swal.showLoading();
                 }
               });
@@ -273,11 +299,11 @@ $(function () {
               var pdfWindow = window.open(exportUrl, '_blank');
 
               // Close loading after a short delay
-              setTimeout(function() {
+              setTimeout(function () {
                 Swal.close();
                 if (pdfWindow) {
                   // Auto-trigger print dialog after page loads
-                  setTimeout(function() {
+                  setTimeout(function () {
                     pdfWindow.print();
                   }, 1000);
                 }
@@ -300,21 +326,21 @@ $(function () {
           type: 'column',
           renderer: function (api, rowIdx, columns) {
             var data = $.map(columns, function (col, i) {
-              return col.title !== ''
-                ? '<tr data-dt-row="' +
-                    col.rowIndex +
-                    '" data-dt-column="' +
-                    col.columnIndex +
-                    '">' +
-                    '<td>' +
-                    col.title +
-                    ':' +
-                    '</td> ' +
-                    '<td>' +
-                    col.data +
-                    '</td>' +
-                    '</tr>'
-                : '';
+              return col.title !== '' ?
+                '<tr data-dt-row="' +
+                col.rowIndex +
+                '" data-dt-column="' +
+                col.columnIndex +
+                '">' +
+                '<td>' +
+                col.title +
+                ':' +
+                '</td> ' +
+                '<td>' +
+                col.data +
+                '</td>' +
+                '</tr>' :
+                '';
             }).join('');
 
             return data ? $('<table class="table"/><tbody />').append(data) : false;

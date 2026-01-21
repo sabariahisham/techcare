@@ -9,13 +9,13 @@ return [
     'cas_hostname' => env('CAS_HOSTNAME', 'satuid.treasury.gov.my'),
     'cas_port' => env('CAS_PORT', 443),
     'cas_uri' => env('CAS_URI', '/gk'),
-    
+
     // Client Service
     'cas_client_service' => env('CAS_CLIENT_SERVICE'),
     'cas_redirect_path' => env('CAS_REDIRECT_PATH', '/dashboard'),
-    
+
     // Logout
-    'cas_logout_url' => env('CAS_LOGOUT_URL', 'https://satuid.treasury.gov.my/gk/logout'),
+    'cas_logout_url' => env('CAS_LOGOUT_URL', 'https://satuid.treasury.gov.my/user/dashboard/'),
 
     /*
     |--------------------------------------------------------------------------
@@ -111,7 +111,7 @@ return [
     | If your server supports redirection services, enter the redirect url
     | in this section.  If left blank, it will default to disabled.
     */
-    'cas_logout_redirect' => 'http://ehelp-dev.treasury.gov.my:8001/',
+    'cas_logout_redirect' => 'http://ehelp-dev.treasury.gov.my',
 
     /*
     |--------------------------------------------------------------------------
@@ -121,7 +121,7 @@ return [
     | page in which the call was initiated.  You can override this method
     | and force the user to be redirected to a specific URL here.
     */
-    'cas_redirect_path' => 'http://ehelp-dev.treasury.gov.my:8001/dashboard',
+    'cas_redirect_path' => 'http://ehelp-dev.treasury.gov.my/dashboard',
 
     /*
     |--------------------------------------------------------------------------
