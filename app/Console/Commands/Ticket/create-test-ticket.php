@@ -2,13 +2,13 @@
 
 /**
  * Create test ticket for reminder testing
- * Run: php create-test-ticket.php
+ * Run: php app/Console/Commands/Ticket/create-test-ticket.php
  */
 
-require __DIR__ . '/../../vendor/autoload.php';
-
-$app = require_once __DIR__ . '/../../bootstrap/app.php';
-$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+// Guard: Only execute if this file is run directly
+if (basename(__FILE__) !== basename($_SERVER['SCRIPT_FILENAME'])) {
+  return;
+}
 
 use App\Models\Ticket;
 use App\Models\TicketChronology;
@@ -18,32 +18,37 @@ use App\Models\RefSubCategory;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
+require __DIR__ . '/../../../../vendor/autoload.php';
+
+$app = require __DIR__ . '/../../../../bootstrap/app.php';
+$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+
 echo "=== Creating Test Ticket for Reminder ===\n\n";
 
 try {
-  // Find or get test user (you)
-  $testUser = User::where('email', 'sabariah.hisham@treasury.gov.my')->first();
+  // Get user ID from command line or use a default
+  $userId = $argv[1] ?? null;
+
+  if (!$userId) {
+    echo "❌ ERROR: User ID is required.\n";
+    echo "Usage: php app/Console/Commands/Ticket/create-test-ticket.php <user_id>\n";
+    echo "Example: php app/Console/Commands/Ticket/create-test-ticket.php 1\n";
+    exit(1);
+  }
+
+  // Find the user
+  $testUser = User::find($userId);
 
   if (!$testUser) {
-    echo "Creating test officer user...\n";
-    $testUser = User::create([
-      'no_kp' => '999999999999',
-      'nama' => 'Sabariah Hisham (Test)',
-      'email' => 'sabariah.hisham@treasury.gov.my',
-      'email_verified_at' => now(),
-      'password' => bcrypt('password123'),
-      'user_status' => 1,
-    ]);
-    echo "✓ Test officer user created: {$testUser->nama}\n";
-  } else {
-    echo "✓ Found existing user: {$testUser->nama}\n";
+    echo "❌ ERROR: User ID {$userId} not found in database.\n";
+    exit(1);
   }
 
-  // Find complainant user (use authenticated user or first user)
-  $complainant = User::where('id', '!=', $testUser->id)->first();
-  if (!$complainant) {
-    $complainant = $testUser; // Use same user if no other users exist
-  }
+  echo "✓ Found user: {$testUser->nama}\n";
+  echo "✓ Email: {$testUser->email}\n";
+
+  // Use same user as complainant and officer
+  $complainant = $testUser;
   echo "✓ Complainant: {$complainant->nama}\n";
 
   // Get first category and subcategory
@@ -63,8 +68,23 @@ try {
   $tomorrow = Carbon::tomorrow()->setTime(17, 0, 0); // Set to 5 PM tomorrow
   echo "✓ Due Date: {$tomorrow->format('d/m/Y H:i')}\n\n";
 
-  // Create test ticket
-  $ticketNumber = 'TEST-' . now()->format('Ymd-His');
+  // Get the next ticket counter
+  $lastTicket = Ticket::whereYear('created_at', now()->year)
+    ->whereMonth('created_at', now()->month)
+    ->orderBy('id', 'desc')
+    ->first();
+
+  $counter = 1;
+  if ($lastTicket) {
+    // Extract counter from last ticket number
+    preg_match('/HELP-\d{4}-\d{2}-(\d{4})/', $lastTicket->ticket_nolog, $matches);
+    if (isset($matches[1])) {
+      $counter = intval($matches[1]) + 1;
+    }
+  }
+
+  // Create test ticket number in format HELP-YYYY-MM-XXXX-Test
+  $ticketNumber = sprintf('HELP-%s-%04d-Test', now()->format('Y-m'), $counter);
 
   $ticket = Ticket::create([
     'uuid' => Str::uuid(),
@@ -102,6 +122,7 @@ try {
 
   echo "=== Test Ticket Created Successfully ===\n\n";
   echo "Ticket Details:\n";
+  echo "  Ticket ID: {$ticket->id}\n";
   echo "  No. Log: {$ticket->ticket_nolog}\n";
   echo "  Title: {$ticket->ticket_title}\n";
   echo "  Status: Aduan Baru (1)\n";
@@ -109,16 +130,16 @@ try {
   echo "  Assigned to: {$testUser->nama}\n";
   echo "  Email: {$testUser->email}\n\n";
 
-  echo "Next steps:\n";
-  echo "1. Run the reminder command:\n";
-  echo "   php artisan tickets:send-duedate-reminders\n\n";
-  echo "2. Check your email: {$testUser->email}\n\n";
-  echo "3. Verify email configuration in .env:\n";
-  echo "   MAIL_MAILER=smtp\n";
-  echo "   MAIL_HOST=...\n";
-  echo "   MAIL_PORT=...\n";
-  echo "   MAIL_USERNAME=...\n";
-  echo "   MAIL_PASSWORD=...\n\n";
+  echo "📊 Database Records:\n";
+  echo "  ✓ Ticket ID {$ticket->id} created in 'tickets' table\n";
+  echo "  ✓ Chronology ID {$chronology->id} created in 'ticket_chronologies' table\n\n";
+
+  echo "Next steps to test email:\n";
+  echo "1. Run due date notification test:\n";
+  echo "   php app/Console/Commands/Ticket/test_duedate_notification.php {$ticket->id}\n\n";
+  echo "2. Process the queue:\n";
+  echo "   php artisan queue:work --stop-when-empty\n\n";
+  echo "3. Check email in Mailpit: http://127.0.0.1:8025\n\n";
 } catch (\Exception $e) {
   echo "✗ ERROR: {$e->getMessage()}\n";
   echo "\nStack trace:\n{$e->getTraceAsString()}\n";
