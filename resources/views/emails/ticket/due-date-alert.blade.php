@@ -38,7 +38,7 @@ Ini adalah peringatan bahawa tiket berikut menghampiri **TARIKH AKHIR** tindakan
 
 **Tarikh Akhir** : <strong>{{ $ticket->tick_duedate ? \Carbon\Carbon::parse($ticket->tick_duedate)->format('d/m/Y') : 'Tiada' }}</strong>
 
-**Status Semasa** : <strong>{{ $ticket->status->st_name ?? 'N/A' }}</strong>
+**Status** : <strong>{{ $ticket->status->st_name ?? 'N/A' }}</strong>
 @endcomponent
 
 Mohon tuan/puan mengambil tindakan sewajarnya sebelum **TARIKH AKHIR** bagi memastikan penyelesaian dapat dilaksanakan dalam tempoh ditetapkan.

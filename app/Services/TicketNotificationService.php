@@ -1,5 +1,12 @@
 <?php
 
+/*
+  * Function TicketNotificationService.php:
+  *  - Handle ticket-related email notifications.
+  *  - Send notifications for new tickets and status changes.
+  *  - Manage notification content and recipients.
+  */
+
 namespace App\Services;
 
 use App\Models\Ticket;

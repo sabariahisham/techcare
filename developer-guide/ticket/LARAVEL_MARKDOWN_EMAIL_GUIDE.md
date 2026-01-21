@@ -44,6 +44,19 @@ Lokasi: `resources/views/emails/ticket/`
   - Panel maklumat tiket dengan tarikh akhir
   - Button "Lihat Tiket" (warna merah/error)
 
+#### d) **sla-overdue.blade.php**
+- **Tujuan**: Email notifikasi untuk tiket yang telah OVERDUE (melepasi tarikh akhir SLA)
+- **Penerima**: Pegawai Tugasan (Level 1/Level 2) yang ditugaskan
+- **Trigger**: SLA due date telah lepas (dari `tickets_chronologies.sla_duedate`)
+- **Komponen Utama**:
+  - Header "⛔ Tindakan Segera: SLA (OVERDUE)" (warna gelap #2c2c2c)
+  - Panel maklumat tiket (No. Log, Tajuk, Tarikh Akhir, Status)
+  - Mesej warning tentang kelewatan berterusan
+  - Button "Lihat Tiket" (warna merah/error)
+- **Service**: `TicketSLAOverdueService.php`
+- **Controller**: `TicketSLAOverdueController.php`
+- **Test Command**: `php artisan ticket:test-overdue-notification`
+
 ---
 
 ## 🎨 Custom Theme
@@ -78,6 +91,7 @@ Setiap email ada header badge dengan warna berbeza:
 - **Status Aduan**: #696cff (Ungu)
 - **Tiket Baru Ditugaskan**: #ffab00 (Oren)
 - **Peringatan Tarikh**: #ff3e1d (Merah)
+- **SLA Overdue**: #2c2c2c (Gelap/Hitam)
 
 ---
 
@@ -111,6 +125,16 @@ return (new MailMessage)
     ->subject('⚠️ Peringatan: Tarikh Akhir Tiket ' . $this->ticket->ticket_nolog)
     ->markdown('emails.ticket.due-date-alert', [
         'ticket' => $this->ticket,
+    ]);
+```
+
+#### 4. **SLAOverdueNotification.php**
+```php
+return (new MailMessage)
+    ->subject($this->ticket->ticket_nolog . ': ⛔ Tindakan Segera - SLA (OVERDUE)')
+    ->markdown('emails.ticket.sla-overdue', [
+        'ticket' => $this->ticket,
+        'notifiable' => $notifiable,
     ]);
 ```
 
@@ -227,6 +251,26 @@ php test_notification_detail.php {ticket_id}
 php test_notification_detail.php 14
 ```
 
+### Test SLA Overdue Notifications
+File: `app/Console/Commands/Ticket/TestSLAOverdueNotification.php`
+
+```bash
+php artisan ticket:test-overdue-notification
+```
+
+**Features:**
+- Automatically fetches all overdue tickets from database
+- Displays table of overdue tickets dengan maklumat lengkap
+- Interactive confirmation sebelum hantar email
+- Shows statistics (total sent, failed, errors)
+- Logs all activities untuk audit trail
+
+**Sistem Check:**
+- Query `tickets_chronologies` table untuk `sla_duedate < NOW()`
+- Filter tiket aktif sahaja (bukan status Selesai/Tutup)
+- Identify pegawai tugasan dari `escalate_to` field
+- Send email kepada pegawai yang bertanggungjawab
+
 ### Mailpit (Local Testing)
 - URL: http://localhost:8025
 - View semua email yang dihantar dalam development
@@ -282,7 +326,53 @@ php test_notification_detail.php {ticket_id}
 
 ### Issue: Raw HTML Displayed
 **Sebab:** Indentation dalam `@component` blocks  
-**Penyelesaian:** Remove semua indentation, gunakan `blade-formatter-disable`
+**Pe� Services & Controllers
+
+### TicketSLAOverdueService.php
+**Lokasi:** `app/Services/TicketSLAOverdueService.php`
+
+**Functions:**
+- `sendOverdueNotifications()` - Main function untuk cari dan hantar notifikasi overdue
+- `getNotificationRecipients($chronology)` - Identify penerima notifikasi
+- `getOverdueTickets()` - Query overdue tickets untuk display/reporting
+
+**Logic Flow:**
+1. Query `tickets_chronologies` WHERE `sla_duedate < NOW()`
+2. Filter active tickets sahaja (exclude status Selesai/Tutup)
+3. Loop through each overdue chronology
+4. Get pegawai tugasan dari `escalate_to` field
+5. Send `SLAOverdueNotification` email
+6. Log success/failure untuk setiap email
+7. Return statistics (total, sent, failed, errors)
+
+### TicketSLAOverdueController.php
+**Lokasi:** `app/Http/Controllers/Notifications/TicketSLAOverdueController.php`
+
+**Endpoints:**
+- `index()` - GET list of overdue tickets (JSON response)
+- `sendNotifications()` - POST trigger manual sending of overdue notifications
+
+**Route Setup (Example):**
+```php
+Route::get('/notifications/overdue', [TicketSLAOverdueController::class, 'index']);
+Route::post('/notifications/overdue/send', [TicketSLAOverdueController::class, 'sendNotifications']);
+```
+
+### TestSLAOverdueNotification.php
+**Lokasi:** `app/Console/Commands/Ticket/TestSLAOverdueNotification.php`
+
+**Command:** `ticket:test-overdue-notification`
+
+**Features:**
+- Interactive console interface
+- Table display of overdue tickets
+- Confirmation prompt before sending
+- Detailed statistics output
+- Error logging and reporting
+
+---
+
+## �nyelesaian:** Remove semua indentation, gunakan `blade-formatter-disable`
 
 ### Issue: Theme Not Applied
 **Sebab:** Cache tidak di-clear atau theme salah configured  

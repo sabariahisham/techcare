@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Function TicketSLAController.php:
+ * Function TicketSLAController.php (REPORTING):
   * - Manage SLA related functionalities for tickets.
   * - Report overdue tickets based on SLA due dates.
   * - Provide SLA statistics and compliance reports.
