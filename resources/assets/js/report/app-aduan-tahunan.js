@@ -113,7 +113,9 @@ $(function () {
         {
           targets: 0,
           render: function (data) {
-            return '<span style="white-space:normal; max-width:180px; display:inline-block;">' + (data || '-') + '</span>';
+            // Decode HTML entities (e.g., &amp; to &)
+            var decodedData = data ? $('<textarea/>').html(data).text() : '-';
+            return '<span style="white-space:normal; max-width:180px; display:inline-block;">' + decodedData + '</span>';
           }
         },
         {

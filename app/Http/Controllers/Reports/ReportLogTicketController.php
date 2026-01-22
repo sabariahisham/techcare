@@ -19,6 +19,120 @@ use Illuminate\Support\Facades\Response;
 
 class ReportLogTicketController extends Controller
 {
+    /**
+     * Apply common filters to ticket query
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Request $request
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function applyFilters($query, Request $request)
+    {
+        if ($request->filled('status')) {
+            $query->where('tick_status', (int) $request->status);
+        }
+
+        if ($request->filled('category')) {
+            $query->where('cat_id', (int) $request->category);
+        }
+
+        if ($request->filled('subcategory')) {
+            $query->where('subcat_id', (int) $request->subcategory);
+        }
+
+        if ($request->filled('officer')) {
+            $officerId = (int) $request->officer;
+            $query->where(function($q) use ($officerId) {
+                $q->whereHas('category.officers', function($sq) use ($officerId) {
+                    $sq->where('user_id', $officerId);
+                })->orWhereHas('subCategory.officers', function($sq) use ($officerId) {
+                    $sq->where('user_id', $officerId);
+                });
+            });
+        }
+
+        if ($request->filled('bahagian')) {
+            $bahagian = e($request->bahagian);
+            $query->whereHas('user', function($q) use ($bahagian) {
+                $q->where('kod_bah', $bahagian);
+            });
+        }
+
+        if ($request->filled('month')) {
+            $month = (int) $request->month;
+            if ($month >= 1 && $month <= 12) {
+                $query->whereMonth('created_at', $month);
+            }
+        }
+
+        if ($request->filled('year')) {
+            $year = (int) $request->year;
+            if ($year >= 2000 && $year <= 2100) {
+                $query->whereYear('created_at', $year);
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * Get officer names for a ticket (optimized with caching)
+     *
+     * @param \App\Models\Ticket $ticket
+     * @param array $officerCache
+     * @return string
+     */
+    private function getOfficerNames($ticket, array &$officerCache): string
+    {
+        $cacheKey = $ticket->subcat_id ? "subcat_{$ticket->subcat_id}" : "cat_{$ticket->cat_id}";
+
+        if (!isset($officerCache[$cacheKey])) {
+            $officers = collect();
+
+            if ($ticket->subcat_id) {
+                $officers = Officer::with('user')
+                    ->where('subcat_id', $ticket->subcat_id)
+                    ->whereHas('user')
+                    ->get();
+            }
+
+            if ($officers->isEmpty() && $ticket->cat_id) {
+                $officers = Officer::with('user')
+                    ->where('cat_id', $ticket->cat_id)
+                    ->whereNull('subcat_id')
+                    ->whereHas('user')
+                    ->get();
+            }
+
+            $officerCache[$cacheKey] = $officers->isEmpty()
+                ? '-'
+                : $officers->map(fn($o) => $o->user->nama)->implode(', ');
+        }
+
+        return $officerCache[$cacheKey];
+    }
+
+    /**
+     * Format date in Malay
+     *
+     * @param \Carbon\Carbon|null $date
+     * @return string
+     */
+    private function formatMalayDate($date): string
+    {
+        if (!$date) {
+            return '-';
+        }
+
+        $bulan = [
+            1 => 'JANUARI', 2 => 'FEBRUARI', 3 => 'MAC', 4 => 'APRIL',
+            5 => 'MEI', 6 => 'JUN', 7 => 'JULAI', 8 => 'OGOS',
+            9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DISEMBER'
+        ];
+
+        return $date->format('d') . ' ' . $bulan[$date->month] . ' ' . $date->format('Y');
+    }
+
     public function index()
     {
         // Calculate total tickets and resolved percentage
@@ -77,59 +191,22 @@ class ReportLogTicketController extends Controller
             'status'
         ]);
 
-        // Apply filters
-        if ($request->filled('status')) {
-            $query->where('tick_status', $request->status);
-        }
+        // Apply filters using shared method
+        $this->applyFilters($query, $request);
 
-        if ($request->filled('category')) {
-            $query->where('cat_id', $request->category);
-        }
-
-        if ($request->filled('subcategory')) {
-            $query->where('subcat_id', $request->subcategory);
-        }
-
-        if ($request->filled('officer')) {
-            $query->where(function($q) use ($request) {
-                $q->whereHas('category.officers', function($sq) use ($request) {
-                    $sq->where('user_id', $request->officer);
-                })->orWhereHas('subCategory.officers', function($sq) use ($request) {
-                    $sq->where('user_id', $request->officer);
-                });
-            });
-        }
-
-        if ($request->filled('bahagian')) {
-            $query->whereHas('user', function($q) use ($request) {
-                $q->where('kod_bah', $request->bahagian);
-            });
-        }
-
-        if ($request->filled('month')) {
-            $query->whereMonth('created_at', $request->month);
-        }
-
-        if ($request->filled('year')) {
-            $query->whereYear('created_at', $request->year);
-        }
+        // Cache for officer lookups to avoid N+1 queries
+        $officerCache = [];
 
         return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('pengadu', function ($ticket) {
-                return $ticket->user ? $ticket->user->nama : '-';
+                return e($ticket->user?->nama ?? '-');
             })
             ->addColumn('bahagian', function ($ticket) {
-                return $ticket->user && $ticket->user->bahagian ? $ticket->user->bahagian->nama_bah : '-';
+                return e($ticket->user?->bahagian?->nama_bah ?? '-');
             })
             ->addColumn('tarikh_tiket', function ($ticket) {
-                if (!$ticket->created_at) return '-';
-                $bulan = [
-                    1 => 'JANUARI', 2 => 'FEBRUARI', 3 => 'MAC', 4 => 'APRIL',
-                    5 => 'MEI', 6 => 'JUN', 7 => 'JULAI', 8 => 'OGOS',
-                    9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DISEMBER'
-                ];
-                return $ticket->created_at->format('d') . ' ' . $bulan[$ticket->created_at->month] . ' ' . $ticket->created_at->format('Y');
+                return $this->formatMalayDate($ticket->created_at);
             })
             ->addColumn('status_badge', function ($ticket) {
                 $status = $ticket->status;
@@ -152,38 +229,16 @@ class ReportLogTicketController extends Controller
                         break;
                 }
 
-                return '<span class="badge ' . $badgeClass . '">' . $status->st_name . '</span>';
+                return '<span class="badge ' . $badgeClass . '">' . e($status->st_name) . '</span>';
             })
             ->addColumn('kategori', function ($ticket) {
-                return $ticket->category ? $ticket->category->cat_name : '-';
+                return e($ticket->category?->cat_name ?? '-');
             })
             ->addColumn('sub_kategori', function ($ticket) {
-                return $ticket->subCategory ? $ticket->subCategory->subcat_name : '-';
+                return e($ticket->subCategory?->subcat_name ?? '-');
             })
-            ->addColumn('pegawai_tugasan', function ($ticket) {
-                // Get officers from subcategory first, then category
-                $officers = collect();
-
-                if ($ticket->subCategory) {
-                    $officers = Officer::with('user')
-                        ->where('subcat_id', $ticket->subcat_id)
-                        ->whereHas('user')
-                        ->get();
-                }
-
-                if ($officers->isEmpty() && $ticket->category) {
-                    $officers = Officer::with('user')
-                        ->where('cat_id', $ticket->cat_id)
-                        ->whereNull('subcat_id')
-                        ->whereHas('user')
-                        ->get();
-                }
-
-                if ($officers->isEmpty()) return '-';
-
-                return $officers->map(function($officer) {
-                    return $officer->user->nama;
-                })->implode(', ');
+            ->addColumn('pegawai_tugasan', function ($ticket) use (&$officerCache) {
+                return e($this->getOfficerNames($ticket, $officerCache));
             })
             ->addColumn('severity', function ($ticket) {
                 // You can customize this based on your severity logic
@@ -214,52 +269,19 @@ class ReportLogTicketController extends Controller
                 'status'
             ]);
 
-            // Apply same filters as logTicketData
-            if ($request->filled('status')) {
-                $query->where('tick_status', $request->status);
-            }
-
-            if ($request->filled('category')) {
-                $query->where('cat_id', $request->category);
-            }
-
-            if ($request->filled('subcategory')) {
-                $query->where('subcat_id', $request->subcategory);
-            }
-
-            if ($request->filled('officer')) {
-                $query->where(function($q) use ($request) {
-                    $q->whereHas('category.officers', function($sq) use ($request) {
-                        $sq->where('user_id', $request->officer);
-                    })->orWhereHas('subCategory.officers', function($sq) use ($request) {
-                        $sq->where('user_id', $request->officer);
-                    });
-                });
-            }
-
-            if ($request->filled('bahagian')) {
-                $query->whereHas('user', function($q) use ($request) {
-                    $q->where('kod_bah', $request->bahagian);
-                });
-            }
-
-            if ($request->filled('month')) {
-                $query->whereMonth('created_at', $request->month);
-            }
-
-            if ($request->filled('year')) {
-                $query->whereYear('created_at', $request->year);
-            }
+            // Apply filters using shared method
+            $this->applyFilters($query, $request);
 
             $tickets = $query->get();
 
             // Calculate statistics
             $totalTickets = $tickets->count();
             // Status ID 6 = 'Aduan Selesai' (Resolved/Completed)
-            $resolvedTickets = $tickets->filter(function($ticket) {
-                return $ticket->tick_status == 6;
-            })->count();
+            $resolvedTickets = $tickets->filter(fn($ticket) => $ticket->tick_status == 6)->count();
             $resolvedPercentage = $totalTickets > 0 ? round(($resolvedTickets / $totalTickets) * 100, 2) : 0;
+
+            // Cache for officer lookups
+            $officerCache = [];
 
             // Create CSV content
             $filename = 'senarai-log-tiket-' . date('Y-m-d-His') . '.csv';
@@ -271,7 +293,7 @@ class ReportLogTicketController extends Controller
                 'Expires' => '0'
             ];
 
-            $callback = function() use ($tickets, $totalTickets, $resolvedTickets, $resolvedPercentage) {
+            $callback = function() use ($tickets, $totalTickets, $resolvedTickets, $resolvedPercentage, &$officerCache) {
                 $file = fopen('php://output', 'w');
                 // Add BOM for UTF-8
                 fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
@@ -300,22 +322,7 @@ class ReportLogTicketController extends Controller
 
                 // Add data rows
                 foreach ($tickets as $ticket) {
-                    // Get officers
-                    $officers = collect();
-                    if ($ticket->subCategory) {
-                        $officers = Officer::with('user')
-                            ->where('subcat_id', $ticket->subcat_id)
-                            ->whereHas('user')
-                            ->get();
-                    }
-                    if ($officers->isEmpty() && $ticket->category) {
-                        $officers = Officer::with('user')
-                            ->where('cat_id', $ticket->cat_id)
-                            ->whereNull('subcat_id')
-                            ->whereHas('user')
-                            ->get();
-                    }
-                    $officerNames = $officers->isEmpty() ? '-' : $officers->map(fn($o) => $o->user->nama)->implode(', ');
+                    $officerNames = $this->getOfficerNames($ticket, $officerCache);
 
                     // Calculate SLA days
                     $slaDays = '-';
@@ -324,25 +331,14 @@ class ReportLogTicketController extends Controller
                         $slaDays = round($daysDiff) . ' hari';
                     }
 
-                    // Format Tarikh Tiket in Malay
-                    $tarikhTiket = '-';
-                    if ($ticket->created_at) {
-                        $bulan = [
-                            1 => 'JANUARI', 2 => 'FEBRUARI', 3 => 'MAC', 4 => 'APRIL',
-                            5 => 'MEI', 6 => 'JUN', 7 => 'JULAI', 8 => 'OGOS',
-                            9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DISEMBER'
-                        ];
-                        $tarikhTiket = $ticket->created_at->format('d') . ' ' . $bulan[$ticket->created_at->month] . ' ' . $ticket->created_at->format('Y');
-                    }
-
                     fputcsv($file, [
                         $ticket->ticket_nolog,
-                        $ticket->user ? $ticket->user->nama : '-',
-                        $ticket->user && $ticket->user->bahagian ? $ticket->user->bahagian->nama_bah : '-',
-                        $tarikhTiket,
-                        $ticket->status ? $ticket->status->st_name : '-',
-                        $ticket->category ? $ticket->category->cat_name : '-',
-                        $ticket->subCategory ? $ticket->subCategory->subcat_name : '-',
+                        $ticket->user?->nama ?? '-',
+                        $ticket->user?->bahagian?->nama_bah ?? '-',
+                        $this->formatMalayDate($ticket->created_at),
+                        $ticket->status?->st_name ?? '-',
+                        $ticket->category?->cat_name ?? '-',
+                        $ticket->subCategory?->subcat_name ?? '-',
                         $officerNames,
                         $slaDays
                     ]);
@@ -369,240 +365,32 @@ class ReportLogTicketController extends Controller
                 'status'
             ]);
 
-            // Apply same filters as logTicketData
-            if ($request->filled('status')) {
-                $query->where('tick_status', $request->status);
-            }
-
-            if ($request->filled('category')) {
-                $query->where('cat_id', $request->category);
-            }
-
-            if ($request->filled('subcategory')) {
-                $query->where('subcat_id', $request->subcategory);
-            }
-
-            if ($request->filled('officer')) {
-                $query->where(function($q) use ($request) {
-                    $q->whereHas('category.officers', function($sq) use ($request) {
-                        $sq->where('user_id', $request->officer);
-                    })->orWhereHas('subCategory.officers', function($sq) use ($request) {
-                        $sq->where('user_id', $request->officer);
-                    });
-                });
-            }
-
-            if ($request->filled('bahagian')) {
-                $query->whereHas('user', function($q) use ($request) {
-                    $q->where('kod_bah', $request->bahagian);
-                });
-            }
-
-            if ($request->filled('month')) {
-                $query->whereMonth('created_at', $request->month);
-            }
-
-            if ($request->filled('year')) {
-                $query->whereYear('created_at', $request->year);
-            }
+            // Apply filters using shared method
+            $this->applyFilters($query, $request);
 
             $tickets = $query->get();
             $totalTickets = $tickets->count();
             // Status ID 6 = 'Aduan Selesai' (Resolved/Completed)
-            $resolvedTickets = $tickets->filter(function($ticket) {
-                return $ticket->tick_status == 6;
-            })->count();
+            $resolvedTickets = $tickets->filter(fn($ticket) => $ticket->tick_status == 6)->count();
             $resolvedPercentage = $totalTickets > 0 ? round(($resolvedTickets / $totalTickets) * 100, 2) : 0;
             $generatedDate = now()->format('d/m/Y H:i:s');
 
-            // Generate HTML for PDF
-            $html = '
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Senarai Log Tiket</title>
-    <style>
-@page{ size: landscape; margin: 20px; }
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 10px;
-            margin: 0;
-            padding: 15px;
-            background-color: #f8f9fa;
-        }
-        .header {
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-        h1 {
-            font-size: 16px;
-            margin: 0 0 8px 0;
-            font-weight: bold;
-        }
-        .info {
-            background-color: white;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            border: 1px solid #dee2e6;
-            text-align: center;
-            font-size: 9px;
-        }
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 15px;
-            gap: 10px;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 6px;
-            padding: 10px;
-            flex: 1;
-            text-align: center;
-            border: 2px solid #e9ecef;
-        }
-        .stat-label {
-            font-size: 8px;
-            color: #6c757d;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-        .stat-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #495057;
-            margin-top: 3px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            background: white;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 6px;
-            text-align: left;
-        }
-        th {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .footer {
-            margin-top: 20px;
-            padding-top: 12px;
-            border-top: 1px solid #dee2e6;
-            text-align: center;
-            font-size: 8px;
-            color: #6c757d;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>SENARAI LOG TIKET</h1>
-        <p style="margin: 0; font-size: 9px;">Tarikh Dijana: ' . $generatedDate . '</p>
-    </div>
+            // Cache for officer lookups to avoid N+1 queries
+            $officerCache = [];
 
-    <div class="stats">
-        <div class="stat-card">
-            <div class="stat-label">Jumlah Tiket</div>
-            <div class="stat-value">' . $totalTickets . '</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Aduan Selesai</div>
-            <div class="stat-value">' . $resolvedTickets . '</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Peratusan</div>
-            <div class="stat-value">' . $resolvedPercentage . '%</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-label">Belum Selesai</div>
-            <div class="stat-value">' . ($totalTickets - $resolvedTickets) . '</div>
-        </div>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 5%;">Bil</th>
-                <th style="width: 10%;">No. Log Tiket</th>
-                <th style="width: 12%;">Pengadu</th>
-                <th style="width: 10%;">Bahagian</th>
-                <th style="width: 12%;">Tarikh Tiket</th>
-                <th style="width: 8%;">Status</th>
-                <th style="width: 12%;">Kategori</th>
-                <th style="width: 12%;">Sub Kategori</th>
-                <th style="width: 12%;">Pegawai Tugasan</th>
-            </tr>
-        </thead>
-        <tbody>';
-
-            $bil = 1;
+            // Process officer names for each ticket using cached method
             foreach ($tickets as $ticket) {
-                // Get officers
-                $officers = collect();
-                if ($ticket->subCategory) {
-                    $officers = Officer::with('user')
-                        ->where('subcat_id', $ticket->subcat_id)
-                        ->whereHas('user')
-                        ->get();
-                }
-                if ($officers->isEmpty() && $ticket->category) {
-                    $officers = Officer::with('user')
-                        ->where('cat_id', $ticket->cat_id)
-                        ->whereNull('subcat_id')
-                        ->whereHas('user')
-                        ->get();
-                }
-                $officerNames = $officers->isEmpty() ? '-' : $officers->map(fn($o) => $o->user->nama)->implode(', ');
-
-                // Format Tarikh Tiket in Malay
-                $tarikhTiket = '-';
-                if ($ticket->created_at) {
-                    $bulan = [
-                        1 => 'JANUARI', 2 => 'FEBRUARI', 3 => 'MAC', 4 => 'APRIL',
-                        5 => 'MEI', 6 => 'JUN', 7 => 'JULAI', 8 => 'OGOS',
-                        9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DISEMBER'
-                    ];
-                    $tarikhTiket = $ticket->created_at->format('d') . ' ' . $bulan[$ticket->created_at->month] . ' ' . $ticket->created_at->format('Y');
-                }
-
-                $html .= '
-            <tr>
-                <td>' . $bil++ . '</td>
-                <td>' . htmlspecialchars($ticket->ticket_nolog) . '</td>
-                <td>' . htmlspecialchars($ticket->user ? $ticket->user->nama : '-') . '</td>
-                <td>' . htmlspecialchars($ticket->user && $ticket->user->bahagian ? $ticket->user->bahagian->nama_bah : '-') . '</td>
-                <td>' . htmlspecialchars($tarikhTiket) . '</td>
-                <td>' . htmlspecialchars($ticket->status ? $ticket->status->st_name : '-') . '</td>
-                <td>' . htmlspecialchars($ticket->category ? $ticket->category->cat_name : '-') . '</td>
-                <td>' . htmlspecialchars($ticket->subCategory ? $ticket->subCategory->subcat_name : '-') . '</td>
-                <td>' . htmlspecialchars($officerNames) . '</td>
-            </tr>';
+                $ticket->officerNames = $this->getOfficerNames($ticket, $officerCache);
             }
 
-            $html .= '
-        </tbody>
-    </table>';
-
-            $html .= '
-    <div class="footer">
-        <p><strong>Sistem eHelp</strong> - Dokumen ini dijana secara automatik</p>
-    </div>
-</body>
-</html>';
+            // Render Blade view for PDF
+            $html = view('report.log-ticket-pdf', compact(
+                'tickets',
+                'totalTickets',
+                'resolvedTickets',
+                'resolvedPercentage',
+                'generatedDate'
+            ))->render();
 
             // Return HTML response that will be printed to PDF
             return response($html)
