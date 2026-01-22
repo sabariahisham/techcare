@@ -60,7 +60,7 @@ $(function () {
         },
         {
           id: 5,
-          name: 'Statistik Log Aduan (Dalam Pembangunan)',
+          name: 'Statistik Log Aduan' ,
           description: 'Statistik Log Aduan Helpdesk Mengikut Kategori ',
           updated_at: currentDateTime
         },
@@ -159,7 +159,7 @@ $(function () {
             }
             else if ($id === 5) {
               // Route for Statistik Log Aduan
-              viewUrl = '/report/statistik-log-aduan';
+              viewUrl = '/report/statistik-log';
             }
             else if ($id === 6) {
               // Route for Laporan Bulanan Aduan Mengikut Status Aduan
