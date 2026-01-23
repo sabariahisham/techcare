@@ -13,11 +13,12 @@ namespace App\Notifications\Ticket;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+//use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class PengaduStatusChangedNotification extends Notification implements ShouldQueue
+class PengaduStatusChangedNotification extends Notification
+// class PengaduStatusChangedNotification extends Notification implements ShouldQueue
 {
   use Queueable;
 
@@ -46,6 +47,12 @@ class PengaduStatusChangedNotification extends Notification implements ShouldQue
    */
   public function via(object $notifiable): array
   {
+    // Jangan hantar email untuk status 2 (Aduan Diproses) dan 3 (Serahan Kepada)
+    // Pengadu tidak perlu tahu pasal proses dalaman pegawai
+    if (in_array($this->newStatus, [2, 3])) {
+        return []; // Return empty array = tiada channel = tiada email
+    }
+
     return ['mail'];
   }
 
@@ -54,11 +61,6 @@ class PengaduStatusChangedNotification extends Notification implements ShouldQue
    */
   public function toMail(object $notifiable): MailMessage
   {
-    // Skip email for "Aduan Diproses" (status 2) and "Serahan Kepada" (status 3)
-    if (in_array($this->newStatus, [2, 3])) {
-      return new MailMessage();
-    }
-
     $statusName = $this->getStatusName($this->newStatus);
 
     // Get assigned user from latest chronology
@@ -101,34 +103,6 @@ class PengaduStatusChangedNotification extends Notification implements ShouldQue
       5 => 'Aduan Dibatal',
       6 => 'Aduan Selesai',
       default => ''
-    };
-  }
-
-  /**
-   * Get status message in Malay
-   */
-  private function getStatusMessage($statusId)
-  {
-    return match ($statusId) {
-      1 => 'Tiket aduan anda telah berjaya direkodkan dan akan diproses.',
-      4 => 'Tiket aduan ini telah dirujuk kepada bahagian berkaitan untuk tindakan selanjutnya.',
-      5 => 'Tiket aduan ini telah dibatalkan.',
-      6 => 'Tiket aduan ini telah selesai diproses.',
-      default => '',
-    };
-  }
-
-  /**
-   * Get closing message based on status
-   */
-  private function getStatusClosingMessage($statusId)
-  {
-    return match ($statusId) {
-      1 => 'Kami akan menghubungi anda sekiranya memerlukan maklumat tambahan.',
-      4 => 'Makluman lanjut akan dimaklumkan dari semasa ke semasa.',
-      5 => 'Sekiranya terdapat sebarang pertanyaan, sila hubungi helpdesk.',
-      6 => 'Terima kasih atas kerjasama anda.',
-      default => '',
     };
   }
 

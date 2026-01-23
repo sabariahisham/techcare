@@ -20,16 +20,24 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Ticket\TicketChronologyController;
 use Illuminate\Support\Facades\Auth;
+use App\Services\TicketNotificationService;
 
 class TicketAssignmentController extends Controller
 {
+  protected $notificationService;
+
+  public function __construct(TicketNotificationService $notificationService)
+  {
+    $this->notificationService = $notificationService;
+  }
+
   /**
    * Update ticket details and assignment
    */
   public function updateTicketAssignment(Request $request, Ticket $ticket)
   {
     // First, get the status name to check if it's "Aduan Dirujuk"
-    $selectedStatus = \App\Models\RefTicketStatus::find($request->tick_status);
+    $selectedStatus = RefTicketStatus::find($request->tick_status);
     $isAduanDirujuk = $selectedStatus && $selectedStatus->st_name === 'Aduan Dirujuk';
 
     // Dynamic validation rules based on status
@@ -64,6 +72,9 @@ class TicketAssignmentController extends Controller
     ]);
 
     try {
+      // Store old status before updating
+      $oldStatus = $ticket->tick_status;
+
       // Get SLA information based on category, subcategory, and severity
       $slaInfo = null;
       $slaDays = null;
@@ -95,11 +106,17 @@ class TicketAssignmentController extends Controller
 
       $ticket->update($updateData);
 
+      // Get the first assigned officer (if any)
+      $firstOfficer = null;
+      if ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
+        $firstOfficer = $request->assigned_officers[0];
+      }
+
       // Check if there's an existing chronology entry with the same status
+      // Look for ANY chronology with this status (including those with escalate_to)
       $existingChronology = TicketChronology::where('ticket_id', $ticket->id)
         ->where('tick_status', $request->tick_status)
-        ->whereNull('escalate_to') // Only main status entries, not assignment entries
-        ->latest()
+        ->orderBy('created_at', 'desc')
         ->first();
 
       if ($existingChronology) {
@@ -110,9 +127,16 @@ class TicketAssignmentController extends Controller
           'sla_severity' => $request->sla_severity,
           'sla_days' => $slaDays,
           'level_pegtugas_id' => $levelPetugas,
+          'escalate_to' => $firstOfficer, // Store first officer here
           'updated_by' => Auth::id(),
           'updated_at' => $request->action_date ? \Carbon\Carbon::parse($request->action_date) : now(),
         ]);
+
+        // Delete any other chronology entries for this ticket + status combination to avoid duplicates
+        TicketChronology::where('ticket_id', $ticket->id)
+          ->where('tick_status', $request->tick_status)
+          ->where('id', '!=', $chronology->id)
+          ->delete();
       } else {
         // Create new chronology entry for status change
         $chronologyData = [
@@ -122,7 +146,7 @@ class TicketAssignmentController extends Controller
           'sla_severity' => $request->sla_severity,
           'sla_days' => $slaDays,
           'level_pegtugas_id' => $levelPetugas,
-          'escalate_to' => null, // Will be handled separately for multiple officers
+          'escalate_to' => $firstOfficer, // Store first officer in main entry
           'created_by' => Auth::id(),
           'updated_by' => Auth::id(),
           'created_at' => $request->action_date ? \Carbon\Carbon::parse($request->action_date) : now(),
@@ -133,10 +157,13 @@ class TicketAssignmentController extends Controller
         $chronology = TicketChronology::create($chronologyData);
       }
 
-      // Handle officer assignments if provided
-      if ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
-        foreach ($request->assigned_officers as $officerId) {
-          // Create separate chronology entries for each officer assignment
+      // Handle additional officer assignments (2nd officer onwards) if provided
+      if ($request->has('assigned_officers') && count($request->assigned_officers) > 1) {
+        // Skip the first officer as it's already stored in the main chronology entry
+        $additionalOfficers = array_slice($request->assigned_officers, 1);
+
+        foreach ($additionalOfficers as $officerId) {
+          // Create separate chronology entries for additional officers only
           TicketChronology::create([
             'ticket_id' => $ticket->id,
             'frm_user_id' => Auth::id(),
@@ -180,6 +207,22 @@ class TicketAssignmentController extends Controller
       // Reload ticket with latest data
       $ticket->refresh();
       $ticket->load(['status', 'category', 'subCategory', 'chronologies.status', 'chronologies.createdBy', 'chronologies.fromUser', 'chronologies.escalatedTo']);
+
+      // Send status change notification
+      \Illuminate\Support\Facades\Log::info('Sending status change notification from TicketAssignmentController', [
+        'ticket_id' => $ticket->id,
+        'old_status' => $oldStatus,
+        'new_status' => $request->tick_status,
+        'changed_by' => Auth::id(),
+      ]);
+
+      $this->notificationService->sendStatusChangeNotification(
+        $ticket,
+        $oldStatus,
+        $request->tick_status,
+        Auth::user(),
+        $request->notes
+      );
 
       return redirect()->route('tickets.show', $ticket)
         ->with('success', 'Tiket berjaya dikemaskini!');
@@ -433,11 +476,14 @@ class TicketAssignmentController extends Controller
       $ticket = Ticket::with(['comments.user', 'comments.createdBy', 'status'])->findOrFail($ticketId);
 
       // Get all chronologies to determine the status at the time each comment was made
+      // Group by status and get the earliest chronology for each status
       $chronologies = $ticket->chronologies()
         ->with('status')
-        ->whereNull('escalate_to') // Only status changes, not assignments
         ->orderBy('created_at', 'asc')
-        ->get();
+        ->get()
+        ->unique(function ($item) {
+          return $item->tick_status;
+        });
 
       // Get all comments from pengadu (ticket creator) and pegawai tugasan (officers)
       $comments = $ticket->comments->map(function ($comment) use ($ticket, $chronologies) {
