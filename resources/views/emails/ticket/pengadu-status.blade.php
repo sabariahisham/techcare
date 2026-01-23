@@ -8,7 +8,7 @@
 @component('mail::panel')
 {{-- Aduan Selesai(6) background Hijau & text berubah --}}
 <div style="
-    background: {{ $isClosed ? '#2e7d32' : '#ffab00' }};
+    background: {{ $isClosed ? '#2e7d32' : '#696cff' }};
     color: #ffffff;
     padding: 14px;
     text-align: center;
@@ -20,7 +20,7 @@
 </div>
 @endcomponent
 
-Assalamualaikum dan Salam Sejahtera,
+Assalamualaikum dan Salam Sejahtera, 
 
 **Y.Bhg.Tan Sri/Puan Sri/Datuk/Dato/Datin/Tuan/Puan,**
 
@@ -37,7 +37,7 @@ Tiket aduan telah berjaya direkodkan dan akan diproses.
 
 **Tajuk** : <strong>{{ $ticket->ticket_title }}</strong>
 
-**Status** : <strong>{{ $ticket->status->st_name ?? 'N/A' }} [{{ $newStatus }}]</strong>
+**Status** : <strong>{{ $statusName ?? ($ticket->status->st_name ?? 'N/A') }}</strong>
 
 **Pegawai Tugasan** : <strong>{{ $assignedUser->nama ?? 'Belum Ditugaskan' }}</strong>
 @endcomponent

@@ -14,17 +14,12 @@ namespace App\Notifications\Ticket;
 
 use App\Models\User;
 use App\Models\Ticket;
-use Illuminate\Bus\Queueable;
-//use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 
 class PegawaiTugasanStatusChangedNotification extends Notification
-// class PegawaiTugasanStatusChangedNotification extends Notification implements ShouldQueue
 {
-  use Queueable;
-
   protected $ticket;
   protected $oldStatus;
   protected $newStatus;
