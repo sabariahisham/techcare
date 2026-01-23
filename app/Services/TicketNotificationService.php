@@ -50,12 +50,6 @@ class TicketNotificationService
       // Send to ticket owner
       $results['owner'] = $this->sendToOwner($ticket, $changedBy, $notes);
 
-      // Add delay to prevent rate limiting (especially for free mail services)
-      // Mailtrap free plan: max 2 emails per second
-      if ($results['owner']) {
-        sleep(1); // Wait 1 second between emails
-      }
-
       // Send to assigned officer
       $results['officer'] = $this->sendToAssignedOfficer($ticket, $changedBy);
 
@@ -92,6 +86,15 @@ class TicketNotificationService
     try {
       $ticketOwner = $ticket->user;
 
+      Log::info('Attempting to send notification to ticket owner', [
+        'ticket_id' => $ticket->id,
+        'ticket_nolog' => $ticket->ticket_nolog,
+        'user_id' => $ticket->user_id,
+        'owner_exists' => $ticketOwner ? 'yes' : 'no',
+        'owner_email' => $ticketOwner->email ?? 'no-email',
+        'owner_name' => $ticketOwner->nama ?? 'no-name'
+      ]);
+
       if (!$ticketOwner || !$ticketOwner->email) {
         Log::warning('Ticket owner has no email address', [
           'ticket_id' => $ticket->id,
@@ -103,6 +106,13 @@ class TicketNotificationService
 
       $notificationMessage = $notes ?? 'Tiket anda telah berjaya dicipta dan akan diproses dalam masa terdekat.';
 
+      Log::info('About to call notify() for Pengadu', [
+        'ticket_id' => $ticket->id,
+        'recipient' => $ticketOwner->email,
+        'notification_class' => 'PengaduStatusChangedNotification',
+        'status' => 1
+      ]);
+
       $ticketOwner->notify(new PengaduStatusChangedNotification(
         $ticket,
         null, // No old status (new ticket)
@@ -111,11 +121,12 @@ class TicketNotificationService
         $notificationMessage
       ));
 
-      Log::info('New ticket notification sent to owner', [
+      Log::info('New ticket notification sent to owner SUCCESSFULLY', [
         'ticket_id' => $ticket->id,
         'ticket_nolog' => $ticket->ticket_nolog,
         'recipient' => $ticketOwner->email,
-        'recipient_name' => $ticketOwner->nama
+        'recipient_name' => $ticketOwner->nama,
+        'mail_driver' => config('mail.default')
       ]);
 
       return true;
@@ -123,7 +134,8 @@ class TicketNotificationService
       Log::error('Failed to send notification to ticket owner', [
         'ticket_id' => $ticket->id,
         'ticket_nolog' => $ticket->ticket_nolog,
-        'error' => $e->getMessage()
+        'error' => $e->getMessage(),
+        'trace' => $e->getTraceAsString()
       ]);
       return false;
     }

@@ -12,16 +12,12 @@ namespace App\Notifications\Ticket;
 
 use App\Models\Ticket;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-//use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 
 class PengaduStatusChangedNotification extends Notification
-// class PengaduStatusChangedNotification extends Notification implements ShouldQueue
 {
-  use Queueable;
-
   protected $ticket;
   protected $oldStatus;
   protected $newStatus;
@@ -50,8 +46,22 @@ class PengaduStatusChangedNotification extends Notification
     // Jangan hantar email untuk status 2 (Aduan Diproses) dan 3 (Serahan Kepada)
     // Pengadu tidak perlu tahu pasal proses dalaman pegawai
     if (in_array($this->newStatus, [2, 3])) {
-        return []; // Return empty array = tiada channel = tiada email
+      Log::info('PengaduStatusChangedNotification: Skipping email for internal status', [
+        'new_status' => $this->newStatus,
+        'ticket_id' => $this->ticket->id,
+        'notifiable_email' => $notifiable->email ?? 'no-email'
+      ]);
+      return []; // Return empty array = tiada channel = tiada email
     }
+
+    Log::info('PengaduStatusChangedNotification: Sending email to Pengadu', [
+      'new_status' => $this->newStatus,
+      'old_status' => $this->oldStatus,
+      'ticket_id' => $this->ticket->id,
+      'ticket_nolog' => $this->ticket->ticket_nolog,
+      'notifiable_email' => $notifiable->email ?? 'no-email',
+      'notifiable_id' => $notifiable->id ?? 'no-id'
+    ]);
 
     return ['mail'];
   }
