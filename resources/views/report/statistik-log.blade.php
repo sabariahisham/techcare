@@ -45,7 +45,11 @@
             </h4>
             <p class="text-muted mb-0">Paparan Statistik Log Aduan</p>
           </div>
-          <div class="d-flex gap-3">
+         
+          <div class="d-flex flex-column align-items-end gap-2">
+             <a href="{{ route('report-index') }}" class="btn btn-sm btn-secondary">
+               <i class="bx bx-arrow-back me-1"></i>Kembali
+            </a>
             <select id="filter-year" class="form-select" style="width: 150px;">
               @foreach($years as $year)
                 <option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>{{ $year }}</option>
