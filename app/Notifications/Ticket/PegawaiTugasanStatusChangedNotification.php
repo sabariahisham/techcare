@@ -12,14 +12,16 @@
 
 namespace App\Notifications\Ticket;
 
-use App\Models\Ticket;
 use App\Models\User;
+use App\Models\Ticket;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
+//use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 
-class PegawaiTugasanStatusChangedNotification extends Notification implements ShouldQueue
+class PegawaiTugasanStatusChangedNotification extends Notification
+// class PegawaiTugasanStatusChangedNotification extends Notification implements ShouldQueue
 {
   use Queueable;
 
@@ -36,11 +38,11 @@ class PegawaiTugasanStatusChangedNotification extends Notification implements Sh
   public function __construct(Ticket $ticket, $oldStatus, $newStatus, User $changedBy, $notes = null, $level = 1)
   {
     $this->ticket = $ticket;
-    $this->oldStatus = $oldStatus;
-    $this->newStatus = $newStatus;
+    $this->oldStatus = (int) $oldStatus;
+    $this->newStatus = (int) $newStatus;
     $this->changedBy = $changedBy;
     $this->notes = $notes;
-    $this->level = $level;
+    $this->level = (int) $level;
   }
 
   /**
@@ -50,6 +52,12 @@ class PegawaiTugasanStatusChangedNotification extends Notification implements Sh
    */
   public function via(object $notifiable): array
   {
+    // Jangan hantar email untuk status 2 (Aduan Diproses) dan 5 (Aduan Dibatal)
+    // Status dalaman sahaja, pegawai tak perlu notification
+    if (in_array($this->newStatus, [2, 5])) {
+      return []; // Return empty array = tiada channel = tiada email
+    }
+
     return ['mail'];
   }
 
@@ -58,12 +66,16 @@ class PegawaiTugasanStatusChangedNotification extends Notification implements Sh
    */
   public function toMail(object $notifiable): MailMessage
   {
-    // Skip email for "Aduan Diproses" (status 2) and "Aduan Dibatal" (status 5)
-    if (in_array($this->newStatus, [2, 5])) {
-      return new MailMessage();
-    }
-
     $statusName = $this->getStatusName($this->newStatus);
+
+    // Log for debugging
+    Log::info('Sending pegawai tugasan email', [
+      'ticket_id' => $this->ticket->id,
+      'new_status' => $this->newStatus,
+      'status_name' => $statusName,
+      'recipient' => $notifiable->email,
+      'level' => $this->level
+    ]);
 
     return (new MailMessage)
       ->subject("[{$statusName}] {$this->ticket->ticket_nolog}: {$this->ticket->ticket_title}")
@@ -71,9 +83,11 @@ class PegawaiTugasanStatusChangedNotification extends Notification implements Sh
         'ticket' => $this->ticket,
         'assignedUser' => $notifiable,
         'statusName' => $statusName,
+        'newStatus' => (int) $this->newStatus,
+        'oldStatus' => (int) $this->oldStatus,
         'changedBy' => $this->changedBy,
         'notes' => $this->notes,
-        'level' => $this->level,
+        'level' => (int) $this->level,
       ]);
   }
 

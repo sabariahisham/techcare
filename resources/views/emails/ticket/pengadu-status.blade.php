@@ -1,32 +1,34 @@
 {{-- blade-formatter-disable --}}
 @component('mail::message')
-<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin: 0 0 20px 0;">
-    <tr>
-        <td style="
-            background: #696cff;
-            padding: 14px 18px;
-            border-radius: 8px;
-            text-align: center;
-        ">
-            <p style="
-                color: #ffffff;
-                font-size: 16px;
-                font-weight: 600;
-                margin: 0;
-                text-align: center;                
-            ">
-                🔔 Status Aduan
-            </p>
-        </td>
-    </tr>    
-</table>
+{{-- Dynamic header based on status --}}
+@php
+    $isClosed = (int) $ticket->tick_status === 6;
+@endphp
 
+@component('mail::panel')
+{{-- Aduan Selesai(6) background Hijau & text berubah --}}
+<div style="
+    background: {{ $isClosed ? '#2e7d32' : '#ffab00' }};
+    color: #ffffff;
+    padding: 14px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 6px;
+">
+    {{ $isClosed ? '📂 Tiket Ditutup' : '🔔 Status Aduan' }}
+</div>
+@endcomponent
 
 Assalamualaikum dan Salam Sejahtera,
 
 **Y.Bhg.Tan Sri/Puan Sri/Datuk/Dato/Datin/Tuan/Puan,**
 
+@if($isClosed)
+Tiket aduan ini telah **selesai diproses dan ditutup**. Terima kasih atas **kerjasama tuan/puan**.
+@else
 Tiket aduan telah berjaya direkodkan dan akan diproses.
+@endif
 
 @component('mail::panel')
 ## **Maklumat Tiket**
@@ -35,7 +37,7 @@ Tiket aduan telah berjaya direkodkan dan akan diproses.
 
 **Tajuk** : <strong>{{ $ticket->ticket_title }}</strong>
 
-**Status Semasa** : <strong>{{ $ticket->status->st_name ?? 'N/A' }}</strong>
+**Status** : <strong>{{ $ticket->status->st_name ?? 'N/A' }} [{{ $newStatus }}]</strong>
 
 **Pegawai Tugasan** : <strong>{{ $assignedUser->nama ?? 'Belum Ditugaskan' }}</strong>
 @endcomponent

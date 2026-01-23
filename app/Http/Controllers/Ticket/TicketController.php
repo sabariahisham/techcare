@@ -1376,24 +1376,13 @@ class TicketController extends Controller
 
       // Send status change notification to ticket owner/complainant
       try {
-        $ticketOwner = $ticket->user;
-        if ($ticketOwner && $ticketOwner->email) {
-          $ticketOwner->notify(new PengaduStatusChangedNotification(
-            $ticket,
-            $oldStatus,
-            $request->tick_status,
-            $currentUser,
-            $request->notes
-          ));
-
-          Log::info('Status change notification sent', [
-            'ticket_id' => $ticket->id,
-            'ticket_nolog' => $ticket->ticket_nolog,
-            'old_status' => $oldStatus,
-            'new_status' => $request->tick_status,
-            'sent_to' => $ticketOwner->email
-          ]);
-        }
+        $this->notificationService->sendStatusChangeNotification(
+          $ticket,
+          $oldStatus,
+          $request->tick_status,
+          $currentUser,
+          $request->notes
+        );
       } catch (\Exception $e) {
         Log::error('Failed to send status change notification', [
           'ticket_id' => $ticket->id,

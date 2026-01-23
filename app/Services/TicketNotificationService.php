@@ -38,7 +38,14 @@ class TicketNotificationService
     try {
       // Refresh ticket to get relationships
       $ticket->refresh();
-      $ticket->load('user', 'category', 'subCategory');
+      $ticket->load('user', 'category', 'subCategory', 'chronologies.escalatedTo');
+
+      Log::info('Starting to send new ticket notifications', [
+        'ticket_id' => $ticket->id,
+        'ticket_nolog' => $ticket->ticket_nolog,
+        'queue_driver' => config('queue.default'),
+        'mail_driver' => config('mail.default')
+      ]);
 
       // Send to ticket owner
       $results['owner'] = $this->sendToOwner($ticket, $changedBy, $notes);
@@ -46,11 +53,19 @@ class TicketNotificationService
       // Add delay to prevent rate limiting (especially for free mail services)
       // Mailtrap free plan: max 2 emails per second
       if ($results['owner']) {
-        sleep(2); // Wait 2 seconds between emails
+        sleep(1); // Wait 1 second between emails
       }
 
       // Send to assigned officer
       $results['officer'] = $this->sendToAssignedOfficer($ticket, $changedBy);
+
+      Log::info('Finished sending new ticket notifications', [
+        'ticket_id' => $ticket->id,
+        'ticket_nolog' => $ticket->ticket_nolog,
+        'owner_notified' => $results['owner'],
+        'officer_notified' => $results['officer'],
+        'queue_driver' => config('queue.default')
+      ]);
     } catch (\Exception $e) {
       Log::error('Failed to send new ticket notifications', [
         'ticket_id' => $ticket->id,
@@ -198,37 +213,216 @@ class TicketNotificationService
   ): bool {
     try {
       $ticket->refresh();
-      $ticket->load('user', 'category', 'subCategory');
+      $ticket->load('user', 'category', 'subCategory', 'chronologies.escalatedTo');
+
+      Log::info('Sending status change notification', [
+        'ticket_id' => $ticket->id,
+        'ticket_nolog' => $ticket->ticket_nolog,
+        'old_status' => $oldStatus,
+        'new_status' => $newStatus
+      ]);
 
       $ticketOwner = $ticket->user;
 
-      if (!$ticketOwner || !$ticketOwner->email) {
+      // Send to ticket owner (Pengadu)
+      $ownerNotified = false;
+      if ($ticketOwner && $ticketOwner->email) {
+        $ticketOwner->notify(new PengaduStatusChangedNotification(
+          $ticket,
+          $oldStatus,
+          $newStatus,
+          $changedBy,
+          $notes
+        ));
+
+        Log::info('Status change notification sent to owner', [
+          'ticket_id' => $ticket->id,
+          'ticket_nolog' => $ticket->ticket_nolog,
+          'old_status' => $oldStatus,
+          'new_status' => $newStatus,
+          'recipient' => $ticketOwner->email
+        ]);
+
+        $ownerNotified = true;
+      } else {
         Log::warning('Ticket owner has no email for status change notification', [
           'ticket_id' => $ticket->id,
           'ticket_nolog' => $ticket->ticket_nolog
         ]);
+      }
+
+      // Send to assigned officer (Pegawai Tugasan) for certain status changes
+      // Status: 3 (Serahan Kepada), 4 (Dirujuk), 6 (Selesai)
+      $officerNotified = false;
+      if (in_array($newStatus, [3, 4, 6])) {
+        $officerNotified = $this->sendStatusChangeToOfficer($ticket, $oldStatus, $newStatus, $changedBy, $notes);
+      }
+
+      Log::info('Status change notifications completed', [
+        'ticket_id' => $ticket->id,
+        'owner_notified' => $ownerNotified,
+        'officer_notified' => $officerNotified
+      ]);
+
+      return $ownerNotified || $officerNotified;
+    } catch (\Exception $e) {
+      Log::error('Failed to send status change notification', [
+        'ticket_id' => $ticket->id,
+        'error' => $e->getMessage()
+      ]);
+      return false;
+    }
+  }
+
+  /**
+   * Send status change notification to assigned officer
+   *
+   * @param Ticket $ticket
+   * @param int $oldStatus
+   * @param int $newStatus
+   * @param User $changedBy
+   * @param string|null $notes
+   * @return bool
+   */
+  private function sendStatusChangeToOfficer(
+    Ticket $ticket,
+    int $oldStatus,
+    int $newStatus,
+    User $changedBy,
+    ?string $notes = null
+  ): bool {
+    try {
+      // For Status 6 (Aduan Selesai), notify opposite level officers
+      if ($newStatus == 6) {
+        // First, determine the level of the person who submitted by checking officers table
+        // Find the officer level for this user in the ticket's category and subcategory
+        $submitterLevel = \Illuminate\Support\Facades\DB::table('officers')
+          ->where('user_id', $changedBy->id)
+          ->where('cat_id', $ticket->cat_id)
+          ->where('subcat_id', $ticket->subcat_id)
+          ->whereNull('deleted_at')
+          ->value('level_tugasan');
+
+        // If not found in officers table, try to get from latest chronology assignment
+        if (!$submitterLevel) {
+          $submitterLevel = TicketChronology::where('ticket_id', $ticket->id)
+            ->whereNotNull('escalate_to')
+            ->where('escalate_to', $changedBy->id)
+            ->value('level_pegtugas_id');
+        }
+
+        // Default to level 2 if not found (assume Level 2 is completing)
+        $submitterLevel = $submitterLevel ?? 2;
+
+        // Notify opposite level: If Level 2 submitted, notify Level 1; if Level 1 submitted, notify Level 2
+        $targetLevel = ($submitterLevel == 2) ? 1 : 2;
+
+        Log::info('Determining completion notification recipients', [
+          'ticket_id' => $ticket->id,
+          'submitted_by' => $changedBy->id,
+          'submitter_name' => $changedBy->nama,
+          'submitter_level' => $submitterLevel,
+          'target_level' => $targetLevel
+        ]);
+
+        // Get officers of target level (exclude the person who submitted)
+        $targetOfficers = TicketChronology::where('ticket_id', $ticket->id)
+          ->whereNotNull('escalate_to')
+          ->where('level_pegtugas_id', $targetLevel)
+          ->where('escalate_to', '!=', $changedBy->id)
+          ->pluck('escalate_to')
+          ->unique();
+
+        if ($targetOfficers->isEmpty()) {
+          Log::info('No Level ' . $targetLevel . ' officer assigned for completion notification', [
+            'ticket_id' => $ticket->id,
+            'new_status' => $newStatus,
+            'submitted_by' => $changedBy->id,
+            'target_level' => $targetLevel
+          ]);
+          return false;
+        }
+
+        $notificationSent = false;
+        foreach ($targetOfficers as $officerId) {
+          $assignedOfficer = User::find($officerId);
+
+          if (!$assignedOfficer || !$assignedOfficer->email) {
+            Log::warning('Level ' . $targetLevel . ' officer has no email for completion notification', [
+              'ticket_id' => $ticket->id,
+              'officer_id' => $officerId
+            ]);
+            continue;
+          }
+
+          $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
+            $ticket,
+            $oldStatus,
+            $newStatus,
+            $changedBy,
+            $notes,
+            $targetLevel
+          ));
+
+          Log::info('Completion notification sent to Level ' . $targetLevel . ' officer', [
+            'ticket_id' => $ticket->id,
+            'new_status' => $newStatus,
+            'officer_id' => $assignedOfficer->id,
+            'officer_email' => $assignedOfficer->email,
+            'officer_name' => $assignedOfficer->nama,
+            'level' => $targetLevel
+          ]);
+
+          $notificationSent = true;
+        }
+
+        return $notificationSent;
+      }
+
+      // For other statuses, notify latest assigned officer
+      $latestChronology = TicketChronology::where('ticket_id', $ticket->id)
+        ->whereNotNull('escalate_to')
+        ->latest()
+        ->first();
+
+      if (!$latestChronology || !$latestChronology->escalate_to) {
+        Log::info('No officer assigned for status change notification', [
+          'ticket_id' => $ticket->id,
+          'new_status' => $newStatus
+        ]);
         return false;
       }
 
-      $ticketOwner->notify(new PengaduStatusChangedNotification(
+      $assignedOfficer = User::find($latestChronology->escalate_to);
+
+      if (!$assignedOfficer || !$assignedOfficer->email) {
+        Log::warning('Assigned officer has no email for status change', [
+          'ticket_id' => $ticket->id,
+          'officer_id' => $latestChronology->escalate_to
+        ]);
+        return false;
+      }
+
+      $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
         $ticket,
         $oldStatus,
         $newStatus,
         $changedBy,
-        $notes
+        $notes,
+        $latestChronology->level_pegtugas_id ?? 1
       ));
 
-      Log::info('Status change notification sent', [
+      Log::info('Status change notification sent to officer', [
         'ticket_id' => $ticket->id,
-        'ticket_nolog' => $ticket->ticket_nolog,
-        'old_status' => $oldStatus,
         'new_status' => $newStatus,
-        'recipient' => $ticketOwner->email
+        'officer_id' => $assignedOfficer->id,
+        'officer_email' => $assignedOfficer->email,
+        'level' => $latestChronology->level_pegtugas_id
       ]);
 
       return true;
     } catch (\Exception $e) {
-      Log::error('Failed to send status change notification', [
+      Log::error('Failed to send status change notification to officer', [
         'ticket_id' => $ticket->id,
         'error' => $e->getMessage()
       ]);
