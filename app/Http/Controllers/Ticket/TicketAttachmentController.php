@@ -137,11 +137,16 @@ class TicketAttachmentController extends Controller
    * Delete an attachment
    *
    * @param \App\Http\Requests\Ticket\DeleteAttachmentRequest $request
-   * @param \App\Models\Document $document
+   * @param string $uuid
    * @return \Illuminate\Http\JsonResponse
    */
-  public function destroy(DeleteAttachmentRequest $request, Document $document)
+  public function destroy(DeleteAttachmentRequest $request, $uuid)
   {
+    // Find document by UUID
+    $document = Document::where('uuid', $uuid)
+      ->where('doc_jenis', 'TICKET')
+      ->firstOrFail();
+
     try {
       Log::info('Attempting to delete attachment', [
         'attachment_id' => $document->id,
@@ -272,13 +277,13 @@ class TicketAttachmentController extends Controller
    * Download an attachment
    *
    * @param \App\Http\Requests\Ticket\DownloadAttachmentRequest $request
-   * @param string $documentId
+   * @param string $uuid
    * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
    */
-  public function download(DownloadAttachmentRequest $request, $documentId)
+  public function download(DownloadAttachmentRequest $request, $uuid)
   {
-    // Authorization handled by DownloadAttachmentRequest
-    $document = Document::where('id', $documentId)
+    // Find document by UUID
+    $document = Document::where('uuid', $uuid)
       ->where('doc_jenis', 'TICKET')
       ->firstOrFail();
 

@@ -302,12 +302,12 @@
                                                         Dimuat naik: {{ $attachment->created_at->format('d M Y, H:i') }}
                                                     </small>
                                                 </div>
-                                                <a href="{{ route('ticket-attachments.download', ['document' => $attachment->id, 'view' => 1]) }}"
+                                                <a href="{{ route('ticket-attachments.download', ['uuid' => $attachment->uuid, 'view' => 1]) }}"
                                                     class="btn btn-sm btn-outline-info me-1" data-bs-toggle="tooltip"
                                                     title="Lihat {{ $attachment->doc_name }}" target="_blank">
                                                     <i class="bx bx-show"></i>
                                                 </a>
-                                                <a href="{{ route('ticket-attachments.download', $attachment->id) }}"
+                                                <a href="{{ route('ticket-attachments.download', $attachment->uuid) }}"
                                                     class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip"
                                                     title="Muat turun {{ $attachment->doc_name }}">
                                                     <i class="bx bx-download"></i>

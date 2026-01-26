@@ -24,8 +24,8 @@ class DownloadAttachmentRequest extends FormRequest
       return false;
     }
 
-    $documentId = $this->route('document');
-    $document = Document::where('id', $documentId)
+    $uuid = $this->route('uuid');
+    $document = Document::where('uuid', $uuid)
       ->where('doc_jenis', 'TICKET')
       ->first();
 

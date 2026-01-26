@@ -171,15 +171,15 @@ $(function () {
 
   // Handle edit button click
   $(document).on('click', '.edit-record', function () {
-    var ticketId = $(this).data('id');
-    console.log('Edit ticket:', ticketId);
+    var ticketUuid = $(this).data('uuid');
+    console.log('Edit ticket UUID:', ticketUuid);
 
     // Show loading state
     showEditTicketLoading();
 
-    // Fetch ticket data
+    // Fetch ticket data using UUID
     $.ajax({
-      url: '/tickets/' + ticketId + '/edit',
+      url: '/tickets/' + ticketUuid + '/edit',
       type: 'GET',
       success: function (response) {
         console.log('Ticket data loaded:', response);
@@ -224,8 +224,8 @@ $(function () {
     window.editSelectedAttachments = []; // Reset global array
     $('#editAttachmentsPreview').empty(); // Clear preview
 
-    // Set ticket ID
-    $('#editTicketId').val(ticket.id);
+    // Set ticket UUID instead of ID
+    $('#editTicketId').val(ticket.uuid);
 
     // Set basic ticket data
     $('#editTicketTitle').val(ticket.ticket_title);
@@ -483,9 +483,9 @@ $(function () {
       return;
     }
 
-    var ticketId = $('#editTicketId').val();
-    if (!ticketId) {
-      toastr.error('ID tiket tidak dijumpai. Sila cuba lagi.');
+    var ticketUuid = $('#editTicketId').val();
+    if (!ticketUuid) {
+      toastr.error('UUID tiket tidak dijumpai. Sila cuba lagi.');
       return;
     }
 
@@ -511,7 +511,7 @@ $(function () {
     submitBtn.prop('disabled', true).text('Mengemaskini...');
 
     $.ajax({
-      url: '/tickets/' + ticketId,
+      url: '/tickets/' + ticketUuid,
       type: 'POST', // Laravel will handle method spoofing with _method field
       data: formData,
       processData: false,

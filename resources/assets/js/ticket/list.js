@@ -44,6 +44,10 @@ $(function () {
         data: function (d) {
           d.type = 'my';
           d.ticket_filter = $('#ticketFilterSelect').val(); // Add filter parameter
+        },
+        error: function (xhr, error, code) {
+          console.error('DataTable AJAX Error:', error, code);
+          console.error('Response:', xhr.responseText);
         }
       },
       columns: [
@@ -130,7 +134,11 @@ $(function () {
       serverSide: true,
       ajax: {
         url: '/tickets/data',
-        data: { type: 'manage' }
+        data: { type: 'manage' },
+        error: function (xhr, error, code) {
+          console.error('DataTable AJAX Error:', error, code);
+          console.error('Response:', xhr.responseText);
+        }
       },
       columns: [
         { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false }, // Bil
@@ -192,20 +200,46 @@ $(function () {
   // Edit and delete functionality removed - complainants should only log and submit tickets
 
   // View Record - Handle view button click for both tables
-  $(document).on('click', '.view-record', function () {
-    var ticketId = $(this).data('id');
+  $(document).on('click', '.view-record, .view-record *', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
 
-    // Redirect to ticket detail page
-    window.location.href = '/tickets/' + ticketId;
+    // Find the button - whether clicked on button or icon inside
+    var $button = $(this).closest('.view-record');
+
+    console.log('=== VIEW BUTTON DEBUG ===');
+    console.log('Clicked element:', this);
+    console.log('Clicked element tag:', this.tagName);
+    console.log('Clicked element classes:', this.className);
+    console.log('Button found:', $button[0]);
+    console.log('Button HTML:', $button[0] ? $button[0].outerHTML : 'NOT FOUND');
+    console.log('data-uuid attribute:', $button.attr('data-uuid'));
+    console.log('data-uuid via data():', $button.data('uuid'));
+    console.log('All button attributes:', $button[0] ? Array.from($button[0].attributes).map(a => a.name + '=' + a.value) : 'N/A');
+
+    var ticketUuid = $button.attr('data-uuid');
+
+    if (ticketUuid && ticketUuid !== 'undefined') {
+      console.log('Navigating to:', '/tickets/' + ticketUuid);
+      window.location.href = '/tickets/' + ticketUuid;
+    } else {
+      console.error('UUID is undefined or not found!');
+      console.log('Button element:', $button[0]);
+    }
   });
 
   // Manage Ticket - Handle manage/status button click
-  $(document).on('click', '.manage-ticket', function () {
-    var ticketId = $(this).data('id');
+  $(document).on('click', '.manage-ticket', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
 
-    // You can implement a modal or redirect to ticket management page
-    // For now, redirect to the ticket detail page where status can be managed
-    window.location.href = '/tickets/' + ticketId;
+    // Get the button element - if icon clicked, get parent button
+    var $button = $(this).hasClass('manage-ticket') ? $(this) : $(this).closest('.manage-ticket');
+    var ticketUuid = $button.attr('data-uuid');
+
+    if (ticketUuid) {
+      window.location.href = '/tickets/' + ticketUuid;
+    }
   });
 
   // Ticket Filter Dropdown Change Event
@@ -217,7 +251,7 @@ $(function () {
 
   // Handle delete ticket
   $(document).on('click', '.delete-record', function () {
-    var ticketId = $(this).data('id');
+    var ticketUuid = $(this).data('uuid');
 
     Swal.fire({
       title: 'Adakah anda pasti?',
@@ -244,7 +278,7 @@ $(function () {
         });
 
         $.ajax({
-          url: '/tickets/' + ticketId,
+          url: '/tickets/' + ticketUuid,
           type: 'DELETE',
           data: {
             _token: $('meta[name="csrf-token"]').attr('content')

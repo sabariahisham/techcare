@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Ramsey\Uuid\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,6 +26,30 @@ class Document extends Model
   ];
 
   protected $appends = ['doc_url', 'doc_size'];
+
+  /**
+   * Get the route key for the model.
+   *
+   * @return string
+   */
+  public function getRouteKeyName()
+  {
+    return 'uuid';
+  }
+
+  /**
+   * Boot function from Laravel.
+   */
+  protected static function boot()
+  {
+    parent::boot();
+
+    static::creating(function ($model) {
+      if (empty($model->uuid)) {
+        $model->uuid = Uuid::uuid4()->toString();
+      }
+    });
+  }
 
   public function tickets()
   {
@@ -91,8 +116,8 @@ class Document extends Model
    */
   public function getDocUrlAttribute()
   {
-    if ($this->doc_jenis === 'TICKET' && $this->id) {
-      return route('ticket-attachments.download', ['document' => $this->id]);
+    if ($this->doc_jenis === 'TICKET' && $this->uuid) {
+      return route('ticket-attachments.download', ['uuid' => $this->uuid]);
     }
     return null;
   }
