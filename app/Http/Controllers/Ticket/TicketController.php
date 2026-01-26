@@ -168,10 +168,10 @@ class TicketController extends Controller
             1 => 'bg-primary',
             2 => 'bg-warning',
             3 => 'bg-info',
-            4 => 'bg-secondary',
-            5 => 'bg-danger',
+            4 => 'bg-danger',
+            5 => 'bg-secondary',
             6 => 'bg-success',
-            default => 'bg-secondary'
+            default => 'bg-black'
           };
           return "<span class=\"badge {$statusClass}\">{$statusName}</span>";
         })
@@ -315,10 +315,10 @@ class TicketController extends Controller
             1 => 'bg-primary',
             2 => 'bg-warning',
             3 => 'bg-info',
-            4 => 'bg-secondary',
-            5 => 'bg-danger',
+            4 => 'bg-danger',
+            5 => 'bg-secondary',
             6 => 'bg-success',
-            default => 'bg-secondary'
+            default => 'bg-black'
           };
           return "<span class=\"badge {$statusClass}\">{$statusName}</span>";
         })
