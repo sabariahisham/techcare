@@ -862,19 +862,19 @@ $timelineItems = $timelineItems
                                             @if (!$isFirst && isset($timelineItems[$index - 1]))
                                                 @php
                                                     $prevItem = $timelineItems[$index - 1];
-                                                    $duration = \Carbon\Carbon::parse(
+                                                    $durationMinutes = \Carbon\Carbon::parse(
                                                         $prevItem->created_at,
                                                     )->diffInMinutes(\Carbon\Carbon::parse($item->created_at));
-                                                    
+
                                                     $durationParts = [];
-                                                    
-                                                    if ($duration >= 1440) {
-                                                        // More than 24 hours - show days, hours, minutes
-                                                        $days = floor($duration / 1440);
-                                                        $remainingMinutes = $duration % 1440;
-                                                        $hours = floor($remainingMinutes / 60);
-                                                        $minutes = $remainingMinutes % 60;
-                                                        
+
+                                                    if ($durationMinutes >= 1440) {
+                                                        // More than 24 hours - show days, hours, minutes (integer format)
+                                                        $days = intval(floor($durationMinutes / 1440));
+                                                        $remainingMinutes = $durationMinutes % 1440;
+                                                        $hours = intval(floor($remainingMinutes / 60));
+                                                        $minutes = intval($remainingMinutes % 60);
+
                                                         $durationParts[] = $days . ' hari';
                                                         if ($hours > 0) {
                                                             $durationParts[] = $hours . ' jam';
@@ -882,24 +882,27 @@ $timelineItems = $timelineItems
                                                         if ($minutes > 0) {
                                                             $durationParts[] = $minutes . ' minit';
                                                         }
-                                                    } elseif ($duration >= 60) {
-                                                        // Between 1 hour and 24 hours - show hours and minutes
-                                                        $hours = floor($duration / 60);
-                                                        $minutes = $duration % 60;
-                                                        
+                                                    } elseif ($durationMinutes >= 60) {
+                                                        // Between 1 hour and 24 hours - show hours and minutes (integer format)
+                                                        $hours = intval(floor($durationMinutes / 60));
+                                                        $minutes = intval($durationMinutes % 60);
+
                                                         $durationParts[] = $hours . ' jam';
                                                         if ($minutes > 0) {
                                                             $durationParts[] = $minutes . ' minit';
                                                         }
                                                     } else {
-                                                        // Less than 1 hour - show only minutes
-                                                        $durationParts[] = $duration . ' minit';
+                                                        // Less than 1 hour - show only minutes (integer format)
+                                                        $minutes = intval($durationMinutes);
+                                                        if ($minutes > 0) {
+                                                            $durationParts[] = $minutes . ' minit';
+                                                        }
                                                     }
-                                                    
+
                                                     $durationText = implode(' ', $durationParts);
                                                 @endphp
 
-                                                @if ($duration > 0)
+                                                @if ($durationMinutes > 0)
                                                     <small class="timeline-time d-block mt-1">
                                                         <i class="bx bx-stopwatch text-warning"></i>
                                                         <strong>Tempoh:</strong>
