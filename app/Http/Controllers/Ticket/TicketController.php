@@ -363,9 +363,9 @@ class TicketController extends Controller
           }
 
           // Only Administrator and higher level roles can delete
-          // if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem'])) {
-          //   $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
-          // }
+          if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem'])) {
+            $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
+          }
 
           $actions .= '</div>';
           return $actions;
