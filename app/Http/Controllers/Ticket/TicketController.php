@@ -88,8 +88,14 @@ class TicketController extends Controller
         $query->where('ticket_type', 2);
       }
 
+      // Order by latest date first
+      $query->orderBy('created_at', 'desc');
+
       return DataTables::eloquent($query)
         ->addIndexColumn()
+        ->addColumn('uuid', function ($ticket) {
+          return $ticket->uuid;
+        })
         ->filterColumn('no_log_tiket', function ($query, $keyword) {
           $query->where('ticket_nolog', 'like', "%{$keyword}%");
         })
@@ -194,7 +200,8 @@ class TicketController extends Controller
           $actions = '<div class="d-flex gap-1">';
 
           // View button - always available
-          $actions .= '<a class="btn btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat"><i class="bx bx-show text-success"></i></a>';
+          $actions .= '<a class="btn btn-sm view-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat" style="cursor: pointer;"><i class="bx bx-show text-success"></i></a>';
+          // $actions .= '<a href="/tickets/' . $ticket->uuid . '" class="btn btn-sm view-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat-href" style="cursor: pointer;"><i class="bx bx-show text-success"></i></a>';
 
           // Edit button - commented out for "Tiket Saya" section
           // $canEdit = false;
@@ -205,7 +212,7 @@ class TicketController extends Controller
           // }
           //
           // if ($canEdit) {
-          //   $actions .= '<a class="btn btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
+          //   $actions .= '<a class="btn btn-sm edit-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
           // }
 
           // Delete button - commented out for "Tiket Saya" section
@@ -217,7 +224,7 @@ class TicketController extends Controller
           // }
           //
           // if ($canDelete) {
-          //   $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
+          //   $actions .= '<a class="btn btn-sm delete-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
           // }
 
           $actions .= '</div>';
@@ -243,8 +250,14 @@ class TicketController extends Controller
         });
       }
 
+      // Order by latest date first
+      $query->orderBy('created_at', 'desc');
+
       return DataTables::eloquent($query)
         ->addIndexColumn()
+        ->addColumn('uuid', function ($ticket) {
+          return $ticket->uuid;
+        })
         ->filterColumn('no_log_tiket', function ($query, $keyword) {
           $query->where('ticket_nolog', 'like', "%{$keyword}%");
         })
@@ -341,7 +354,9 @@ class TicketController extends Controller
           $actions = '<div class="d-flex gap-1">';
 
           // Manage button - for helpdesk staff
-          $actions .= '<a class="btn btn-sm manage-ticket" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus"><i class="bx bx-cog text-primary"></i></a>';
+          $actions .= '<a class="btn btn-sm manage-ticket" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus"><i class="bx bx-cog text-primary"></i></a>';
+          // View button - always available for all users
+          // $actions .= '<a href="/tickets/' . $ticket->uuid . '" class="btn btn-sm manage-ticket" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus2" style="cursor: pointer;"><i class="bx bx-cog text-primary"></i></a>';
 
           // Admin can edit any ticket
           $canEdit = false;
@@ -359,12 +374,12 @@ class TicketController extends Controller
           }
 
           if ($canEdit) {
-            $actions .= '<a class="btn btn-sm edit-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
+            $actions .= '<a class="btn btn-sm edit-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
           }
 
           // Only Administrator and higher level roles can delete
           if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem'])) {
-            $actions .= '<a class="btn btn-sm delete-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
+            $actions .= '<a class="btn btn-sm delete-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
           }
 
           $actions .= '</div>';
@@ -514,8 +529,11 @@ class TicketController extends Controller
    * Show the form for editing the specified ticket
    * Only Administrator and Pegawai Tugasan can edit tickets
    */
-  public function edit(Ticket $ticket)
+  public function edit($uuid)
   {
+    // Find ticket by UUID
+    $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
+
     // Check authorization - ONLY Administrator or Pegawai Tugasan can edit
     $user = Auth::user();
     $canEdit = false;
@@ -613,8 +631,11 @@ class TicketController extends Controller
    * Only Administrator and Pegawai Tugasan can update tickets
    * Only these fields can be edited: tajuk, kategori, sub kategori, keterangan aduan, lampiran
    */
-  public function update(UpdateTicketRequest $request, Ticket $ticket)
+  public function update(UpdateTicketRequest $request, $uuid)
   {
+    // Find ticket by UUID
+    $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
+
     // Check authorization - ONLY Administrator or Pegawai Tugasan can update
     $user = Auth::user();
     $canEdit = false;
@@ -764,8 +785,11 @@ class TicketController extends Controller
   /**
    * Remove the specified ticket
    */
-  public function destroy(Ticket $ticket)
+  public function destroy($uuid)
   {
+    // Find ticket by UUID
+    $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
+
     // Check authorization - only allow deletion if:
     // 1. User has admin/helpdesk roles OR
     // 2. User is the ticket creator and ticket is not processed yet
@@ -858,8 +882,11 @@ class TicketController extends Controller
     }
   }
 
-  public function show(Ticket $ticket)
+  public function show($uuid)
   {
+    // Find ticket by UUID
+    $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
+
     // Load ticket with comprehensive relationships
     $ticket->load([
       'user.sektor',
@@ -1292,8 +1319,11 @@ class TicketController extends Controller
   /**
    * Update ticket status and create chronology entry
    */
-  public function updateTicketStatus(Request $request, Ticket $ticket)
+  public function updateTicketStatus(Request $request, $uuid)
   {
+    // Find ticket by UUID
+    $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
+
     $request->validate([
       'tick_status' => 'required|exists:ref_ticket_statuses,id',
       'escalate_to' => 'nullable|exists:users,id',

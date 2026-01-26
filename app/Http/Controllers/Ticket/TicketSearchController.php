@@ -81,6 +81,9 @@ class TicketSearchController extends Controller
 
     return DataTables::of($tickets)
       ->addIndexColumn()
+      ->addColumn('uuid', function ($ticket) {
+        return $ticket->uuid;
+      })
       ->addColumn('no_log_tiket', function ($ticket) {
         return e($ticket->ticket_nolog);
       })
@@ -168,6 +171,9 @@ class TicketSearchController extends Controller
 
     return DataTables::of($query)
       ->addIndexColumn()
+      ->addColumn('uuid', function ($ticket) {
+        return $ticket->uuid;
+      })
       ->addColumn('no_log_tiket', function ($ticket) {
         return e($ticket->ticket_nolog);
       })
@@ -252,13 +258,13 @@ class TicketSearchController extends Controller
 
     // View button for all tickets
     if ($context === 'my') {
-      $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm view-record" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></button>';
+      $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm view-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" title="View"><i class="bx bx-show"></i></button>';
     } else {
       // For tickets to manage
       if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
-        $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm manage-ticket" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Manage Status"><i class="bx bx-cog"></i></button>';
+        $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm manage-ticket" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" title="Manage Status"><i class="bx bx-cog"></i></button>';
       } elseif ($user->hasRole('Pegawai Tugasan')) {
-        $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm manage-ticket" data-id="' . $ticket->id . '" data-bs-toggle="tooltip" title="Update Status"><i class="bx bx-task"></i></button>';
+        $buttons[] = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm manage-ticket" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" title="Update Status"><i class="bx bx-task"></i></button>';
       }
     }
 
