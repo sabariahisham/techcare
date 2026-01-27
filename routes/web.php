@@ -52,10 +52,10 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
   ->name('two-factor.login.store');
 
 // ============================================================================
-// CAS/SATUID ROUTES - FOR PRODUCTION
+// CAS/SATUID ROUTES - FOR PRODUCTION/DEV SERVER
 // ============================================================================
-// PRODUCTION: Uncomment this entire block and comment out the "LOCAL DEVELOPMENT"
-// session routes below when deploying to production with SATUID
+// DEV/PRODUCTION: Uncomment this entire block and comment out the "LOCAL DEVELOPMENT"
+// session routes below when testing/deploying with SATUID
 // ============================================================================
 // Route::middleware('cas.auth')->group(function () {
 //     // Dashboard
@@ -97,7 +97,7 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
 // ============================================================================
 // LOCAL DEVELOPMENT ROUTES
 // ============================================================================
-// PRODUCTION: Comment out this entire block when deploying to production with SATUID
+// LOCAL: Comment out this entire block when testing/deploying with SATUID
 // ============================================================================
 // Session Management Routes (for session timeout handling)
 Route::middleware(['auth', config('jetstream.auth_session')])->group(function () {

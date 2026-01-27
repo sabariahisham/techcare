@@ -3,26 +3,14 @@
 /**
  * CAS Authentication Configuration (SATUID)
  * Optimized for Treasury eHelp System
+ *
+ * Note: This implementation uses manual CAS authentication without phpCAS library.
+ * Configuration is simplified to include only required settings.
  */
 return [
-    // CAS Server
-    'cas_hostname' => env('CAS_HOSTNAME', 'satuid.treasury.gov.my'),
-    'cas_port' => env('CAS_PORT', 443),
-    'cas_uri' => env('CAS_URI', '/gk'),
-
-    // Client Service
-    'cas_client_service' => env('CAS_CLIENT_SERVICE'),
-    'cas_redirect_path' => env('CAS_REDIRECT_PATH', '/dashboard'),
-
-    // Logout
-    'cas_logout_url' => env('CAS_LOGOUT_URL', 'https://satuid.treasury.gov.my/user/dashboard/'),
-
     /*
     |--------------------------------------------------------------------------
-    | Laravel has it's own authentication sessions. Unless you want phpCAS
-    | to manage the session, leave this set to false.  Note that the
-    | middleware and redirect classes will be handling removal
-    | of the Laravel sessions when this is set to false.
+    | CAS Server Configuration
     |--------------------------------------------------------------------------
     */
     'cas_control_session' => false,
@@ -56,10 +44,8 @@ return [
     |--------------------------------------------------------------------------
     | Example: 'http://localhost', 'https://example.com:8888'
     */
-
      // 'cas_client_service' => 'http://ehelp-dev.treasury.gov.my',
     'cas_client_service' => env('CAS_CLIENT_SERVICE', 'http://ehelp-dev.treasury.gov.my'),
-
 
     /*
     |--------------------------------------------------------------------------
@@ -112,7 +98,7 @@ return [
     |--------------------------------------------------------------------------
     | If your server supports redirection services, enter the redirect url
     | in this section.  If left blank, it will default to disabled.
-    */
+    */  
     // 'cas_logout_redirect' => 'http://ehelp-dev.treasury.gov.my',
     'cas_logout_redirect' => env('CAS_LOGOUT_REDIRECT', 'http://ehelp-dev.treasury.gov.my'),
 
@@ -124,7 +110,6 @@ return [
     | page in which the call was initiated.  You can override this method
     | and force the user to be redirected to a specific URL here.
     */
-
     //'cas_redirect_path' => 'http://ehelp-dev.treasury.gov.my/dashboard',
     'cas_redirect_path' => env('CAS_REDIRECT_PATH', '/dashboard'),
 
@@ -139,50 +124,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | CAS will support version 1.0, 2.0, 3.0 of the protocol.  It is recommended
-    | to use version 2.0, 3.0, or SAML 1.1.  If you enable SAML, then that
-    | will override this configuration.
+    | Client Service Configuration
+    |--------------------------------------------------------------------------
+    | The base URL of this application that CAS will redirect back to.
+    | Example: 'http://localhost:8001', 'https://ehelp.treasury.gov.my'
+    */
+    'cas_client_service' => env('CAS_CLIENT_SERVICE', 'http://ehelp-dev.treasury.gov.my'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Redirect Path After Login
+    |--------------------------------------------------------------------------
+    | Where to redirect users after successful CAS authentication.
+    */
+    'cas_redirect_path' => env('CAS_REDIRECT_PATH', '/dashboard'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | CAS Logout Configuration
     |--------------------------------------------------------------------------
     */
-    'cas_version' => '2.0',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Sets the log method for phpCAS. phpCAS logs are verbose, multi-line, INFO
-    | log entries. Consider the implications when choosing a log approach.
-    |
-    | null (default) = no logging
-    | laravel = use the Laravel MonoLog instance
-    | /path/to/file = create a new log at the given file path
-    |--------------------------------------------------------------------------
-    */
-    'cas_log' => null,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Enable Verbose error messages. Not recommended for production.
-    | true | false
-    |--------------------------------------------------------------------------
-    */
-    'cas_verbose_errors' => false,
-
-    /*
-    |--------------------------------------------------------------------------
-    | This will cause CAS to skip authentication and assume this user id.
-    | This should only be used for developmental purposes.  getAttributes()
-    | will return null in this condition.
-     */
-    'cas_masquerade' => '',
-
-    /*
-    |--------------------------------------------------------------------------
-    | The value to set in the Domain field on cookies.
-     */
-    'cas_session_domain' => '.treasury.gov.my',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Whether to add the Secure flag to cookies.
-     */
-    'cas_session_secure' => false,
+    'cas_logout_url' => env('CAS_LOGOUT_URL', 'https://satuid.treasury.gov.my/gk/logout'),
+    'cas_logout_redirect' => env('CAS_LOGOUT_REDIRECT', 'http://ehelp-dev.treasury.gov.my'),
 ];
