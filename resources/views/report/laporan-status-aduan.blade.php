@@ -433,13 +433,19 @@
 <div class="card shadow-sm">
 
     {{-- HEADER LAPORAN --}}
-    <div class="card-header bg-white">
-        <h5 class="mb-1 fw-bold">LAPORAN ADUAN MENGIKUT STATUS</h5>
-        <small class="text-muted">
-            Tahun: <span id="label-year"></span> |
-            Bulan: <span id="label-month"></span>
-        </small>
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-1 fw-bold">LAPORAN ADUAN MENGIKUT STATUS</h5>
+            <small class="text-muted">
+                Tahun: <span id="label-year"></span> |
+                Bulan: <span id="label-month"></span>
+            </small>
+        </div>
+        <a href="{{ route('report-index') }}" class="btn btn-sm btn-secondary">
+            <i class="bx bx-arrow-back me-1"></i>Kembali
+        </a>
     </div>
+    
 
     <div class="card-body">
 
