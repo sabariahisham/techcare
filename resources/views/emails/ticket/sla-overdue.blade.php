@@ -49,7 +49,7 @@ Mohon **tindakan segera** kerana isu ini telah melepasi **tempoh penyelesaian (S
 
 Sila akses tiket melalui pautan berikut:
 
-@component('mail::button', ['url' => route('tickets.show', $ticket->id), 'color' => 'error'])
+@component('mail::button', ['url' => route('tickets.show', $ticket->uuid), 'color' => 'error'])
 Lihat Tiket
 @endcomponent
 

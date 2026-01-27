@@ -45,7 +45,7 @@ Mohon tuan/puan mengambil tindakan sewajarnya sebelum **TARIKH AKHIR** bagi mema
 
 Sila akses tiket melalui pautan berikut:
 
-@component('mail::button', ['url' => route('tickets.show', $ticket->id), 'color' => 'error'])
+@component('mail::button', ['url' => route('tickets.show', $ticket->uuid), 'color' => 'error'])
 Lihat Tiket
 @endcomponent
 
