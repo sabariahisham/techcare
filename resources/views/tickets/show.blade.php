@@ -302,12 +302,12 @@
                                                         Dimuat naik: {{ $attachment->created_at->format('d M Y, H:i') }}
                                                     </small>
                                                 </div>
-                                                <a href="{{ route('ticket-attachments.download', ['document' => $attachment->id, 'view' => 1]) }}"
+                                                <a href="{{ route('ticket-attachments.download', ['uuid' => $attachment->uuid, 'view' => 1]) }}"
                                                     class="btn btn-sm btn-outline-info me-1" data-bs-toggle="tooltip"
                                                     title="Lihat {{ $attachment->doc_name }}" target="_blank">
                                                     <i class="bx bx-show"></i>
                                                 </a>
-                                                <a href="{{ route('ticket-attachments.download', $attachment->id) }}"
+                                                <a href="{{ route('ticket-attachments.download', $attachment->uuid) }}"
                                                     class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip"
                                                     title="Muat turun {{ $attachment->doc_name }}">
                                                     <i class="bx bx-download"></i>
@@ -636,17 +636,17 @@ $filteredOfficers = $officersQuery
                                 $getStatusDescription = function ($statusName) {
                                     switch ($statusName) {
                                         case 'Aduan Baru':
-                                            return 'Tiket baru dicipta dan dilog ke dalam sistem.';
+                                            return 'Tiket di log dalam sistem.';
                                         case 'Aduan Diproses':
-                                            return 'Tiket sedang diproses oleh pegawai yang bertugas.';
+                                            return 'Tiket sedang dalam proses tindakan.';
                                         case 'Serahan Kepada':
-                                            return 'Tiket telah diserahkan kepada pegawai yang berkaitan untuk tindakan.';
+                                            return 'Tiket diserahkan untuk tindakan lanjut.';
                                         case 'Aduan Dirujuk':
-                                            return 'Tiket dirujuk kepada unit/pegawai lain untuk tindakan lanjut.';
+                                            return 'Tiket telah dirujuk kepada pihak berkaitan untuk tindakan lanjut.';
                                         case 'Aduan DiBatal':
-                                            return 'Tiket telah dibatalkan dan tidak akan diproses lagi.';
+                                            return 'Tiket telah dibatalkan dan tidak akan diproses.';
                                         case 'Aduan Selesai':
-                                            return 'Tiket telah diselesaikan dengan jayanya dan ditutup.';
+                                            return 'Tiket berjaya diselesai dan ditutup.';
                                         default:
                                             return 'Status tiket dikemaskini.';
                                     }
@@ -676,7 +676,7 @@ $filteredOfficers = $officersQuery
                                 $getActionVerb = function ($statusName) {
                                     switch ($statusName) {
                                         case 'Aduan Baru':
-                                            return 'Dicipta oleh:';
+                                            return 'Direkod (Log) oleh:';
                                         case 'Aduan Diproses':
                                             return 'Diproses oleh:';
                                         case 'Serahan Kepada':
@@ -697,13 +697,24 @@ $filteredOfficers = $officersQuery
 
                                 // Always add "Aduan Baru" as first item if it doesn't exist
 if (!$hasAduanBaru) {
+    // Get the first assigned officer from chronologies for Aduan Baru
+    $firstAssignedOfficer = $ticket
+        ->chronologies()
+        ->with('escalatedTo')
+        ->whereNotNull('escalate_to')
+        ->orderBy('created_at', 'asc')
+        ->first();
+
     $timelineItems->push(
         (object) [
             'status_name' => 'Aduan Baru',
             'description' => $getStatusDescription('Aduan Baru'),
             'created_by' => $ticket->user ? $ticket->user->nama : 'Pengguna',
             'created_at' => $ticket->created_at,
-            'escalated_to' => null,
+            'escalated_to' =>
+                $firstAssignedOfficer && $firstAssignedOfficer->escalatedTo
+                    ? $firstAssignedOfficer->escalatedTo->nama
+                    : null,
             'is_current' => false,
             'is_initial' => true,
         ],
@@ -713,6 +724,27 @@ if (!$hasAduanBaru) {
 // Add all chronological entries
 foreach ($allChronologies as $chron) {
     if ($chron->status) {
+        // Get new category and subcategory info if this is "Aduan Dirujuk"
+        $newCategoryName = null;
+        $newSubcategoryName = null;
+
+        if ($chron->status->st_name === 'Aduan Dirujuk') {
+            // For "Aduan Dirujuk", get the current category and subcategory from the ticket at that chronology point
+            // These represent the NEW category/subcategory after referral
+            if ($ticket->cat_id) {
+                $newCat = \Illuminate\Support\Facades\DB::table('ref_categories')
+                    ->where('id', $ticket->cat_id)
+                    ->first(['cat_name']);
+                $newCategoryName = $newCat ? $newCat->cat_name : null;
+            }
+            if ($ticket->subcat_id) {
+                $newSubcat = \Illuminate\Support\Facades\DB::table('ref_sub_categories')
+                    ->where('id', $ticket->subcat_id)
+                    ->first(['subcat_name']);
+                $newSubcategoryName = $newSubcat ? $newSubcat->subcat_name : null;
+            }
+        }
+
         $timelineItems->push(
             (object) [
                 'status_name' => $chron->status->st_name,
@@ -722,6 +754,8 @@ foreach ($allChronologies as $chron) {
                 'escalated_to' => $chron->escalatedTo
                     ? $chron->escalatedTo->nama
                     : null,
+                'new_category_name' => $newCategoryName,
+                'new_subcategory_name' => $newSubcategoryName,
                 'is_current' => $chron->tick_status == $ticket->tick_status,
                 'is_initial' => false,
             ],
@@ -729,12 +763,12 @@ foreach ($allChronologies as $chron) {
     }
 }
 
-// Remove duplicates and ensure proper ordering (from oldest to newest)
+// Remove duplicates and ensure proper ordering (from newest to oldest - latest on top)
 $timelineItems = $timelineItems
     ->unique(function ($item) {
         return $item->status_name . '-' . $item->created_at->format('Y-m-d H:i:s');
     })
-    ->sortBy('created_at'); // Remove reverse() to show chronological order
+    ->sortByDesc('created_at'); // Show latest updates first
                             @endphp
 
                             {{-- Display complete timeline from oldest to newest (Aduan Baru to current status) --}}
@@ -779,7 +813,7 @@ $timelineItems = $timelineItems
                                                     </div>
                                                     <small class="timeline-time">
                                                         <i class="bx bx-user-plus text-success"></i>
-                                                        <strong>Diserahkan kepada:</strong>
+                                                        <strong>{{ $item->status_name === 'Aduan Dirujuk' ? 'Dirujuk kepada:' : 'Diserahkan kepada:' }}</strong>
                                                         <span
                                                             class="text-success fw-bold">{{ $item->escalated_to }}</span>
                                                     </small>
@@ -795,6 +829,26 @@ $timelineItems = $timelineItems
                                                 <span class="text-primary">{{ $item->created_by }}</span>
                                             </small>
 
+                                            {{-- Show new category and subcategory info for Aduan Dirujuk --}}
+                                            @if ($item->status_name === 'Aduan Dirujuk')
+                                                @if ($item->new_category_name)
+                                                    <small class="timeline-time d-block mb-1">
+                                                        <i class="bx bx-tag text-warning"></i>
+                                                        <strong>Kategori Baharu:</strong>
+                                                        <span
+                                                            class="text-warning fw-bold">{{ $item->new_category_name }}</span>
+                                                    </small>
+                                                @endif
+                                                @if ($item->new_subcategory_name)
+                                                    <small class="timeline-time d-block mb-1">
+                                                        <i class="bx bx-tag text-info"></i>
+                                                        <strong>Subkategori Baharu:</strong>
+                                                        <span
+                                                            class="text-info fw-bold">{{ $item->new_subcategory_name }}</span>
+                                                    </small>
+                                                @endif
+                                            @endif
+
                                             <small class="timeline-time d-block">
                                                 <i class="bx bx-time text-muted"></i>
                                                 <strong>Tarikh & Masa:</strong>
@@ -808,27 +862,47 @@ $timelineItems = $timelineItems
                                             @if (!$isFirst && isset($timelineItems[$index - 1]))
                                                 @php
                                                     $prevItem = $timelineItems[$index - 1];
-                                                    $duration = \Carbon\Carbon::parse(
+                                                    $durationMinutes = \Carbon\Carbon::parse(
                                                         $prevItem->created_at,
                                                     )->diffInMinutes(\Carbon\Carbon::parse($item->created_at));
-                                                    $durationText = '';
 
-                                                    if ($duration < 60) {
-                                                        $durationText = $duration . ' minit';
-                                                    } elseif ($duration < 1440) {
-                                                        $hours = floor($duration / 60);
-                                                        $mins = $duration % 60;
-                                                        $durationText =
-                                                            $hours . ' jam' . ($mins > 0 ? ' ' . $mins . ' minit' : '');
+                                                    $durationParts = [];
+
+                                                    if ($durationMinutes >= 1440) {
+                                                        // More than 24 hours - show days, hours, minutes (integer format)
+                                                        $days = intval(floor($durationMinutes / 1440));
+                                                        $remainingMinutes = $durationMinutes % 1440;
+                                                        $hours = intval(floor($remainingMinutes / 60));
+                                                        $minutes = intval($remainingMinutes % 60);
+
+                                                        $durationParts[] = $days . ' hari';
+                                                        if ($hours > 0) {
+                                                            $durationParts[] = $hours . ' jam';
+                                                        }
+                                                        if ($minutes > 0) {
+                                                            $durationParts[] = $minutes . ' minit';
+                                                        }
+                                                    } elseif ($durationMinutes >= 60) {
+                                                        // Between 1 hour and 24 hours - show hours and minutes (integer format)
+                                                        $hours = intval(floor($durationMinutes / 60));
+                                                        $minutes = intval($durationMinutes % 60);
+
+                                                        $durationParts[] = $hours . ' jam';
+                                                        if ($minutes > 0) {
+                                                            $durationParts[] = $minutes . ' minit';
+                                                        }
                                                     } else {
-                                                        $days = floor($duration / 1440);
-                                                        $hours = floor(($duration % 1440) / 60);
-                                                        $durationText =
-                                                            $days . ' hari' . ($hours > 0 ? ' ' . $hours . ' jam' : '');
+                                                        // Less than 1 hour - show only minutes (integer format)
+                                                        $minutes = intval($durationMinutes);
+                                                        if ($minutes > 0) {
+                                                            $durationParts[] = $minutes . ' minit';
+                                                        }
                                                     }
+
+                                                    $durationText = implode(' ', $durationParts);
                                                 @endphp
 
-                                                @if ($duration > 0)
+                                                @if ($durationMinutes > 0)
                                                     <small class="timeline-time d-block mt-1">
                                                         <i class="bx bx-stopwatch text-warning"></i>
                                                         <strong>Tempoh:</strong>

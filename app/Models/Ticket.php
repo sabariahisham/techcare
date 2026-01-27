@@ -39,6 +39,16 @@ class Ticket extends Model implements Auditable
   ];
 
   /**
+   * Get the route key for the model.
+   *
+   * @return string
+   */
+  public function getRouteKeyName()
+  {
+    return 'uuid';
+  }
+
+  /**
    * Attributes to include in audit.
    */
   protected $auditInclude = [
