@@ -27,8 +27,8 @@
     <div class="card mb-4">
         <div class="card-header">
             <div>
-                <h5 class="card-title mb-0">Tiket Saya [<strong class="text-primary">Dilog oleh:  {{ auth()->user()->nama }}</strong>]</h5>
-                <p class="text-muted small mb-0">Senarai semua tiket yang dilog oleh anda</p>
+                <h5 class="card-title mb-0">Tiket Saya [<strong class="text-primary">Direkod (Log) oleh:  {{ auth()->user()->nama }}</strong>]</h5>
+                <p class="text-muted small mb-0">Senarai semua tiket yang di log oleh anda</p>
             </div>
         </div>
         <div class="card-datatable table-responsive">

@@ -636,7 +636,7 @@ $filteredOfficers = $officersQuery
                                 $getStatusDescription = function ($statusName) {
                                     switch ($statusName) {
                                         case 'Aduan Baru':
-                                            return 'Tiket dilog dalam sistem.';
+                                            return 'Tiket di log dalam sistem.';
                                         case 'Aduan Diproses':
                                             return 'Tiket sedang dalam proses tindakan.';
                                         case 'Serahan Kepada':
@@ -676,7 +676,7 @@ $filteredOfficers = $officersQuery
                                 $getActionVerb = function ($statusName) {
                                     switch ($statusName) {
                                         case 'Aduan Baru':
-                                            return 'Di log oleh:';
+                                            return 'Direkod (Log) oleh:';
                                         case 'Aduan Diproses':
                                             return 'Diproses oleh:';
                                         case 'Serahan Kepada':

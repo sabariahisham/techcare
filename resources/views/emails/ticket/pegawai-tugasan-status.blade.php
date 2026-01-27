@@ -37,7 +37,7 @@ Tiket aduan baru telah direkodkan dan ditugaskan kepada anda. **Sila ambil tinda
 
 **Tajuk** : <strong>{{ $ticket->ticket_title }}</strong>
 
-**Status** : <strong>{{ $ticket->status->st_name ?? 'N/A' }} [{{ $newStatus }}]</strong>
+**Status** : <strong>{{ $ticket->status->st_name ?? 'N/A' }} {{-- $ticket->tick_status --}}</strong>
 
 **Pengadu** : <strong>{{ $ticket->user->nama ?? 'N/A' }}</strong>
 
@@ -46,7 +46,7 @@ Tiket aduan baru telah direkodkan dan ditugaskan kepada anda. **Sila ambil tinda
 
 Mohon tindakan selanjutnya melalui pautan di bawah:
 
-@component('mail::button', ['url' => route('tickets.show', $ticket->id)])
+@component('mail::button', ['url' => route('tickets.show', $ticket->uuid)])
 Lihat Tiket
 @endcomponent
 

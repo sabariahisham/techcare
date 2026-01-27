@@ -44,7 +44,7 @@ Tiket aduan telah berjaya direkodkan dan akan diproses.
 
 Sila semak status tiket melalui pautan berikut:
 
-@component('mail::button', ['url' => route('tickets.show', $ticket->id)])
+@component('mail::button', ['url' => route('tickets.show', $ticket->uuid)])
 Lihat Tiket
 @endcomponent
 

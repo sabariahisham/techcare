@@ -56,7 +56,9 @@ return [
     |--------------------------------------------------------------------------
     | Example: 'http://localhost', 'https://example.com:8888'
     */
-    'cas_client_service' => 'http://ehelp-dev.treasury.gov.my:8001',
+
+     // 'cas_client_service' => 'http://ehelp-dev.treasury.gov.my',
+    'cas_client_service' => env('CAS_CLIENT_SERVICE', 'http://ehelp-dev.treasury.gov.my'),
 
 
     /*
@@ -111,7 +113,8 @@ return [
     | If your server supports redirection services, enter the redirect url
     | in this section.  If left blank, it will default to disabled.
     */
-    'cas_logout_redirect' => 'http://ehelp-dev.treasury.gov.my',
+    // 'cas_logout_redirect' => 'http://ehelp-dev.treasury.gov.my',
+    'cas_logout_redirect' => env('CAS_LOGOUT_REDIRECT', 'http://ehelp-dev.treasury.gov.my'),
 
     /*
     |--------------------------------------------------------------------------
@@ -121,7 +124,9 @@ return [
     | page in which the call was initiated.  You can override this method
     | and force the user to be redirected to a specific URL here.
     */
-    'cas_redirect_path' => 'http://ehelp-dev.treasury.gov.my/dashboard',
+
+    //'cas_redirect_path' => 'http://ehelp-dev.treasury.gov.my/dashboard',
+    'cas_redirect_path' => env('CAS_REDIRECT_PATH', '/dashboard'),
 
     /*
     |--------------------------------------------------------------------------
