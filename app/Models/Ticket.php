@@ -192,6 +192,36 @@ class Ticket extends Model implements Auditable
   }
 
   /**
+   * Get the currently assigned user (from latest chronology)
+   *
+   * @return \Illuminate\Database\Eloquent\Relations\BelongsTo|null
+   */
+  public function assignedUser()
+  {
+    $latestChronology = $this->chronologies()
+      ->whereNotNull('escalate_to')
+      ->latest()
+      ->first();
+
+    return $latestChronology ? $latestChronology->escalatedTo() : null;
+  }
+
+  /**
+   * Get the latest SLA due date from chronologies
+   *
+   * @return \Carbon\Carbon|null
+   */
+  public function getLatestSlaDueDateAttribute()
+  {
+    $latestChronology = $this->chronologies()
+      ->whereNotNull('sla_duedate')
+      ->latest()
+      ->first();
+
+    return $latestChronology ? $latestChronology->sla_duedate : null;
+  }
+
+  /**
    * Get all file attachments for this ticket
    *
    * Attachments are stored in the documents table with:

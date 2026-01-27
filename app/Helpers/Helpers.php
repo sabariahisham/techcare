@@ -9,68 +9,133 @@ use Carbon\Carbon;
 class Helpers
 {
   /**
-   * Get Malaysian public holidays (hardcoded)
+   * Get Malaysian Federal Public Holidays (Putrajaya)
+   * Auto-generates fixed holidays + manually defined floating holidays
+   *
+   * UPDATE: Edit getFloatingHolidays() method setiap tahun
+   * Reference: https://www.federalgazette.agc.gov.my/
    *
    * @return array Array of holiday dates in Y-m-d format
    */
   public static function getMalaysianPublicHolidays()
   {
+    $currentYear = (int) date('Y');
+    $holidays = [];
+
+    // Generate for current year + 2 years ahead
+    $years = range($currentYear, $currentYear + 2);
+
+    foreach ($years as $year) {
+      // Auto-generate fixed holidays (Putrajaya Federal Territory)
+      $holidays = array_merge($holidays, [
+        "$year-01-01", // New Year's Day
+        "$year-02-01", // Federal Territory Day
+        "$year-05-01", // Labour Day
+        "$year-08-31", // National Day
+        "$year-09-16", // Malaysia Day
+        "$year-12-25", // Christmas Day
+      ]);
+    }
+
+    // Add floating holidays (Islamic, Hindu, Chinese calendar dates)
+    $floatingHolidays = self::getFloatingHolidays();
+    $holidays = array_merge($holidays, $floatingHolidays);
+
+    // Sort and remove duplicates
+    $holidays = array_unique($holidays);
+    sort($holidays);
+
+    // Check if update needed
+    self::checkHolidayDataFreshness($holidays);
+
+    return $holidays;
+  }
+
+  /**
+   * Floating holidays that change annually (Islamic, Hindu, Chinese calendar)
+   *
+   * ⚠️ UPDATE ANNUALLY: Get dates from official government gazette
+   * Reference: https://www.federalgazette.agc.gov.my/
+   *
+   * @return array
+   */
+  private static function getFloatingHolidays()
+  {
     return [
-      // 2025 Federal Holidays
-      '2025-01-01', // New Year's Day
+      // === 2025 Floating Holidays ===
       '2025-01-25', // Thaipusam
       '2025-01-29', // Chinese New Year
       '2025-01-30', // Chinese New Year (Day 2)
-      '2025-02-01', // Federal Territory Day
       '2025-03-31', // Hari Raya Aidilfitri
       '2025-04-01', // Hari Raya Aidilfitri (Day 2)
-      '2025-05-01', // Labour Day
       '2025-05-12', // Wesak Day
       '2025-06-02', // Agong's Birthday
       '2025-06-07', // Hari Raya Aidiladha
       '2025-06-28', // Awal Muharram
-      '2025-08-31', // National Day
       '2025-09-06', // Maulidur Rasul
-      '2025-09-16', // Malaysia Day
       '2025-10-24', // Deepavali
-      '2025-12-25', // Christmas Day
 
-      // 2026 Federal Holidays
-      '2026-01-01', // New Year's Day
+      // === 2026 Floating Holidays ===
       '2026-01-14', // Thaipusam
-      '2026-02-01', // Federal Territory Day
       '2026-02-17', // Chinese New Year
       '2026-02-18', // Chinese New Year (Day 2)
       '2026-03-21', // Hari Raya Aidilfitri
       '2026-03-22', // Hari Raya Aidilfitri (Day 2)
-      '2026-05-01', // Labour Day / Wesak Day
+      '2026-05-12', // Wesak Day
       '2026-05-28', // Hari Raya Aidiladha
       '2026-06-01', // Agong's Birthday
       '2026-06-17', // Awal Muharram
       '2026-08-27', // Maulidur Rasul
-      '2026-08-31', // National Day
-      '2026-09-16', // Malaysia Day
       '2026-11-12', // Deepavali
-      '2026-12-25', // Christmas Day
 
-      // 2027 Federal Holidays (add more years as needed)
-      '2027-01-01', // New Year's Day
-      '2027-02-01', // Federal Territory Day
+      // === 2027 Floating Holidays (Tentative - verify with gazette) ===
+      '2027-02-03', // Thaipusam (tentative)
       '2027-02-06', // Chinese New Year
       '2027-02-07', // Chinese New Year (Day 2)
-      '2027-03-11', // Hari Raya Aidilfitri
-      '2027-03-12', // Hari Raya Aidilfitri (Day 2)
-      '2027-05-01', // Labour Day
-      '2027-05-17', // Hari Raya Aidiladha
-      '2027-05-20', // Wesak Day
+      '2027-03-11', // Hari Raya Aidilfitri (tentative)
+      '2027-03-12', // Hari Raya Aidilfitri Day 2 (tentative)
+      '2027-05-20', // Wesak Day (tentative)
+      '2027-05-17', // Hari Raya Aidiladha (tentative)
       '2027-06-05', // Agong's Birthday
-      '2027-06-07', // Awal Muharram
-      '2027-08-16', // Maulidur Rasul
-      '2027-08-31', // National Day
-      '2027-09-16', // Malaysia Day
-      '2027-11-01', // Deepavali
-      '2027-12-25', // Christmas Day
+      '2027-06-07', // Awal Muharram (tentative)
+      '2027-08-16', // Maulidur Rasul (tentative)
+      '2027-11-01', // Deepavali (tentative)
+
+      // === 2028+ Holidays ===
+      // TODO: Add when government announces
+      // See update-public-holidays-guide.md for instructions
     ];
+  }
+
+  /**
+   * Check if holiday data needs update
+   * Logs warning if data incomplete for current/next year
+   *
+   * @param array $holidays
+   * @return void
+   */
+  private static function checkHolidayDataFreshness($holidays)
+  {
+    $currentYear = (int) date('Y');
+    $nextYear = $currentYear + 1;
+
+    // Check current year (expect 15-17 holidays for Putrajaya)
+    $currentYearCount = count(array_filter($holidays, function ($date) use ($currentYear) {
+      return strpos($date, "$currentYear-") === 0;
+    }));
+
+    if ($currentYearCount < 14) {
+      \Log::warning("⚠️ Public holidays incomplete for $currentYear. Found $currentYearCount holidays, expected 15-17. Update Helpers::getFloatingHolidays()");
+    }
+
+    // Check next year
+    $nextYearCount = count(array_filter($holidays, function ($date) use ($nextYear) {
+      return strpos($date, "$nextYear-") === 0;
+    }));
+
+    if ($nextYearCount < 14) {
+      \Log::warning("⚠️ Public holidays incomplete for $nextYear. Found $nextYearCount holidays, expected 15-17. Update Helpers::getFloatingHolidays() - See update-public-holidays-guide.md");
+    }
   }
 
   /**
@@ -145,6 +210,58 @@ class Helpers
     }
 
     return $workingDays;
+  }
+
+  /**
+   * Subtract working days from a date (skip weekends and public holidays)
+   * @param string|\DateTimeInterface $startDate
+   * @param int $workingDays
+   * @return \Carbon\Carbon
+   */
+  public static function subtractWorkingDays($startDate, int $workingDays): \Carbon\Carbon
+  {
+    $date = \Carbon\Carbon::parse($startDate);
+    $daysSubtracted = 0;
+
+    while ($daysSubtracted < $workingDays) {
+      $date->subDay();
+
+      // Skip weekends (Saturday = 6, Sunday = 0)
+      if ($date->dayOfWeek === 0 || $date->dayOfWeek === 6) {
+        continue;
+      }
+
+      // Skip public holidays
+      if (self::isPublicHoliday($date)) {
+        continue;
+      }
+
+      $daysSubtracted++;
+    }
+
+    return $date;
+  }
+
+  /**
+   * Check if a date is a working day (not weekend or public holiday)
+   * @param string|\DateTimeInterface $date
+   * @return bool
+   */
+  public static function isWorkingDay($date): bool
+  {
+    $date = \Carbon\Carbon::parse($date);
+
+    // Check if weekend (Saturday = 6, Sunday = 0)
+    if ($date->dayOfWeek === 0 || $date->dayOfWeek === 6) {
+      return false;
+    }
+
+    // Check if public holiday
+    if (self::isPublicHoliday($date)) {
+      return false;
+    }
+
+    return true;
   }
 
 
