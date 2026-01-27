@@ -440,8 +440,7 @@
           <small class="text-muted">Statistik aduan berdasarkan kategori dan bulan</small>
         </div>
         <a href="{{ route('report-index') }}" class="btn btn-sm btn-secondary">
-          <i class="bx bx-arrow-back me-1"></i>Kembali
-        </a>
+          <i class="bx bx-arrow-back me-1"></i>Kembali</a> 
       </div>
       <hr class="my-0">
       <div class="card-body">

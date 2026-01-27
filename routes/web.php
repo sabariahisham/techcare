@@ -25,6 +25,7 @@ use App\Http\Controllers\Configuration\RefCategoryManagementController;
 use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 use App\Http\Controllers\Reports\AduanTahunanController;
 use App\Http\Controllers\Reports\StatistikLogAduanController;
+use App\Http\Controllers\Reports\LaporanStatusAduanTahunanController;
 
 // Test email route using Mailtrap
 // run at browser: ../test-email
@@ -263,7 +264,15 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/report/statistik-log/chart', [App\Http\Controllers\Reports\StatistikLogAduanController::class, 'getChart'])->name('report-statistik-log-chart');
   Route::get('/report/statistik-log/export-excel', [App\Http\Controllers\Reports\StatistikLogAduanController::class, 'exportExcel'])->name('report-statistik-log-export-excel');
   Route::get('/report/statistik-log/export-pdf', [App\Http\Controllers\Reports\StatistikLogAduanController::class, 'exportPdf'])->name('report-statistik-log-export-pdf');
-});
+  
+  //laporan status aduan tahunan
+  Route::get('/report/laporan-status-aduan-tahunan', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'index'])->name('report-laporan-status-aduan-tahunan');
+  Route::post('/report/laporan-status-aduan-tahunan/data', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'data'])->name('report-laporan-status-aduan-tahunan-data');
+  Route::get('/report/laporan-status-aduan-tahunan/export-excel', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportExcel'])->name('report-laporan-status-aduan-tahunan-export-excel');
+  Route::get('/report/laporan-status-aduan-tahunan/export-pdf', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportPdf'])->name('report-laporan-status-aduan-tahunan-export-pdf');
+  
+
+  });
 
 // references
 Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');

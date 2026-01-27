@@ -66,7 +66,7 @@ $(function () {
         },
         {
           id: 6,
-          name: 'Laporan Bulanan Aduan Mengikut Status Aduan (Dalam Pembangunan)',
+          name: 'Laporan Bulanan Aduan Mengikut Status Aduan ',
           description: 'Laporan bulanan aduan yang diterima mengikut status aduan',
           updated_at: currentDateTime
         }
@@ -163,7 +163,7 @@ $(function () {
             }
             else if ($id === 6) {
               // Route for Laporan Bulanan Aduan Mengikut Status Aduan
-              viewUrl = '/report/aduan-mengikut-status';
+              viewUrl = '/report/laporan-status-aduan-tahunan';
             } 
 
             return (
