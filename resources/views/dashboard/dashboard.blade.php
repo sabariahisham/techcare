@@ -159,9 +159,10 @@ TASK:
 
     <!-- Pegawai Tugasan Specific Section -->
     @if ($sections['pegawai'] ?? false)
-        <div class="card mb-6 bg-transparent">
+        {{-- <div class="card mb-6 bg-secondary text-dark bg-opacity-75"> --}}
+        {{-- <div class="card mb-6 text-dark" style="background-color: rgba(30, 58, 138, 0.1);">
             <div class="card-header">
-                <div class="p-2 bg-white rounded shadow-sm d-flex align-items-center">
+                <div class="p-2 bg-white rounded shadow-sm d-flex align-items-center" style="background-color: white; box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15); border-bottom: 2px solid #1431eb;">
                     <i class='bx bxs-bell-ring fs-2 me-2' style='color:#1431eb'></i>
                     <h4 class="text-primary mb-0">TUGASAN ANDA!</h4>
                 </div>
@@ -171,7 +172,59 @@ TASK:
                     @include('dashboard/partials/pegawai-tugasan/my-tasks') <!-- My Tasks Section -->
                 </div>
             </div>
+        </div> --}}
+        <div class="card mb-6 text-dark"
+            style="
+    background-color: rgba(30, 58, 138, 0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+">
+            <div class="card-header">
+                <div class="p-3 rounded shadow-sm d-flex align-items-center"
+                    style="
+            background-color: rgba(255,255,255,0.9);
+            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);
+            border-bottom: 2px solid #1431eb;
+        ">
+                    <i class='bx bxs-bell-ring fs-2 me-3' style='color:#1431eb'></i>
+                    <h4 class="mb-0 fw-bold" style="color:#1431eb; letter-spacing: -0.5px;">TUGASAN ANDA!</h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row dashboard-row-consistent">
+                    @include('dashboard/partials/pegawai-tugasan/my-tasks')
+                </div>
+            </div>
         </div>
+
+        {{-- <div class="card mb-6 text-dark" style="background-color: rgba(255, 193, 7, 0.55);">
+            <div class="card-header">
+                <div class="p-2 bg-white rounded shadow-sm d-flex align-items-center" style="background-color: #FFFFFFCC;">
+                    <i class='bx bxs-bell-ring fs-2 me-2' style='color:#1431eb'></i>
+                    <h4 class="text-primary mb-0">TUGASAN ANDA!</h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row dashboard-row-consistent">
+                    @include('dashboard/partials/pegawai-tugasan/my-tasks')
+                </div>
+            </div>
+        </div> --}}
+        {{-- <div class="card mb-6 text-dark" style="background-color: rgba(30, 58, 138, 0.1);">
+            <div class="card-header">
+                <div class="p-3 rounded shadow-sm d-flex align-items-center"
+                    style="background-color: white; box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15); border-bottom: 2px solid #1E3A8A;">
+                    <i class='bx bxs-bell-ring fs-2 me-3' style='color:#1E3A8A'></i>
+                    <h4 class="mb-0 fw-bold" style="color:#1E3A8A; letter-spacing: -0.5px;">TUGASAN ANDA!</h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row dashboard-row-consistent">
+                    @include('dashboard/partials/pegawai-tugasan/my-tasks')
+                </div>
+            </div>
+        </div> --}}
     @endif
 
     <!-- Administrator, Pengurusan MOF, Pentadbir Sistem, Penyelia Helpdesk, Helpdesk On Duty Section -->
