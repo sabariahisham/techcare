@@ -67,7 +67,17 @@ class DashboardService
       ],
     ];
 
-    $ticketData = [];
+    // Initialize default ticket counts to prevent undefined variable errors
+    $ticketData = [
+      'newTickets' => 0,
+      'inProgressTickets' => 0,
+      'closedTickets' => 0,
+      'referredTickets' => 0,
+      'newTicketsOnBehalf' => 0,
+      'inProgressTicketsOnBehalf' => 0,
+      'closedTicketsOnBehalf' => 0,
+      'referredTicketsOnBehalf' => 0,
+    ];
 
     // Check Pegawai Tugasan role
     if ($user->hasRole('Pegawai Tugasan')) {
