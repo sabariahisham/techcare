@@ -38,11 +38,15 @@ $(function () {
         url: '/report/prestasi-pegawai-tugasan/data',
         data: function (d) {
           d.officer = $('#filter-officer').val();
+          d.bulan = $('#filter-bulan').val();
+          d.tahun = $('#filter-tahun').val();
         }
       },
       columns: [
         { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
         { data: 'pegawai_tugasan', name: 'u.nama' },
+        { data: 'bulan', name: 'pp.bulan' },
+        { data: 'tahun', name: 'pp.tahun' },
         { data: 'tiket_diterima', name: 'pp.tiket_diterima' },
         { data: 'tiket_selesai', name: 'pp.tiket_selesai' },
         { data: 'tiket_dalam_tindakan', name: 'pp.tiket_dalam_tindakan' },
@@ -71,63 +75,77 @@ $(function () {
           }
         },
         {
-          // Tiket Diterima
+          // Bulan
           targets: 2,
+          render: function (data, type, full, meta) {
+            return '<span>' + data + '</span>';
+          }
+        },
+        {
+          // Tahun
+          targets: 3,
+          render: function (data, type, full, meta) {
+            return '<span>' + data + '</span>';
+          }
+        },
+        {
+          // Tiket Diterima
+          targets: 4,
           render: function (data, type, full, meta) {
             return '<span class="badge bg-label-primary">' + data + '</span>';
           }
         },
         {
           // Tiket Diselesai
-          targets: 3,
+          targets: 5,
           render: function (data, type, full, meta) {
             return '<span class="badge bg-label-success">' + data + '</span>';
           }
         },
         {
           // Tiket Dalam Tindakan
-          targets: 4,
+          targets: 6,
           render: function (data, type, full, meta) {
             return '<span class="badge bg-label-warning">' + data + '</span>';
           }
         },
         {
           // Tiket Lewat SLA
-          targets: 5,
-          render: function (data, type, full, meta) {
-            return '<span class="badge bg-label-danger">' + data + '</span>';
-          }
-        },
-        {
-          // Tiket Selesai Dalam SLA
-          targets: 6,
-          render: function (data, type, full, meta) {
-            return '<span class="badge bg-label-success">' + data + '</span>';
-          }
-        },
-        {
-          // HIGH
           targets: 7,
           render: function (data, type, full, meta) {
             return '<span class="badge bg-label-danger">' + data + '</span>';
           }
         },
         {
-          // MEDIUM
+          // Tiket Selesai Dalam SLA
           targets: 8,
+          render: function (data, type, full, meta) {
+            return '<span class="badge bg-label-success">' + data + '</span>';
+          }
+        },
+        {
+          // HIGH
+          targets: 9,
+          render: function (data, type, full, meta) {
+            return '<span class="badge bg-label-danger">' + data + '</span>';
+          }
+        },
+        {
+          // MEDIUM
+          targets: 10,
           render: function (data, type, full, meta) {
             return '<span class="badge bg-label-warning">' + data + '</span>';
           }
         },
         {
           // LOW
-          targets: 9,
+          targets: 11,
           render: function (data, type, full, meta) {
             return '<span class="badge bg-label-info">' + data + '</span>';
           }
         }
       ],
-      order: [[2, 'desc']], // Sort by tiket diterima descending
+      order: [[4, 'desc']], // Sort by tiket diterima descending
       dom:
         '<"row"' +
         '<"col-md-2"<"me-3"l>>' +
@@ -157,7 +175,9 @@ $(function () {
           action: function (e, dt, button, config) {
             // Get current filters
             var filters = {
-              officer: $('#filter-officer').val()
+              officer: $('#filter-officer').val(),
+              bulan: $('#filter-bulan').val(),
+              tahun: $('#filter-tahun').val()
             };
 
             // Build query string
@@ -195,7 +215,9 @@ $(function () {
           action: function (e, dt, button, config) {
             // Get current filters
             var filters = {
-              officer: $('#filter-officer').val()
+              officer: $('#filter-officer').val(),
+              bulan: $('#filter-bulan').val(),
+              tahun: $('#filter-tahun').val()
             };
 
             // Build query string
@@ -270,8 +292,46 @@ $(function () {
 
     $('.dataTables_length').addClass('my-0');
 
-    // Apply filters on change
+    // Apply filter button - reload page with filters for cards and table
+    $('#apply-filter').on('click', function () {
+      var bulan = $('#filter-bulan').val();
+      var tahun = $('#filter-tahun').val();
+
+      // Build URL with query parameters
+      var url = window.location.pathname;
+      var params = [];
+
+      if (bulan) {
+        params.push('bulan=' + bulan);
+      }
+      if (tahun) {
+        params.push('tahun=' + tahun);
+      }
+
+      if (params.length > 0) {
+        url += '?' + params.join('&');
+      }
+
+      // Reload page with filters
+      window.location.href = url;
+    });
+
+    // Reset filter button
+    $('#reset-filter').on('click', function () {
+      window.location.href = window.location.pathname;
+    });
+
+    // Apply filters on change for officer (table only)
     $('#filter-officer').on('change', function () {
+      dt_prestasi_pegtugas.ajax.reload();
+    });
+
+    // Table filter for bulan and tahun (reload datatable only)
+    $('#filter-bulan').on('change', function () {
+      dt_prestasi_pegtugas.ajax.reload();
+    });
+
+    $('#filter-tahun').on('change', function () {
       dt_prestasi_pegtugas.ajax.reload();
     });
   }

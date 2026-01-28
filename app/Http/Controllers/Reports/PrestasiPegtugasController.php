@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class PrestasiPegtugasController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         // Get unique officers from prestasi_pegtugas view with user names
         $officers = DB::table('prestasi_pegtugas as pp')
@@ -26,14 +26,27 @@ class PrestasiPegtugasController extends Controller
             ->orderBy('nama_bah', 'asc')
             ->get();
 
-        // Calculate all statistics in a single optimized query
-        $statistics = DB::table('prestasi_pegtugas')
+        // Calculate all statistics with filters applied
+        $statisticsQuery = DB::table('prestasi_pegtugas')
             ->selectRaw('COUNT(DISTINCT assignee_id) as total_officers')
             ->selectRaw('SUM(tiket_diterima) as total_tickets')
+            ->selectRaw('SUM(tiket_selesai) as total_tiket_selesai')
+            ->selectRaw('SUM(tiket_dalam_tindakan) as total_tiket_dalam_tindakan')
+            ->selectRaw('SUM(tiket_lewat_sla) as total_tiket_lewat_sla')
+            ->selectRaw('SUM(tiket_selesai_dalam_sla) as total_tiket_selesai_dalam_sla')
             ->selectRaw('SUM(high) as total_high')
             ->selectRaw('SUM(medium) as total_medium')
-            ->selectRaw('SUM(low) as total_low')
-            ->first();
+            ->selectRaw('SUM(low) as total_low');
+
+        // Apply filters if provided
+        if ($request->filled('bulan')) {
+            $statisticsQuery->where('bulan', $request->bulan);
+        }
+        if ($request->filled('tahun')) {
+            $statisticsQuery->where('tahun', $request->tahun);
+        }
+
+        $statistics = $statisticsQuery->first();
 
         return view('report.prestasi-pegtugas', compact(
             'officers',
@@ -41,9 +54,15 @@ class PrestasiPegtugasController extends Controller
         ))->with([
             'totalOfficers' => $statistics->total_officers ?? 0,
             'totalTickets' => $statistics->total_tickets ?? 0,
+            'totalTicketSelesai' => $statistics->total_tiket_selesai ?? 0,
+            'totalTicketDalamTindakan' => $statistics->total_tiket_dalam_tindakan ?? 0,
+            'totalTicketLewatSla' => $statistics->total_tiket_lewat_sla ?? 0,
+            'totalTicketSelesaiDalamSla' => $statistics->total_tiket_selesai_dalam_sla ?? 0,
             'totalHigh' => $statistics->total_high ?? 0,
             'totalMedium' => $statistics->total_medium ?? 0,
             'totalLow' => $statistics->total_low ?? 0,
+            'filterBulan' => $request->input('bulan'),
+            'filterTahun' => $request->input('tahun'),
         ]);
     }
 
@@ -58,6 +77,8 @@ class PrestasiPegtugasController extends Controller
         // Validate request parameters
         $request->validate([
             'officer' => 'nullable|integer|exists:users,id',
+            'bulan' => 'nullable|integer|min:1|max:12',
+            'tahun' => 'nullable|integer|min:2020|max:2099',
         ]);
 
         $query = DB::table('prestasi_pegtugas as pp')
@@ -65,6 +86,8 @@ class PrestasiPegtugasController extends Controller
             ->select(
                 'pp.assignee_id',
                 'u.nama as pegawai_tugasan',
+                'pp.bulan',
+                'pp.tahun',
                 'pp.tiket_diterima',
                 'pp.tiket_selesai',
                 'pp.tiket_dalam_tindakan',
@@ -80,6 +103,14 @@ class PrestasiPegtugasController extends Controller
             $query->where('pp.assignee_id', $request->officer);
         }
 
+        if ($request->filled('bulan')) {
+            $query->where('pp.bulan', $request->bulan);
+        }
+
+        if ($request->filled('tahun')) {
+            $query->where('pp.tahun', $request->tahun);
+        }
+
         return $query;
     }
 
@@ -91,6 +122,17 @@ class PrestasiPegtugasController extends Controller
             ->addIndexColumn()
             ->editColumn('pegawai_tugasan', function ($row) {
                 return $row->pegawai_tugasan ?? '-';
+            })
+            ->editColumn('bulan', function ($row) {
+                $bulanNames = [
+                    1 => 'Januari', 2 => 'Februari', 3 => 'Mac', 4 => 'April',
+                    5 => 'Mei', 6 => 'Jun', 7 => 'Julai', 8 => 'Ogos',
+                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Disember'
+                ];
+                return $bulanNames[$row->bulan] ?? '-';
+            })
+            ->editColumn('tahun', function ($row) {
+                return $row->tahun ?? '-';
             })
             ->editColumn('tiket_diterima', function ($row) {
                 return $row->tiket_diterima ?? 0;
@@ -123,7 +165,10 @@ class PrestasiPegtugasController extends Controller
     {
         $query = $this->buildBaseQuery($request)
             ->select(
+                'pp.assignee_id',
                 'u.nama as pegawai_tugasan',
+                'pp.bulan',
+                'pp.tahun',
                 'pp.tiket_diterima',
                 'pp.tiket_selesai',
                 'pp.tiket_dalam_tindakan',
@@ -137,9 +182,17 @@ class PrestasiPegtugasController extends Controller
 
         $data = $query->get();
 
-        // Calculate summary statistics
-        $totalOfficers = $data->count();
+        // Get filter values
+        $filterBulan = $request->filled('bulan') ? $request->bulan : null;
+        $filterTahun = $request->filled('tahun') ? $request->tahun : null;
+
+        // Calculate summary statistics - count unique officers
+        $totalOfficers = $data->unique('assignee_id')->count();
         $totalTickets = $data->sum('tiket_diterima');
+        $totalTicketSelesai = $data->sum('tiket_selesai');
+        $totalTicketDalamTindakan = $data->sum('tiket_dalam_tindakan');
+        $totalTicketLewatSla = $data->sum('tiket_lewat_sla');
+        $totalTicketSelesaiDalamSla = $data->sum('tiket_selesai_dalam_sla');
         $totalHigh = $data->sum('high');
         $totalMedium = $data->sum('medium');
         $totalLow = $data->sum('low');
@@ -147,7 +200,7 @@ class PrestasiPegtugasController extends Controller
         // Create Excel export
         $filename = 'prestasi_pegawai_tugasan_' . date('YmdHis') . '.csv';
 
-        return response()->streamDownload(function () use ($data, $totalOfficers, $totalTickets, $totalHigh, $totalMedium, $totalLow) {
+        return response()->streamDownload(function () use ($data, $totalOfficers, $totalTickets, $totalTicketSelesai, $totalTicketDalamTindakan, $totalTicketLewatSla, $totalTicketSelesaiDalamSla, $totalHigh, $totalMedium, $totalLow, $filterBulan, $filterTahun) {
             $handle = fopen('php://output', 'w');
 
             // Add BOM for UTF-8
@@ -156,10 +209,27 @@ class PrestasiPegtugasController extends Controller
             // Add summary statistics header
             fputcsv($handle, ['LAPORAN PRESTASI PEGAWAI TUGASAN']);
             fputcsv($handle, ['Tarikh: ' . date('d-m-Y')]);
+
+            // Add filter information
+            $bulanNames = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Mac', 4 => 'April',
+                5 => 'Mei', 6 => 'Jun', 7 => 'Julai', 8 => 'Ogos',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Disember'
+            ];
+            if ($filterBulan) {
+                fputcsv($handle, ['Bulan: ' . ($bulanNames[$filterBulan] ?? $filterBulan)]);
+            }
+            if ($filterTahun) {
+                fputcsv($handle, ['Tahun: ' . $filterTahun]);
+            }
             fputcsv($handle, []);
             fputcsv($handle, ['RINGKASAN']);
             fputcsv($handle, ['Jumlah Pegawai', $totalOfficers]);
-            fputcsv($handle, ['Jumlah Tiket', $totalTickets]);
+            fputcsv($handle, ['Jumlah Tiket Diterima', $totalTickets]);
+            fputcsv($handle, ['Jumlah Tiket Selesai', $totalTicketSelesai]);
+            fputcsv($handle, ['Jumlah Tiket Dalam Tindakan', $totalTicketDalamTindakan]);
+            fputcsv($handle, ['Jumlah Tiket Lewat SLA', $totalTicketLewatSla]);
+            fputcsv($handle, ['Jumlah Tiket Selesai Dalam SLA', $totalTicketSelesaiDalamSla]);
             fputcsv($handle, ['Jumlah High', $totalHigh]);
             fputcsv($handle, ['Jumlah Medium', $totalMedium]);
             fputcsv($handle, ['Jumlah Low', $totalLow]);
@@ -168,6 +238,8 @@ class PrestasiPegtugasController extends Controller
             // Add headers
             fputcsv($handle, [
                 'PEGAWAI TUGASAN',
+                'BULAN',
+                'TAHUN',
                 'TIKET DITERIMA',
                 'TIKET DISELESAI',
                 'TIKET DALAM TINDAKAN',
@@ -179,9 +251,16 @@ class PrestasiPegtugasController extends Controller
             ]);
 
             // Add data rows
+            $bulanNames = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Mac', 4 => 'April',
+                5 => 'Mei', 6 => 'Jun', 7 => 'Julai', 8 => 'Ogos',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Disember'
+            ];
             foreach ($data as $row) {
                 fputcsv($handle, [
                     $row->pegawai_tugasan,
+                    $bulanNames[$row->bulan] ?? $row->bulan,
+                    $row->tahun,
                     $row->tiket_diterima,
                     $row->tiket_selesai,
                     $row->tiket_dalam_tindakan,
@@ -205,7 +284,10 @@ class PrestasiPegtugasController extends Controller
         try {
             $query = $this->buildBaseQuery($request)
                 ->select(
+                    'pp.assignee_id',
                     'u.nama as pegawai_tugasan',
+                    'pp.bulan',
+                    'pp.tahun',
                     'pp.tiket_diterima',
                     'pp.tiket_selesai',
                     'pp.tiket_dalam_tindakan',
@@ -219,9 +301,25 @@ class PrestasiPegtugasController extends Controller
 
             $data = $query->get();
 
-            // Calculate summary statistics
-            $totalOfficers = $data->count();
+            // Get filter values
+            $filterBulan = $request->filled('bulan') ? $request->bulan : null;
+            $filterTahun = $request->filled('tahun') ? $request->tahun : null;
+
+            // Month names
+            $bulanNames = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Mac', 4 => 'April',
+                5 => 'Mei', 6 => 'Jun', 7 => 'Julai', 8 => 'Ogos',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Disember'
+            ];
+            $filterBulanName = $filterBulan ? ($bulanNames[$filterBulan] ?? $filterBulan) : null;
+
+            // Calculate summary statistics - count unique officers
+            $totalOfficers = $data->unique('assignee_id')->count();
             $totalTickets = $data->sum('tiket_diterima');
+            $totalTicketSelesai = $data->sum('tiket_selesai');
+            $totalTicketDalamTindakan = $data->sum('tiket_dalam_tindakan');
+            $totalTicketLewatSla = $data->sum('tiket_lewat_sla');
+            $totalTicketSelesaiDalamSla = $data->sum('tiket_selesai_dalam_sla');
             $totalHigh = $data->sum('high');
             $totalMedium = $data->sum('medium');
             $totalLow = $data->sum('low');
@@ -232,10 +330,17 @@ class PrestasiPegtugasController extends Controller
                 'data',
                 'totalOfficers',
                 'totalTickets',
+                'totalTicketSelesai',
+                'totalTicketDalamTindakan',
+                'totalTicketLewatSla',
+                'totalTicketSelesaiDalamSla',
                 'totalHigh',
                 'totalMedium',
                 'totalLow',
-                'generatedDate'
+                'generatedDate',
+                'filterBulan',
+                'filterTahun',
+                'filterBulanName'
             ))->render();
 
             // Return HTML response that will be printed to PDF
