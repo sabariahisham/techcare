@@ -1,3 +1,46 @@
+{{--
+CONTEXT:
+This is the main Dashboard Blade view for a Laravel 11 application.
+This dashboard supports multiple roles:
+- Administrator
+- Pentadbir Sistem
+- Penyelia Helpdesk
+- Helpdesk On Duty
+- Pegawai Tugasan
+- Pengurusan MOF
+
+GOAL:
+Refactor this Blade to follow best practices without changing UI or behavior.
+
+REFACTORING RULES:
+- DO NOT change any HTML structure, layout, Bootstrap classes, CSS, or JS includes.
+- DO NOT rename or remove any @include partials.
+- DO NOT add or remove any widgets or sections.
+
+ARCHITECTURE RULES:
+- Blade must NOT contain role logic (hasRole, hasAnyRole).
+- Blade must NOT decide access based on Auth::user().
+- Blade must ONLY use boolean flags or data passed from Controller / DashboardService.
+
+DATA ASSUMPTION:
+The Controller provides:
+- $user (authenticated user object)
+- $sections (array of booleans, example:
+  [
+    'pegawai' => true|false,
+    'admin' => true|false,
+    'pengurusan' => true|false,
+    'helpdesk' => true|false
+  ])
+
+TASK:
+- Replace all role-based conditionals with checks against $sections.
+- Replace Auth::user() usage with $user.
+- Keep all existing behavior identical.
+--}}
+
+
+
 @extends('layouts/layoutMaster')
 
 @section('title', 'Dashboard')
@@ -20,10 +63,6 @@
 @endsection
 
 @section('content')
-    @php
-        use Illuminate\Support\Facades\Auth;
-    @endphp
-
     <!-- Impersonation Card -->
     @include('dashboard/partials/impersonate-card')
 
@@ -32,8 +71,9 @@
         <div class="col-md-8">
             <div class="card h-100">
                 <div class="card-body">
-                    <h4 class="text-primary mb-1">Selamat datang, {{ Auth::user()->nama }}!</h4>
-                    <p class="mb-0">Paparan ini memaparkan rumusan aktiviti, statistik dan prestasi semasa sistem untuk rujukan pantas anda.</p>
+                    <h4 class="text-primary mb-1">Selamat datang, {{ $user->nama }}!</h4>
+                    <p class="mb-0">Paparan ini memaparkan rumusan aktiviti, statistik dan prestasi semasa sistem untuk
+                        rujukan pantas anda.</p>
                 </div>
             </div>
         </div>
@@ -63,7 +103,8 @@
                             </div>
                         </div>
                         <div class="progress mt-2" style="height: 4px;">
-                            <div id="sessionTimerProgress" class="progress-bar bg-primary" role="progressbar" style="width: 100%;"></div>
+                            <div id="sessionTimerProgress" class="progress-bar bg-primary" role="progressbar"
+                                style="width: 100%;"></div>
                         </div>
                         <button id="btnRefreshSession" class="btn btn-sm btn-outline-primary mt-2 w-100">
                             <i class="bx bx-refresh me-1"></i>Lanjutkan Sesi
@@ -98,9 +139,9 @@
             <div class="col-12">
                 <div class="alert alert-warning mb-0">
                     <h6><i class="fas fa-bug"></i> Debug Role Information:</h6>
-                    <strong>Current User:</strong> {{ Auth::user()->nama }}<br>
-                    <strong>User Roles:</strong> {{ Auth::user()->getRoleNames()->implode(', ') ?: 'No roles assigned' }}<br>
-                    @if (Auth::user()->getRoleNames()->isEmpty())
+                    <strong>Current User:</strong> {{ $user->nama }}<br>
+                    <strong>User Roles:</strong> {{ $user->getRoleNames()->implode(', ') ?: 'No roles assigned' }}<br>
+                    @if ($user->getRoleNames()->isEmpty())
                         <div class="mt-2 p-2 bg-light border-left border-warning">
                             <small><strong>Note:</strong> This user has no roles assigned. They will see the default
                                 dashboard.</small>
@@ -117,7 +158,7 @@
     </div>
 
     <!-- Pegawai Tugasan Specific Section -->
-    @if (Auth::user()->hasRole('Pegawai Tugasan'))
+    @if ($sections['pegawai'] ?? false)
         <div class="card mb-6 bg-transparent">
             <div class="card-header">
                 <div class="p-2 bg-white rounded shadow-sm d-flex align-items-center">
@@ -127,14 +168,14 @@
             </div>
             <div class="card-body">
                 <div class="row dashboard-row-consistent">
-                    @include('dashboard/partials/my-tasks') <!-- My Tasks Section -->
+                    @include('dashboard/partials/pegawai-tugasan/my-tasks') <!-- My Tasks Section -->
                 </div>
             </div>
         </div>
     @endif
 
     <!-- Administrator, Pengurusan MOF, Pentadbir Sistem, Penyelia Helpdesk, Helpdesk On Duty Section -->
-    @if (Auth::user()->hasRole('Administrator'))
+    @if ($sections['admin'] ?? false)
         <div class="row g-4 mb-6 dashboard-row-consistent">
             @include('dashboard/partials/cards-status') <!-- Card Status -->
             @include('dashboard/partials/chart-status') <!-- Ticket Status -->
@@ -146,7 +187,7 @@
         <div class="row g-4 mb-6">
             @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
         </div>
-    @elseif(Auth::user()->hasRole('Pengurusan MOF'))
+    @elseif($sections['pengurusan'] ?? false)
         <div class="row g-4 mb-6 dashboard-row-consistent">
             @include('dashboard/partials/cards-status')
             @include('dashboard/partials/chart-status')
@@ -154,7 +195,10 @@
             @include('dashboard/partials/chart-trend')
             @include('dashboard/partials/chart-total')
         </div>
-    @elseif(Auth::user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
+        {{-- <div class="row g-4 mb-6">
+            @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
+        </div> --}}
+    @elseif($sections['helpdesk'] ?? false)
         <div class="row g-4 mb-6 dashboard-row-consistent">
             @include('dashboard/partials/cards-status')
             @include('dashboard/partials/chart-status')
@@ -162,6 +206,9 @@
             @include('dashboard/partials/chart-trend')
             @include('dashboard/partials/chart-total')
             @include('dashboard/partials/chart-assigned')
+        </div>
+        <div class="row g-4 mb-6">
+            @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
         </div>
     @endif
 

@@ -146,6 +146,15 @@ Route::middleware([
   Route::get('/weekly-completed', [DashboardController::class, 'getWeeklyCompletedTickets'])->name('weekly-completed');
   Route::get('/pending-stats', [DashboardController::class, 'getPendingTicketsStats'])->name('pending-stats');
   Route::get('/overdue-sla-count', [DashboardController::class, 'getOverdueSLACount'])->name('overdue-sla-count');
+
+  // Pegawai Tugasan specific endpoints (always filtered by assigned tasks)
+  Route::get('/pegawai/today-logs-count', [DashboardController::class, 'getTodayLogsCountPegawai'])->name('pegawai.today-logs-count');
+  Route::get('/pegawai/weekly-completed', [DashboardController::class, 'getWeeklyCompletedTicketsPegawai'])->name('pegawai.weekly-completed');
+  Route::get('/pegawai/pending-stats', [DashboardController::class, 'getPendingTicketsStatsPegawai'])->name('pegawai.pending-stats');
+  Route::get('/pegawai/overdue-sla-count', [DashboardController::class, 'getOverdueSLACountPegawai'])->name('pegawai.overdue-sla-count');
+  Route::get('/pegawai/status-tickets', [DashboardController::class, 'getStatusTicketsPegawai'])->name('pegawai.status-tickets');
+  Route::get('/pegawai/category-tickets', [DashboardController::class, 'getCategoryTicketsPegawai'])->name('pegawai.category-tickets');
+  Route::get('/pegawai/list-overdue', [DashboardController::class, 'getListOverduePegawai'])->name('pegawai.list-overdue');
 });
 
 // API Routes for AJAX calls
