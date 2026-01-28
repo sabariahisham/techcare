@@ -3,6 +3,18 @@
 * File include item demo only specific css only
 ******************************************************************************/
 
+/* =========================
+   LAYOUT - Premium Blue (Sneat)
+   ========================= */
+
+.content-wrapper,
+.layout-page {
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 75%) !important; */ /* Dark */
+  background: linear-gradient(135deg, #6d84e9 0%, #a55eec 100%) !important; /* Medium */
+  /* background: linear-gradient(135deg, #A5B4FC 0%, #C4B5FD 100%) !important; */ /* Light */
+
+}
+
 .menu .app-brand.demo {
   height: 64px;
   margin-top: 12px;
