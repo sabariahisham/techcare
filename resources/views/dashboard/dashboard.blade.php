@@ -133,7 +133,7 @@ TASK:
     @endif
 
     <!-- Debug Role Information - Remove after role assignment is complete -->
-    @if (config('app.debug', false))
+    {{-- @if (config('app.debug', false))
         <div class="row g-4 mb-4">
             <!-- Debug Role Info -->
             <div class="col-12">
@@ -150,9 +150,9 @@ TASK:
                 </div>
             </div>
         </div>
-    @endif
+    @endif --}}
 
-    <!-- User Ticket Status Cards - Shown to ALL users -->
+    <!-- User Ticket Status Cards - Shown to ALL users (default all users are pengadu) -->
     <div class="row g-4 mb-6">
         @include('dashboard/partials/card-status-user')
     </div>

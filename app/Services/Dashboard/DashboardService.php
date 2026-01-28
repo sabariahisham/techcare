@@ -13,6 +13,7 @@ use App\Services\Dashboard\Role\AdminDashboard;
 use App\Services\Dashboard\Role\PegawaiTugasanDashboard;
 use App\Services\Dashboard\Role\PengurusanDashboard;
 use App\Services\Dashboard\Role\HelpdeskDashboard;
+use App\Services\Dashboard\Role\PengaduDashboard;
 
 /**
  * Dashboard Service Dispatcher
@@ -24,6 +25,7 @@ use App\Services\Dashboard\Role\HelpdeskDashboard;
  * DashboardController → DashboardService (dispatcher) → Role Dashboard → Widgets → Blade
  *
  * Roles:
+ * - Pengadu (default, no role) → PengaduDashboard
  * - Pegawai Tugasan → PegawaiTugasanDashboard
  * - Pengurusan MOF → PengurusanDashboard
  * - Helpdesk (Pentadbir Sistem, Penyelia Helpdesk, Helpdesk On Duty) → HelpdeskDashboard
@@ -35,17 +37,20 @@ class DashboardService
   protected PegawaiTugasanDashboard $pegawaiDashboard;
   protected PengurusanDashboard $pengurusanDashboard;
   protected HelpdeskDashboard $helpdeskDashboard;
+  protected PengaduDashboard $pengaduDashboard;
 
   public function __construct(
     AdminDashboard $adminDashboard,
     PegawaiTugasanDashboard $pegawaiDashboard,
     PengurusanDashboard $pengurusanDashboard,
-    HelpdeskDashboard $helpdeskDashboard
+    HelpdeskDashboard $helpdeskDashboard,
+    PengaduDashboard $pengaduDashboard
   ) {
     $this->adminDashboard = $adminDashboard;
     $this->pegawaiDashboard = $pegawaiDashboard;
     $this->pengurusanDashboard = $pengurusanDashboard;
     $this->helpdeskDashboard = $helpdeskDashboard;
+    $this->pengaduDashboard = $pengaduDashboard;
   }
 
   /**
@@ -79,6 +84,9 @@ class DashboardService
       'referredTicketsOnBehalf' => 0,
     ];
 
+    // Flag to track if user has any specific role
+    $hasSpecificRole = false;
+
     // Check Pegawai Tugasan role
     if ($user->hasRole('Pegawai Tugasan')) {
       $data = $this->pegawaiDashboard->getData($user);
@@ -86,6 +94,7 @@ class DashboardService
       // Remove 'user' and 'sections' keys to prevent overwriting
       unset($data['user'], $data['sections']);
       $ticketData = array_merge($ticketData, $data);
+      $hasSpecificRole = true;
     }
 
     // Check Administrator role
@@ -95,6 +104,7 @@ class DashboardService
       // Remove 'user' and 'sections' keys to prevent overwriting
       unset($data['user'], $data['sections']);
       $ticketData = array_merge($ticketData, $data);
+      $hasSpecificRole = true;
     }
 
     // Check Pengurusan MOF role
@@ -104,12 +114,22 @@ class DashboardService
       // Remove 'user' and 'sections' keys to prevent overwriting
       unset($data['user'], $data['sections']);
       $ticketData = array_merge($ticketData, $data);
+      $hasSpecificRole = true;
     }
 
     // Check Helpdesk roles
     if ($user->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
       $data = $this->helpdeskDashboard->getData($user);
       $mergedData['sections']['helpdesk'] = true;
+      // Remove 'user' and 'sections' keys to prevent overwriting
+      unset($data['user'], $data['sections']);
+      $ticketData = array_merge($ticketData, $data);
+      $hasSpecificRole = true;
+    }
+
+    // If user has no specific role, treat them as a regular pengadu (default user)
+    if (!$hasSpecificRole) {
+      $data = $this->pengaduDashboard->getData($user);
       // Remove 'user' and 'sections' keys to prevent overwriting
       unset($data['user'], $data['sections']);
       $ticketData = array_merge($ticketData, $data);
