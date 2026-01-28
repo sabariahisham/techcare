@@ -5,7 +5,7 @@
                 <div class="content-left flex-grow-1">
                     <span class="text-heading">Baru</span>
                     <div class="d-flex align-items-center my-1">
-                        <h4 class="mb-0 me-2">{{ number_format($newTickets) + number_format($newTicketsOnBehalf) }}</h4>
+                        <h4 class="mb-0 me-2">{{ number_format($newTickets + $newTicketsOnBehalf) }}</h4>
                     </div>
                 </div>
                 <div class="avatar flex-shrink-0" data-bs-toggle="tooltip" data-bs-title="Aduan Baru">
@@ -28,7 +28,7 @@
                     <span class="text-heading">Diproses</span>
                     <div class="d-flex align-items-center my-1">
                         <h4 class="mb-0 me-2">
-                            {{ number_format($inProgressTickets) + number_format($inProgressTicketsOnBehalf) }}</h4>
+                            {{ number_format($inProgressTickets + $inProgressTicketsOnBehalf) }}</h4>
                     </div>
                 </div>
                 <div class="avatar flex-shrink-0">
@@ -49,7 +49,7 @@
                     <span class="text-heading">Dirujuk</span>
                     <div class="d-flex align-items-center my-1">
                         <h4 class="mb-0 me-2">
-                            {{ number_format($referredTickets) + number_format($referredTicketsOnBehalf) }}</h4>
+                            {{ number_format($referredTickets + $referredTicketsOnBehalf) }}</h4>
                     </div>
                 </div>
                 <div class="avatar flex-shrink-0">
@@ -70,7 +70,7 @@
                     <span class="text-heading">Selesai</span>
                     <div class="d-flex align-items-center my-1">
                         <h4 class="mb-0 me-2">
-                            {{ number_format($closedTickets) + number_format($closedTicketsOnBehalf) }}</h4>
+                            {{ number_format($closedTickets + $closedTicketsOnBehalf) }}</h4>
                     </div>
                 </div>
                 <div class="avatar flex-shrink-0">
