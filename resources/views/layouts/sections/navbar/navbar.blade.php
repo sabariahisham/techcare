@@ -70,7 +70,7 @@
         @endif
 
         <!-- Language -->
-        <li class="nav-item dropdown-language dropdown me-2 me-xl-0">
+        {{-- <li class="nav-item dropdown-language dropdown me-2 me-xl-0">
             <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                 <i class='bx bx-globe bx-md'></i>
             </a>
@@ -100,7 +100,7 @@
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> --}}
         <!-- /Language -->
 
         @if ($configData['hasCustomizer'] == true)
@@ -146,8 +146,8 @@
         <li class="nav-item navbar-dropdown dropdown-user dropdown">
             <a class="nav-link dropdown-toggle hide-arrow p-0" href="javascript:void(0);" data-bs-toggle="dropdown">
                 <div class="avatar avatar-online">
-                    <img src="{{ Auth::user() ? Auth::user()->profile_photo_url : asset('assets/img/avatars/1.png') }}"
-                        alt class="w-px-40 h-auto rounded-circle">
+                    <img src="{{ asset('assets/img/icon-profile/user.png') }}" alt
+                        class="w-px-40 h-auto rounded-circle">
                 </div>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -157,8 +157,8 @@
                         <div class="d-flex">
                             <div class="flex-shrink-0 me-3">
                                 <div class="avatar avatar-online">
-                                    <img src="{{ Auth::user() ? Auth::user()->profile_photo_url : asset('assets/img/avatars/1.png') }}"
-                                        alt class="w-px-40 h-auto rounded-circle">
+                                    <img src="{{ asset('assets/img/icon-profile/user.png') }}" alt
+                                        class="w-px-40 h-auto rounded-circle">
                                 </div>
                             </div>
                             <div class="flex-grow-1">
@@ -167,7 +167,7 @@
                                         {{ Auth::user()->nama }}<br>
                                         <small class="text-muted">{{ Auth::user()->email }}</small><br>
                                         <small
-                                            class="text-muted">{{ Auth::user()->getRoleNames()->join(', ') }}</small>
+                                            class="text-muted"><i>[{{ Auth::user()->getRoleNames()->join(', ') }}]</i></small>
                                     @endif
                                 </h6>
                             </div>
@@ -216,8 +216,7 @@
 
 <!-- Search Small Screens -->
 <div class="navbar-search-wrapper search-input-wrapper {{ isset($menuHorizontal) ? $containerNav : '' }} d-none">
-    <input type="text"
-        class="form-control search-input {{ isset($menuHorizontal) ? '' : $containerNav }} border-0"
+    <input type="text" class="form-control search-input {{ isset($menuHorizontal) ? '' : $containerNav }} border-0"
         placeholder="Search..." aria-label="Search...">
     <i class="bx bx-x bx-md search-toggler cursor-pointer"></i>
 </div>
