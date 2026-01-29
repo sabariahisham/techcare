@@ -47,8 +47,13 @@
 
 @section('content')
 
-<h4 class="mb-1">LOG KESELURUHAN</h4>
+<div class="card mb-4">
+    <div class="card-body">
+    <h4 class="mb-1">LOG KESELURUHAN</h4>
     <p class="mb-6">Papar rekod log keseluruhan sistem.</p>
+    </div>
+ </div>
+
 
     <div>
         <div class="card">
