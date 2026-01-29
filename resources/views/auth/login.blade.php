@@ -371,13 +371,13 @@ html, body {
           <div class="app-brand justify-content-center">
             <a href="{{url('/')}}" class="app-brand-link d-flex flex-column align-items-center text-decoration-none">
               <!-- Custom Logo Image -->
-              <img src="{{ asset('assets/img/logos/logo2.png') }}" 
-                   alt="eHelp Logo" 
+              <img src="{{ asset('assets/img/logos/techcare.png') }}" 
+                   alt="TechCare Logo" 
                    class="app-brand-logo-img mb-2"
-                   style="height: 100px; width: auto;">
+                   style="height: 1000px; width: auto;">
               
               <!-- System Title -->
-              <span class="app-system-title text-heading fw-bold text-center">KEMENTERIAN KEWANGAN</span>
+              {{-- <span class="app-system-title text-heading fw-bold text-center">KEMENTERIAN KEWANGAN</span> --}}
             </a>
           </div>
           <!-- /Logo -->
@@ -391,7 +391,7 @@ html, body {
                  style="max-width: 200px; height: auto; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
           </div> --}}
 
-          <p class="app-system-title-login text-center">SISTEM eHELP DEV</p>
+          {{-- <p class="app-system-title-login text-center">SISTEM eHELP DEV</p> --}}
 
           @if (session('status'))
           <div class="alert alert-success mb-1 rounded-0" role="alert">
@@ -428,7 +428,7 @@ html, body {
               @enderror
             </div>
 
-            <div class="mb-8">
+            {{-- <div class="mb-8">
               <div class="d-flex justify-content-between mt-8">
                 <div class="form-check mb-0 ms-2">
                   <input class="form-check-input" type="checkbox" id="remember-me" name="remember" {{ old('remember') ? 'checked' : '' }}>
@@ -442,7 +442,7 @@ html, body {
                   </a>
                 @endif
               </div>
-            </div>
+            </div> --}}
             <div class="mb-6">
               <button class="btn btn-primary d-grid w-100" type="submit">Log Masuk</button>
             </div>
@@ -464,7 +464,7 @@ html, body {
                      style="height: 60px; width: auto;">
           </div>
           <span class="mb-2 fw-semibold">Kementerian Kewangan Malaysia</span>
-            <div class="auth-footer">Hak Cipta Terpelihara @ 2025</div>
+            <div class="auth-footer">Hak Cipta Terpelihara @ 2025-{{ date('Y') }}</div>
             <div class="auth-footer">Bahagian Teknologi Maklumat</div>
       </div>
       <!-- /Register -->
