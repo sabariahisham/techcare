@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\DB;
  * Provides dashboard data for administrator roles:
  * - Administrator
  * - Pentadbir Sistem
- * - Penyelia Helpdesk
- * - Helpdesk On Duty
+ *
+ * Both roles share the same admin section with full system management panel.
  *
  * Returns data for blade partials:
  * - card-status-user (user's own tickets)

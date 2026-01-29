@@ -96,19 +96,19 @@
         </div>
     @endif
 
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-1">Maklumat Penuh Tiket</h4>
                     <p class="mb-0 text-muted">{{ $ticket->ticket_nolog }}</p>
                 </div>
-                <div>
+                <div class="d-flex gap-2">
                     <a href="{{ route('tickets.index') }}" class="btn btn-outline-secondary">
-                        <i class="bx bx-arrow-back me-3"></i>Kembali ke Senarai
+                        <i class="bx bx-arrow-back me-1"></i>Kembali ke Senarai
                     </a>
                     <button type="button" class="btn btn-primary" onclick="window.print()">
-                        <i class="bx bx-printer me-3"></i>Cetak
+                        <i class="bx bx-printer me-1"></i>Cetak
                     </button>
                 </div>
             </div>
