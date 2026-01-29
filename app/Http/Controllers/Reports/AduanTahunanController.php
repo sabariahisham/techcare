@@ -58,46 +58,48 @@ class AduanTahunanController extends Controller
             ->leftJoin('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->select('rc.id as category_id', 'rc.cat_name')
             ->selectRaw("
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 1 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as jan_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 1 AND YEAR(t.created_at) = ? THEN t.id END) as jan_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 1 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as jan_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 2 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as feb_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 2 AND YEAR(t.created_at) = ? THEN t.id END) as feb_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 2 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as feb_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 3 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as mac_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 3 AND YEAR(t.created_at) = ? THEN t.id END) as mac_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 3 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as mac_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 4 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as apr_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 4 AND YEAR(t.created_at) = ? THEN t.id END) as apr_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 4 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as apr_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 5 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as mei_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 5 AND YEAR(t.created_at) = ? THEN t.id END) as mei_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 5 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as mei_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 6 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as jun_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 6 AND YEAR(t.created_at) = ? THEN t.id END) as jun_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 6 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as jun_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 7 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as jul_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 7 AND YEAR(t.created_at) = ? THEN t.id END) as jul_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 7 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as jul_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 8 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as ogos_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 8 AND YEAR(t.created_at) = ? THEN t.id END) as ogos_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 8 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as ogos_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 9 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as sep_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 9 AND YEAR(t.created_at) = ? THEN t.id END) as sep_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 9 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as sep_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 10 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as okt_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 10 AND YEAR(t.created_at) = ? THEN t.id END) as okt_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 10 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as okt_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 11 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as nov_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 11 AND YEAR(t.created_at) = ? THEN t.id END) as nov_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 11 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as nov_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 12 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as dis_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 12 AND YEAR(t.created_at) = ? THEN t.id END) as dis_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 12 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as dis_selesai,
 
-                COUNT(DISTINCT CASE WHEN YEAR(tc.created_at) = ? THEN tc.ticket_id END) as jumlah_aduan,
+                COUNT(DISTINCT CASE WHEN YEAR(t.created_at) = ? THEN t.id END) as jumlah_aduan,
                 COUNT(DISTINCT CASE WHEN YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as jumlah_selesai
             ", array_fill(0, 26, $year))
             ->whereNull('rc.deleted_at')
+            ->whereNull('t.deleted_at')
+            ->whereNull('tc.deleted_at')
             ->groupBy('rc.id', 'rc.cat_name')
             ->orderBy('rc.cat_name');
 
@@ -111,7 +113,7 @@ class AduanTahunanController extends Controller
         }
 
         if (!empty($monthsFilter)) {
-            $query->whereIn(DB::raw('MONTH(tc.created_at)'), $monthsFilter);
+            $query->whereIn(DB::raw('MONTH(t.created_at)'), $monthsFilter);
         }
 
         // Get all data for calculating totals SEBELUM DataTables process
@@ -316,46 +318,48 @@ class AduanTahunanController extends Controller
             ->leftJoin('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->select('rc.id as category_id', 'rc.cat_name')
             ->selectRaw("
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 1 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as jan_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 1 AND YEAR(t.created_at) = ? THEN t.id END) as jan_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 1 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as jan_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 2 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as feb_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 2 AND YEAR(t.created_at) = ? THEN t.id END) as feb_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 2 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as feb_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 3 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as mac_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 3 AND YEAR(t.created_at) = ? THEN t.id END) as mac_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 3 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as mac_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 4 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as apr_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 4 AND YEAR(t.created_at) = ? THEN t.id END) as apr_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 4 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as apr_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 5 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as mei_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 5 AND YEAR(t.created_at) = ? THEN t.id END) as mei_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 5 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as mei_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 6 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as jun_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 6 AND YEAR(t.created_at) = ? THEN t.id END) as jun_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 6 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as jun_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 7 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as jul_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 7 AND YEAR(t.created_at) = ? THEN t.id END) as jul_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 7 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as jul_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 8 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as ogos_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 8 AND YEAR(t.created_at) = ? THEN t.id END) as ogos_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 8 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as ogos_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 9 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as sep_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 9 AND YEAR(t.created_at) = ? THEN t.id END) as sep_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 9 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as sep_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 10 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as okt_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 10 AND YEAR(t.created_at) = ? THEN t.id END) as okt_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 10 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as okt_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 11 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as nov_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 11 AND YEAR(t.created_at) = ? THEN t.id END) as nov_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 11 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as nov_selesai,
 
-                COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 12 AND YEAR(tc.created_at) = ? THEN tc.ticket_id END) as dis_aduan,
+                COUNT(DISTINCT CASE WHEN MONTH(t.created_at) = 12 AND YEAR(t.created_at) = ? THEN t.id END) as dis_aduan,
                 COUNT(DISTINCT CASE WHEN MONTH(tc.created_at) = 12 AND YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as dis_selesai,
 
-                COUNT(DISTINCT CASE WHEN YEAR(tc.created_at) = ? THEN tc.ticket_id END) as jumlah_aduan,
+                COUNT(DISTINCT CASE WHEN YEAR(t.created_at) = ? THEN t.id END) as jumlah_aduan,
                 COUNT(DISTINCT CASE WHEN YEAR(tc.created_at) = ? AND tc.tick_status = 6 THEN tc.ticket_id END) as jumlah_selesai
             ", array_fill(0, 26, $year))
             ->whereNull('rc.deleted_at')
+            ->whereNull('t.deleted_at')
+            ->whereNull('tc.deleted_at')
             ->groupBy('rc.id', 'rc.cat_name')
             ->orderBy('rc.cat_name');
 
@@ -364,7 +368,7 @@ class AduanTahunanController extends Controller
         }
 
         if (!empty($monthsFilter)) {
-            $query->whereIn(DB::raw('MONTH(tc.created_at)'), $monthsFilter);
+            $query->whereIn(DB::raw('MONTH(t.created_at)'), $monthsFilter);
         }
 
         return $query->get();

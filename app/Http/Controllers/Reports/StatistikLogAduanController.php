@@ -48,12 +48,14 @@ class StatistikLogAduanController extends Controller
         $data = DB::table('tickets as t')
             ->join('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->select(
-                DB::raw('MONTH(tc.created_at) as bulan'),
+                DB::raw('MONTH(t.created_at) as bulan'),
                 DB::raw('COUNT(DISTINCT t.id) as jumlah')
             )
             ->where('tc.tick_status', 1) // Status = 1 (Logged/Dilog)
-            ->whereYear('tc.created_at', $year)
-            ->groupBy(DB::raw('MONTH(tc.created_at)'))
+            ->whereYear('t.created_at', $year)
+            ->whereNull('t.deleted_at')
+            ->whereNull('tc.deleted_at')
+            ->groupBy(DB::raw('MONTH(t.created_at)'))
             ->orderBy('bulan')
             ->get();
 
@@ -123,15 +125,17 @@ class StatistikLogAduanController extends Controller
             ->join('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
             ->select(
-                DB::raw('MONTH(tc.created_at) as bulan'),
+                DB::raw('MONTH(t.created_at) as bulan'),
                 'rc.id as cat_id',
                 'rc.cat_name',
                 DB::raw('COUNT(DISTINCT t.id) as jumlah')
             )
             ->where('tc.tick_status', 1)
-            ->whereYear('tc.created_at', $year)
+            ->whereYear('t.created_at', $year)
             ->whereNull('rc.deleted_at')
-            ->groupBy(DB::raw('MONTH(tc.created_at)'), 'rc.id', 'rc.cat_name')
+            ->whereNull('t.deleted_at')
+            ->whereNull('tc.deleted_at')
+            ->groupBy(DB::raw('MONTH(t.created_at)'), 'rc.id', 'rc.cat_name')
             ->get();
 
         // Transpose: Create rows for each month
@@ -183,15 +187,17 @@ class StatistikLogAduanController extends Controller
             ->join('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
             ->select(
-                DB::raw('MONTH(tc.created_at) as bulan'),
+                DB::raw('MONTH(t.created_at) as bulan'),
                 'rc.id as cat_id',
                 'rc.cat_name',
                 DB::raw('COUNT(DISTINCT t.id) as jumlah')
             )
             ->where('tc.tick_status', 1)
-            ->whereYear('tc.created_at', $year)
+            ->whereYear('t.created_at', $year)
             ->whereNull('rc.deleted_at')
-            ->groupBy(DB::raw('MONTH(tc.created_at)'), 'rc.id', 'rc.cat_name')
+            ->whereNull('t.deleted_at')
+            ->whereNull('tc.deleted_at')
+            ->groupBy(DB::raw('MONTH(t.created_at)'), 'rc.id', 'rc.cat_name')
             ->get();
 
         // Transpose: Create rows for each month
@@ -243,15 +249,17 @@ class StatistikLogAduanController extends Controller
             ->join('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
             ->select(
-                DB::raw('MONTH(tc.created_at) as bulan'),
+                DB::raw('MONTH(t.created_at) as bulan'),
                 'rc.id as cat_id',
                 'rc.cat_name',
                 DB::raw('COUNT(DISTINCT t.id) as jumlah')
             )
             ->where('tc.tick_status', 1)
-            ->whereYear('tc.created_at', $year)
+            ->whereYear('t.created_at', $year)
             ->whereNull('rc.deleted_at')
-            ->groupBy(DB::raw('MONTH(tc.created_at)'), 'rc.id', 'rc.cat_name')
+            ->whereNull('t.deleted_at')
+            ->whereNull('tc.deleted_at')
+            ->groupBy(DB::raw('MONTH(t.created_at)'), 'rc.id', 'rc.cat_name')
             ->get();
 
         // Transpose: Create rows for each month

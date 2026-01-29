@@ -49,9 +49,12 @@
 
 
 @section('content')
+ <div class="card mb-4">
+    <div class="card-body">
     <h4 class="mb-1">AUDIT TRAIL</h4>
     <p class="mb-6">Papar rekod perubahan data dalam sistem.</p>
-
+    </div>
+ </div>
     <!-- Filter Section -->
     <div class="card mb-4">
         
