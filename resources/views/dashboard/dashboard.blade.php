@@ -2,9 +2,9 @@
 CONTEXT:
 This is the main Dashboard Blade view for a Laravel 11 application.
 This dashboard supports multiple roles:
-- Administrator
-- Pentadbir Sistem
-- Penyelia Helpdesk
+- Administrator (shares admin section)
+- Pentadbir Sistem (shares admin section)
+- Penyelia Helpdesk (share )
 - Helpdesk On Duty
 - Pegawai Tugasan
 - Pengurusan MOF
@@ -27,10 +27,10 @@ The Controller provides:
 - $user (authenticated user object)
 - $sections (array of booleans, example:
   [
-    'pegawai' => true|false,
-    'admin' => true|false,
-    'pengurusan' => true|false,
-    'helpdesk' => true|false
+    'pegawai' => true|false,     // Pegawai Tugasan section
+    'admin' => true|false,       // Administrator & Pentadbir Sistem section
+    'pengurusan' => true|false,  // Pengurusan MOF section
+    'helpdesk' => true|false     // Penyelia Helpdesk & Helpdesk On Duty section
   ])
 
 TASK:
@@ -156,36 +156,14 @@ TASK:
     <div class="row g-4 mb-6">
         @include('dashboard/partials/card-status-user')
     </div>
-
-    <!-- Pegawai Tugasan Specific Section -->
+    
     @if ($sections['pegawai'] ?? false)
-        {{-- <div class="card mb-6 bg-secondary text-dark bg-opacity-75"> --}}
-        {{-- <div class="card mb-6 text-dark" style="background-color: rgba(30, 58, 138, 0.1);">
-            <div class="card-header">
-                <div class="p-2 bg-white rounded shadow-sm d-flex align-items-center" style="background-color: white; box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15); border-bottom: 2px solid #1431eb;">
-                    <i class='bx bxs-bell-ring fs-2 me-2' style='color:#1431eb'></i>
-                    <h4 class="text-primary mb-0">TUGASAN ANDA!</h4>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row dashboard-row-consistent">
-                    @include('dashboard/partials/pegawai-tugasan/my-tasks') <!-- My Tasks Section -->
-                </div>
-            </div>
-        </div> --}}
+    <!-- Pegawai Tugasan Specific Section -->
         <div class="card mb-6 text-dark"
-            style="
-    background-color: rgba(30, 58, 138, 0.15);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.2);
-">
+            style="background-color: rgba(136, 57, 111, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
             <div class="card-header">
                 <div class="p-3 rounded shadow-sm d-flex align-items-center"
-                    style="
-            background-color: rgba(255,255,255,0.9);
-            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);
-            border-bottom: 2px solid #1431eb;
+                    style="background-color: rgba(255,255,255,0.9);box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);     border-bottom: 2px solid #1431eb;
         ">
                     <i class='bx bxs-bell-ring fs-2 me-3' style='color:#1431eb'></i>
                     <h4 class="mb-0 fw-bold" style="color:#1431eb; letter-spacing: -0.5px;">TUGASAN ANDA!</h4>
@@ -197,71 +175,87 @@ TASK:
                 </div>
             </div>
         </div>
-
-        {{-- <div class="card mb-6 text-dark" style="background-color: rgba(255, 193, 7, 0.55);">
-            <div class="card-header">
-                <div class="p-2 bg-white rounded shadow-sm d-flex align-items-center" style="background-color: #FFFFFFCC;">
-                    <i class='bx bxs-bell-ring fs-2 me-2' style='color:#1431eb'></i>
-                    <h4 class="text-primary mb-0">TUGASAN ANDA!</h4>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row dashboard-row-consistent">
-                    @include('dashboard/partials/pegawai-tugasan/my-tasks')
-                </div>
-            </div>
-        </div> --}}
-        {{-- <div class="card mb-6 text-dark" style="background-color: rgba(30, 58, 138, 0.1);">
+    @endif  
+   
+    @if ($sections['admin'] ?? false) 
+     <!-- Administrator Section -->
+        <div class="card mb-6 text-dark"
+            style="background-color: rgba(27, 27, 31, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
             <div class="card-header">
                 <div class="p-3 rounded shadow-sm d-flex align-items-center"
-                    style="background-color: white; box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15); border-bottom: 2px solid #1E3A8A;">
-                    <i class='bx bxs-bell-ring fs-2 me-3' style='color:#1E3A8A'></i>
-                    <h4 class="mb-0 fw-bold" style="color:#1E3A8A; letter-spacing: -0.5px;">TUGASAN ANDA!</h4>
+                    style="background-color: rgba(255,255,255,0.9);box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);     border-bottom: 2px solid #1431eb;
+        ">
+                    <i class='bx bxs-cog fs-2 me-3' style='color:#1431eb'></i>
+                    <h4 class="mb-0 fw-bold" style="color:#1431eb; letter-spacing:-0.5px;">
+                        PANEL PENGURUSAN SISTEM
+                    </h4>
                 </div>
             </div>
             <div class="card-body">
-                <div class="row dashboard-row-consistent">
-                    @include('dashboard/partials/pegawai-tugasan/my-tasks')
+                <div class="row g-4 mb-2 dashboard-row-consistent">
+                    @include('dashboard/partials/cards-status') <!-- Card Status -->
+                    @include('dashboard/partials/chart-status') <!-- Ticket Status -->
+                    @include('dashboard/partials/chart-category') <!-- Ticket Category -->
+                    @include('dashboard/partials/chart-trend') <!-- Monthly Ticket Trend -->
+                    @include('dashboard/partials/chart-total') <!-- Total Tickets -->
+                    @include('dashboard/partials/chart-assigned') <!-- Assigned Tickets -->
+                </div>
+                <div class="row g-4 mb-0">
+                    @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
                 </div>
             </div>
-        </div> --}}
-    @endif
-
-    <!-- Administrator, Pengurusan MOF, Pentadbir Sistem, Penyelia Helpdesk, Helpdesk On Duty Section -->
-    @if ($sections['admin'] ?? false)
-        <div class="row g-4 mb-6 dashboard-row-consistent">
-            @include('dashboard/partials/cards-status') <!-- Card Status -->
-            @include('dashboard/partials/chart-status') <!-- Ticket Status -->
-            @include('dashboard/partials/chart-category') <!-- Ticket Category -->
-            @include('dashboard/partials/chart-trend') <!-- Monthly Ticket Trend -->
-            @include('dashboard/partials/chart-total') <!-- Total Tickets -->
-            @include('dashboard/partials/chart-assigned') <!-- Assigned Tickets -->
-        </div>
-        <div class="row g-4 mb-6">
-            @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
-        </div>
+        </div>    
     @elseif($sections['pengurusan'] ?? false)
-        <div class="row g-4 mb-6 dashboard-row-consistent">
-            @include('dashboard/partials/cards-status')
-            @include('dashboard/partials/chart-status')
-            @include('dashboard/partials/chart-category')
-            @include('dashboard/partials/chart-trend')
-            @include('dashboard/partials/chart-total')
-        </div>
-        {{-- <div class="row g-4 mb-6">
-            @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
-        </div> --}}
+    <!-- Pengurusan MOF Section -->
+        <div class="card mb-6 text-dark"
+            style="background-color: rgba(30, 58, 138, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
+            <div class="card-header">
+                <div class="p-3 rounded shadow-sm d-flex align-items-center"
+                    style="background-color: rgba(255,255,255,0.9);box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);     border-bottom: 2px solid #1431eb;
+        ">
+                    <i class='bx bxs-bar-chart-alt-2 fs-2 me-3' style='color:#1431eb'></i>
+                    <h4 class="mb-0 fw-bold" style="color:#1431eb; letter-spacing:-0.5px;">
+                        PANEL PEMANTAUAN PENGURUSAN ATASAN
+                    </h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-4 mb-2 dashboard-row-consistent">
+                    @include('dashboard/partials/cards-status')
+                    @include('dashboard/partials/chart-status')
+                    @include('dashboard/partials/chart-category')
+                    @include('dashboard/partials/chart-trend')
+                    @include('dashboard/partials/chart-total')
+                </div>
+            </div>
+        </div>    
     @elseif($sections['helpdesk'] ?? false)
-        <div class="row g-4 mb-6 dashboard-row-consistent">
-            @include('dashboard/partials/cards-status')
-            @include('dashboard/partials/chart-status')
-            @include('dashboard/partials/chart-category')
-            @include('dashboard/partials/chart-trend')
-            @include('dashboard/partials/chart-total')
-            @include('dashboard/partials/chart-assigned')
-        </div>
-        <div class="row g-4 mb-6">
-            @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
+    <!-- Helpdesk On Duty / Penyelia Helpdesk Section -->
+        <div class="card mb-6 text-dark"
+            style="background-color: rgba(30, 58, 138, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
+            <div class="card-header">
+                <div class="p-3 rounded shadow-sm d-flex align-items-center"
+                    style="background-color: rgba(255,255,255,0.9);box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);     border-bottom: 2px solid #1431eb;
+        ">
+                    <i class='bx bxs-user-voice fs-2 me-3' style='color:#1431eb'></i>
+                    <h4 class="mb-0 fw-bold" style="color:#1431eb; letter-spacing:-0.5px;">
+                        PANEL HELPDESK ON DUTY / PENYELIA HELPDESK
+                    </h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-4 mb-2 dashboard-row-consistent">
+                    @include('dashboard/partials/cards-status')
+                    @include('dashboard/partials/chart-status')
+                    @include('dashboard/partials/chart-category')
+                    @include('dashboard/partials/chart-trend')
+                    @include('dashboard/partials/chart-total')
+                    @include('dashboard/partials/chart-assigned')
+                </div>
+                <div class="row g-4 mb-0">
+                    @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
+                </div>
+            </div>
         </div>
     @endif
 

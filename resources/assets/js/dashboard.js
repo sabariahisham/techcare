@@ -878,9 +878,9 @@ if (typeof window.config === 'undefined') {
                         let title = chartLabels[index] || 'Unknown Officer';
 
                         // Add user ID for development
-                        if (chartData.debug_mode && officerData && officerData.debug) {
-                          title += ` (User ID: ${officerData.debug.user_id})`;
-                        }
+                        // if (chartData.debug_mode && officerData && officerData.debug) {
+                        //   title += ` (User ID: ${officerData.debug.user_id})`;
+                        // }
 
                         return title;
                       },
@@ -902,20 +902,20 @@ if (typeof window.config === 'undefined') {
                           label = ` Aduan Selesai: ${value} tiket`;
 
                           // Add debug info for completed tickets
-                          if (chartData.debug_mode && officerData && officerData.debug &&
-                            officerData.debug.completed_ticket_ids &&
-                            officerData.debug.completed_ticket_ids.length > 0) {
-                            label += ` (Ticket IDs: ${officerData.debug.completed_ticket_ids.join(', ')})`;
-                          }
+                          // if (chartData.debug_mode && officerData && officerData.debug &&
+                          //   officerData.debug.completed_ticket_ids &&
+                          //   officerData.debug.completed_ticket_ids.length > 0)  {
+                          //   label += ` (Ticket IDs: ${officerData.debug.completed_ticket_ids.join(', ')})`;
+                          // }
                         } else if (datasetLabel === 'Belum Selesai') {
                           label = ` Belum Selesai: ${value} tiket`;
 
                           // Add debug info for pending tickets
-                          if (chartData.debug_mode && officerData && officerData.debug &&
-                            officerData.debug.pending_ticket_ids &&
-                            officerData.debug.pending_ticket_ids.length > 0) {
-                            label += ` (Ticket IDs: ${officerData.debug.pending_ticket_ids.join(', ')})`;
-                          }
+                          // if (chartData.debug_mode && officerData && officerData.debug &&
+                          //   officerData.debug.pending_ticket_ids &&
+                          //   officerData.debug.pending_ticket_ids.length > 0) {
+                          //   label += ` (Ticket IDs: ${officerData.debug.pending_ticket_ids.join(', ')})`;
+                          // }
                         } else {
                           label = `${datasetLabel}: ${value} tiket`;
                         }
@@ -928,41 +928,42 @@ if (typeof window.config === 'undefined') {
                         const index = context[0].dataIndex;
                         const officerData = chartData.data[index];
 
-                        if (officerData && officerData.debug) {
-                          const debugLines = [];
-                          debugLines.push(''); // Empty line separator
-                          debugLines.push('--- DEBUG INFO ---');
-                          debugLines.push(`Officer ID: ${officerData.debug.user_id}`);
+                        /* Display Debug Info */
+                        // if (officerData && officerData.debug) {
+                        //   const debugLines = [];
+                        //   debugLines.push(''); // Empty line separator
+                        //   debugLines.push('--- DEBUG INFO ---');
+                        //   debugLines.push(`Officer ID: ${officerData.debug.user_id}`);
 
-                          if (officerData.debug.all_ticket_ids && officerData.debug.all_ticket_ids.length > 0) {
-                            debugLines.push(`All Ticket IDs: ${officerData.debug.all_ticket_ids.join(', ')}`);
-                          }
+                        //   if (officerData.debug.all_ticket_ids && officerData.debug.all_ticket_ids.length > 0) {
+                        //     debugLines.push(`All Ticket IDs: ${officerData.debug.all_ticket_ids.join(', ')}`);
+                        //   }
 
-                          if (officerData.debug.chronology_ids && officerData.debug.chronology_ids.length > 0) {
-                            debugLines.push(`Chronology IDs: ${officerData.debug.chronology_ids.join(', ')}`);
-                          }
+                        //   if (officerData.debug.chronology_ids && officerData.debug.chronology_ids.length > 0) {
+                        //     debugLines.push(`Chronology IDs: ${officerData.debug.chronology_ids.join(', ')}`);
+                        //   }
 
-                          // Show detailed ticket information
-                          if (officerData.debug.completed_tickets_detail &&
-                            officerData.debug.completed_tickets_detail.length > 0) {
-                            debugLines.push('');
-                            debugLines.push('Completed Tickets:');
-                            officerData.debug.completed_tickets_detail.forEach(ticket => {
-                              debugLines.push(`  • ${ticket.ticket_nolog} (ID: ${ticket.ticket_id}, Status: ${ticket.status})`);
-                            });
-                          }
+                        //   // Show detailed ticket information
+                        //   if (officerData.debug.completed_tickets_detail &&
+                        //     officerData.debug.completed_tickets_detail.length > 0) {
+                        //     debugLines.push('');
+                        //     debugLines.push('Completed Tickets:');
+                        //     officerData.debug.completed_tickets_detail.forEach(ticket => {
+                        //       debugLines.push(`  • ${ticket.ticket_nolog} (ID: ${ticket.ticket_id}, Status: ${ticket.status})`);
+                        //     });
+                        //   }
 
-                          if (officerData.debug.pending_tickets_detail &&
-                            officerData.debug.pending_tickets_detail.length > 0) {
-                            debugLines.push('');
-                            debugLines.push('Pending Tickets:');
-                            officerData.debug.pending_tickets_detail.forEach(ticket => {
-                              debugLines.push(`  • ${ticket.ticket_nolog} (ID: ${ticket.ticket_id}, Status: ${ticket.status})`);
-                            });
-                          }
+                        //   if (officerData.debug.pending_tickets_detail &&
+                        //     officerData.debug.pending_tickets_detail.length > 0) {
+                        //     debugLines.push('');
+                        //     debugLines.push('Pending Tickets:');
+                        //     officerData.debug.pending_tickets_detail.forEach(ticket => {
+                        //       debugLines.push(`  • ${ticket.ticket_nolog} (ID: ${ticket.ticket_id}, Status: ${ticket.status})`);
+                        //     });
+                        //   }
 
-                          return debugLines;
-                        }
+                        //   return debugLines;
+                        // }
 
                         return [];
                       }

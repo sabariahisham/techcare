@@ -9,10 +9,11 @@ use Illuminate\Support\Facades\DB;
 /**
  * Helpdesk Dashboard Service
  *
- * Provides dashboard data for helpdesk-related roles:
- * - Pentadbir Sistem
+ * Provides dashboard data for helpdesk operational roles:
  * - Penyelia Helpdesk
  * - Helpdesk On Duty
+ *
+ * Note: Pentadbir Sistem now uses AdminDashboard (admin section).
  *
  * Returns data for blade partials:
  * - card-status-user (user's own tickets)
@@ -42,9 +43,9 @@ class HelpdeskDashboard
       // Section visibility flags
       'sections' => [
         'pegawai' => false,
-        'admin' => false,
+        'admin' => true,
         'pengurusan' => false,
-        'helpdesk' => true,
+        'helpdesk' => false,
       ],
 
       // User's own ticket status (shown to all users)

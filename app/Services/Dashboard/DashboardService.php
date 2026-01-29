@@ -28,8 +28,8 @@ use App\Services\Dashboard\Role\PengaduDashboard;
  * - Pengadu (default, no role) → PengaduDashboard
  * - Pegawai Tugasan → PegawaiTugasanDashboard
  * - Pengurusan MOF → PengurusanDashboard
- * - Helpdesk (Pentadbir Sistem, Penyelia Helpdesk, Helpdesk On Duty) → HelpdeskDashboard
- * - Administrator → AdminDashboard
+ * - Administrator & Pentadbir Sistem → AdminDashboard (share admin section)
+ * - Helpdesk (Penyelia Helpdesk, Helpdesk On Duty) → HelpdeskDashboard
  */
 class DashboardService
 {
@@ -97,8 +97,8 @@ class DashboardService
       $hasSpecificRole = true;
     }
 
-    // Check Administrator role
-    if ($user->hasRole('Administrator')) {
+    // Check Administrator or Pentadbir Sistem role (both share admin section)
+    if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem'])) {
       $data = $this->adminDashboard->getData($user);
       $mergedData['sections']['admin'] = true;
       // Remove 'user' and 'sections' keys to prevent overwriting
@@ -117,8 +117,8 @@ class DashboardService
       $hasSpecificRole = true;
     }
 
-    // Check Helpdesk roles
-    if ($user->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
+    // Check Helpdesk roles (Penyelia Helpdesk, Helpdesk On Duty)
+    if ($user->hasAnyRole(['Penyelia Helpdesk', 'Helpdesk On Duty'])) {
       $data = $this->helpdeskDashboard->getData($user);
       $mergedData['sections']['helpdesk'] = true;
       // Remove 'user' and 'sections' keys to prevent overwriting

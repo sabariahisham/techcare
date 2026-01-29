@@ -20,14 +20,23 @@
 @endsection
 
 @section('content')
-    <h4 class="mb-1">Senarai Tiket</h4>
-    <p class="mb-6">Papar dan tambah tiket berdasarkan peranan pengguna. Tiket yang telah dihantar tidak boleh diedit.</p>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4 class="mb-1">Senarai Tiket</h4>
+            <p class="mb-0 text-muted">
+                Papar dan tambah tiket berdasarkan peranan pengguna.
+                Tiket yang telah dihantar tidak boleh diedit.
+            </p>
+        </div>
+    </div>
 
     <!-- My Tickets Table -->
     <div class="card mb-4">
         <div class="card-header">
             <div>
-                <h5 class="card-title mb-0">Tiket Saya [<strong class="text-primary">Direkod (Log) oleh:  {{ auth()->user()->nama }}</strong>]</h5>
+                <h5 class="card-title mb-0">Tiket Saya [<strong class="text-primary">Direkod (Log) oleh:
+                        {{ auth()->user()->nama }}</strong>]</h5>
                 <p class="text-muted small mb-0">Senarai semua tiket yang di log oleh anda</p>
             </div>
         </div>
@@ -58,9 +67,11 @@
                     @if (auth()->user()->hasRole('Administrator'))
                         Semua Tiket [<strong class="text-danger">Administrator</strong>]
                     @elseif(auth()->user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
-                        Tiket Untuk Tindakan [<strong class="text-warning">{{ auth()->user()->roles->first()->name }}</strong>]
+                        Tiket Untuk Tindakan [<strong
+                            class="text-warning">{{ auth()->user()->roles->first()->name }}</strong>]
                     @elseif(auth()->user()->hasRole('Pegawai Tugasan'))
-                        Tiket Tugasan Anda [<strong class="text-primary">Ditugaskan kepada: </strong> <strong class="text-primary">{{ auth()->user()->nama }}</strong>]
+                        Tiket Tugasan Anda [<strong class="text-primary">Ditugaskan kepada: </strong> <strong
+                            class="text-primary">{{ auth()->user()->nama }}</strong>]
                     @endif
                 </h5>
                 <p class="text-muted small mb-0">

@@ -58,10 +58,10 @@ class DashboardController extends Controller
       $today = Carbon::today();
       $userId = Auth::id();
 
-      // Count tickets created today from tickets_chronologies
-      $query = DB::table('tickets_chronologies as tc')
-        ->whereNull('tc.deleted_at')
-        ->whereDate('tc.created_at', $today);
+      // Count tickets created today from tickets table
+      $query = DB::table('tickets as t')
+        ->whereNull('t.deleted_at')
+        ->whereDate('t.created_at', $today);
 
       // Filter logic:
       // - If user has admin roles → show ALL data (overall)
@@ -70,7 +70,17 @@ class DashboardController extends Controller
         !Auth::user()->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty', 'Pengurusan MOF']) &&
         Auth::user()->hasRole('Pegawai Tugasan')
       ) {
-        $query->where('tc.escalate_to', $userId);
+        // Join with latest chronology to get escalate_to
+        $query->join('tickets_chronologies as tc', function ($join) use ($userId) {
+          $join->on('t.id', '=', 'tc.ticket_id')
+            ->where('tc.escalate_to', $userId)
+            ->whereRaw('tc.id = (
+              SELECT MAX(tc2.id)
+              FROM tickets_chronologies tc2
+              WHERE tc2.ticket_id = t.id
+              AND tc2.deleted_at IS NULL
+            )');
+        })->whereNull('tc.deleted_at');
       }
 
       $todayCount = $query->count();
@@ -95,16 +105,26 @@ class DashboardController extends Controller
       $endOfWeek = Carbon::now()->endOfWeek()->subDays(2); // Friday (Sunday minus 2 days)
       $userId = Auth::id();
 
-      // Get completed tickets (status = 6) for this week, grouped by day
-      $query = DB::table('tickets_chronologies as tc')
+      // Get completed tickets (status = 6) for this week, grouped by day from tickets table
+      $query = DB::table('tickets as t')
+        ->join('tickets_chronologies as tc', function ($join) {
+          $join->on('t.id', '=', 'tc.ticket_id')
+            ->whereRaw('tc.id = (
+              SELECT MAX(tc2.id)
+              FROM tickets_chronologies tc2
+              WHERE tc2.ticket_id = t.id
+              AND tc2.deleted_at IS NULL
+            )');
+        })
         ->select(
-          DB::raw('DAYOFWEEK(tc.updated_at) as day_of_week'),
-          DB::raw('DATE(tc.updated_at) as date'),
-          DB::raw('COUNT(*) as count')
+          DB::raw('DAYOFWEEK(t.updated_at) as day_of_week'),
+          DB::raw('DATE(t.updated_at) as date'),
+          DB::raw('COUNT(DISTINCT t.id) as count')
         )
+        ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
         ->where('tc.tick_status', 6) // Completed status
-        ->whereBetween('tc.updated_at', [$startOfWeek, $endOfWeek]);
+        ->whereBetween('t.updated_at', [$startOfWeek, $endOfWeek]);
 
       // Filter logic:
       // - If user has admin roles → show ALL data (overall)
@@ -116,8 +136,8 @@ class DashboardController extends Controller
         $query->where('tc.escalate_to', $userId);
       }
 
-      $weeklyData = $query->groupBy(DB::raw('DATE(tc.updated_at)'), DB::raw('DAYOFWEEK(tc.updated_at)'))
-        ->orderBy(DB::raw('DATE(tc.updated_at)'))
+      $weeklyData = $query->groupBy(DB::raw('DATE(t.updated_at)'), DB::raw('DAYOFWEEK(t.updated_at)'))
+        ->orderBy(DB::raw('DATE(t.updated_at)'))
         ->get();
 
       // Prepare data for Monday to Friday
@@ -290,10 +310,20 @@ class DashboardController extends Controller
     $userId = Auth::id();
 
     try {
-      // Get status counts from ticket_chronologies table
-      $statusQuery = DB::table('tickets_chronologies as tc')
+      // Get status counts from tickets table with latest status
+      $statusQuery = DB::table('tickets as t')
+        ->join('tickets_chronologies as tc', function ($join) {
+          $join->on('t.id', '=', 'tc.ticket_id')
+            ->whereRaw('tc.id = (
+              SELECT MAX(tc2.id)
+              FROM tickets_chronologies tc2
+              WHERE tc2.ticket_id = t.id
+              AND tc2.deleted_at IS NULL
+            )');
+        })
         ->join('ref_ticket_statuses as rts', 'tc.tick_status', '=', 'rts.id')
-        ->select('rts.id', 'rts.st_name', DB::raw('COUNT(tc.id) as count'))
+        ->select('rts.id', 'rts.st_name', DB::raw('COUNT(DISTINCT t.id) as count'))
+        ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
         ->whereNull('rts.deleted_at');
 
@@ -424,23 +454,21 @@ class DashboardController extends Controller
   public function getTotalTickets()
   {
     try {
-      // Get total tickets count from tickets_chronologies table
-      $totalCount = DB::table('tickets_chronologies')
+      // Get total tickets count from tickets table
+      $totalCount = DB::table('tickets')
         ->whereNull('deleted_at')
         ->count();
 
       // Get tickets count by type (Self vs On Behalf)
       $ticketTypes = DB::table('tickets as t')
-        ->join('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
         ->select(
           DB::raw('CASE
             WHEN t.ticket_type = 1 THEN "Tiket Sendiri"
             ELSE "Tiket Bagi Pihak"
           END as type_name'),
-          DB::raw('COUNT(DISTINCT t.id) as count')
+          DB::raw('COUNT(t.id) as count')
         )
         ->whereNull('t.deleted_at')
-        ->whereNull('tc.deleted_at')
         ->groupBy('t.ticket_type')
         ->get();
 
@@ -480,16 +508,16 @@ class DashboardController extends Controller
     $year = $request->get('year', Carbon::now()->year);
 
     try {
-      // Get monthly ticket counts from tickets_chronologies table
-      $monthlyData = DB::table('tickets_chronologies as tc')
+      // Get monthly ticket counts from tickets table
+      $monthlyData = DB::table('tickets as t')
         ->select(
-          DB::raw('MONTH(tc.created_at) as month'),
-          DB::raw('COUNT(tc.id) as count')
+          DB::raw('MONTH(t.created_at) as month'),
+          DB::raw('COUNT(t.id) as count')
         )
-        ->whereNull('tc.deleted_at')
-        ->whereYear('tc.created_at', $year)
-        ->groupBy(DB::raw('MONTH(tc.created_at)'))
-        ->orderBy(DB::raw('MONTH(tc.created_at)'))
+        ->whereNull('t.deleted_at')
+        ->whereYear('t.created_at', $year)
+        ->groupBy(DB::raw('MONTH(t.created_at)'))
+        ->orderBy(DB::raw('MONTH(t.created_at)'))
         ->get();
 
       // Create array for all 12 months with zero count as default
@@ -524,7 +552,7 @@ class DashboardController extends Controller
       }
 
       // Get the oldest and newest years from database
-      $oldestYear = DB::table('tickets_chronologies')
+      $oldestYear = DB::table('tickets')
         ->whereNull('deleted_at')
         ->min(DB::raw('YEAR(created_at)'));
 
@@ -912,8 +940,8 @@ class DashboardController extends Controller
               $class = 'text-warning fw-bold';
               $icon = '<i class="ti ti-bell text-warning me-1"></i>';
             } else {
-              $class = 'text-info';
-              $icon = '<i class="ti ti-bell text-info me-1"></i>';
+              $class = 'text-danger';
+              $icon = '<i class="ti ti-bell text-danger me-1"></i>';
             }
             return $icon . '<span class="' . $class . '">' . $days . ' hari</span>';
           })
@@ -1004,12 +1032,22 @@ class DashboardController extends Controller
       $today = Carbon::today();
       $userId = Auth::id();
 
-      // Count tickets created today from tickets_chronologies
+      // Count tickets created today from tickets table
       // ALWAYS filter by escalate_to (assigned to this user)
-      $todayCount = DB::table('tickets_chronologies as tc')
+      $todayCount = DB::table('tickets as t')
+        ->join('tickets_chronologies as tc', function ($join) use ($userId) {
+          $join->on('t.id', '=', 'tc.ticket_id')
+            ->where('tc.escalate_to', $userId)
+            ->whereRaw('tc.id = (
+              SELECT MAX(tc2.id)
+              FROM tickets_chronologies tc2
+              WHERE tc2.ticket_id = t.id
+              AND tc2.deleted_at IS NULL
+            )');
+        })
+        ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->whereDate('tc.created_at', $today)
-        ->where('tc.escalate_to', $userId)
+        ->whereDate('t.created_at', $today)
         ->count();
 
       return response()->json([
@@ -1036,18 +1074,28 @@ class DashboardController extends Controller
 
       // Get completed tickets (status = 6) for this week, grouped by day
       // ALWAYS filter by escalate_to (assigned to this user)
-      $weeklyData = DB::table('tickets_chronologies as tc')
+      $weeklyData = DB::table('tickets as t')
+        ->join('tickets_chronologies as tc', function ($join) use ($userId) {
+          $join->on('t.id', '=', 'tc.ticket_id')
+            ->where('tc.escalate_to', $userId)
+            ->whereRaw('tc.id = (
+              SELECT MAX(tc2.id)
+              FROM tickets_chronologies tc2
+              WHERE tc2.ticket_id = t.id
+              AND tc2.deleted_at IS NULL
+            )');
+        })
         ->select(
-          DB::raw('DAYOFWEEK(tc.updated_at) as day_of_week'),
-          DB::raw('DATE(tc.updated_at) as date'),
-          DB::raw('COUNT(*) as count')
+          DB::raw('DAYOFWEEK(t.updated_at) as day_of_week'),
+          DB::raw('DATE(t.updated_at) as date'),
+          DB::raw('COUNT(DISTINCT t.id) as count')
         )
+        ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
         ->where('tc.tick_status', 6) // Completed status
-        ->whereBetween('tc.updated_at', [$startOfWeek, $endOfWeek])
-        ->where('tc.escalate_to', $userId)
-        ->groupBy(DB::raw('DATE(tc.updated_at)'), DB::raw('DAYOFWEEK(tc.updated_at)'))
-        ->orderBy(DB::raw('DATE(tc.updated_at)'))
+        ->whereBetween('t.updated_at', [$startOfWeek, $endOfWeek])
+        ->groupBy(DB::raw('DATE(t.updated_at)'), DB::raw('DAYOFWEEK(t.updated_at)'))
+        ->orderBy(DB::raw('DATE(t.updated_at)'))
         ->get();
 
       // Prepare data for Monday to Friday
@@ -1203,14 +1251,24 @@ class DashboardController extends Controller
     $userId = Auth::id();
 
     try {
-      // Get status counts from ticket_chronologies table
+      // Get status counts from tickets table with latest status
       // ALWAYS filter by escalate_to (assigned to this user)
-      $statusQuery = DB::table('tickets_chronologies as tc')
+      $statusQuery = DB::table('tickets as t')
+        ->join('tickets_chronologies as tc', function ($join) use ($userId) {
+          $join->on('t.id', '=', 'tc.ticket_id')
+            ->where('tc.escalate_to', $userId)
+            ->whereRaw('tc.id = (
+              SELECT MAX(tc2.id)
+              FROM tickets_chronologies tc2
+              WHERE tc2.ticket_id = t.id
+              AND tc2.deleted_at IS NULL
+            )');
+        })
         ->join('ref_ticket_statuses as rts', 'tc.tick_status', '=', 'rts.id')
-        ->select('rts.id', 'rts.st_name', DB::raw('COUNT(tc.id) as count'))
+        ->select('rts.id', 'rts.st_name', DB::raw('COUNT(DISTINCT t.id) as count'))
+        ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->whereNull('rts.deleted_at')
-        ->where('tc.escalate_to', $userId);
+        ->whereNull('rts.deleted_at');
 
       $statusCounts = $statusQuery->groupBy('rts.id', 'rts.st_name')
         ->orderBy('rts.id')
@@ -1276,7 +1334,7 @@ class DashboardController extends Controller
               AND tc2.deleted_at IS NULL
             )');
         })
-        ->select('rc.id', DB::raw('COUNT(t.id) as count'))
+        ->select('rc.id', DB::raw('COUNT(DISTINCT t.id) as count'))
         ->whereNull('t.deleted_at')
         ->whereNull('rc.deleted_at')
         ->whereNull('tc.deleted_at')
@@ -1407,8 +1465,8 @@ class DashboardController extends Controller
               $class = 'text-warning fw-bold';
               $icon = '<i class="ti ti-bell text-warning me-1"></i>';
             } else {
-              $class = 'text-info';
-              $icon = '<i class="ti ti-bell text-info me-1"></i>';
+              $class = 'text-danger';
+              $icon = '<i class="ti ti-bell text-danger me-1"></i>';
             }
             return $icon . '<span class="' . $class . '">' . $days . ' hari</span>';
           })
