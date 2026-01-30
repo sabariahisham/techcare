@@ -18,10 +18,11 @@ class StatistikLogAduanController extends Controller
      */
     public function index()
     {
-        // Get available years from tickets_chronologies
-        $years = DB::table('tickets_chronologies')
+        // Get available years from tickets
+        $years = DB::table('tickets')
             ->selectRaw('DISTINCT YEAR(created_at) as year')
             ->whereNotNull('created_at')
+            ->whereNull('deleted_at')
             ->orderBy('year', 'desc')
             ->pluck('year');
 
@@ -46,15 +47,12 @@ class StatistikLogAduanController extends Controller
 
         // Get total complaint counts by month only (not by category)
         $data = DB::table('tickets as t')
-            ->join('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->select(
                 DB::raw('MONTH(t.created_at) as bulan'),
-                DB::raw('COUNT(DISTINCT t.id) as jumlah')
+                DB::raw('COUNT(t.id) as jumlah')
             )
-            ->where('tc.tick_status', 1) // Status = 1 (Logged/Dilog)
             ->whereYear('t.created_at', $year)
             ->whereNull('t.deleted_at')
-            ->whereNull('tc.deleted_at')
             ->groupBy(DB::raw('MONTH(t.created_at)'))
             ->orderBy('bulan')
             ->get();
@@ -122,19 +120,16 @@ class StatistikLogAduanController extends Controller
 
         // Get data grouped by month and category
         $rawData = DB::table('tickets as t')
-            ->join('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
             ->select(
                 DB::raw('MONTH(t.created_at) as bulan'),
                 'rc.id as cat_id',
                 'rc.cat_name',
-                DB::raw('COUNT(DISTINCT t.id) as jumlah')
+                DB::raw('COUNT(t.id) as jumlah')
             )
-            ->where('tc.tick_status', 1)
             ->whereYear('t.created_at', $year)
             ->whereNull('rc.deleted_at')
             ->whereNull('t.deleted_at')
-            ->whereNull('tc.deleted_at')
             ->groupBy(DB::raw('MONTH(t.created_at)'), 'rc.id', 'rc.cat_name')
             ->get();
 
@@ -184,19 +179,16 @@ class StatistikLogAduanController extends Controller
 
         // Get data grouped by month and category
         $rawData = DB::table('tickets as t')
-            ->join('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
             ->select(
                 DB::raw('MONTH(t.created_at) as bulan'),
                 'rc.id as cat_id',
                 'rc.cat_name',
-                DB::raw('COUNT(DISTINCT t.id) as jumlah')
+                DB::raw('COUNT(t.id) as jumlah')
             )
-            ->where('tc.tick_status', 1)
             ->whereYear('t.created_at', $year)
             ->whereNull('rc.deleted_at')
             ->whereNull('t.deleted_at')
-            ->whereNull('tc.deleted_at')
             ->groupBy(DB::raw('MONTH(t.created_at)'), 'rc.id', 'rc.cat_name')
             ->get();
 
@@ -246,19 +238,16 @@ class StatistikLogAduanController extends Controller
 
         // Get data grouped by month and category
         $rawData = DB::table('tickets as t')
-            ->join('tickets_chronologies as tc', 't.id', '=', 'tc.ticket_id')
             ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
             ->select(
                 DB::raw('MONTH(t.created_at) as bulan'),
                 'rc.id as cat_id',
                 'rc.cat_name',
-                DB::raw('COUNT(DISTINCT t.id) as jumlah')
+                DB::raw('COUNT(t.id) as jumlah')
             )
-            ->where('tc.tick_status', 1)
             ->whereYear('t.created_at', $year)
             ->whereNull('rc.deleted_at')
             ->whereNull('t.deleted_at')
-            ->whereNull('tc.deleted_at')
             ->groupBy(DB::raw('MONTH(t.created_at)'), 'rc.id', 'rc.cat_name')
             ->get();
 
