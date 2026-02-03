@@ -26,7 +26,7 @@ $(function () {
           var moduleId = firstRowData.module_id || null;
 
           var moduleActions = '';
-          if (moduleId) {
+          if (moduleId && window.isAdmin) {
             moduleActions = '<div class="float-end">' +
               '<button type="button" class="btn btn-icon btn-text-primary rounded-pill btn-sm edit-module me-1"' +
               ' data-id="' + moduleId + '"' +
@@ -53,18 +53,32 @@ $(function () {
             '</div>';
         }
       },
-      columns: [
-        { data: '' },
-        { data: 'DT_RowIndex', orderable: false, searchable: false },
-        { data: 'name' },
-        { data: 'module' },
-        { data: 'description' },
-        { data: 'assigned_to' },
-        // { data: 'created_date' },
-        { data: 'action' }
-      ],
-      columnDefs: [
+      columns: [{
+          data: ''
+        },
         {
+          data: 'DT_RowIndex',
+          orderable: false,
+          searchable: false
+        },
+        {
+          data: 'name'
+        },
+        {
+          data: 'module'
+        },
+        {
+          data: 'description'
+        },
+        {
+          data: 'assigned_to'
+        },
+        // { data: 'created_date' },
+        {
+          data: 'action'
+        }
+      ],
+      columnDefs: [{
           // For Responsive
           className: 'control',
           orderable: false,
@@ -135,9 +149,11 @@ $(function () {
           className: 'text-center'
         }
       ],
-      order: [[3, 'asc'], [2, 'asc']], // Order by module first, then by name
-      dom:
-        '<"row"' +
+      order: [
+        [3, 'asc'],
+        [2, 'asc']
+      ], // Order by module first, then by name
+      dom: '<"row"' +
         '<"col-sm-12 col-md-3" l>' +
         '<"col-sm-12 col-md-9"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-md-end justify-content-center flex-wrap"<"me-4 mt-n6 mt-md-0"f>B>>' +
         '>t' +
@@ -154,9 +170,8 @@ $(function () {
           previous: '<i class="bx bx-chevron-left bx-18px"></i>'
         }
       },
-      // Buttons with Dropdown
-      buttons: [
-        {
+      // Buttons with Dropdown - Only show for Administrator
+      buttons: window.isAdmin ? [{
           text: '<i class="bx bx-cube bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Modul</span>',
           className: 'add-module btn btn-success mb-6 mb-md-0 me-3',
           attr: {
@@ -178,7 +193,7 @@ $(function () {
             $(node).removeClass('btn-secondary');
           }
         }
-      ],
+      ] : [],
       // For responsive popup
       responsive: {
         details: {
@@ -192,20 +207,21 @@ $(function () {
           renderer: function (api, rowIdx, columns) {
             var data = $.map(columns, function (col, i) {
               return col.title !== '' // ? Do not show row in modal popup if title is blank (for check box)
-                ? '<tr data-dt-row="' +
-                    col.rowIndex +
-                    '" data-dt-column="' +
-                    col.columnIndex +
-                    '">' +
-                    '<td>' +
-                    col.title +
-                    ':' +
-                    '</td> ' +
-                    '<td>' +
-                    col.data +
-                    '</td>' +
-                    '</tr>'
-                : '';
+                ?
+                '<tr data-dt-row="' +
+                col.rowIndex +
+                '" data-dt-column="' +
+                col.columnIndex +
+                '">' +
+                '<td>' +
+                col.title +
+                ':' +
+                '</td> ' +
+                '<td>' +
+                col.data +
+                '</td>' +
+                '</tr>' :
+                '';
             }).join('');
 
             return data ? $('<table class="table"/><tbody />').append(data) : false;
@@ -216,7 +232,7 @@ $(function () {
         console.log('DataTable initialized');
 
         // Check if buttons exist after initialization
-        setTimeout(function() {
+        setTimeout(function () {
           const editButtons = $('.edit-permission');
           const deleteButtons = $('.delete-permission');
           console.log('Edit buttons found:', editButtons.length);
@@ -236,8 +252,8 @@ $(function () {
           .every(function () {
             var column = this;
             var select = $(
-              '<select id="UserRole" class="form-select text-capitalize"><option value=""> Select Role </option></select>'
-            )
+                '<select id="UserRole" class="form-select text-capitalize"><option value=""> Select Role </option></select>'
+              )
               .appendTo('.user_role')
               .on('change', function () {
                 var val = $.fn.dataTable.util.escapeRegex($(this).val());
@@ -248,14 +264,14 @@ $(function () {
             var roles = new Set();
             column.data().each(function (d, j) {
               if (d && Array.isArray(d)) {
-                d.forEach(function(role) {
+                d.forEach(function (role) {
                   roles.add(role);
                 });
               }
             });
 
             // Add roles to select
-            Array.from(roles).sort().forEach(function(role) {
+            Array.from(roles).sort().forEach(function (role) {
               select.append('<option value="' + role + '" class="text-capitalize">' + role + '</option>');
             });
           });
@@ -271,7 +287,7 @@ $(function () {
   }, 300);
 
   // Event delegation for module edit buttons
-  $(document).on('click', '.edit-module', function(e) {
+  $(document).on('click', '.edit-module', function (e) {
     e.preventDefault();
     console.log('Edit module button clicked');
 
@@ -289,7 +305,7 @@ $(function () {
     $.ajax({
       url: '/modules/' + moduleId + '/edit',
       type: 'GET',
-      success: function(response) {
+      success: function (response) {
         console.log('Edit response:', response);
 
         if (response.success && response.data) {
@@ -303,7 +319,7 @@ $(function () {
           toastr.error('Gagal mengambil data modul', 'Ralat!');
         }
       },
-      error: function(xhr, status, error) {
+      error: function (xhr, status, error) {
         console.error('Edit fetch error:', xhr.responseJSON);
         toastr.error('Gagal mengambil data modul', 'Ralat!');
       }
@@ -311,7 +327,7 @@ $(function () {
   });
 
   // Event delegation for module delete buttons
-  $(document).on('click', '.delete-module', function(e) {
+  $(document).on('click', '.delete-module', function (e) {
     e.preventDefault();
     console.log('Delete module button clicked');
 
@@ -352,7 +368,7 @@ $(function () {
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
-      success: function(response) {
+      success: function (response) {
         console.log('Delete response:', response);
 
         if (response.status === 'success' || response.success) {
@@ -374,7 +390,7 @@ $(function () {
           );
         }
       },
-      error: function(xhr, status, error) {
+      error: function (xhr, status, error) {
         console.error('Delete error:', xhr.responseJSON);
 
         var errorMessage = 'Terdapat masalah semasa memadamkan modul.';

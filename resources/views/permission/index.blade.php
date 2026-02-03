@@ -26,6 +26,9 @@
 @endsection
 
 @section('page-script')
+<script>
+  window.isAdmin = {{ auth()->user()->hasRole('Administrator') ? 'true' : 'false' }};
+</script>
 @vite([
   'resources/assets/js/permissions/app-permission-list.js',
   'resources/assets/js/permissions/app-permission-add.js',
