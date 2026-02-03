@@ -144,7 +144,7 @@
           <th>Bil.</th>
           <th>Nama Kategori</th>
           <th>Nama Sub Kategori</th>
-          <th>Tahap Tugasan</th>
+          <th>Level Tugasan</th>
           <th>Pegawai Tugasan</th>
           <th>Tindakan</th>
         </tr>
@@ -179,18 +179,18 @@
         </div>
         <div class="mb-6">
           <label class="form-label" for="add-officer-level">
-            Tahap Tugasan <span class="text-danger">*</span>
+            Level Tugasan <span class="text-danger">*</span>
             <small class="text-muted">
-              <span class="badge bg-label-success me-1">Tahap 1</span>
-              <span class="badge bg-label-warning me-1">Tahap 2</span>
-              <span class="badge bg-label-danger">Tahap 3</span>
+              <span class="badge bg-label-success me-1">Level 1</span>
+              <span class="badge bg-label-warning me-1">Level 2</span>
+              <span class="badge bg-label-danger">Level 3</span>
             </small>
           </label>
           <select class="form-select" id="add-officer-level" name="level_tugasan" required>
-            <option value="">Pilih Tahap Tugasan</option>
-            <option value="1">Tahap 1 </option>
-            <option value="2">Tahap 2 </option>
-            <option value="3">Tahap 3 </option>
+            <option value="">Pilih Level Tugasan</option>
+            <option value="1">Level 1 </option>
+            <option value="2">Level 2 </option>
+            <option value="3">Level 3 </option>
           </select>
         </div>
         <div class="mb-6">
@@ -235,18 +235,18 @@
       </div>
       <div class="mb-6">
         <label class="form-label" for="edit-officer-level">
-          Tahap Tugasan <span class="text-danger">*</span>
+          Level Tugasan <span class="text-danger">*</span>
           <small class="text-muted">
-            <span class="badge bg-label-success me-1">Tahap 1</span>
-            <span class="badge bg-label-warning me-1">Tahap 2</span>
-            <span class="badge bg-label-danger">Tahap 3</span>
+            <span class="badge bg-label-success me-1">Level 1</span>
+            <span class="badge bg-label-warning me-1">Level 2</span>
+            <span class="badge bg-label-danger">Level 3</span>
           </small>
         </label>
         <select class="form-select" id="edit-officer-level" name="level_tugasan" required>
-          <option value="">Pilih Tahap Tugasan</option>
-          <option value="1">Tahap 1 </option>
-          <option value="2">Tahap 2 </option>
-          <option value="3">Tahap 3 </option>
+          <option value="">Pilih Level Tugasan</option>
+          <option value="1">Level 1 </option>
+          <option value="2">Level 2 </option>
+          <option value="3">Level 3 </option>
         </select>
       </div>
       <div class="mb-6">
