@@ -1,6 +1,6 @@
 @extends('layouts/layoutMaster')
 
-@section('title', 'Senarai Tahap Pegawai Tugasan &  Tahap Keterukan')
+@section('title', 'Senarai Level Pegawai Tugasan &  Level Keterukan')
 
 @section('vendor-style')
 @vite([
@@ -118,7 +118,7 @@
           <th>Bil.</th>
           {{-- <th>Kategori</th> --}}
           <th>Sub Kategori</th>
-          <th>Tahap Pegawai Tugasan</th>
+          <th>Level Pegawai Tugasan</th>
           <th>Severity</th>
           <th>Hari</th>
           <th>Tindakan</th>
@@ -153,9 +153,9 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label" for="add-sla-level">Tahap Pegawai Tugasan</label>
+          <label class="form-label" for="add-sla-level">Level Pegawai Tugasan</label>
           <select class="form-select" id="add-sla-level" name="sla_level" required>
-            <option value="">Pilih Tahap Pegawai Tugasan</option>
+            <option value="">Pilih Level Pegawai Tugasan</option>
             <option value="1">1</option>
             <option value="2">2</option>
           </select>
@@ -216,9 +216,9 @@
         </select>
       </div>
       <div class="mb-6">
-        <label class="form-label" for="edit_sla_level">Tahap Pegawai Tugasan</label>
+        <label class="form-label" for="edit_sla_level">Level Pegawai Tugasan</label>
         <select class="form-select" id="edit_sla_level" name="sla_level" required>
-          <option value="">Pilih Tahap Pegawai Tugasan</option>
+          <option value="">Pilih Level Pegawai Tugasan</option>
           <option value="1">1</option>
           <option value="2">2</option>
         </select>
