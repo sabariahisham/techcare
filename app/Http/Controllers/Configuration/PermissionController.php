@@ -86,6 +86,11 @@ class PermissionController extends Controller
                 return $permission->created_at->format('d M Y');
             })
             ->addColumn('action', function ($permission) {
+                // Only show edit/delete buttons for Administrator role
+                if (!auth()->user()->hasRole('Administrator')) {
+                    return '<span class="text-muted">-</span>';
+                }
+
                 $editBtn = '<button type="button" class="btn btn-icon btn-text-secondary rounded-pill btn-sm edit-permission"
                            data-id="' . e($permission->id) . '"
                            data-bs-toggle="tooltip"
