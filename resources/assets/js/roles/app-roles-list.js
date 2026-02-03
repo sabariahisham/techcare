@@ -16,31 +16,43 @@ $(function () {
       ajax: '/admin/roles/data', // Point to your backend route
       serverSide: false, // Changed to false since backend doesn't support server-side processing
       processing: true,
-      columns: [
-        { data: '' },
-        { data: null },
-        { data: 'name' },
-        { data: 'user_names' },
-        { data: 'module_names' },
-        { data: 'users_count' },
+      columns: [{
+          data: ''
+        },
         {
-            data: null,
-            render: function (data, type, row) {
-                return `
+          data: null
+        },
+        {
+          data: 'name'
+        },
+        {
+          data: 'user_names'
+        },
+        {
+          data: 'module_names'
+        },
+        {
+          data: 'users_count'
+        },
+        {
+          data: null,
+          render: function (data, type, row) {
+            return `
                     <div class="d-flex justify-content-center gap-1">
                         <button class="btn btn-sm btn-icon edit-role" data-id="${row.id}" data-name="${row.name}" title="Kemaskini Peranan">
                             <i class="bx bx-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-icon delete-record" data-id="${row.id}" title="Padam Peranan">
+                        <button class="btn btn-sm btn-icon delete-record text-danger" data-id="${row.id}" title="Padam Peranan">
                             <i class="bx bx-trash"></i>
                         </button>
                     </div>`;
-            }
+          }
         }
       ],
-      order: [[2, 'asc']],
-      dom:
-        '<"row"' +
+      order: [
+        [2, 'asc']
+      ],
+      dom: '<"row"' +
         '<"col-sm-12 col-md-3" l>' +
         '<"col-sm-12 col-md-9"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-md-end justify-content-center flex-wrap"<"me-4 mt-n6 mt-md-0"f>B>>' +
         '>t' +
@@ -58,21 +70,18 @@ $(function () {
         }
       },
       // Buttons with Dropdown
-      buttons: [
-        {
-          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Peranan</span>',
-          className: 'add-new btn btn-primary mb-6 mb-md-0',
-          attr: {
-            'data-bs-toggle': 'modal',
-            'data-bs-target': '#modalAddRole'
-          },
-          init: function (api, node, config) {
-            $(node).removeClass('btn-secondary');
-          }
+      buttons: [{
+        text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Peranan</span>',
+        className: 'add-new btn btn-primary mb-6 mb-md-0',
+        attr: {
+          'data-bs-toggle': 'modal',
+          'data-bs-target': '#modalAddRole'
+        },
+        init: function (api, node, config) {
+          $(node).removeClass('btn-secondary');
         }
-      ],
-      columnDefs: [
-        {
+      }],
+      columnDefs: [{
           // For Responsive
           className: 'control',
           orderable: false,
@@ -104,7 +113,7 @@ $(function () {
           render: function (data, type, full, meta) {
             if (full['user_names'] && Array.isArray(full['user_names']) && full['user_names'].length > 0) {
               // Display user names as badges
-              let userBadges = full['user_names'].map(function(userName) {
+              let userBadges = full['user_names'].map(function (userName) {
                 return '<span class="badge bg-label-primary me-1 mb-1">' + userName + '</span>';
               }).join('');
 

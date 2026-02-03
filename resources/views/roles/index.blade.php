@@ -260,12 +260,12 @@
           <hr class="mb-3">
 
           <div class="mb-4">
-            <h6>Role Permissions</h6>
+            <h6>Capaian Peranan</h6>
             <!-- Select All Permissions -->
             <div class="form-check mb-3">
               <input class="form-check-input" type="checkbox" id="editSelectAllPermissions">
               <label class="form-check-label fw-bold text-primary" for="editSelectAllPermissions">
-                Select All Permissions
+                Pilih semua capaian
               </label>
             </div>
             <hr class="mb-3">
