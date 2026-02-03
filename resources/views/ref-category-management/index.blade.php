@@ -152,7 +152,7 @@
    <!-- Offcanvas to edit category -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditCategory" aria-labelledby="offcanvasEditCategoryLabel">
     <div class="offcanvas-header border-bottom">
-      <h5 id="offcanvasEditCategoryLabel" class="offcanvas-title">Edit Kategori</h5>
+      <h5 id="offcanvasEditCategoryLabel" class="offcanvas-title">Kemaskini Kategori</h5>
       <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
