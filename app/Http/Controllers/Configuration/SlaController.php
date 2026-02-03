@@ -47,7 +47,7 @@ class SlaController extends Controller
             ->editColumn('sla_level', function ($sla) {
                 $level = $sla->sla_level;
                 $badgeClass = '';
-                $badgeText = 'Tahap ' . $level;
+                $badgeText = 'Level ' . $level;
 
                 switch($level) {
                     case '1':
