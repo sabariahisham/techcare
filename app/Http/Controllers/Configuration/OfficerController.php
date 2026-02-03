@@ -80,19 +80,19 @@ class OfficerController extends Controller
                 switch ($level) {
                     case 1:
                         $badgeClass = 'bg-label-success';
-                        $levelText = 'Tahap 1';
+                        $levelText = 'Level 1';
                         break;
                     case 2:
                         $badgeClass = 'bg-label-warning';
-                        $levelText = 'Tahap 2';
+                        $levelText = 'Level 2';
                         break;
                     case 3:
                         $badgeClass = 'bg-label-danger';
-                        $levelText = 'Tahap 3';
+                        $levelText = 'Level 3';
                         break;
                     default:
                         $badgeClass = 'bg-label-secondary';
-                        $levelText = 'Tahap ' . $level;
+                        $levelText = 'Level ' . $level;
                         break;
                 }
 

@@ -53,7 +53,29 @@ $(function () {
         },
         {
           data: 'level_tugasan',
-          name: 'level_tugasan'
+          name: 'level_tugasan',
+          render: function (data, type, row) {
+            var badgeClass = '';
+            var levelText = '';
+            switch (parseInt(data)) {
+              case 1:
+                badgeClass = 'bg-label-success';
+                levelText = 'Level 1';
+                break;
+              case 2:
+                badgeClass = 'bg-label-warning';
+                levelText = 'Level 2';
+                break;
+              case 3:
+                badgeClass = 'bg-label-danger';
+                levelText = 'Level 3';
+                break;
+              default:
+                badgeClass = 'bg-label-secondary';
+                levelText = data;
+            }
+            return '<span class="badge ' + badgeClass + '">' + levelText + '</span>';
+          }
         },
         {
           data: 'user_name',
