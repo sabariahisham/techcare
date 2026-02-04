@@ -3,11 +3,11 @@
   return [
     "creatorName" => "ThemeSelection",
     "creatorUrl" => "https://themeselection.com",
-    "templateName" => "Sistem Helpdesk Perbendaharaan",
+    "templateName" => "Sistem TechCare Perbendaharaan",
     "templateSuffix" => "",
     "templateVersion" => "3.0.0",
     "templateFree" => false,
-    "templateDescription" => "Most Powerful & Comprehensive Bootstrap 5 HTML Admin Dashboard Template built for developers!",
+    "templateDescription" => "",
     "templateKeyword" => "dashboard, bootstrap 5 dashboard, bootstrap 5 design, bootstrap 5",
     "licenseUrl" => "https://themeselection.com/license/",
     "livePreview" => "https://themeselection.com/item/sneat-bootstrap-laravel-admin-template/",
