@@ -254,7 +254,7 @@
                 <!-- Keterangan -->
                 <div class="mb-3">
                     <label class="form-label">Keterangan Aduan</label>
-                    <textarea name="tick_desc" class="form-control" rows="4" required></textarea>
+                    <textarea name="tick_desc" id="tick_desc" class="form-control" rows="4" required></textarea>
                 </div>
 
                 <!-- Lampiran -->
@@ -358,3 +358,32 @@
         display: block !important;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tickDescTextarea = document.getElementById('tick_desc');
+
+        if (tickDescTextarea) {
+            tickDescTextarea.addEventListener('input', function(e) {
+                let value = this.value;
+                let cursorPos = this.selectionStart;
+
+                // Capitalize first letter
+                if (value.length > 0) {
+                    value = value.charAt(0).toUpperCase() + value.slice(1);
+                }
+
+                // Capitalize letter after period followed by space
+                value = value.replace(/\.\s+([a-z])/g, function(match) {
+                    return match.toUpperCase();
+                });
+
+                // Only update if value changed to avoid cursor jumping
+                if (this.value !== value) {
+                    this.value = value;
+                    this.setSelectionRange(cursorPos, cursorPos);
+                }
+            });
+        }
+    });
+</script>

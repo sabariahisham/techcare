@@ -23,9 +23,12 @@ class TicketCommentController extends Controller
   /**
    * Store a new comment for a ticket
    */
-  public function store(StoreCommentRequest $request, Ticket $ticket)
+  public function store(StoreCommentRequest $request, $uuid)
   {
     try {
+      // Find the ticket by ID
+      $ticket = Ticket::findOrFail($uuid);
+
       TicketComment::create([
         'user_id' => Auth::id(),
         'ticket_id' => $ticket->id,
@@ -38,7 +41,7 @@ class TicketCommentController extends Controller
     } catch (\Exception $e) {
       Log::error('Error creating comment', [
         'error' => $e->getMessage(),
-        'ticket_id' => $ticket->id,
+        'ticket_id' => $uuid ?? null,
         'user_id' => Auth::id(),
       ]);
 

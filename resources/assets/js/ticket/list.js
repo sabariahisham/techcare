@@ -251,7 +251,25 @@ $(function () {
 
   // Handle delete ticket
   $(document).on('click', '.delete-record', function () {
-    var ticketUuid = $(this).data('uuid');
+    // Try multiple ways to get UUID
+    var ticketUuid = $(this).attr('data-id') || $(this).attr('data-ticket-uuid') || $(this).data('id');
+
+    // Debug log to verify UUID
+    console.log('Delete button clicked');
+    console.log('data-id:', $(this).attr('data-id'));
+    console.log('data-ticket-uuid:', $(this).attr('data-ticket-uuid'));
+    console.log('Final UUID:', ticketUuid);
+    console.log('Button HTML:', this.outerHTML);
+
+    if (!ticketUuid || ticketUuid === 'undefined') {
+      console.error('No UUID found for delete operation');
+      Swal.fire({
+        title: 'Ralat!',
+        text: 'UUID tiket tidak dijumpai. Sila cuba lagi.',
+        icon: 'error'
+      });
+      return;
+    }
 
     Swal.fire({
       title: 'Adakah anda pasti?',
@@ -276,6 +294,9 @@ $(function () {
             Swal.showLoading();
           }
         });
+
+        // Debug log before AJAX call
+        console.log('Sending DELETE request to:', '/tickets/' + ticketUuid);
 
         $.ajax({
           url: '/tickets/' + ticketUuid,
