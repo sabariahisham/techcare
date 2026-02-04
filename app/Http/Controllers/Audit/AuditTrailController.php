@@ -47,7 +47,9 @@ class AuditTrailController extends Controller
             ->whereIn('auditable_type', [
                 'App\\Models\\Ticket',
                 'App\\Models\\TicketChronology', 
-                'App\\Models\\KnowledgeBase'
+                'App\\Models\\KnowledgeBase',
+                'App\\Models\\RefCategory',
+                'App\\Models\\RefSubCategory',
             ])
             ->orderBy('created_at', 'desc');
 
@@ -64,7 +66,9 @@ class AuditTrailController extends Controller
             $modelMap = [
                 'Ticket' => 'App\\Models\\Ticket',
                 'TicketChronology' => 'App\\Models\\TicketChronology',
-                'KnowledgeBase' => 'App\\Models\\KnowledgeBase'
+                'KnowledgeBase' => 'App\\Models\\KnowledgeBase',
+                'RefCategory' => 'App\\Models\\RefCategory',
+                'RefSubCategory' => 'App\\Models\\RefSubCategory',
             ];
             
             if (isset($modelMap[$request->model])) {
@@ -94,6 +98,12 @@ class AuditTrailController extends Controller
                         break;
                     case 'KnowledgeBase':
                         $badgeClass = 'model-knowledgebase';
+                        break;
+                    case 'RefCategory':
+                        $badgeClass = 'model-refcategory';
+                        break;
+                    case 'RefSubCategory':
+                        $badgeClass = 'model-refsubcategory';
                         break;
                 }
                 return '<span class="badge ' . $badgeClass . '">' . $modelName . '</span>';
