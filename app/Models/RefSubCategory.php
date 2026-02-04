@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class RefSubCategory extends Model
+class RefSubCategory extends Model implements Auditable
 {
     use HasFactory, SoftDeletes;
+    use \OwenIt\Auditing\Auditable;
 
     protected $table = 'ref_sub_categories';
 
@@ -21,6 +23,13 @@ class RefSubCategory extends Model
         'deleted_by',
     ];
 
+    /**
+     * Generate audit tags.
+     */
+    public function generateTags(): array
+    {
+        return ['ref_sub_categories'];
+    }
     public function category()
     {
         return $this->belongsTo(RefCategory::class, 'cat_id');

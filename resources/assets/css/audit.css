@@ -1,7 +1,7 @@
 /* Audit Trail CSS */
 /* Model Color Coding */
 .model-ticket { 
-    background-color: #28a745 !important; 
+    background-color: #011406 !important; 
     color: white !important; 
     border-radius: 4px;
     padding: 3px 8px;
@@ -20,6 +20,23 @@
 
 .model-knowledgebase { 
     background-color: #fd7e14 !important; 
+    color: white !important; 
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.model-refcategory { 
+    background-color: #c03fb5 !important; 
+    color: white !important; 
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.model-refsubcategory { 
+    background-color: #20c997 !important; 
     color: white !important; 
     border-radius: 4px;
     padding: 3px 8px;
