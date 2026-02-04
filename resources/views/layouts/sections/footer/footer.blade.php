@@ -7,7 +7,7 @@ $containerFooter = (isset($configData['contentLayout']) && $configData['contentL
   <div class="{{ $containerFooter }}">
     <div class="footer-container d-flex align-items-center justify-content-between py-4 flex-md-row flex-column">
       <div class="text-body">
-       <span style="color: white;">© <script>document.write(new Date().getFullYear())</script> Sistem Meja Bantuan Perbendaharaan </span> 
+       <span style="color: white;">© <script>document.write(new Date().getFullYear())</script> Sistem TechCare MOF </span> 
       </div>
       <div class="d-none d-lg-inline-block">
         {{-- <a href="{{ config('variables.licenseUrl') ? config('variables.licenseUrl') : '#' }}" class="footer-link me-4" target="_blank">License</a>
