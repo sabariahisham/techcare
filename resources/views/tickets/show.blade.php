@@ -373,17 +373,43 @@
                 ) {
                     $canSeeTindakanPegawai = true;
                 }
+
+                // Check if current user already submitted update for this status
+                // If they did, show read-only view. If not (newly assigned), show editable form
+                $isReadOnlyView = false;
+                $lastChronologyUpdate = null;
+
+                if (auth()->user()->hasRole('Pegawai Tugasan')) {
+                    // Get the latest chronology entry for current status
+                    $lastChronologyUpdate = $ticket
+                        ->chronologies()
+                        ->where('tick_status', $ticket->tick_status)
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+
+                    // If current user is the one who made the last update (frm_user_id), show read-only
+                    if ($lastChronologyUpdate && $lastChronologyUpdate->frm_user_id == auth()->user()->id) {
+                        $isReadOnlyView = true;
+                    }
+                }
             @endphp
 
             @if ($canSeeTindakanPegawai)
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bx bx-cog me-2"></i>Maklumat Tindakan Pegawai
+                <div class="card mb-0">
+                    <div class="card-header {{ $isReadOnlyView ? 'bg-label-secondary' : '' }} mb-4">
+                        <h5 class="card-title mb-1">
+                            <i class="bx {{ $isReadOnlyView ? 'bx-info-circle' : 'bx-cog' }} me-2"></i>
+                            {{ $isReadOnlyView ? 'Maklumat Tindakan (Telah Dihantar)' : 'Maklumat Tindakan Pegawai' }}
                         </h5>
+                        @if ($isReadOnlyView)
+                            <small class="text-muted d-block mb-0">
+                                <i class="bx bx-lock-alt me-0"></i>Anda telah menghantar tindakan untuk tiket ini. Sila
+                                tunggu pegawai lain untuk tindakan seterusnya.
+                            </small>
+                        @endif
                     </div>
-                    <div class="card-body">
-                        <form id="updateTicketForm" action="{{ route('ticket-assignments.update', $ticket) }}"
+                    <div class="card-body mt-3">
+                        <form id="updateTicketForm" action="{{ route('ticket-assignments.update', $ticket->uuid) }}"
                             method="POST">
                             @csrf
                             @method('PUT')
@@ -392,7 +418,8 @@
                                     <h6 class="mb-0">Status Tiket</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    <select class="form-select" name="tick_status" id="tick_status" required>
+                                    <select class="form-select" name="tick_status" id="tick_status" required
+                                        {{ $isReadOnlyView ? 'disabled' : '' }}>
                                         <option value="">Pilih Status</option>
                                         @foreach ($allStatuses as $status)
                                             <option value="{{ $status->id }}"
@@ -408,7 +435,8 @@
                                     <h6 class="mb-0">Kategori</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    <select class="form-select" name="cat_id" id="cat_id">
+                                    <select class="form-select" name="cat_id" id="cat_id"
+                                        {{ $isReadOnlyView ? 'disabled' : '' }}>
                                         <option value="">Pilih Kategori</option>
                                         @foreach ($allCategories as $category)
                                             <option value="{{ $category->id }}"
@@ -424,7 +452,8 @@
                                     <h6 class="mb-0">Sub Kategori</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    <select class="form-select" name="subcat_id" id="subcat_id">
+                                    <select class="form-select" name="subcat_id" id="subcat_id"
+                                        {{ $isReadOnlyView ? 'disabled' : '' }}>
                                         <option value="">Pilih Sub Kategori</option>
                                         @foreach ($allSubCategories as $subCategory)
                                             <option value="{{ $subCategory->id }}"
@@ -441,15 +470,42 @@
                                     <h6 class="mb-0">Tahap Severity</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    <select class="form-select" name="sla_severity" id="sla_severity">
-                                        <option value="">Pilih Tahap Severity</option>
-                                        <option value="High">High</option>
-                                        <option value="Medium">Medium</option>
-                                        <option value="Low">Low</option>
-                                    </select>
+                                    @if ($isReadOnlyView && $lastChronologyUpdate)
+                                        {{-- Read-only view: Display severity level --}}
+                                        @php
+                                            $severityValue = $lastChronologyUpdate->sla_severity ?? '-';
+                                            $severityBadgeClass = 'secondary';
+                                            if ($severityValue === 'High') {
+                                                $severityBadgeClass = 'danger';
+                                            } elseif ($severityValue === 'Medium') {
+                                                $severityBadgeClass = 'warning';
+                                            } elseif ($severityValue === 'Low') {
+                                                $severityBadgeClass = 'success';
+                                            }
+                                        @endphp
+                                        <div class="alert alert-{{ $severityBadgeClass }} mb-0">
+                                            <i class="bx bx-error-circle me-1"></i>
+                                            <strong>{{ $severityValue }}</strong>
+                                        </div>
+                                    @else
+                                        {{-- Editable view: Show dropdown with pre-selected value --}}
+                                        @php
+                                            // Get current severity from last chronology or ticket
+                                            $currentSeverity = $lastChronologyUpdate->sla_severity ?? null;
+                                        @endphp
+                                        <select class="form-select" name="sla_severity" id="sla_severity">
+                                            <option value="">Pilih Tahap Severity</option>
+                                            <option value="High" {{ $currentSeverity === 'High' ? 'selected' : '' }}>
+                                                High</option>
+                                            <option value="Medium" {{ $currentSeverity === 'Medium' ? 'selected' : '' }}>
+                                                Medium</option>
+                                            <option value="Low" {{ $currentSeverity === 'Low' ? 'selected' : '' }}>Low
+                                            </option>
+                                        </select>
 
-                                    <small class="text-muted d-block mt-1">Tahap severity akan dipaparkan berdasarkan
-                                        kategori dan sub kategori yang dipilih.</small>
+                                        <small class="text-muted d-block mt-1">Tahap severity akan dipaparkan berdasarkan
+                                            kategori dan sub kategori yang dipilih.</small>
+                                    @endif
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -457,21 +513,45 @@
                                     <h6 class="mb-0">Pegawai Tugasan</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    <select class="form-select" name="assigned_officers[]" id="assigned_officers"
-                                        multiple>
+                                    @if ($isReadOnlyView)
+                                        {{-- Read-only view: Display assigned officers --}}
                                         @php
-                                            // Get currently assigned officers from latest chronologies
-                                            $assignedOfficerIds = $ticket
+                                            $displayOfficers = $ticket
                                                 ->chronologies()
                                                 ->whereNotNull('escalate_to')
                                                 ->where('tick_status', $ticket->tick_status)
-                                                ->latest()
-                                                ->pluck('escalate_to')
+                                                ->with('escalatedTo')
+                                                ->get()
+                                                ->pluck('escalatedTo.nama')
+                                                ->filter()
                                                 ->unique()
-                                                ->toArray();
+                                                ->values();
+                                        @endphp
+                                        <div class="alert alert-secondary mb-0">
+                                            <i class="bx bx-user-check me-1"></i>
+                                            @if ($displayOfficers->count() > 0)
+                                                {{ $displayOfficers->implode(', ') }}
+                                            @else
+                                                Tiada pegawai ditugaskan
+                                            @endif
+                                        </div>
+                                    @else
+                                        {{-- Editable view: Show multi-select dropdown --}}
+                                        <select class="form-select" name="assigned_officers[]" id="assigned_officers"
+                                            multiple>
+                                            @php
+                                                // Get currently assigned officers from latest chronologies
+                                                $assignedOfficerIds = $ticket
+                                                    ->chronologies()
+                                                    ->whereNotNull('escalate_to')
+                                                    ->where('tick_status', $ticket->tick_status)
+                                                    ->latest()
+                                                    ->pluck('escalate_to')
+                                                    ->unique()
+                                                    ->toArray();
 
-                                            // Keep original assigned officers for dropdown selection
-                                            // Don't add current user as fallback
+                                                // Keep original assigned officers for dropdown selection
+                                                // Don't add current user as fallback
 
 // Get currently assigned officers and their levels
 $currentAssignedOfficerData = \Illuminate\Support\Facades\DB::table(
@@ -516,16 +596,17 @@ if ($showLevelTugasan !== null) {
 
 $filteredOfficers = $officersQuery
     ->select('users.id', 'users.nama', 'users.email')
-                                                ->get();
-                                        @endphp
-                                        @foreach ($filteredOfficers as $officer)
-                                            <option value="{{ $officer->id }}"
-                                                data-current-user="{{ $officer->id === auth()->user()->id ? 'true' : 'false' }}"
-                                                {{ in_array($officer->id, $assignedOfficerIds) ? 'selected' : '' }}>
-                                                {{ $officer->nama }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                                    ->get();
+                                            @endphp
+                                            @foreach ($filteredOfficers as $officer)
+                                                <option value="{{ $officer->id }}"
+                                                    data-current-user="{{ $officer->id === auth()->user()->id ? 'true' : 'false' }}"
+                                                    {{ in_array($officer->id, $assignedOfficerIds) ? 'selected' : '' }}>
+                                                    {{ $officer->nama }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    @endif
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -533,8 +614,17 @@ $filteredOfficers = $officersQuery
                                     <h6 class="mb-0">Tarikh Tindakan</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
-                                    <input type="datetime-local" class="form-control" name="action_date"
-                                        id="action_date" value="{{ now()->format('Y-m-d\TH:i') }}" />
+                                    @if ($isReadOnlyView && $lastChronologyUpdate)
+                                        {{-- Read-only view: Display submitted date --}}
+                                        <div class="alert alert-secondary mb-0">
+                                            <i class="bx bx-calendar me-1"></i>
+                                            {{ \Carbon\Carbon::parse($lastChronologyUpdate->created_at)->format('d/m/Y, H:i') }}
+                                        </div>
+                                    @else
+                                        {{-- Editable view: Show datetime input --}}
+                                        <input type="datetime-local" class="form-control" name="action_date"
+                                            id="action_date" value="{{ now()->format('Y-m-d\TH:i') }}" />
+                                    @endif
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -543,28 +633,18 @@ $filteredOfficers = $officersQuery
                                 </div>
                                 <div class="col-sm-9 text-secondary">
                                     @php
-                                        // Get currently assigned officers from latest chronologies
-                                        $currentAssignedOfficerIds = $ticket
+                                        // Get ACTUAL assigned officers from latest chronologies for current status
+                                        $assignedOfficerNames = $ticket
                                             ->chronologies()
                                             ->whereNotNull('escalate_to')
                                             ->where('tick_status', $ticket->tick_status)
-                                            ->latest()
-                                            ->pluck('escalate_to')
+                                            ->with('escalatedTo')
+                                            ->get()
+                                            ->pluck('escalatedTo.nama')
+                                            ->filter()
                                             ->unique()
+                                            ->values()
                                             ->toArray();
-
-                                        // Only show actually assigned officers from database, no fallback to current user
-                                        $assignedOfficerNames = [];
-                                        if (!empty($currentAssignedOfficerIds)) {
-                                            // Get assigned officer names directly from officers table joined with users
-                                            $assignedOfficerNames = \Illuminate\Support\Facades\DB::table('officers')
-                                                ->join('users', 'officers.user_id', '=', 'users.id')
-                                                ->whereIn('officers.user_id', $currentAssignedOfficerIds)
-                                                ->whereNull('officers.deleted_at')
-                                                ->pluck('users.nama')
-                                                ->unique()
-                                                ->toArray();
-                                        }
 
                                         // Display assigned officers or empty if none assigned
                                         $actionByText = !empty($assignedOfficerNames)
@@ -576,31 +656,35 @@ $filteredOfficers = $officersQuery
                                         value="{{ auth()->user()->id }}" />
                                 </div>
                             </div>
-                            <div class="row mb-3">
-                                <div class="col-sm-3">
-                                    <h6 class="mb-0">Catatan</h6>
+                            @if (!$isReadOnlyView)
+                                <div class="row mb-3">
+                                    <div class="col-sm-3">
+                                        <h6 class="mb-0">Catatan</h6>
+                                    </div>
+                                    <div class="col-sm-9 text-secondary">
+                                        <textarea class="form-control" name="notes" id="notes" rows="3"
+                                            placeholder="Masukkan catatan tambahan (pilihan)"></textarea>
+                                    </div>
                                 </div>
-                                <div class="col-sm-9 text-secondary">
-                                    <textarea class="form-control" name="notes" id="notes" rows="3"
-                                        placeholder="Masukkan catatan tambahan (pilihan)"></textarea>
-                                </div>
-                            </div>
+                            @endif
                             <hr>
-                            <div class="row mt-6 mb-1">
-                                <div class="col-sm">
-                                    {{-- <button type="button" class="btn btn-warning btn-sm "
-                                        onclick="$('#commentModal').modal('show')">
-                                        <i class="bx bx-message me-3"></i>Komen
-                                    </button> --}}
-                                    <button type="submit" class="btn btn-primary btn-sm float-end">
-                                        <i class="bx bx-save me-1"></i>Kemaskini
-                                    </button>
-                                    <button type="button" class="btn btn-secondary btn-sm float-end me-2"
-                                        onclick="cancelUpdate()">
-                                        <i class="bx bx-x me-1"></i>Batal
-                                    </button>
+                            @if (!$isReadOnlyView)
+                                <div class="row mt-6 mb-1">
+                                    <div class="col-sm">
+                                        {{-- <button type="button" class="btn btn-warning btn-sm "
+                                            onclick="$('#commentModal').modal('show')">
+                                            <i class="bx bx-message me-3"></i>Komen
+                                        </button> --}}
+                                        <button type="submit" class="btn btn-primary btn-sm float-end">
+                                            <i class="bx bx-save me-1"></i>Kemaskini
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm float-end me-2"
+                                            onclick="cancelUpdate()">
+                                            <i class="bx bx-x me-1"></i>Batal
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            @endif
                         </form>
                     </div>
                 </div>

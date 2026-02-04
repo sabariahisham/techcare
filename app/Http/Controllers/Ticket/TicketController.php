@@ -6,6 +6,18 @@
  *  - CRUD main ticket (create, read, update, delete)
  *  - status management (open, pending, closed).
  *
+ * IMPORTANT: SLA Logic for ticket_chronologies table
+ *
+ * SITUASI 1 - Create Ticket (Initial chronology):
+ *  - sla_severity: NULL (not set on creation)
+ *  - sla_days: 3 (default 3 working days)
+ *  - sla_duedate: created_at + 3 working days (skip weekends & public holidays)
+ *
+ * SITUASI 2 - Update Ticket (Subsequent chronologies):
+ *  - sla_severity: High/Medium/Low (from user selection)
+ *  - sla_days: Retrieved from slas table based on cat_id, subcat_id, and sla_severity
+ *  - sla_duedate: current time + sla_days working days (skip weekends & public holidays)
+ *
  * IMPORTANT: Officer Assignment Logic
  * The 'escalate_to' field in TicketChronology MUST always refer to user_id from the Officer table
  * where cat_id and subcat_id match between the ticket and officer records.
@@ -182,9 +194,10 @@ class TicketController extends Controller
           return "<span class=\"badge {$statusClass}\">{$statusName}</span>";
         })
         ->addColumn('pegawai_tugasan', function ($ticket) {
-          // Get assigned officer from latest chronology
+          // Get assigned officer from latest chronology for CURRENT ticket status
           $latestChronology = $ticket->chronologies()
             ->whereNotNull('escalate_to')
+            ->where('tick_status', $ticket->tick_status)
             ->with('escalatedTo')
             ->latest()
             ->first();
@@ -199,9 +212,11 @@ class TicketController extends Controller
           $user = Auth::user();
           $actions = '<div class="d-flex gap-1">';
 
+          // Escape UUID for HTML attributes
+          $escapedUuid = htmlspecialchars($ticket->uuid, ENT_QUOTES, 'UTF-8');
+
           // View button - always available
-          $actions .= '<a class="btn btn-sm view-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat" style="cursor: pointer;"><i class="bx bx-show text-success"></i></a>';
-          // $actions .= '<a href="/tickets/' . $ticket->uuid . '" class="btn btn-sm view-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat-href" style="cursor: pointer;"><i class="bx bx-show text-success"></i></a>';
+          $actions .= '<a class="btn btn-sm view-record" data-uuid="' . $escapedUuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Lihat" style="cursor: pointer;"><i class="bx bx-show text-success"></i></a>';
 
           // Edit button - commented out for "Tiket Saya" section
           // $canEdit = false;
@@ -336,9 +351,10 @@ class TicketController extends Controller
           return "<span class=\"badge {$statusClass}\">{$statusName}</span>";
         })
         ->addColumn('pegawai_tugasan', function ($ticket) {
-          // Get assigned officer from latest chronology
+          // Get assigned officer from latest chronology for CURRENT ticket status
           $latestChronology = $ticket->chronologies()
             ->whereNotNull('escalate_to')
+            ->where('tick_status', $ticket->tick_status)
             ->with('escalatedTo')
             ->latest()
             ->first();
@@ -353,10 +369,11 @@ class TicketController extends Controller
           $user = Auth::user();
           $actions = '<div class="d-flex gap-1">';
 
+          // Escape UUID for HTML attributes
+          $escapedUuid = htmlspecialchars($ticket->uuid, ENT_QUOTES, 'UTF-8');
+
           // Manage button - for helpdesk staff
-          $actions .= '<a class="btn btn-sm manage-ticket" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus"><i class="bx bx-cog text-primary"></i></a>';
-          // View button - always available for all users
-          // $actions .= '<a href="/tickets/' . $ticket->uuid . '" class="btn btn-sm manage-ticket" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus2" style="cursor: pointer;"><i class="bx bx-cog text-primary"></i></a>';
+          $actions .= '<a class="btn btn-sm manage-ticket" data-uuid="' . $escapedUuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus"><i class="bx bx-cog text-primary"></i></a>';
 
           // Admin can edit any ticket
           $canEdit = false;
@@ -374,12 +391,12 @@ class TicketController extends Controller
           }
 
           if ($canEdit) {
-            $actions .= '<a class="btn btn-sm edit-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
+            $actions .= '<a class="btn btn-sm edit-record" data-uuid="' . $escapedUuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
           }
 
           // Only Administrator and higher level roles can delete
-          if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem'])) {
-            $actions .= '<a class="btn btn-sm delete-record" data-uuid="' . $ticket->uuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
+          if ($user->hasAnyRole(['Administrator'])) {
+            $actions .= '<a class="btn btn-sm delete-record" data-id="' . htmlspecialchars($ticket->uuid, ENT_QUOTES, 'UTF-8') . '" data-ticket-uuid="' . htmlspecialchars($ticket->uuid, ENT_QUOTES, 'UTF-8') . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
           }
 
           $actions .= '</div>';
@@ -464,8 +481,9 @@ class TicketController extends Controller
         // Create ticket
         $ticket = Ticket::create($data);
 
-        // Get SLA information based on category and subcategory
-        $slaInfo = $this->calculateSLA($validated['cat_id'], $validated['subcat_id']);
+        // Situasi 1: Create ticket - sla_severity = null, sla_days = 3 working days
+        $slaDays = 3; // Default 3 working days
+        $slaDueDate = Helpers::addWorkingDays(Carbon::now(), $slaDays);
 
         // Create initial chronology entry
         $chronologyData = [
@@ -474,9 +492,9 @@ class TicketController extends Controller
           'level_pegtugas_id' => 1,
           'tick_status' => $defaultStatus ? $defaultStatus->id : 1,
           'escalate_to' => $this->getAssignedOfficer($validated['cat_id'], $validated['subcat_id'], 1),
-          'sla_duedate' => $slaInfo['sla_duedate'],
-          'sla_days' => $slaInfo['sla_days'],
-          'sla_severity' => $slaInfo['sla_severity'],
+          'sla_duedate' => $slaDueDate,
+          'sla_days' => $slaDays,
+          'sla_severity' => null, // NULL for initial ticket creation
           'created_by' => Auth::id(),
           'updated_by' => Auth::id(),
         ];
@@ -486,7 +504,9 @@ class TicketController extends Controller
         Log::info('Ticket and chronology created successfully', [
           'ticket_id' => $ticket->id,
           'ticket_nolog' => $ticketNumber,
-          'assigned_officer' => $chronologyData['escalate_to']
+          'assigned_officer' => $chronologyData['escalate_to'],
+          'sla_days' => $slaDays,
+          'sla_severity' => null
         ]);
 
         return $ticket;
@@ -787,8 +807,20 @@ class TicketController extends Controller
    */
   public function destroy($uuid)
   {
+    // Log incoming delete request
+    Log::info('Ticket delete request received', [
+      'uuid' => $uuid,
+      'user_id' => Auth::id()
+    ]);
+
     // Find ticket by UUID
     $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
+
+    Log::info('Ticket found for deletion', [
+      'ticket_id' => $ticket->id,
+      'ticket_nolog' => $ticket->ticket_nolog,
+      'uuid' => $ticket->uuid
+    ]);
 
     // Check authorization - only allow deletion if:
     // 1. User has admin/helpdesk roles OR

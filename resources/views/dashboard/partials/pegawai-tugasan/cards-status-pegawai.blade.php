@@ -14,12 +14,16 @@
                     </div>
                     <div class="mb-5 d-block text-center">
                         <p class="mb-5">Aduan Hari Ini</p>
-                        <h2 class="fw-bold mb-0" id="pegawai-today-logs-count"
-                            style="font-size: 3.5rem; line-height: 1;">
-                            <span class="placeholder-glow">
-                                <span class="placeholder placeholder-lg col-3"></span>
-                            </span>
-                        </h2>
+                        <a href="{{ route('tickets.index') }}" title="Klik untuk Lihat Aduan"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            style="text-decoration: none; color: inherit; cursor: pointer;">
+                            <h2 class="fw-bold mb-0" id="pegawai-today-logs-count"
+                                style="font-size: 3.5rem; line-height: 1; transition: color 0.2s;">
+                                <span class="placeholder-glow">
+                                    <span class="placeholder placeholder-lg col-3"></span>
+                                </span>
+                            </h2>
+                        </a>
                     </div>
                     <div class="mt-auto text-center">
                         <small class="d-block mb-1 text-muted small">Data log harian (Tugasan Anda)</small>

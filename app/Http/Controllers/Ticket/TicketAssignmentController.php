@@ -6,6 +6,13 @@
  *  - CRUD ticket assignments (create, read, update)
  *  - Handle assigning tickets to Pengadu and Pegawai Tugasan.
  *  - Provide assignment functionalities for Pengadu and Pegawai Tugasan.
+ *
+ * IMPORTANT: SLA Logic for Update Ticket
+ * When updating ticket (SITUASI 2):
+ *  - sla_severity: User selects High/Medium/Low from dropdown
+ *  - sla_days: Retrieved from slas table WHERE cat_id, subcat_id, sla_severity match
+ *  - sla_duedate: current time + sla_days working days (skip weekends & public holidays)
+ *  - Uses Helpers::addWorkingDays() to calculate working days properly
  */
 
 namespace App\Http\Controllers\Ticket;
@@ -21,6 +28,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Ticket\TicketChronologyController;
 use Illuminate\Support\Facades\Auth;
 use App\Services\TicketNotificationService;
+use App\Helpers\Helpers;
+use Carbon\Carbon;
 
 class TicketAssignmentController extends Controller
 {
@@ -34,8 +43,11 @@ class TicketAssignmentController extends Controller
   /**
    * Update ticket details and assignment
    */
-  public function updateTicketAssignment(Request $request, Ticket $ticket)
+  public function updateTicketAssignment(Request $request, $uuid)
   {
+    // Find ticket by UUID
+    $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
+
     // First, get the status name to check if it's "Aduan Dirujuk"
     $selectedStatus = RefTicketStatus::find($request->tick_status);
     $isAduanDirujuk = $selectedStatus && $selectedStatus->st_name === 'Aduan Dirujuk';
@@ -75,20 +87,120 @@ class TicketAssignmentController extends Controller
       // Store old status before updating
       $oldStatus = $ticket->tick_status;
 
-      // Get SLA information based on category, subcategory, and severity
+      // Log incoming request data for debugging
+      \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Request Data', [
+        'ticket_id' => $ticket->id,
+        'tick_status' => $request->tick_status,
+        'cat_id' => $request->cat_id,
+        'subcat_id' => $request->subcat_id,
+        'sla_severity' => $request->sla_severity,
+        'assigned_officers' => $request->assigned_officers,
+        'action_date' => $request->action_date,
+        'notes' => $request->notes
+      ]);
+
+      // Situasi 2: Update ticket - Get SLA information based on category, subcategory, and severity
       $slaInfo = null;
       $slaDays = null;
+      $slaDueDate = null;
       $levelPetugas = 1; // Default level
+      $slaSeverity = $request->sla_severity;
 
-      if ($request->sla_severity && $request->cat_id && $request->subcat_id) {
-        $slaInfo = Sla::where('cat_id', $request->cat_id)
-          ->where('subcat_id', $request->subcat_id)
-          ->where('sla_severity', $request->sla_severity)
+      // Use existing ticket's cat_id and subcat_id if not provided in request
+      $catId = $request->cat_id ?? $ticket->cat_id;
+      $subcatId = $request->subcat_id ?? $ticket->subcat_id;
+
+      // Get the first assigned officer to determine level_pegtugas
+      $firstOfficerId = null;
+      if ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
+        $firstOfficerId = $request->assigned_officers[0];
+
+        // Get level_pegtugas from officers table
+        $officerData = \Illuminate\Support\Facades\DB::table('officers')
+          ->where('user_id', $firstOfficerId)
+          ->where('cat_id', $catId)
+          ->where('subcat_id', $subcatId)
+          ->whereNull('deleted_at')
           ->first();
+
+        if ($officerData) {
+          $levelPetugas = $officerData->level_tugasan ?? 1;
+        }
+      }
+
+      // Log incoming data for debugging
+      \Illuminate\Support\Facades\Log::info('updateTicketAssignment - SLA Lookup Input', [
+        'ticket_id' => $ticket->id,
+        'request_cat_id' => $request->cat_id,
+        'request_subcat_id' => $request->subcat_id,
+        'used_cat_id' => $catId,
+        'used_subcat_id' => $subcatId,
+        'sla_severity' => $slaSeverity,
+        'level_pegtugas' => $levelPetugas,
+        'first_officer_id' => $firstOfficerId
+      ]);
+
+      // Try to get SLA info from database
+      if ($catId && $subcatId) {
+        // Build SLA query
+        $slaQuery = Sla::where('cat_id', $catId)
+          ->where('subcat_id', $subcatId)
+          ->where('sla_level', $levelPetugas);
+
+        // Add severity filter if provided
+        if ($slaSeverity) {
+          $slaQuery->where('sla_severity', $slaSeverity);
+        }
+
+        $slaInfo = $slaQuery->first();
+
+        // If not found with severity, try without severity (fallback)
+        if (!$slaInfo && $slaSeverity) {
+          \Illuminate\Support\Facades\Log::warning('updateTicketAssignment - No SLA with severity, trying without', [
+            'cat_id' => $catId,
+            'subcat_id' => $subcatId,
+            'sla_severity' => $slaSeverity,
+            'level_pegtugas' => $levelPetugas
+          ]);
+
+          $slaInfo = Sla::where('cat_id', $catId)
+            ->where('subcat_id', $subcatId)
+            ->where('sla_level', $levelPetugas)
+            ->first();
+        }
 
         if ($slaInfo) {
           $slaDays = $slaInfo->sla_days;
-          $levelPetugas = $slaInfo->level_petugas_id ?? 1;
+          $slaSeverity = $slaSeverity ?? $slaInfo->sla_severity; // Use from DB if not provided
+          $levelPetugas = $slaInfo->sla_level ?? $levelPetugas;
+
+          // Calculate SLA due date by adding working days (skip weekends and public holidays)
+          $slaDueDate = Helpers::addWorkingDays(Carbon::now(), $slaDays);
+
+          // Log successful SLA calculation
+          \Illuminate\Support\Facades\Log::info('updateTicketAssignment - SLA Calculation SUCCESS', [
+            'ticket_id' => $ticket->id,
+            'cat_id' => $catId,
+            'subcat_id' => $subcatId,
+            'sla_severity' => $slaSeverity,
+            'sla_days' => $slaDays,
+            'sla_duedate' => $slaDueDate ? $slaDueDate->format('Y-m-d H:i:s') : null,
+            'level_pegtugas' => $levelPetugas
+          ]);
+        } else {
+          // No SLA info found - use default values
+          $slaDays = 3; // Default 3 working days
+          $slaDueDate = Helpers::addWorkingDays(Carbon::now(), $slaDays);
+
+          \Illuminate\Support\Facades\Log::warning('updateTicketAssignment - No SLA Info Found, using defaults', [
+            'ticket_id' => $ticket->id,
+            'cat_id' => $catId,
+            'subcat_id' => $subcatId,
+            'sla_severity' => $slaSeverity,
+            'level_pegtugas' => $levelPetugas,
+            'default_sla_days' => $slaDays,
+            'default_sla_duedate' => $slaDueDate ? $slaDueDate->format('Y-m-d H:i:s') : null
+          ]);
         }
       }
 
@@ -106,11 +218,13 @@ class TicketAssignmentController extends Controller
 
       $ticket->update($updateData);
 
-      // Get the first assigned officer (if any)
-      $firstOfficer = null;
-      if ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
-        $firstOfficer = $request->assigned_officers[0];
-      }
+      // Log ticket update
+      \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Ticket Updated', [
+        'ticket_id' => $ticket->id,
+        'update_data' => $updateData
+      ]);
+
+      // Note: firstOfficerId is already set in SLA calculation section above
 
       // Check if there's an existing chronology entry with the same status
       // Look for ANY chronology with this status (including those with escalate_to)
@@ -119,17 +233,30 @@ class TicketAssignmentController extends Controller
         ->orderBy('created_at', 'desc')
         ->first();
 
+      // Log values before saving to chronology
+      \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Before Saving to Chronology', [
+        'ticket_id' => $ticket->id,
+        'tick_status' => $request->tick_status,
+        'sla_severity' => $slaSeverity,
+        'sla_days' => $slaDays,
+        'sla_duedate' => $slaDueDate ? $slaDueDate->format('Y-m-d H:i:s') : 'NULL',
+        'level_pegtugas' => $levelPetugas,
+        'escalate_to' => $firstOfficerId,
+        'existing_chronology' => $existingChronology ? 'YES (ID: ' . $existingChronology->id . ')' : 'NO'
+      ]);
+
       if ($existingChronology) {
         // Update existing chronology entry
         $chronology = $existingChronology;
         $chronology->update([
           'frm_user_id' => Auth::id(),
-          'sla_severity' => $request->sla_severity,
+          'sla_severity' => $slaSeverity,
           'sla_days' => $slaDays,
+          'sla_duedate' => $slaDueDate,
           'level_pegtugas_id' => $levelPetugas,
-          'escalate_to' => $firstOfficer, // Store first officer here
+          'escalate_to' => $firstOfficerId, // Store first officer here
           'updated_by' => Auth::id(),
-          'updated_at' => $request->action_date ? \Carbon\Carbon::parse($request->action_date) : now(),
+          'updated_at' => $request->action_date ? Carbon::parse($request->action_date) : now(),
         ]);
 
         // Delete any other chronology entries for this ticket + status combination to avoid duplicates
@@ -137,24 +264,40 @@ class TicketAssignmentController extends Controller
           ->where('tick_status', $request->tick_status)
           ->where('id', '!=', $chronology->id)
           ->delete();
+
+        \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Existing Chronology Updated', [
+          'chronology_id' => $chronology->id,
+          'ticket_id' => $ticket->id,
+          'tick_status' => $request->tick_status,
+          'escalate_to' => $firstOfficerId,
+          'sla_severity' => $slaSeverity,
+          'sla_days' => $slaDays,
+          'sla_duedate' => $slaDueDate ? $slaDueDate->format('Y-m-d H:i:s') : null
+        ]);
       } else {
         // Create new chronology entry for status change
         $chronologyData = [
           'ticket_id' => $ticket->id,
           'frm_user_id' => Auth::id(),
           'tick_status' => $request->tick_status,
-          'sla_severity' => $request->sla_severity,
+          'sla_severity' => $slaSeverity,
           'sla_days' => $slaDays,
+          'sla_duedate' => $slaDueDate,
           'level_pegtugas_id' => $levelPetugas,
-          'escalate_to' => $firstOfficer, // Store first officer in main entry
+          'escalate_to' => $firstOfficerId, // Store first officer in main entry
           'created_by' => Auth::id(),
           'updated_by' => Auth::id(),
-          'created_at' => $request->action_date ? \Carbon\Carbon::parse($request->action_date) : now(),
+          'created_at' => $request->action_date ? Carbon::parse($request->action_date) : now(),
           'updated_at' => now()
         ];
 
         // Create the chronology entry
         $chronology = TicketChronology::create($chronologyData);
+
+        \Illuminate\Support\Facades\Log::info('updateTicketAssignment - New Chronology Created', [
+          'chronology_id' => $chronology->id,
+          'chronology_data' => $chronologyData
+        ]);
       }
 
       // Handle additional officer assignments (2nd officer onwards) if provided
@@ -169,12 +312,13 @@ class TicketAssignmentController extends Controller
             'frm_user_id' => Auth::id(),
             'tick_status' => $request->tick_status,
             'escalate_to' => $officerId,
-            'sla_severity' => $request->sla_severity,
+            'sla_severity' => $slaSeverity,
             'sla_days' => $slaDays,
+            'sla_duedate' => $slaDueDate,
             'level_pegtugas_id' => $levelPetugas,
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
-            'created_at' => $request->action_date ? \Carbon\Carbon::parse($request->action_date) : now(),
+            'created_at' => $request->action_date ? Carbon::parse($request->action_date) : now(),
             'updated_at' => now()
           ]);
         }
@@ -224,7 +368,7 @@ class TicketAssignmentController extends Controller
         $request->notes
       );
 
-      return redirect()->route('tickets.show', $ticket)
+      return redirect()->route('tickets.show', $ticket->uuid)
         ->with('success', 'Tiket berjaya dikemaskini!');
     } catch (\Exception $e) {
       return redirect()->back()
@@ -237,11 +381,14 @@ class TicketAssignmentController extends Controller
    * Assign ticket to a user
    *
    * @param \Illuminate\Http\Request $request
-   * @param \App\Models\Ticket $ticket
+   * @param string $uuid
    * @return \Illuminate\Http\JsonResponse
    */
-  public function assignTicket(Request $request, Ticket $ticket)
+  public function assignTicket(Request $request, $uuid)
   {
+    // Find ticket by UUID
+    $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
+
     $request->validate([
       'assignee_id' => 'required|exists:users,id',
       'tick_status' => 'required|exists:ref_ticket_statuses,id',
@@ -287,11 +434,14 @@ class TicketAssignmentController extends Controller
   /**
    * Get current assignees for a ticket
    *
-   * @param \App\Models\Ticket $ticket
+   * @param string $uuid
    * @return \Illuminate\Http\JsonResponse
    */
-  public function getAssignees(Ticket $ticket)
+  public function getAssignees($uuid)
   {
+    // Find ticket by UUID
+    $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
+
     try {
       // Get the latest chronology entries with escalations
       $assignments = $ticket->chronologies()
