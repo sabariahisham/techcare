@@ -42,7 +42,7 @@ Route::get('/test-email', function () {
 
 Route::get('/', function () {
   return redirect('/dashboard');
-})->middleware('auth');
+})->middleware('cas.auth');
 
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
   ->middleware(['auth'])
@@ -58,39 +58,39 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
 // DEV/PRODUCTION: Uncomment this entire block and comment out the "LOCAL DEVELOPMENT"
 // session routes below when testing/deploying with SATUID
 // ============================================================================
-// Route::middleware('cas.auth')->group(function () {
-//     // Dashboard
-//     Route::get('/dashboard', [DashboardController::class, 'index']);
-//
-//     // Session Management Routes (for session timeout handling with CAS)
-//     Route::post('/session/ping', function () {
-//         return response()->json([
-//             'authenticated' => Auth::check(),
-//             'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
-//             'timestamp' => now()->toISOString()
-//         ]);
-//     })->name('session.ping');
-//
-//     Route::get('/session/check', function () {
-//         $user = Auth::user();
-//         return response()->json([
-//             'authenticated' => Auth::check(),
-//             'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
-//             'timestamp' => now()->toISOString()
-//         ]);
-//     })->name('session.check');
-//
-//     // Add other CAS protected routes here as needed
-// });
-//
-// // CAS Logout Route
-// Route::get('/cas-logout', function () {
-//     Auth::logout();
-//     request()->session()->invalidate();
-//     request()->session()->regenerateToken();
-//     // Redirect to SATUID logout
-//     return redirect(config('cas.cas_logout_url'));
-// })->name('cas.logout');
+Route::middleware('cas.auth')->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Session Management Routes (for session timeout handling with CAS)
+    Route::post('/session/ping', function () {
+        return response()->json([
+            'authenticated' => Auth::check(),
+            'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
+            'timestamp' => now()->toISOString()
+        ]);
+    })->name('session.ping');
+
+    Route::get('/session/check', function () {
+        $user = Auth::user();
+        return response()->json([
+            'authenticated' => Auth::check(),
+            'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
+            'timestamp' => now()->toISOString()
+        ]);
+    })->name('session.check');
+
+    // Add other CAS protected routes here as needed
+});
+
+// CAS Logout Route
+Route::get('/cas-logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    // Redirect to SATUID logout
+    return redirect(config('cas.cas_logout_url'));
+})->name('cas.logout');
 // ============================================================================
 // END CAS/SATUID ROUTES
 // ============================================================================
@@ -101,26 +101,26 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
 // LOCAL: Comment out this entire block when testing/deploying with SATUID
 // ============================================================================
 // Session Management Routes (for session timeout handling)
-Route::middleware(['auth', config('jetstream.auth_session')])->group(function () {
-  // Ping endpoint to extend session and check authentication status
-  Route::post('/session/ping', function () {
-    return response()->json([
-      'authenticated' => Auth::check(),
-      'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
-      'timestamp' => now()->toISOString()
-    ]);
-  })->name('session.ping');
+// Route::middleware(['auth', config('jetstream.auth_session')])->group(function () {
+//   // Ping endpoint to extend session and check authentication status
+//   Route::post('/session/ping', function () {
+//     return response()->json([
+//       'authenticated' => Auth::check(),
+//       'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
+//       'timestamp' => now()->toISOString()
+//     ]);
+//   })->name('session.ping');
 
-  // Check session status without extending
-  Route::get('/session/check', function () {
-    $user = Auth::user();
-    return response()->json([
-      'authenticated' => Auth::check(),
-      'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
-      'timestamp' => now()->toISOString()
-    ]);
-  })->name('session.check');
-});
+//   // Check session status without extending
+//   Route::get('/session/check', function () {
+//     $user = Auth::user();
+//     return response()->json([
+//       'authenticated' => Auth::check(),
+//       'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
+//       'timestamp' => now()->toISOString()
+//     ]);
+//   })->name('session.check');
+// });
 // ============================================================================
 // END LOCAL DEVELOPMENT ROUTES
 // ============================================================================
@@ -273,13 +273,13 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/report/statistik-log/chart', [App\Http\Controllers\Reports\StatistikLogAduanController::class, 'getChart'])->name('report-statistik-log-chart');
   Route::get('/report/statistik-log/export-excel', [App\Http\Controllers\Reports\StatistikLogAduanController::class, 'exportExcel'])->name('report-statistik-log-export-excel');
   Route::get('/report/statistik-log/export-pdf', [App\Http\Controllers\Reports\StatistikLogAduanController::class, 'exportPdf'])->name('report-statistik-log-export-pdf');
-  
+
   //laporan status aduan tahunan
   Route::get('/report/laporan-status-aduan-tahunan', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'index'])->name('report-laporan-status-aduan-tahunan');
   Route::post('/report/laporan-status-aduan-tahunan/data', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'data'])->name('report-laporan-status-aduan-tahunan-data');
   Route::get('/report/laporan-status-aduan-tahunan/export-excel', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportExcel'])->name('report-laporan-status-aduan-tahunan-export-excel');
   Route::get('/report/laporan-status-aduan-tahunan/export-pdf', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportPdf'])->name('report-laporan-status-aduan-tahunan-export-pdf');
-  
+
 
   });
 

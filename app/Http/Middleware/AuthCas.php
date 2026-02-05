@@ -10,129 +10,257 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
 /**
- * Middleware untuk authenticate dan map User model ke LDAP
+ * Middleware for CAS Authentication with SATUID
+ * Maps authenticated users from LDAP to local User model
  */
 class AuthCas
 {
-  /**
-   * Handle an incoming request.
-   *
-   * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-   */
-  public function handle(Request $request, Closure $next): Response
-  {
-    // Simple CAS authentication without phpCAS library
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        try {
+            // Check if user is already authenticated
+            if (Auth::check()) {
+                Log::info('CAS: User already authenticated', [
+                    'user_id' => Auth::id(),
+                    'username' => Auth::user()->nama ?? 'N/A'
+                ]);
+                return $next($request);
+            }
 
-    try {
-      // Check if user is already logged in
-      if (Auth::check()) {
-        Log::info('User already authenticated', ['user_id' => Auth::id()]);
-        return $next($request);
-      }
+            // Check if we have a CAS ticket (returning from SATUID)
+            $ticket = $request->query('ticket');
 
-      // Check if we have a CAS ticket (returning from SATUID)
-      $ticket = $request->query('ticket');
+            if ($ticket) {
+                Log::info('CAS: Ticket received', [
+                    'ticket_preview' => substr($ticket, 0, 20) . '...',
+                    'full_url' => $request->fullUrl()
+                ]);
 
-      if ($ticket) {
-        Log::info('CAS ticket received', ['ticket' => substr($ticket, 0, 20) . '...']);
+                // Validate ticket and authenticate user
+                $user = $this->validateTicketAndGetUser($request, $ticket);
 
-        // Validate ticket with CAS server
-        $serviceUrl = $request->url(); // Use full URL without query parameters
-        $casServer = 'https://' . config('cas.cas_hostname') . ':' . config('cas.cas_port') . config('cas.cas_uri');
-        $validateUrl = $casServer . '/serviceValidate?service=' . urlencode($serviceUrl) . '&ticket=' . urlencode($ticket);
+                if (!$user) {
+                    return $this->errorResponse('SATUID authentication gagal. Sila cuba log masuk semula.');
+                }
 
-        Log::info('Validating ticket', ['url' => $validateUrl]);
+                // Login user
+                Auth::login($user, true);
+                Log::info('CAS: User logged in successfully', [
+                    'user_id' => $user->id,
+                    'nama' => $user->nama,
+                    'ldap_id' => $user->id_pgn_ldap
+                ]);
 
-        // Call CAS server to validate ticket
-        $context = stream_context_create([
-          'ssl' => [
-            'verify_peer' => false,
-            'verify_peer_name' => false,
-          ],
+                // Redirect to clean URL without ticket parameter
+                $cleanUrl = $request->url();
+                Log::info('CAS: Redirecting to clean URL', ['url' => $cleanUrl]);
+
+                return redirect($cleanUrl);
+            }
+
+            // No ticket, redirect to CAS login
+            return $this->redirectToCasLogin($request);
+
+        } catch (\Throwable $e) {
+            Log::error('CAS: Unexpected error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->errorResponse('Authentication error: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Validate CAS ticket and retrieve user
+     *
+     * @param Request $request
+     * @param string $ticket
+     * @return User|null
+     */
+    private function validateTicketAndGetUser(Request $request, string $ticket): ?User
+    {
+        try {
+            // Build service URL (without query parameters)
+            $serviceUrl = $request->url();
+
+            // Build CAS server URL
+            $casServer = 'https://'
+                . config('cas.cas_hostname')
+                . ':' . config('cas.cas_port')
+                . config('cas.cas_uri');
+
+            // Build validation URL
+            $validateUrl = $casServer
+                . config('cas.cas_validate_path')
+                . '?service=' . urlencode($serviceUrl)
+                . '&ticket=' . urlencode($ticket);
+
+            Log::info('CAS: Validating ticket', [
+                'validate_url' => $validateUrl,
+                'service_url' => $serviceUrl
+            ]);
+
+            // Create SSL context for HTTPS request
+            $context = stream_context_create([
+                'ssl' => [
+                    'verify_peer' => config('cas.cas_validation') !== 'none',
+                    'verify_peer_name' => config('cas.cas_validate_cn', false),
+                ],
+                'http' => [
+                    'timeout' => 30,
+                    'user_agent' => 'eHelp CAS Client/1.0'
+                ]
+            ]);
+
+            // Call CAS server to validate ticket
+            $response = @file_get_contents($validateUrl, false, $context);
+
+            if ($response === false) {
+                Log::error('CAS: Failed to contact CAS server', [
+                    'validate_url' => $validateUrl,
+                    'error' => error_get_last()
+                ]);
+                return null;
+            }
+
+            Log::info('CAS: Server response received', [
+                'response_preview' => substr($response, 0, 300)
+            ]);
+
+            // Parse XML response
+            $xml = simplexml_load_string($response);
+            if ($xml === false) {
+                Log::error('CAS: Failed to parse XML response', [
+                    'response' => $response,
+                    'xml_errors' => libxml_get_errors()
+                ]);
+                return null;
+            }
+
+            // Register CAS namespace
+            $xml->registerXPathNamespace('cas', 'http://www.yale.edu/tp/cas');
+
+            // Check for authentication success
+            $success = $xml->xpath('//cas:authenticationSuccess');
+            if (empty($success)) {
+                // Check for authentication failure
+                $failure = $xml->xpath('//cas:authenticationFailure');
+                $failureMessage = !empty($failure) ? (string)$failure[0] : 'Unknown error';
+
+                Log::warning('CAS: Authentication failed', [
+                    'failure_message' => $failureMessage,
+                    'response' => $response
+                ]);
+                return null;
+            }
+
+            // Get username (LDAP ID)
+            $users = $xml->xpath('//cas:user');
+            if (empty($users)) {
+                Log::error('CAS: No user in CAS response', [
+                    'response' => $response
+                ]);
+                return null;
+            }
+
+            $ldapId = (string)$users[0];
+            Log::info('CAS: Authentication successful', ['ldap_id' => $ldapId]);
+
+            // Get additional attributes if SAML is enabled
+            $attributes = [];
+            if (config('cas.cas_enable_saml')) {
+                $attrs = $xml->xpath('//cas:attributes');
+                if (!empty($attrs)) {
+                    foreach ($attrs[0]->children('cas', true) as $name => $value) {
+                        $attributes[$name] = (string)$value;
+                    }
+                    Log::info('CAS: SAML attributes retrieved', ['attributes' => $attributes]);
+                }
+            }
+
+            // Find user in database by LDAP ID
+            $user = User::where('id_pgn_ldap', $ldapId)->first();
+
+            if (!$user) {
+                Log::warning('CAS: User not found in database', [
+                    'ldap_id' => $ldapId,
+                    'attributes' => $attributes
+                ]);
+                return null;
+            }
+
+            Log::info('CAS: User found in database', [
+                'user_id' => $user->id,
+                'nama' => $user->nama,
+                'email' => $user->email
+            ]);
+
+            return $user;
+
+        } catch (\Exception $e) {
+            Log::error('CAS: Error validating ticket', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Redirect to CAS login page
+     *
+     * @param Request $request
+     * @return Response
+     */
+    private function redirectToCasLogin(Request $request): Response
+    {
+        // Build service URL (current page URL)
+        $serviceUrl = $request->url();
+
+        // Build CAS server URL
+        $casServer = 'https://'
+            . config('cas.cas_hostname')
+            . ':' . config('cas.cas_port')
+            . config('cas.cas_uri');
+
+        // Build login URL
+        $loginUrl = $casServer . '/login?service=' . urlencode($serviceUrl);
+
+        Log::info('CAS: Redirecting to login', [
+            'login_url' => $loginUrl,
+            'service_url' => $serviceUrl
         ]);
 
-        $response = @file_get_contents($validateUrl, false, $context);
-
-        if ($response === false) {
-          Log::error('Failed to contact CAS server');
-          return response()->view('errors.401', [
-            'message' => 'Tidak dapat menghubungi SATUID server. Sila cuba lagi.'
-          ], 401);
-        }
-
-        Log::info('CAS server response received', ['response' => substr($response, 0, 200)]);
-
-        // Parse XML response to get username
-        $xml = simplexml_load_string($response);
-        if ($xml === false) {
-          Log::error('Failed to parse CAS response');
-          return response()->view('errors.401', [
-            'message' => 'Invalid CAS response format.'
-          ], 401);
-        }
-
-        // Register namespaces
-        $xml->registerXPathNamespace('cas', 'http://www.yale.edu/tp/cas');
-
-        // Check for authentication success
-        $success = $xml->xpath('//cas:authenticationSuccess');
-        if (empty($success)) {
-          Log::warning('CAS authentication failed', ['response' => $response]);
-          return response()->view('errors.401', [
-            'message' => 'SATUID authentication failed. Sila cuba log masuk semula.'
-          ], 401);
-        }
-
-        // Get username
-        $users = $xml->xpath('//cas:user');
-        if (empty($users)) {
-          Log::error('No user in CAS response');
-          return response()->view('errors.401', [
-            'message' => 'SATUID tidak mengembalikan user ID.'
-          ], 401);
-        }
-
-        $ldapId = (string)$users[0];
-        Log::info('CAS authentication successful', ['ldap_id' => $ldapId]);
-
-        // Find user in database
-        $user = User::where('id_pgn_ldap', $ldapId)->first();
-
-        if (!$user) {
-          Log::warning("User not found for LDAP ID: {$ldapId}");
-          return response()->view('errors.401', [
-            'message' => "Akaun tidak dijumpai untuk LDAP ID: {$ldapId}. Sila hubungi pentadbir sistem."
-          ], 401);
-        }
-
-        // Login user
-        Auth::login($user, true);
-        Log::info('User logged in successfully', ['user_id' => $user->id, 'nama' => $user->nama]);
-
-        // Redirect to clean URL without ticket parameter
-        $cleanUrl = $request->url();
-        Log::info('Redirecting to clean URL', ['url' => $cleanUrl]);
-        return redirect($cleanUrl);
-      }
-
-      // No ticket, redirect to CAS login
-      $serviceUrl = $request->url(); // Use full current URL
-      $casServer = 'https://' . config('cas.cas_hostname') . ':' . config('cas.cas_port') . config('cas.cas_uri');
-      $loginUrl = $casServer . '/login?service=' . urlencode($serviceUrl);
-
-      Log::info('Redirecting to CAS login', ['url' => $loginUrl]);
-
-      return redirect($loginUrl);
-    } catch (\Throwable $e) {
-      Log::error("CAS Error: " . $e->getMessage(), [
-        'file' => $e->getFile(),
-        'line' => $e->getLine(),
-        'trace' => $e->getTraceAsString()
-      ]);
-
-      return response()->view('errors.401', [
-        'message' => 'Authentication error: ' . $e->getMessage()
-      ], 401);
+        return redirect($loginUrl);
     }
-  }
+
+    /**
+     * Return error response
+     *
+     * @param string $message
+     * @return Response
+     */
+    private function errorResponse(string $message): Response
+    {
+        Log::error('CAS: Returning error response', ['message' => $message]);
+
+        // Check if error view exists, otherwise return JSON
+        if (view()->exists('errors.401')) {
+            return response()->view('errors.401', ['message' => $message], 401);
+        }
+
+        return response()->json([
+            'error' => $message,
+            'code' => 401
+        ], 401);
+    }
 }
