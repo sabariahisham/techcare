@@ -1,85 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ms">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>401 - Unauthorized</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .error-container {
-            background: white;
-            border-radius: 20px;
-            padding: 60px 40px;
-            max-width: 600px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-        .error-code {
-            font-size: 120px;
-            font-weight: bold;
-            color: #667eea;
-            line-height: 1;
-            margin-bottom: 20px;
-        }
-        .error-title {
-            font-size: 32px;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .error-message {
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        .btn {
-            display: inline-block;
-            padding: 15px 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-size: 16px;
-            font-weight: 600;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-        .icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-        }
-    </style>
+    <title>Authentication Error - eHelp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="error-container">
-        <div class="icon">🔒</div>
-        <div class="error-code">401</div>
-        <h1 class="error-title">Tidak Dibenarkan / Unauthorized</h1>
-        <p class="error-message">
-            @if(isset($message))
-                {{ $message }}
-            @else
-                Anda tidak mempunyai akses ke halaman ini. Sila log masuk terlebih dahulu.<br>
-                You don't have access to this page. Please login first.
+<body class="bg-gray-100">
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
+            <div class="text-center">
+                <svg class="mx-auto h-16 w-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <h1 class="mt-4 text-2xl font-bold text-gray-900">Authentication Error</h1>
+                <p class="mt-2 text-gray-600">{{ $message ?? 'Ralat semasa pengesahan pengguna.' }}</p>
+            </div>
+            
+            <div class="mt-6 space-y-3">
+                <a href="/logout" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-center">
+                    Cuba Log Masuk Semula
+                </a>
+                <a href="https://satuid.treasury.gov.my" class="block w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded text-center">
+                    Kembali ke SATUID
+                </a>
+            </div>
+            
+            @if(config('app.debug'))
+            <div class="mt-6 p-4 bg-gray-50 rounded border border-gray-200">
+                <p class="text-xs text-gray-600">
+                    <strong>Debug Info:</strong><br>
+                    Timestamp: {{ now()->toDateTimeString() }}<br>
+                    Session ID: {{ session()->getId() }}
+                </p>
+            </div>
             @endif
-        </p>
-        <a href="{{ url('/') }}" class="btn">Kembali ke Halaman Utama / Back to Home</a>
+        </div>
     </div>
 </body>
 </html>
