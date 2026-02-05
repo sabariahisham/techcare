@@ -42,7 +42,7 @@ Route::get('/test-email', function () {
 
 Route::get('/', function () {
   return redirect('/dashboard');
-})->middleware('cas.auth');
+})->middleware('auth');
 
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
   ->middleware(['auth'])
@@ -58,39 +58,38 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
 // DEV/PRODUCTION: Uncomment this entire block and comment out the "LOCAL DEVELOPMENT"
 // session routes below when testing/deploying with SATUID
 // ============================================================================
-Route::middleware('cas.auth')->group(function () {
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+// Route::middleware('cas.auth')->group(function () {
+//     // Dashboard
+//     Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    // Session Management Routes (for session timeout handling with CAS)
-    Route::post('/session/ping', function () {
-        return response()->json([
-            'authenticated' => Auth::check(),
-            'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
-            'timestamp' => now()->toISOString()
-        ]);
-    })->name('session.ping');
+//     // Session Management Routes (for session timeout handling with CAS)
+//     Route::post('/session/ping', function () {
+//         return response()->json([
+//             'authenticated' => Auth::check(),
+//             'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
+//             'timestamp' => now()->toISOString()
+//         ]);
+//     })->name('session.ping');
 
-    Route::get('/session/check', function () {
-        $user = Auth::user();
-        return response()->json([
-            'authenticated' => Auth::check(),
-            'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
-            'timestamp' => now()->toISOString()
-        ]);
-    })->name('session.check');
+//     Route::get('/session/check', function () {
+//         $user = Auth::user();
+//         return response()->json([
+//             'authenticated' => Auth::check(),
+//             'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
+//             'timestamp' => now()->toISOString()
+//         ]);
+//     })->name('session.check');
 
-    // Add other CAS protected routes here as needed
-});
+// });
 
 // CAS Logout Route
-Route::get('/cas-logout', function () {
-    Auth::logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
-    // Redirect to SATUID logout
-    return redirect(config('cas.cas_logout_url'));
-})->name('cas.logout');
+// Route::get('/cas-logout', function () {
+//     Auth::logout();
+//     request()->session()->invalidate();
+//     request()->session()->regenerateToken();
+//     // Redirect to SATUID logout
+//     return redirect(config('cas.cas_logout_url'));
+// })->name('cas.logout');
 // ============================================================================
 // END CAS/SATUID ROUTES
 // ============================================================================
@@ -101,26 +100,26 @@ Route::get('/cas-logout', function () {
 // LOCAL: Comment out this entire block when testing/deploying with SATUID
 // ============================================================================
 // Session Management Routes (for session timeout handling)
-// Route::middleware(['auth', config('jetstream.auth_session')])->group(function () {
-//   // Ping endpoint to extend session and check authentication status
-//   Route::post('/session/ping', function () {
-//     return response()->json([
-//       'authenticated' => Auth::check(),
-//       'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
-//       'timestamp' => now()->toISOString()
-//     ]);
-//   })->name('session.ping');
+Route::middleware(['auth', config('jetstream.auth_session')])->group(function () {
+  // Ping endpoint to extend session and check authentication status
+  Route::post('/session/ping', function () {
+    return response()->json([
+      'authenticated' => Auth::check(),
+      'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
+      'timestamp' => now()->toISOString()
+    ]);
+  })->name('session.ping');
 
-//   // Check session status without extending
-//   Route::get('/session/check', function () {
-//     $user = Auth::user();
-//     return response()->json([
-//       'authenticated' => Auth::check(),
-//       'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
-//       'timestamp' => now()->toISOString()
-//     ]);
-//   })->name('session.check');
-// });
+  // Check session status without extending
+  Route::get('/session/check', function () {
+    $user = Auth::user();
+    return response()->json([
+      'authenticated' => Auth::check(),
+      'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
+      'timestamp' => now()->toISOString()
+    ]);
+  })->name('session.check');
+});
 // ============================================================================
 // END LOCAL DEVELOPMENT ROUTES
 // ============================================================================
@@ -390,8 +389,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Tickets Routes Group: Core ticket operations (TicketController only)
-// Using 'cas.auth' middleware for SatuID authentication
-Route::middleware(['cas.auth'])->prefix('tickets')->group(function () {
+// Using 'auth' middleware for authentication
+Route::middleware(['auth'])->prefix('tickets')->group(function () {
   Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
   Route::get('/data', [TicketController::class, 'data'])->name('tickets.data');
   Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
