@@ -67,7 +67,7 @@ TASK:
     @include('dashboard/partials/impersonate-card')
 
     <!-- Dashboard Content -->
-    <div class="row g-4 mb-6">
+    <div class="row g-4 mb-4">
         <div class="col-md-8">
             <div class="card h-100">
                 <div class="card-body">
@@ -153,24 +153,24 @@ TASK:
     @endif --}}
 
     <!-- User Ticket Status Cards - Shown to ALL users (default all users are pengadu) -->
-    <div class="row g-4 mb-6">
+    <div class="row g-4 mb-4">
         @include('dashboard/partials/card-status-user')
     </div>
     
     @if ($sections['pegawai'] ?? false)
     <!-- Pegawai Tugasan Specific Section -->
-        <div class="card mb-6 text-dark"
+        <div class="card text-dark mb-2"
             style="background-color: rgba(136, 57, 111, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
             <div class="card-header">
                 <div class="p-3 rounded shadow-sm d-flex align-items-center"
-                    style="background-color: rgba(255,255,255,0.9);box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);     border-bottom: 2px solid #1431eb;
+                    style="background-color: rgba(255,255,255,0.9);box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);  border-bottom: 2px solid #1431eb;
         ">
                     <i class='bx bxs-bell-ring fs-2 me-3' style='color:#1431eb'></i>
                     <h4 class="mb-0 fw-bold" style="color:#1431eb; letter-spacing: -0.5px;">TUGASAN ANDA!</h4>
                 </div>
             </div>
             <div class="card-body">
-                <div class="row dashboard-row-consistent">
+                <div class="row g-4 mb-2 dashboard-row-consistent">
                     @include('dashboard/partials/pegawai-tugasan/my-tasks')
                 </div>
             </div>
