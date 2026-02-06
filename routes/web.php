@@ -289,8 +289,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 
-  });
-
 // references
 Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');
 Route::get('/app/access-permission', [AccessPermission::class, 'index'])->name('app-access-permission');
