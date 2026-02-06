@@ -75,7 +75,7 @@ Route::get('/test-email', function () {
 
 Route::get('/', function () {
   return redirect('/dashboard');
-})->middleware('auth');
+})->middleware($authMiddleware);
 
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
   ->middleware(['auth'])
