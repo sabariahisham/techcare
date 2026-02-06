@@ -18,7 +18,7 @@ use App\Http\Controllers\Ticket\TicketCommentController;
 use App\Http\Controllers\Ticket\TicketAssignmentController;
 use App\Http\Controllers\Ticket\TicketAttachmentController;
 use App\Http\Controllers\Ticket\TicketChronologyController;
-use App\Http\Controllers\Notifications\TicketDueDateController;
+use App\Http\Controllers\Ticket\TicketDueDateController;
 use App\Http\Controllers\Notifications\TicketStatusController;
 use App\Http\Controllers\Configuration\UserManagementController;
 use App\Http\Controllers\Configuration\RefCategoryManagementController;
@@ -273,15 +273,13 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/report/statistik-log/chart', [App\Http\Controllers\Reports\StatistikLogAduanController::class, 'getChart'])->name('report-statistik-log-chart');
   Route::get('/report/statistik-log/export-excel', [App\Http\Controllers\Reports\StatistikLogAduanController::class, 'exportExcel'])->name('report-statistik-log-export-excel');
   Route::get('/report/statistik-log/export-pdf', [App\Http\Controllers\Reports\StatistikLogAduanController::class, 'exportPdf'])->name('report-statistik-log-export-pdf');
-  
+
   //laporan status aduan tahunan
   Route::get('/report/laporan-status-aduan-tahunan', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'index'])->name('report-laporan-status-aduan-tahunan');
   Route::post('/report/laporan-status-aduan-tahunan/data', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'data'])->name('report-laporan-status-aduan-tahunan-data');
   Route::get('/report/laporan-status-aduan-tahunan/export-excel', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportExcel'])->name('report-laporan-status-aduan-tahunan-export-excel');
   Route::get('/report/laporan-status-aduan-tahunan/export-pdf', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportPdf'])->name('report-laporan-status-aduan-tahunan-export-pdf');
-  
-
-  });
+});
 
 // references
 Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');

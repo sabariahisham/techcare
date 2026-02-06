@@ -8,17 +8,36 @@ Artisan::command('inspire', function () {
   $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
 
-// Schedule: Send due date reminders daily at 9:00 AM
-// Checks for tickets with status "Aduan Baru" that are due tomorrow
-// Sends email reminder to Level 1 officers (Pegawai Tugasan L1)
-Schedule::command('tickets:send-duedate-reminders')
-  ->dailyAt('09:00')
+// ============================================================================
+// SLA NOTIFICATION SYSTEM (SIMPLIFIED - 2 TYPES ONLY)
+// ============================================================================
+// Daily at 7:30 AM - Send BOTH reminder and overdue notifications
+//
+// 1. REMINDER: 1 working day BEFORE sla_duedate (ALL statuses except 5=Batal, 6=Selesai)
+//    - Checks: tickets_chronologies.sla_duedate = tomorrow (working day)
+//    - Email: sla-reminder.blade.php
+//    - Recipient: escalate_to (assigned officer)
+//
+// 2. OVERDUE: 1 working day AFTER sla_duedate (ALL statuses except 5=Batal, 6=Selesai)
+//    - Checks: tickets_chronologies.sla_duedate = yesterday (working day)
+//    - Email: sla-overdue.blade.php
+//    - Recipient: escalate_to (assigned officer)
+//
+// Features:
+// - NO QUEUE (direct email sending)
+// - Working days calculation (skip weekends & public holidays)
+// - Uses tickets_chronologies.sla_duedate ONLY
+// - Single unified command
+// ============================================================================
+
+Schedule::command('sla:send-notifications --type=all')
+  ->dailyAt('07:30')
   ->timezone('Asia/Kuala_Lumpur')
-  ->name('Send Ticket Due Date Reminders')
-  ->description('Send email reminders for tickets due tomorrow')
+  ->name('Send SLA Notifications (Reminder & Overdue)')
+  ->description('Send SLA reminder (-1 working day) and overdue (+1 working day) notifications at 7:30 AM daily')
   ->onSuccess(function () {
-    \Illuminate\Support\Facades\Log::info('Due date reminder schedule executed successfully');
+    \Illuminate\Support\Facades\Log::info('✓ SLA notifications executed successfully at ' . now()->toDateTimeString());
   })
   ->onFailure(function () {
-    \Illuminate\Support\Facades\Log::error('Due date reminder schedule failed');
+    \Illuminate\Support\Facades\Log::error('✗ SLA notifications failed at ' . now()->toDateTimeString());
   });

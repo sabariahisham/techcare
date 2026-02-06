@@ -374,23 +374,21 @@
                     $canSeeTindakanPegawai = true;
                 }
 
-                // Check if current user already submitted update for this status
-                // If they did, show read-only view. If not (newly assigned), show editable form
+                // Check if current ticket status is one of the final statuses (read-only)
+                // Status 4 (Aduan Dirujuk), Status 5 (Aduan Dibatal), Status 6 (Aduan Selesai)
                 $isReadOnlyView = false;
                 $lastChronologyUpdate = null;
 
-                if (auth()->user()->hasRole('Pegawai Tugasan')) {
-                    // Get the latest chronology entry for current status
-                    $lastChronologyUpdate = $ticket
-                        ->chronologies()
-                        ->where('tick_status', $ticket->tick_status)
-                        ->orderBy('created_at', 'desc')
-                        ->first();
+                // Get the latest chronology entry for current status
+                $lastChronologyUpdate = $ticket
+                    ->chronologies()
+                    ->where('tick_status', $ticket->tick_status)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
 
-                    // If current user is the one who made the last update (frm_user_id), show read-only
-                    if ($lastChronologyUpdate && $lastChronologyUpdate->frm_user_id == auth()->user()->id) {
-                        $isReadOnlyView = true;
-                    }
+                // Set read-only view ONLY for specific statuses: Dirujuk(4), Dibatal(5), Selesai(6)
+                if (in_array($ticket->tick_status, [4, 5, 6])) {
+                    $isReadOnlyView = true;
                 }
             @endphp
 
@@ -633,27 +631,45 @@ $filteredOfficers = $officersQuery
                                 </div>
                                 <div class="col-sm-9 text-secondary">
                                     @php
-                                        // Get ACTUAL assigned officers from latest chronologies for current status
-                                        $assignedOfficerNames = $ticket
-                                            ->chronologies()
-                                            ->whereNotNull('escalate_to')
-                                            ->where('tick_status', $ticket->tick_status)
-                                            ->with('escalatedTo')
-                                            ->get()
-                                            ->pluck('escalatedTo.nama')
-                                            ->filter()
-                                            ->unique()
-                                            ->values()
-                                            ->toArray();
+                                        // Display who actually performed the action (from chronology frm_user_id)
+                                        $actionByText = '-';
 
-                                        // Display assigned officers or empty if none assigned
-                                        $actionByText = !empty($assignedOfficerNames)
-                                            ? implode(', ', $assignedOfficerNames)
-                                            : '-';
+                                        if (
+                                            $isReadOnlyView &&
+                                            $lastChronologyUpdate &&
+                                            $lastChronologyUpdate->fromUser
+                                        ) {
+                                            // For read-only view: Show who performed the last action
+                                            $actionByText = $lastChronologyUpdate->fromUser->nama;
+                                        } else {
+                                            // For editable view: Show currently assigned officers
+                                            $assignedOfficerNames = $ticket
+                                                ->chronologies()
+                                                ->whereNotNull('escalate_to')
+                                                ->where('tick_status', $ticket->tick_status)
+                                                ->with('escalatedTo')
+                                                ->get()
+                                                ->pluck('escalatedTo.nama')
+                                                ->filter()
+                                                ->unique()
+                                                ->values()
+                                                ->toArray();
+
+                                            $actionByText = !empty($assignedOfficerNames)
+                                                ? implode(', ', $assignedOfficerNames)
+                                                : '-';
+                                        }
                                     @endphp
-                                    <span id="action_by_display">{{ $actionByText }}</span>
-                                    <input type="hidden" name="action_by" id="action_by"
-                                        value="{{ auth()->user()->id }}" />
+                                    @if ($isReadOnlyView)
+                                        <div class="alert alert-secondary mb-0">
+                                            <i class="bx bx-user me-1"></i>
+                                            {{ $actionByText }}
+                                        </div>
+                                    @else
+                                        <span id="action_by_display">{{ $actionByText }}</span>
+                                        <input type="hidden" name="action_by" id="action_by"
+                                            value="{{ auth()->user()->id }}" />
+                                    @endif
                                 </div>
                             </div>
                             @if (!$isReadOnlyView)

@@ -133,8 +133,8 @@ Public holidays are configured in `Helpers::getMalaysianPublicHolidays()`:
 Location: `app/Helpers/Helpers.php`
 Contains all working day calculation functions.
 
-### 2. TicketSLAReminderService.php
-Location: `app/Services/TicketSLAReminderService.php`
+### 2. TicketReminderService.php
+Location: `app/Services/TicketReminderService.php`
 Main service for SLA reminder logic.
 
 Key methods:
@@ -144,8 +144,8 @@ Key methods:
 - `sendOverdueNotifications()` - Overdue reminder
 
 ### 3. Notification Classes
-- `SLAReminderNotification.php` - Email template for SLA-1, Due Today, Due Date+1
-- `SLAOverdueNotification.php` - Email template for Overdue
+- `ReminderNotification.php` - Email template for SLA-1, Due Today, Due Date+1
+- `OverdueNotification.php` - Email template for Overdue
 
 ## Testing
 
@@ -167,10 +167,10 @@ Add to Laravel scheduler (`app/Console/Kernel.php`):
 ```php
 // SLA Reminders - Run at 9:00 AM daily
 $schedule->call(function () {
-    app(TicketSLAReminderService::class)->sendBeforeDueReminders();
-    app(TicketSLAReminderService::class)->sendDueTodayReminders();
-    app(TicketSLAReminderService::class)->sendAfterDueReminders();
-    app(TicketSLAReminderService::class)->sendOverdueNotifications();
+    app(TicketReminderService::class)->sendBeforeDueReminders();
+    app(TicketReminderService::class)->sendDueTodayReminders();
+    app(TicketReminderService::class)->sendAfterDueReminders();
+    app(TicketReminderService::class)->sendOverdueNotifications();
 })->dailyAt('09:00');
 ```
 

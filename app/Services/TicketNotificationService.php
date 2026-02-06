@@ -264,9 +264,9 @@ class TicketNotificationService
       }
 
       // Send to assigned officer (Pegawai Tugasan) for certain status changes
-      // Status: 3 (Serahan Kepada), 4 (Dirujuk), 6 (Selesai)
+      // Status: 3 (Serahan Kepada), 4 (Dirujuk), 5 (Aduan Dibatal), 6 (Selesai)
       $officerNotified = false;
-      if (in_array($newStatus, [3, 4, 6])) {
+      if (in_array($newStatus, [3, 4, 5, 6])) {
         $officerNotified = $this->sendStatusChangeToOfficer($ticket, $oldStatus, $newStatus, $changedBy, $notes);
       }
 
@@ -304,8 +304,8 @@ class TicketNotificationService
     ?string $notes = null
   ): bool {
     try {
-      // For Status 6 (Aduan Selesai), notify opposite level officers
-      if ($newStatus == 6) {
+      // For Status 5 (Aduan Dibatal) and 6 (Aduan Selesai), notify opposite level officers
+      if (in_array($newStatus, [5, 6])) {
         // First, determine the level of the person who submitted by checking officers table
         // Find the officer level for this user in the ticket's category and subcategory
         $submitterLevel = \Illuminate\Support\Facades\DB::table('officers')
@@ -329,12 +329,14 @@ class TicketNotificationService
         // Notify opposite level: If Level 2 submitted, notify Level 1; if Level 1 submitted, notify Level 2
         $targetLevel = ($submitterLevel == 2) ? 1 : 2;
 
-        Log::info('Determining completion notification recipients', [
+        $actionType = ($newStatus == 5) ? 'cancellation' : 'completion';
+        Log::info("Determining {$actionType} notification recipients", [
           'ticket_id' => $ticket->id,
           'submitted_by' => $changedBy->id,
           'submitter_name' => $changedBy->nama,
           'submitter_level' => $submitterLevel,
-          'target_level' => $targetLevel
+          'target_level' => $targetLevel,
+          'new_status' => $newStatus
         ]);
 
         // Get officers of target level (exclude the person who submitted)
@@ -346,7 +348,8 @@ class TicketNotificationService
           ->unique();
 
         if ($targetOfficers->isEmpty()) {
-          Log::info('No Level ' . $targetLevel . ' officer assigned for completion notification', [
+          $actionType = ($newStatus == 5) ? 'cancellation' : 'completion';
+          Log::info("No Level {$targetLevel} officer assigned for {$actionType} notification", [
             'ticket_id' => $ticket->id,
             'new_status' => $newStatus,
             'submitted_by' => $changedBy->id,
@@ -376,7 +379,8 @@ class TicketNotificationService
             $targetLevel
           ));
 
-          Log::info('Completion notification sent to Level ' . $targetLevel . ' officer', [
+          $actionType = ($newStatus == 5) ? 'Cancellation' : 'Completion';
+          Log::info("{$actionType} notification sent to Level {$targetLevel} officer", [
             'ticket_id' => $ticket->id,
             'new_status' => $newStatus,
             'officer_id' => $assignedOfficer->id,

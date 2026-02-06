@@ -175,7 +175,7 @@ public function toMail($notifiable)
 }
 ```
 
-#### d) `SLAOverdueNotification.php`
+#### d) `OverdueNotification.php`
 ```php
 public function toMail($notifiable)
 {
@@ -450,7 +450,7 @@ $tickets = Ticket::whereDate('tick_duedate', '<', Carbon::now())
     ->get();
 
 foreach ($tickets as $ticket) {
-    $ticket->assignedUser->notify(new SLAOverdueNotification($ticket));
+    $ticket->assignedUser->notify(new OverdueNotification($ticket));
 }
 ```
 
