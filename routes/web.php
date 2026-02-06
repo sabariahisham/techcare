@@ -27,6 +27,39 @@ use App\Http\Controllers\Reports\AduanTahunanController;
 use App\Http\Controllers\Reports\StatistikLogAduanController;
 use App\Http\Controllers\Reports\LaporanStatusAduanTahunanController;
 
+// ============================================================================
+// DYNAMIC MIDDLEWARE CONFIGURATION
+// ============================================================================
+// Automatically select middleware based on CAS_ENABLED in .env
+// Toggle CAS: Set CAS_ENABLED=true (SATUID) or false (Local auth) in .env
+// ============================================================================
+$authMiddleware = config('cas.cas_enabled')
+    ? ['cas.auth']
+    : ['auth', config('jetstream.auth_session')];
+// ============================================================================
+
+// Test route to check CAS configuration
+Route::get('/auth-status', function () {
+  $casEnabled = config('cas.cas_enabled');
+  $casService = config('cas.cas_client_service');
+  $currentUrl = config('app.url');
+
+  return response()->json([
+    'cas_enabled' => $casEnabled,
+    'authentication_mode' => $casEnabled ? 'SATUID (CAS)' : 'Local Laravel',
+    'cas_service_url' => $casService,
+    'app_url' => $currentUrl,
+    'cas_hostname' => config('cas.cas_hostname'),
+    'middleware' => $casEnabled ? 'cas.auth' : 'auth + jetstream',
+    'user_authenticated' => Auth::check(),
+    'current_user' => Auth::check() ? [
+      'id' => Auth::user()->id,
+      'nama' => Auth::user()->nama,
+      'email' => Auth::user()->email
+    ] : null
+  ]);
+})->name('auth.status');
+
 // Test email route using Mailtrap
 // run at browser: ../test-email
 use Illuminate\Support\Facades\Mail;
@@ -53,54 +86,16 @@ Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::c
   ->name('two-factor.login.store');
 
 // ============================================================================
-// CAS/SATUID ROUTES - FOR PRODUCTION/DEV SERVER
+// DYNAMIC CAS/LOCAL AUTHENTICATION ROUTES
 // ============================================================================
-// DEV/PRODUCTION: Uncomment this entire block and comment out the "LOCAL DEVELOPMENT"
-// session routes below when testing/deploying with SATUID
-// ============================================================================
-// Route::middleware('cas.auth')->group(function () {
-//     // Dashboard
-//     Route::get('/dashboard', [DashboardController::class, 'index']);
-
-//     // Session Management Routes (for session timeout handling with CAS)
-//     Route::post('/session/ping', function () {
-//         return response()->json([
-//             'authenticated' => Auth::check(),
-//             'remaining' => config('session.lifetime') * 60 - (time() - session('_token_time', time())),
-//             'timestamp' => now()->toISOString()
-//         ]);
-//     })->name('session.ping');
-
-//     Route::get('/session/check', function () {
-//         $user = Auth::user();
-//         return response()->json([
-//             'authenticated' => Auth::check(),
-//             'user' => $user ? ['id' => $user->id, 'name' => $user->name] : null,
-//             'timestamp' => now()->toISOString()
-//         ]);
-//     })->name('session.check');
-
-// });
-
-// CAS Logout Route
-// Route::get('/cas-logout', function () {
-//     Auth::logout();
-//     request()->session()->invalidate();
-//     request()->session()->regenerateToken();
-//     // Redirect to SATUID logout
-//     return redirect(config('cas.cas_logout_url'));
-// })->name('cas.logout');
-// ============================================================================
-// END CAS/SATUID ROUTES
+// Automatically switches between CAS (SATUID) and Local authentication
+// based on CAS_ENABLED in .env file
+// - CAS_ENABLED=true: Uses SATUID authentication
+// - CAS_ENABLED=false: Uses standard Laravel/Jetstream authentication
 // ============================================================================
 
-// ============================================================================
-// LOCAL DEVELOPMENT ROUTES
-// ============================================================================
-// LOCAL: Comment out this entire block when testing/deploying with SATUID
-// ============================================================================
 // Session Management Routes (for session timeout handling)
-Route::middleware(['auth', config('jetstream.auth_session')])->group(function () {
+Route::middleware($authMiddleware)->group(function () {
   // Ping endpoint to extend session and check authentication status
   Route::post('/session/ping', function () {
     return response()->json([
@@ -120,15 +115,23 @@ Route::middleware(['auth', config('jetstream.auth_session')])->group(function ()
     ]);
   })->name('session.check');
 });
+
+// CAS Logout Route (only active when CAS is enabled)
+if (config('cas.cas_enabled')) {
+  Route::get('/cas-logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    // Redirect to SATUID logout
+    return redirect(config('cas.cas_logout_url'));
+  })->name('cas.logout');
+}
 // ============================================================================
-// END LOCAL DEVELOPMENT ROUTES
+// END DYNAMIC AUTHENTICATION ROUTES
 // ============================================================================
 
 // Dashboard Routes Group
-Route::middleware([
-  'auth',
-  config('jetstream.auth_session'),
-])->prefix('dashboard')->name('dashboard.')->group(function () {
+Route::middleware($authMiddleware)->prefix('dashboard')->name('dashboard.')->group(function () {
   // Main dashboard page
   Route::get('/', [DashboardController::class, 'index'])->name('index');
   // Dashboard API endpoints
@@ -157,10 +160,7 @@ Route::middleware([
 });
 
 // API Routes for AJAX calls
-Route::prefix('api')->middleware([
-  'auth',
-  config('jetstream.auth_session'),
-])->group(function () {
+Route::prefix('api')->middleware($authMiddleware)->group(function () {
   Route::get('/subcategories/{categoryId}', [DashboardController::class, 'getSubcategories'])->name('api.subcategories');
 
   // SLA-based filtering routes

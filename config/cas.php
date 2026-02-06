@@ -10,6 +10,16 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | CAS Enabled
+    |--------------------------------------------------------------------------
+    | Toggle CAS authentication on/off
+    | true = Use SATUID (CAS) authentication
+    | false = Use standard Laravel authentication
+    */
+    'cas_enabled' => env('CAS_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | CAS Server Hostname
     |--------------------------------------------------------------------------
     | The hostname of your CAS server (without https://)
