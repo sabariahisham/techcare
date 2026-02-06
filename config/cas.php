@@ -2,157 +2,147 @@
 
 /**
  * CAS Authentication Configuration (SATUID)
- * Optimized for Treasury eHelp System
+ * For Treasury eHelp System
  *
- * Note: This implementation uses manual CAS authentication without phpCAS library.
- * Configuration is simplified to include only required settings.
+ * This configuration uses manual CAS authentication without phpCAS library.
+ * Only essential settings are included to avoid duplicates.
  */
 return [
-  /*
+    /*
     |--------------------------------------------------------------------------
-    | CAS Server Configuration
+    | CAS Enabled
     |--------------------------------------------------------------------------
+    | Toggle CAS authentication on/off
+    | true = Use SATUID (CAS) authentication
+    | false = Use standard Laravel authentication
     */
-  'cas_control_session' => false,
+    'cas_enabled' => env('CAS_ENABLED', false),
 
-  /*
+    /*
     |--------------------------------------------------------------------------
-    | CAS Hostname
+    | CAS Server Hostname
     |--------------------------------------------------------------------------
+    | The hostname of your CAS server (without https://)
+    | Example: satuid.treasury.gov.my
     */
-  'cas_hostname' => env('CAS_HOSTNAME', 'satuid.treasury.gov.my'),
+    'cas_hostname' => env('CAS_HOSTNAME', 'satuid.treasury.gov.my'),
 
-  /*
+    /*
     |--------------------------------------------------------------------------
-    | Enable using this as a cas proxy
+    | CAS Server Port
     |--------------------------------------------------------------------------
+    | Usually 443 for HTTPS
     */
-  'cas_proxy' => false,
+    'cas_port' => env('CAS_PORT', 443),
 
-  /*
-    |--------------------------------------------------------------------------
-    | Cas Port
-    |--------------------------------------------------------------------------
-    | Usually 443
-    */
-  //'cas_port' => 443,
-  'cas_port' => env('CAS_PORT', 443),
-
-  /*
+    /*
     |--------------------------------------------------------------------------
     | CAS URI
     |--------------------------------------------------------------------------
-    | Sometimes is /cas
+    | The base URI path for CAS endpoints
+    | Example: /cas or /gk
     */
-  //'cas_uri' => '/gk',
-  'cas_uri' => env('CAS_URI', '/gk'),
+    'cas_uri' => env('CAS_URI', '/gk'),
 
-  /*
+    /*
     |--------------------------------------------------------------------------
-    | Client service: host, port, protocol.
+    | Client Service URL
     |--------------------------------------------------------------------------
-    | Example: 'http://localhost', 'https://example.com:8888'
+    | The base URL of your application that CAS will redirect back to.
+    | This should match exactly what's registered with SATUID.
+    | Example: 'http://techcare.test'
     */
-  // 'cas_client_service' => 'http://ehelp-dev.treasury.gov.my',
-  'cas_client_service' => env('CAS_CLIENT_SERVICE', 'http://ehelp-dev.treasury.gov.my'),
+    'cas_client_service' => env('CAS_CLIENT_SERVICE', 'http://techcare-dev.treasury.gov.my'),
 
-  /*
-    |--------------------------------------------------------------------------
-    | CAS Validation
-    |--------------------------------------------------------------------------
-    | CAS server SSL validation: 'self' for self-signed certificate, 'ca' for
-    | certificate from a CA, 'none' for no SSL validation.
-    |
-    | VALIDATING THE CAS SERVER IS CRUCIAL TO THE SECURITY OF THE CAS PROTOCOL
-    */
-  'cas_validation' => 'none',
-
-  /*
-    |--------------------------------------------------------------------------
-    | CA Certificate
-    |--------------------------------------------------------------------------
-    | Path to the CA certificate file.  For production use set
-    | the CA certificate that is the issuer of the cert
-    */
-  'cas_cert' => null,
-
-  /*
-    |--------------------------------------------------------------------------
-    | CN Validation (if you are using CA certs)
-    |--------------------------------------------------------------------------
-    | If for some reason you want to disable validating the certificate
-    | intermediaries, here is where you can.  Recommended to leave
-    | this set with default (true).
-    */
-  'cas_validate_cn' => false,
-
-  /*
-    |--------------------------------------------------------------------------
-    | CAS Login URI
-    |--------------------------------------------------------------------------
-    | Empty is fine
-    */
-  'cas_login_url' => '',
-
-  /*
-    |--------------------------------------------------------------------------
-    | CAS Logout URI
-    |--------------------------------------------------------------------------
-    */
-  'cas_logout_url' => 'https://satuid.treasury.gov.my/gk/logout',
-
-  /*
-    |--------------------------------------------------------------------------
-    | CAS Logout Redirect Services
-    |--------------------------------------------------------------------------
-    | If your server supports redirection services, enter the redirect url
-    | in this section.  If left blank, it will default to disabled.
-    */
-  // 'cas_logout_redirect' => 'http://ehelp-dev.treasury.gov.my',
-  'cas_logout_redirect' => env('CAS_LOGOUT_REDIRECT', 'http://ehelp-dev.treasury.gov.my'),
-
-  /*
-    |--------------------------------------------------------------------------
-    | CAS Successful Logon Redirection Url
-    |--------------------------------------------------------------------------
-    | By default, CAS will assume that the user should be redirected to the
-    | page in which the call was initiated.  You can override this method
-    | and force the user to be redirected to a specific URL here.
-    */
-  //'cas_redirect_path' => 'http://ehelp-dev.treasury.gov.my/dashboard',
-  'cas_redirect_path' => env('CAS_REDIRECT_PATH', '/dashboard'),
-
-  /*
-    |--------------------------------------------------------------------------
-    | CAS Supports SAML 1.1, allowing you to retrieve more than just the
-    | user identifier.  If your CAS authentication service supports
-    | this feature, you may be able to retrieve user meta data.
-    |--------------------------------------------------------------------------
-    */
-  'cas_enable_saml' => true,
-
-  /*
-    |--------------------------------------------------------------------------
-    | Client Service Configuration
-    |--------------------------------------------------------------------------
-    | The base URL of this application that CAS will redirect back to.
-    | Example: 'http://localhost:8001', 'https://ehelp.treasury.gov.my'
-    */
-  'cas_client_service' => env('CAS_CLIENT_SERVICE', 'http://ehelp-dev.treasury.gov.my'),
-
-  /*
+    /*
     |--------------------------------------------------------------------------
     | Redirect Path After Login
-    |--------------------------------------------------------------------------
+    --------------------------------------------------------------------------
     | Where to redirect users after successful CAS authentication.
+    | This is a relative path from your application root.
     */
-  'cas_redirect_path' => env('CAS_REDIRECT_PATH', '/dashboard'),
+    'cas_redirect_path' => env('CAS_REDIRECT_PATH', '/dashboard'),
 
-  /*
+    /*
     |--------------------------------------------------------------------------
-    | CAS Logout Configuration
+    | CAS Logout URL
     |--------------------------------------------------------------------------
+    | The full URL to the CAS logout endpoint
     */
-  'cas_logout_url' => env('CAS_LOGOUT_URL', 'https://satuid.treasury.gov.my/gk/logout'),
-  'cas_logout_redirect' => env('CAS_LOGOUT_REDIRECT', 'http://ehelp-dev.treasury.gov.my'),
+    'cas_logout_url' => env('CAS_LOGOUT_URL', 'https://satuid.treasury.gov.my/gk/logout'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logout Redirect URL
+    |--------------------------------------------------------------------------
+    | Where to redirect after logging out from CAS
+    | If not specified, will redirect to CAS logout page
+    */
+    'cas_logout_redirect' => env('CAS_LOGOUT_REDIRECT', 'http://techcare-dev.treasury.gov.my'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | CAS Validation Path
+    |--------------------------------------------------------------------------
+    | The endpoint used to validate CAS tickets
+    */
+    'cas_validate_path' => env('CAS_VALIDATE_PATH', '/gk/serviceValidate'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | SSL Certificate Validation
+    |--------------------------------------------------------------------------
+    | Options: 'ca' (validate with CA), 'self' (self-signed), 'none' (no validation)
+    |
+    | WARNING: Use 'none' only for development. Production should use 'ca'.
+    */
+    'cas_validation' => env('CAS_VALIDATION', 'none'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | CA Certificate Path
+    |--------------------------------------------------------------------------
+    | Path to the CA certificate file if using 'ca' validation
+    */
+    'cas_cert' => env('CAS_CERT', null),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validate CN (Common Name)
+    |--------------------------------------------------------------------------
+    | Whether to validate the certificate's common name
+    */
+    'cas_validate_cn' => env('CAS_VALIDATE_CN', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enable SAML 1.1
+    |--------------------------------------------------------------------------
+    | If your CAS server supports SAML, you can retrieve additional user attributes
+    */
+    'cas_enable_saml' => env('CAS_ENABLE_SAML', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | CAS Proxy
+    |--------------------------------------------------------------------------
+    | Enable if using CAS as a proxy
+    */
+    'cas_proxy' => env('CAS_PROXY', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Control Session
+    |--------------------------------------------------------------------------
+    | Whether CAS should control the session
+    */
+    'cas_control_session' => env('CAS_CONTROL_SESSION', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Debug Mode
+    |--------------------------------------------------------------------------
+    | Enable detailed logging for CAS operations
+    */
+    'cas_debug' => env('CAS_DEBUG', true),
 ];
