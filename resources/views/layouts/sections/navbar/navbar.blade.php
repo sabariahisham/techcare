@@ -192,14 +192,14 @@
                 @endif --}}
                 @if (Auth::check())
                     <li>
-                        <a class="dropdown-item" href="{{ route('logout') }}"
-                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                            <i class='bx bx-power-off bx-md me-3'></i><span>Logout</span>
-                        </a>
-                    </li>
-                    <form method="POST" id="logout-form" action="{{ route('logout') }}">
+                        <form method="POST" id="logout-form" action="{{ route('cas.logout') }}">
                         @csrf
-                    </form>
+                            <a class="dropdown-item" href="{{ route('logout') }}"
+                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class='bx bx-power-off bx-md me-3'></i><span>Logout</span>
+                            </a>
+                        </form>
+                    </li>
                 @else
                     <li>
                         <a class="dropdown-item"
