@@ -395,16 +395,23 @@
             @if ($canSeeTindakanPegawai)
                 <div class="card mb-0">
                     <div class="card-header {{ $isReadOnlyView ? 'bg-label-secondary' : '' }} mb-4">
-                        <h5 class="card-title mb-1">
-                            <i class="bx {{ $isReadOnlyView ? 'bx-info-circle' : 'bx-cog' }} me-2"></i>
-                            {{ $isReadOnlyView ? 'Maklumat Tindakan (Telah Dihantar)' : 'Maklumat Tindakan Pegawai' }}
-                        </h5>
-                        @if ($isReadOnlyView)
-                            <small class="text-muted d-block mb-0">
-                                <i class="bx bx-lock-alt me-0"></i>Anda telah menghantar tindakan untuk tiket ini. Sila
-                                tunggu pegawai lain untuk tindakan seterusnya.
-                            </small>
-                        @endif
+
+                        <div class="d-flex align-items-start">
+                            <i class="bx {{ $isReadOnlyView ? 'bx-lock-alt' : 'bx-cog' }} fs-4 me-3 mt-1"></i>
+
+                            <div>
+                                <h5 class="card-title mb-1">
+                                    {{ $isReadOnlyView ? 'Maklumat Tindakan (Telah Dihantar)' : 'Maklumat Tindakan Pegawai' }}
+                                </h5>
+
+                                @if ($isReadOnlyView)
+                                    <small class="text-secondary d-block">
+                                        Paparan ini adalah untuk rujukan bagi status Aduan Dirujuk, Aduan Dibatal atau Aduan
+                                        Selesai.
+                                    </small>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body mt-3">
                         <form id="updateTicketForm" action="{{ route('ticket-assignments.update', $ticket->uuid) }}"
@@ -699,6 +706,14 @@ $filteredOfficers = $officersQuery
                                             <i class="bx bx-x me-1"></i>Batal
                                         </button>
                                     </div>
+                                </div>
+                            @endif
+                            @if ($isReadOnlyView)
+                                <div class="d-flex justify-content-center align-items-center mt-2 text-secondary">
+                                    <i class="bx bx-info-circle me-1"></i>
+                                    <small class="text-center fst-italic">
+                                        Tindakan telah berjaya direkodkan dan sedang menunggu tindakan seterusnya.
+                                    </small>
                                 </div>
                             @endif
                         </form>
@@ -1838,23 +1853,18 @@ $timelineItems = $timelineItems
                         return false;
                     }
 
-                    // Only validate kategori and sub kategori if they are enabled (Aduan Dirujuk status)
+                    // Only validate kategori and sub kategori if they are NOT disabled (status is not Aduan Dirujuk)
                     const selectedStatusText = statusSelect.selectedOptions[0]?.text.trim();
                     const isAduanDirujuk = selectedStatusText === 'Aduan Dirujuk';
 
-                    if (isAduanDirujuk) {
-                        if (!categorySelect.value) {
-                            e.preventDefault();
-                            alert('Sila pilih kategori untuk status Aduan Dirujuk.');
-                            categorySelect.focus();
-                            return false;
+                    // Skip validation for kategori and sub kategori when status is Aduan Dirujuk
+                    if (!isAduanDirujuk) {
+                        if (categorySelect.value && !categorySelect.disabled) {
+                            // Category is set, continue
                         }
 
-                        if (!subcategorySelect.value) {
-                            e.preventDefault();
-                            alert('Sila pilih sub kategori untuk status Aduan Dirujuk.');
-                            subcategorySelect.focus();
-                            return false;
+                        if (subcategorySelect.value && !subcategorySelect.disabled) {
+                            // Subcategory is set, continue
                         }
                     }
 
@@ -1888,34 +1898,53 @@ $timelineItems = $timelineItems
                 }
 
                 const selectedStatusText = statusSelect.selectedOptions[0]?.text.trim();
-                const isAduanDirujuk = selectedStatusText === 'Aduan Dirujuk';
+                // Check if status is one of the final statuses (Dirujuk, Dibatal, Selesai)
+                const isFinalStatus = selectedStatusText === 'Aduan Dirujuk' ||
+                    selectedStatusText === 'Aduan DiBatal' ||
+                    selectedStatusText === 'Aduan Selesai';
 
-                console.log('Status change - Text:', selectedStatusText, 'IsAduanDirujuk:', isAduanDirujuk);
+                console.log('Status change - Text:', selectedStatusText, 'IsFinalStatus:', isFinalStatus);
 
-                // Enable/disable kategori and sub kategori based on status
-                categorySelect.disabled = !isAduanDirujuk;
-                subcategorySelect.disabled = !isAduanDirujuk;
+                // Disable all fields when status is final
+                categorySelect.disabled = isFinalStatus;
+                subcategorySelect.disabled = isFinalStatus;
+                if (severitySelect) severitySelect.disabled = isFinalStatus;
+                if (assignedOfficersSelect) assignedOfficersSelect.disabled = isFinalStatus;
 
-                // Add/remove required attributes based on status
-                if (isAduanDirujuk) {
-                    categorySelect.setAttribute('required', 'required');
-                    subcategorySelect.setAttribute('required', 'required');
-                } else {
+                // Remove required attributes when disabled
+                if (isFinalStatus) {
                     categorySelect.removeAttribute('required');
                     subcategorySelect.removeAttribute('required');
+                    if (severitySelect) severitySelect.removeAttribute('required');
                 }
 
                 // Add visual styling for disabled state
-                if (!isAduanDirujuk) {
+                if (isFinalStatus) {
                     categorySelect.style.backgroundColor = '#f8f9fa';
                     categorySelect.style.color = '#6c757d';
                     subcategorySelect.style.backgroundColor = '#f8f9fa';
                     subcategorySelect.style.color = '#6c757d';
+                    if (severitySelect) {
+                        severitySelect.style.backgroundColor = '#f8f9fa';
+                        severitySelect.style.color = '#6c757d';
+                    }
+                    if (assignedOfficersSelect) {
+                        assignedOfficersSelect.style.backgroundColor = '#f8f9fa';
+                        assignedOfficersSelect.style.color = '#6c757d';
+                    }
                 } else {
                     categorySelect.style.backgroundColor = '';
                     categorySelect.style.color = '';
                     subcategorySelect.style.backgroundColor = '';
                     subcategorySelect.style.color = '';
+                    if (severitySelect) {
+                        severitySelect.style.backgroundColor = '';
+                        severitySelect.style.color = '';
+                    }
+                    if (assignedOfficersSelect) {
+                        assignedOfficersSelect.style.backgroundColor = '';
+                        assignedOfficersSelect.style.color = '';
+                    }
                 }
             }
 
