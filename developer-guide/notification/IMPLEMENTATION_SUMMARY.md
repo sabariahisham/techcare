@@ -7,11 +7,11 @@
 ### 1. **New Files Created**
 
 #### Notifications
-- ✅ `app/Notifications/Ticket/SLAReminderNotification.php` - Reminder notification class
+- ✅ `app/Notifications/Ticket/ReminderNotification.php` - Reminder notification class
 - ✅ `resources/views/emails/ticket/sla-reminder.blade.php` - Email template untuk reminders
 
 #### Services
-- ✅ `app/Services/TicketSLAReminderService.php` - Service untuk handle semua SLA reminder logic
+- ✅ `app/Services/TicketReminderService.php` - Service untuk handle semua SLA reminder logic
 
 #### Documentation & Testing
 - ✅ `developer-guide/notification/12_SLA_NOTIFICATION_GUIDE.md` - Complete documentation
@@ -30,7 +30,7 @@
   - Added `getLatestSlaDueDateAttribute()` attribute
 
 #### Controllers
-- ✅ `app/Http/Controllers/Notifications/TicketSLAOverdueController.php`
+- ✅ `app/Http/Controllers/Notifications/TicketOverdueController.php`
   - Complete rewrite dengan new methods:
     - `sendBeforeDueReminders()` - SLA-1 (due tomorrow)
     - `sendDueTodayReminders()` - Due today
@@ -153,19 +153,19 @@ Authorization: Bearer YOUR_TOKEN
 Add to `app/Console/Kernel.php`:
 ```php
 $schedule->call(function () {
-    app(TicketSLAReminderService::class)->sendBeforeDueReminders();
+    app(TicketReminderService::class)->sendBeforeDueReminders();
 })->dailyAt('09:00');
 
 $schedule->call(function () {
-    app(TicketSLAReminderService::class)->sendDueTodayReminders();
+    app(TicketReminderService::class)->sendDueTodayReminders();
 })->dailyAt('08:00');
 
 $schedule->call(function () {
-    app(TicketSLAReminderService::class)->sendAfterDueReminders();
+    app(TicketReminderService::class)->sendAfterDueReminders();
 })->dailyAt('10:00');
 
 $schedule->call(function () {
-    app(TicketSLAReminderService::class)->sendOverdueNotifications();
+    app(TicketReminderService::class)->sendOverdueNotifications();
 })->dailyAt('11:00');
 ```
 

@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SlaController;
 use App\Http\Controllers\Ticket\TicketDueDateController;
 use App\Http\Controllers\Ticket\TicketSLAController;
-use App\Http\Controllers\Notifications\TicketSLAOverdueController;
+use App\Http\Controllers\Notifications\TicketReminderController;
+use App\Http\Controllers\Notifications\TicketOverdueController;
 
 Route::get('/user', function (Request $request) {
   return $request->user();
@@ -40,40 +41,38 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // SLA Notification Routes (Admin/Testing)
 // ========================================
 Route::middleware(['auth:sanctum'])->prefix('sla')->name('api.sla.')->group(function () {
-  
+
   // Trigger SLA notifications manually (for testing or manual execution)
-  Route::post('/notifications/before-due', [TicketSLAOverdueController::class, 'sendBeforeDueReminders'])
-    ->name('notifications.before-due');
-  
-  Route::post('/notifications/due-today', [TicketSLAOverdueController::class, 'sendDueTodayReminders'])
-    ->name('notifications.due-today');
-  
-  Route::post('/notifications/after-due', [TicketSLAOverdueController::class, 'sendAfterDueReminders'])
+
+  // REMINDER: 1 working day BEFORE sla_duedate
+  Route::post('/notifications/reminder', [TicketReminderController::class, 'sendBeforeDueReminders'])
+    ->name('notifications.reminder');
+
+  // AFTER DUE: 1 working day AFTER sla_duedate
+  Route::post('/notifications/after-due', [TicketOverdueController::class, 'sendAfterDueNotifications'])
     ->name('notifications.after-due');
-  
-  Route::post('/notifications/overdue', [TicketSLAOverdueController::class, 'sendOverdueNotifications'])
-    ->name('notifications.overdue');
-  
-  Route::post('/notifications/all', [TicketSLAOverdueController::class, 'sendAllSLANotifications'])
-    ->name('notifications.all');
-  
-  // Get upcoming SLA tickets
-  Route::get('/upcoming', [TicketSLAOverdueController::class, 'getUpcomingSLA'])
+
+  // Get upcoming SLA tickets (for dashboard)
+  Route::get('/upcoming', [TicketReminderController::class, 'getUpcomingSLA'])
     ->name('upcoming');
-  
+
+  // Get after due tickets (for reporting)
+  Route::get('/after-due-tickets', [TicketOverdueController::class, 'getAfterDueTickets'])
+    ->name('after-due-tickets');
+
   // Reporting routes
   Route::get('/tickets/overdue', [TicketSLAController::class, 'getOverdueTickets'])
     ->name('tickets.overdue');
-  
+
   Route::get('/tickets/due-tomorrow', [TicketSLAController::class, 'getDueTomorrowTickets'])
     ->name('tickets.due-tomorrow');
-  
+
   Route::get('/tickets/due-today', [TicketSLAController::class, 'getDueTodayTickets'])
     ->name('tickets.due-today');
-  
+
   Route::get('/tickets/due-yesterday', [TicketSLAController::class, 'getDueYesterdayTickets'])
     ->name('tickets.due-yesterday');
-  
+
   Route::get('/statistics', [TicketSLAController::class, 'getSlaStatistics'])
     ->name('statistics');
 });

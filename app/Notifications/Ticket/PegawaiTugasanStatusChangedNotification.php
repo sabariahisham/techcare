@@ -4,7 +4,7 @@
 * Function PegawaiTugasanStatusChangedNotification.php:
 *  - Notification: Ticket Status Changed to inform Pegawai Tugasan.
 *  - Ticket status changes:
-*     1. Level 1: Aduan Baru(1), Dirujuk(4), Selesai(6)-after Level 2 submits
+*     1. Level 1: Aduan Baru(1), Dirujuk(4), Dibatal(5)-after Level 2 submits, Selesai(6)-after Level 2 submits
 *     2. Level 2: Serahan Kepada(3)
 *  - Sends email with ticket details and status update information.
 *  - run command: php test_notification_detail.php 14[ticket_id] to test email notification for ticket status "Aduan Baru"(1)
@@ -47,12 +47,8 @@ class PegawaiTugasanStatusChangedNotification extends Notification
    */
   public function via(object $notifiable): array
   {
-    // Jangan hantar email untuk status 2 (Aduan Diproses) dan 5 (Aduan Dibatal)
-    // Status dalaman sahaja, pegawai tak perlu notification
-    if (in_array($this->newStatus, [2, 5])) {
-      return []; // Return empty array = tiada channel = tiada email
-    }
-
+    // Allow all status notifications - filtering is done at service layer
+    // This allows Level 1 to receive notifications when Level 2 cancels tickets
     return ['mail'];
   }
 
@@ -121,12 +117,14 @@ class PegawaiTugasanStatusChangedNotification extends Notification
       return match ($statusId) {
         1 => 'Tiket baru telah ditugaskan kepada anda. Sila ambil tindakan yang sewajarnya.',
         4 => 'Tiket ini telah dirujuk kepada bahagian lain. Sila semak dan ambil tindakan jika perlu.',
+        5 => 'Tiket ini telah dibatalkan. Sila ambil maklum untuk rekod.',
         6 => 'Tiket ini telah diselesaikan. Terima kasih atas tindakan anda.',
         default => '',
       };
     } else {
       return match ($statusId) {
         3 => 'Tiket ini telah diserahkan kepada anda untuk tindakan lanjut.',
+        5 => 'Tiket ini telah dibatalkan. Sila ambil maklum untuk rekod.',
         6 => 'Tiket ini telah diselesaikan. Terima kasih atas tindakan anda.',
         default => '',
       };
@@ -142,6 +140,7 @@ class PegawaiTugasanStatusChangedNotification extends Notification
       1 => 'Sila ambil tindakan segera untuk memproses tiket ini.',
       3 => 'Sila semak dan ambil tindakan yang bersesuaian.',
       4 => 'Makluman lanjut akan dimaklumkan sekiranya diperlukan.',
+      5 => 'Tiket ini telah dibatalkan dan tidak akan diproses lagi.',
       6 => 'Tiket ini telah ditutup.',
       default => '',
     };

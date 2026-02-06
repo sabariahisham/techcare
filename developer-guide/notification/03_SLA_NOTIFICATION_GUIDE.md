@@ -1,8 +1,10 @@
 # 📧 Dokumentasi SLA Notification System
 
+**Last Updated:** February 6, 2026
+
 ## 📋 Ringkasan
 
-Sistem SLA Notification yang telah ditambah baik untuk menghantar email reminder kepada Pegawai Tugasan berdasarkan tarikh akhir SLA (Service Level Agreement).
+Sistem SLA Notification yang telah diperbaiki dan diseragamkan untuk menghantar email reminder kepada Pegawai Tugasan berdasarkan tarikh akhir SLA (Service Level Agreement). Sistem ini tidak menggunakan Laravel Queue dan berjalan pada jam 7:30 AM dengan mengambil kira hari bekerja dan cuti umum.
 
 ## 🔄 Flow Sistem
 
@@ -33,173 +35,270 @@ Selesai              Escalate ke Level 2
 
 ## 📧 Jenis Email Notifications
 
-### 1. **SLA-1 (Due Tomorrow)** - `before_due`
-- Dihantar 1 hari sebelum SLA tamat tempoh
-- Subject: "⚠️ Peringatan SLA - Hampir Tamat Tempoh"
-- Recipient: Pegawai Tugasan yang ditugaskan (Level 1 atau Level 2)
+### 1. **Reminder** - 1 Hari Sebelum Due Date
+- **Trigger:** 1 hari bekerja sebelum SLA tamat tempoh (sla_duedate - 1 working day)
+- **Subject:** "⏳ Peringatan SLA - Hampir Tamat Tempoh"
+- **Email Template:** `sla-reminder.blade.php`
+- **Notification Class:** `ReminderNotification`
+- **Recipient:** Pegawai Tugasan Level 1 atau Level 2 (bergantung kepada chronology terkini)
+- **Working Days:** Ya (skip weekends & public holidays)
 
-### 2. **Due Today** - `due_today`
-- Dihantar pada hari SLA akan tamat tempoh
-- Subject: "🔔 Peringatan SLA - Tamat Tempoh HARI INI"
-- Recipient: Pegawai Tugasan yang ditugaskan
+### 2. **Overdue** - 1 Hari Selepas Due Date
+- **Trigger:** 1 hari bekerja selepas SLA tamat tempoh (sla_duedate + 1 working day)
+- **Subject:** "🚨 Amaran: Tiket SLA OVERDUE"
+- **Email Template:** `sla-overdue.blade.php`
+- **Notification Class:** `SLAOverdueNotification`
+- **Recipient:** Pegawai Tugasan yang berkaitan
+- **Working Days:** Ya (skip weekends & public holidays)
 
-### 3. **Due Date+1 (Yesterday)** - `after_due`
-- Dihantar sehari selepas SLA tamat tempoh
-- Subject: "⚠️ Peringatan SLA - Tempoh Tamat Semalam"
-- Recipient: Pegawai Tugasan yang ditugaskan
-
-### 4. **Overdue** - `overdue`
-- Dihantar untuk tiket yang sudah lebih 1 hari overdue
-- Subject: "⛔ Tindakan Segera: SLA (OVERDUE)"
-- Recipient: Pegawai Tugasan yang ditugaskan
+### 3. **Due Date (Status=1 Only)** - 3 Hari Selepas Created
+- **Trigger:** 3 hari bekerja selepas tiket dicipta (created_at + 3 working days)
+- **Condition:** HANYA untuk tiket dengan status = 1 (Baru/Menunggu)
+- **Subject:** "📅 Peringatan: Tiket Menunggu Tindakan"
+- **Email Template:** `due-date.blade.php`
+- **Notification Class:** `DueDateNotification`
+- **Recipient:** Pegawai Tugasan Level 1
+- **Working Days:** Ya (skip weekends & public holidays)
+- **Special:** Tidak bergantung kepada sla_duedate, guna created_at sahaja
 
 ## 🔧 Files Yang Telah Dibuat/Diubah
 
 ### Models
-- ✅ `app/Models/Ticket.php` - Tambah `assignedUser()` dan `getLatestSlaDueDateAttribute()`
-- ✅ `app/Models/TicketChronology.php` - Existing model dengan SLA fields
+- ✅ `app/Models/Ticket.php` - Tambah `assignedUser()` dan helper methods
+- ✅ `app/Models/TicketChronology.php` - Model dengan SLA fields (sla_duedate, tick_status)
 
-### Notifications
-- ✅ `app/Notifications/Ticket/SLAReminderNotification.php` - **NEW** - Reminder notification class
-- ✅ `app/Notifications/Ticket/SLAOverdueNotification.php` - Existing overdue notification
+### Notifications (NO QUEUE)
+- ✅ `app/Notifications/Ticket/ReminderNotification.php` - 1 day before reminder
+- ✅ `app/Notifications/Ticket/SLAOverdueNotification.php` - 1 day after overdue
+- ✅ `app/Notifications/Ticket/DueDateNotification.php` - 3 days after created (status=1)
+- ⚠️ **REMOVED:** `SLAReminderNotification.php` (duplicate dengan ReminderNotification)
 
-### Services
-- ✅ `app/Services/TicketSLAReminderService.php` - **NEW** - Handle semua SLA reminder logic
-- ⚠️ `app/Services/TicketSLAOverdueService.php` - Existing (masih boleh guna untuk overdue sahaja)
+### Services (MAIN LOGIC)
+- ✅ `app/Services/TicketSLAReminderService.php` - **UNIFIED SERVICE**
+  - `sendReminderNotifications()` - 1 day before
+  - `sendOverdueNotifications()` - 1 day after
+  - `sendDueDateNotifications()` - 3 days after created (status=1)
+  - Semua method guna working days
+- ⚠️ **DEPRECATED:** `TicketDueDateController` - Old conflicting logic
 
-### Controllers
-- ✅ `app/Http/Controllers/Notifications/TicketSLAOverdueController.php` - Updated dengan methods baru
-- ✅ `app/Http/Controllers/Ticket/TicketSLAController.php` - Updated dengan reporting methods
+### Console Commands (AUTOMATION)
+- ✅ `app/Console/Commands/SendSLANotifications.php` - **UNIFIED COMMAND**
+  - Jalankan semua 3 jenis notifikasi
+  - Scheduled pada 7:30 AM setiap hari
+  - No queue, direct send
+
+### Helpers
+- ✅ `app/Helpers/WorkingDaysHelper.php` - Working days calculation
+  - `addWorkingDays()` - Tambah hari bekerja
+  - `subtractWorkingDays()` - Tolak hari bekerja
+  - `isWorkingDay()` - Check sama ada hari bekerja
+  - Skip weekends & public holidays
 
 ### Views (Email Templates)
-- ✅ `resources/views/emails/ticket/sla-reminder.blade.php` - **NEW** - Template untuk reminders
-- ✅ `resources/views/emails/ticket/sla-overdue.blade.php` - Existing template untuk overdue
+- ✅ `resources/views/emails/ticket/sla-reminder.blade.php` - Reminder template
+- ✅ `resources/views/emails/ticket/sla-overdue.blade.php` - Overdue template
+- ✅ `resources/views/emails/ticket/due-date.blade.php` - Due date template
 
-### Routes
-- ✅ `routes/api.php` - Tambah routes untuk SLA notifications
+### Schedule (Kernel.php)
+- ✅ `app/Console/Kernel.php` - Schedule command pada 7:30 AM
+  ```php
+  $schedule->command('sla:send-notifications')->dailyAt('07:30');
+  ```
 
-## 🌐 API Endpoints
+## 🌐 Testing & Manual Trigger
 
-### Trigger Notifications (Manual/Testing)
-
-```bash
-# 1. Send SLA-1 reminders (due tomorrow)
-POST /api/sla/notifications/before-due
-
-# 2. Send due today reminders
-POST /api/sla/notifications/due-today
-
-# 3. Send after due reminders (due date+1)
-POST /api/sla/notifications/after-due
-
-# 4. Send overdue notifications
-POST /api/sla/notifications/overdue
-
-# 5. Send ALL notifications at once
-POST /api/sla/notifications/all
-```
-
-### Reporting Endpoints
+### Console Command (RECOMMENDED)
 
 ```bash
-# Get overdue tickets
-GET /api/sla/tickets/overdue
+# Jalankan semua 3 jenis notifikasi sekaligus
+php artisan sla:send-notifications
 
-# Get tickets due tomorrow (SLA-1)
-GET /api/sla/tickets/due-tomorrow
+# Dengan verbose output untuk debugging
+php artisan sla:send-notifications -v
 
-# Get tickets due today
-GET /api/sla/tickets/due-today
-
-# Get tickets due yesterday (due date+1)
-GET /api/sla/tickets/due-yesterday
-
-# Get SLA statistics
-GET /api/sla/statistics
-
-# Get upcoming SLA tickets (next 7 days)
-GET /api/sla/upcoming?days=7
+# Atau guna PowerShell
+php artisan sla:send-notifications
 ```
 
-## 🧪 Testing Manual
-
-### 1. Test Individual Notification
-
-```bash
-# Test using PowerShell
-$token = "YOUR_BEARER_TOKEN"
-$headers = @{
-    "Authorization" = "Bearer $token"
-    "Accept" = "application/json"
-}
-
-# Test SLA-1 (due tomorrow)
-Invoke-RestMethod -Uri "http://localhost/api/sla/notifications/before-due" -Method POST -Headers $headers
-
-# Test due today
-Invoke-RestMethod -Uri "http://localhost/api/sla/notifications/due-today" -Method POST -Headers $headers
-
-# Test after due
-Invoke-RestMethod -Uri "http://localhost/api/sla/notifications/after-due" -Method POST -Headers $headers
-
-# Test overdue
-Invoke-RestMethod -Uri "http://localhost/api/sla/notifications/overdue" -Method POST -Headers $headers
-```
-
-### 2. Test All Notifications
-
-```bash
-# Send all notifications at once
-Invoke-RestMethod -Uri "http://localhost/api/sla/notifications/all" -Method POST -Headers $headers
-```
-
-### 3. Check Reports
-
-```bash
-# Get overdue tickets
-Invoke-RestMethod -Uri "http://localhost/api/sla/tickets/overdue" -Method GET -Headers $headers
-
-# Get due tomorrow
-Invoke-RestMethod -Uri "http://localhost/api/sla/tickets/due-tomorrow" -Method GET -Headers $headers
-
-# Get upcoming tickets
-Invoke-RestMethod -Uri "http://localhost/api/sla/upcoming?days=7" -Method GET -Headers $headers
-```
-
-## ⏰ Automated Scheduling (Cronjob)
-
-Untuk automate notification system, tambah dalam `app/Console/Kernel.php`:
+### Individual Testing (Service Methods)
 
 ```php
-protected function schedule(Schedule $schedule)
+use App\Services\TicketSLAReminderService;
+
+$service = app(TicketSLAReminderService::class);
+
+// Test reminder (1 day before)
+$service->sendReminderNotifications();
+
+// Test overdue (1 day after)
+$service->sendOverdueNotifications();
+
+// Test due date (3 days after created, status=1 only)
+$service->sendDueDateNotifications();
+```
+
+### Schedule Automation
+
+Dijadualkan berjalan setiap hari pada **7:30 AM** melalui Laravel Scheduler:
+
+```php
+// app/Console/Kernel.php
+$schedule->command('sla:send-notifications')->dailyAt('07:30');
+```
+
+Pastikan cron job berjalan:
+```bash
+* * * * * cd /path-to-ehelp && php artisan schedule:run >> /dev/null 2>&1
+```
+
+## 🧪 Database Query Examples
+
+### Check Tickets for Reminder (1 day before)
+
+```sql
+SELECT t.id, t.ticket_nolog, t.ticket_title, 
+       tc.sla_duedate, tc.tick_status,
+       u.nama as pegawai_tugasan
+FROM tickets t
+INNER JOIN tickets_chronologies tc ON tc.ticket_id = t.id
+LEFT JOIN users u ON u.id = tc.frm_user_id
+WHERE t.deleted_at IS NULL
+  AND tc.deleted_at IS NULL
+  AND tc.sla_duedate IS NOT NULL
+  AND tc.tick_status NOT IN (5, 6) -- 5=Batal, 6=Selesai
+  AND DATE(tc.sla_duedate) = DATE(DATE_ADD(NOW(), INTERVAL 1 DAY))
+ORDER BY tc.created_at DESC;
+```
+
+### Check Tickets for Overdue (1 day after)
+
+```sql
+SELECT t.id, t.ticket_nolog, t.ticket_title,
+       tc.sla_duedate, tc.tick_status,
+       DATEDIFF(NOW(), tc.sla_duedate) as days_overdue
+FROM tickets t
+INNER JOIN tickets_chronologies tc ON tc.ticket_id = t.id
+WHERE t.deleted_at IS NULL
+  AND tc.deleted_at IS NULL
+  AND tc.sla_duedate IS NOT NULL
+  AND tc.tick_status NOT IN (5, 6) -- 5=Batal, 6=Selesai
+  AND DATE(tc.sla_duedate) < DATE(NOW())
+  AND DATE(tc.sla_duedate) = DATE(DATE_SUB(NOW(), INTERVAL 1 DAY))
+ORDER BY tc.created_at DESC;
+```
+
+### Check Tickets for Due Date (3 days after created, status=1)
+
+```sql
+SELECT t.id, t.ticket_nolog, t.ticket_title,
+       t.created_at, tc.tick_status,
+       DATEDIFF(NOW(), t.created_at) as days_since_created
+FROM tickets t
+INNER JOIN tickets_chronologies tc ON tc.ticket_id = t.id
+WHERE t.deleted_at IS NULL
+  AND tc.deleted_at IS NULL
+  AND tc.tick_status = 1 -- Status Baru/Menunggu sahaja
+  AND DATE(t.created_at) = DATE(DATE_SUB(NOW(), INTERVAL 3 DAY))
+ORDER BY t.created_at DESC;
+```
+
+## 🔍 Troubleshooting
+
+### Email tidak dihantar?
+
+1. **Check mail configuration** dalam `.env`:
+   ```env
+   MAIL_MAILER=smtp
+   MAIL_HOST=smtp.gmail.com
+   MAIL_PORT=587
+   MAIL_USERNAME=your_email@gmail.com
+   MAIL_PASSWORD=your_app_password
+   MAIL_ENCRYPTION=tls
+   MAIL_FROM_ADDRESS=your_email@gmail.com
+   MAIL_FROM_NAME="${APP_NAME}"
+   ```
+
+2. **Check Laravel logs**:
+   ```bash
+   tail -f storage/logs/laravel.log
+   ```
+
+3. **Test mail configuration**:
+   ```bash
+   php artisan tinker
+   Mail::raw('Test email', function($msg) {
+       $msg->to('test@example.com')->subject('Test');
+   });
+   ```
+
+### Notification tidak trigger?
+
+1. **Verify cron is running**:
+   ```bash
+   php artisan schedule:list
+   ```
+
+2. **Run command manually**:
+   ```bash
+   php artisan sla:send-notifications -v
+   ```
+
+3. **Check database** untuk tickets yang qualify:
+   ```sql
+   SELECT COUNT(*) FROM tickets t
+   JOIN tickets_chronologies tc ON tc.ticket_id = t.id
+   WHERE DATE(tc.sla_duedate) = DATE(DATE_ADD(NOW(), INTERVAL 1 DAY));
+   ```
+
+### Working days tidak betul?
+
+1. **Check public holidays** dalam database:
+   ```sql
+   SELECT * FROM public_holidays WHERE ph_date >= CURDATE()
+   ORDER BY ph_date;
+   ```
+
+2. **Test working days calculation**:
+   ```php
+   php artisan tinker
+   use App\Helpers\WorkingDaysHelper;
+   $tomorrow = WorkingDaysHelper::addWorkingDays(now(), 1);
+   echo $tomorrow;
+   ```
+
+## 📊 Response Format
+
+### Success Response
+
+```json
 {
-    // Send SLA-1 reminders daily at 9:00 AM
-    $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendBeforeDueReminders();
-    })->dailyAt('09:00')->name('sla-before-due-reminders');
-
-    // Send due today reminders daily at 8:00 AM
-    $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendDueTodayReminders();
-    })->dailyAt('08:00')->name('sla-due-today-reminders');
-
-    // Send after due reminders daily at 10:00 AM
-    $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendAfterDueReminders();
-    })->dailyAt('10:00')->name('sla-after-due-reminders');
-
-    // Send overdue notifications daily at 11:00 AM
-    $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendOverdueNotifications();
-    })->dailyAt('11:00')->name('sla-overdue-notifications');
+  "success": true,
+  "message": "All SLA notifications sent successfully",
+  "results": {
+    "reminder": {
+      "sent": 5,
+      "failed": 0
+    },
+    "overdue": {
+      "sent": 2,
+      "failed": 0
+    },
+    "due_date": {
+      "sent": 3,
+      "failed": 0
+    }
+  }
 }
 ```
 
-Kemudian setup Laravel Scheduler dalam Windows Task Scheduler atau cron:
+### Error Response
 
-```bash
-# Add to Windows Task Scheduler (run every minute)
-php c:\path\to\artisan schedule:run
+```json
+{
+  "success": false,
+  "message": "Failed to send notifications",
+  "error": "Error message here"
+}
 ```
 
 ## 📊 Response Format

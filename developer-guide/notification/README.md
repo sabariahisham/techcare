@@ -24,29 +24,56 @@ Dokumentasi lengkap untuk sistem email dan notification dalam eHelp.
     - Level 1 officer notifications
 
 ### SLA Notification System ⭐
-12. [**SLA Notification Guide**](12_SLA_NOTIFICATION_GUIDE.md) 🔥
-    - **Complete SLA notification implementation**
-    - 4 types of reminders:
-      - SLA-1 (due tomorrow)
-      - Due today
-      - Due date+1 (yesterday)
-      - Overdue (>1 day)
-    - API endpoints documentation
-    - Testing instructions
-    - Automation setup
-    - Troubleshooting guide
+12. [**SLA Notification Guide**](03_SLA_NOTIFICATION_GUIDE.md) 🔥 **UPDATED Feb 6, 2026**
+    - **Complete FIXED & UNIFIED implementation**
+    - **NO DUPLICATES** - Single unified service & command
+    - **NO QUEUE** - Direct email sending
+    - **7:30 AM Schedule** - Consistent timing
+    - 3 types of notifications:
+      - **Reminder:** 1 day before (sla_duedate - 1 working day)
+      - **Overdue:** 1 day after (sla_duedate + 1 working day)
+      - **Due Date:** 3 days after created (status=1 only)
+    - Working days calculation (skip weekends & holidays)
+    - SQL queries for debugging
+    - Complete troubleshooting guide
+    - Testing commands
 
-13. [**SLA Flow Diagram**](13_SLA_FLOW_DIAGRAM.md) 🔥
-    - **Visual flow diagrams**
+13. [**SLA Quick Reference**](SLA_NOTIFICATION_QUICK_REF.md) 🆕 **NEW**
+    - **One-page quick reference**
+    - Summary table of all notifications
+    - Quick testing commands
+    - Common debugging queries
+    - Checklist for setup
+    - Expected behavior scenarios
+
+14. [**SLA Complete Implementation**](SLA_NOTIFICATION_IMPLEMENTATION.md) 🆕 **NEW**
+    - **Technical implementation details**
+    - Complete file structure
+    - Code examples for all components
+    - Database structure & queries
+    - Scheduling setup
+    - Monitoring & logging guide
+    - Production checklist
+
+15. [**SLA Visual Guide**](SLA_NOTIFICATION_VISUAL_GUIDE.md) 🆕 **NEW**
+    - **Visual diagrams & flowcharts**
+    - System architecture overview
+    - Notification flow by type
+    - Timeline examples
+    - Database relationship diagrams
+    - Query logic visualization
+    - Working days calculation flow
+
+13. [**SLA Flow Diagram**](04_SLA_FLOW_DIAGRAM.md)
+    - Visual flow diagrams
     - Complete ticket lifecycle
     - Database relationships
     - Notification logic flow
     - Query examples
     - Service method flow
-    - Cron schedule recommendations
 
-14. [**SLA Quick Start**](14_SLA_QUICK_START.md) 🔥
-    - **Quick reference guide**
+14. [**SLA Quick Start**](05_SLA_QUICK_START.md)
+    - Quick reference guide
     - Testing commands (PHP & PowerShell)
     - API endpoints summary
     - Configuration checklist
@@ -91,6 +118,22 @@ Dokumentasi lengkap untuk sistem email dan notification dalam eHelp.
 - **API design** → [12_SLA_NOTIFICATION_GUIDE.md](12_SLA_NOTIFICATION_GUIDE.md#api-endpoints)
 
 ## 🆕 Latest Updates
+
+### February 6, 2026 ⭐ **SIMPLIFIED SYSTEM**
+- ✅ **SLA Notification System SIMPLIFIED**
+  - **REMOVED** "Due Date" notification (status=1 specific)
+  - **REMOVED** all files related to `tick_duedate` (Aduan Baru system)
+  - **DELETED FILES**:
+    - `TicketDueDateController.php`
+    - `SendTicketDueDateReminders.php`
+    - `due-date-alert.blade.php`
+  - **KEPT ONLY 2 notifications**:
+    1. **Reminder:** 1 working day BEFORE `sla_duedate` (ALL statuses except 5=Batal, 6=Selesai)
+    2. **Overdue:** 1 working day AFTER `sla_duedate` (ALL statuses except 5=Batal, 6=Selesai)
+  - **Single unified command**: `php artisan sla:send-notifications`
+  - **Single schedule**: Daily at 7:30 AM
+  - **NO QUEUE** - Direct email sending
+  - All notifications refer to `tickets_chronologies.sla_duedate` ONLY
 
 ### January 27, 2026
 - ✅ **Working Days Implementation** - Updated reminder calculations
@@ -143,15 +186,15 @@ Ticket Created → Assigned Level 1
 Notification System
 ├── Controllers
 │   ├── TicketSLAController (Reporting)
-│   └── TicketSLAOverdueController (Notifications)
+│   └── TicketOverdueController (Notifications)
 │
 ├── Services
-│   ├── TicketSLAReminderService
-│   └── TicketSLAOverdueService
+│   ├── TicketReminderService
+│   └── TicketOverdueService
 │
 ├── Notifications
-│   ├── SLAReminderNotification
-│   └── SLAOverdueNotification
+│   ├── ReminderNotification
+│   └── OverdueNotification
 │
 ├── Email Templates
 │   ├── sla-reminder.blade.php
@@ -213,22 +256,22 @@ protected function schedule(Schedule $schedule)
 {
     // 8:00 AM - Due today reminders
     $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendDueTodayReminders();
+        app(TicketReminderService::class)->sendDueTodayReminders();
     })->dailyAt('08:00');
 
     // 9:00 AM - SLA-1 reminders
     $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendBeforeDueReminders();
+        app(TicketReminderService::class)->sendBeforeDueReminders();
     })->dailyAt('09:00');
 
     // 10:00 AM - After due reminders
     $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendAfterDueReminders();
+        app(TicketReminderService::class)->sendAfterDueReminders();
     })->dailyAt('10:00');
 
     // 11:00 AM - Overdue notifications
     $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendOverdueNotifications();
+        app(TicketReminderService::class)->sendOverdueNotifications();
     })->dailyAt('11:00');
 }
 ```

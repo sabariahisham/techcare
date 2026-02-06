@@ -54,8 +54,8 @@ GET /api/sla/statistics            # SLA statistics
 ## 📁 Files Modified/Created
 
 ### New Files
-- `app/Notifications/Ticket/SLAReminderNotification.php`
-- `app/Services/TicketSLAReminderService.php`
+- `app/Notifications/Ticket/ReminderNotification.php`
+- `app/Services/TicketReminderService.php`
 - `resources/views/emails/ticket/sla-reminder.blade.php`
 - `developer-guide/SLA_NOTIFICATION_GUIDE.md`
 - `test-sla-simple.php`
@@ -63,7 +63,7 @@ GET /api/sla/statistics            # SLA statistics
 
 ### Modified Files
 - `app/Models/Ticket.php` - Added relationships
-- `app/Http/Controllers/Notifications/TicketSLAOverdueController.php` - New methods
+- `app/Http/Controllers/Notifications/TicketOverdueController.php` - New methods
 - `app/Http/Controllers/Ticket/TicketSLAController.php` - Reporting methods
 - `routes/api.php` - New SLA routes
 
@@ -76,22 +76,22 @@ protected function schedule(Schedule $schedule)
 {
     // SLA-1 reminders (due tomorrow) at 9 AM
     $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendBeforeDueReminders();
+        app(TicketReminderService::class)->sendBeforeDueReminders();
     })->dailyAt('09:00');
 
     // Due today reminders at 8 AM
     $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendDueTodayReminders();
+        app(TicketReminderService::class)->sendDueTodayReminders();
     })->dailyAt('08:00');
 
     // After due reminders at 10 AM
     $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendAfterDueReminders();
+        app(TicketReminderService::class)->sendAfterDueReminders();
     })->dailyAt('10:00');
 
     // Overdue notifications at 11 AM
     $schedule->call(function () {
-        app(TicketSLAReminderService::class)->sendOverdueNotifications();
+        app(TicketReminderService::class)->sendOverdueNotifications();
     })->dailyAt('11:00');
 }
 ```

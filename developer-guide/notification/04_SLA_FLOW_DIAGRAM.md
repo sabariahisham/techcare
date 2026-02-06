@@ -193,29 +193,29 @@ WHERE tc.sla_duedate < 'YESTERDAY 00:00:00'
 ## Service Method Flow
 
 ```
-TicketSLAReminderService
+TicketReminderService
 ├── sendBeforeDueReminders()
 │   ├── Query: Tomorrow's due dates
 │   ├── Get recipient from escalate_to
-│   ├── Send: SLAReminderNotification('before_due')
+│   ├── Send: ReminderNotification('before_due')
 │   └── Log: Success/Failed/Skipped
 │
 ├── sendDueTodayReminders()
 │   ├── Query: Today's due dates
 │   ├── Get recipient from escalate_to
-│   ├── Send: SLAReminderNotification('due_today')
+│   ├── Send: ReminderNotification('due_today')
 │   └── Log: Success/Failed/Skipped
 │
 ├── sendAfterDueReminders()
 │   ├── Query: Yesterday's due dates
 │   ├── Get recipient from escalate_to
-│   ├── Send: SLAReminderNotification('after_due')
+│   ├── Send: ReminderNotification('after_due')
 │   └── Log: Success/Failed/Skipped
 │
 ├── sendOverdueNotifications()
 │   ├── Query: Before yesterday
 │   ├── Get recipient from escalate_to
-│   ├── Send: SLAOverdueNotification()
+│   ├── Send: OverdueNotification()
 │   └── Log: Success/Failed/Skipped
 │
 └── getUpcomingSLATickets($daysAhead)

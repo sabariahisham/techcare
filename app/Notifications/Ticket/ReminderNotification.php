@@ -1,27 +1,27 @@
 <?php
 
 /*
- * Function DueDateNotification.php:
- *  - Notification class to remind Pegawai Tugasan about tickets due tomorrow.
- *  - Sends email with ticket details and due date information.
+ * Function ReminderNotification.php:
+ *  - Notification class to alert Pegawai Tugasan (Level 1 & 2) about reminder SLA tickets.
+ *  - Sends email 1 working day BEFORE due date with ticket details.
+ *  - Scheduled to be sent at 7:30 AM daily
  */
 
 namespace App\Notifications\Ticket;
 
 use App\Models\Ticket;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Carbon\Carbon;
 
-class DueDateNotification extends Notification
+class ReminderNotification extends Notification
 {
-  use Queueable;
-
   protected $ticket;
 
   /**
    * Create a new notification instance.
+   *
+   * @param Ticket $ticket
    */
   public function __construct(Ticket $ticket)
   {
@@ -44,10 +44,11 @@ class DueDateNotification extends Notification
   public function toMail(object $notifiable): MailMessage
   {
     return (new MailMessage)
-      ->subject("{$this->ticket->ticket_nolog}: Peringatan Tarikh Tamat Tindakan")
-      ->markdown('emails.ticket.due-date-alert', [
+      ->subject("{$this->ticket->ticket_nolog}: ⚠️ Peringatan SLA - Hampir Tamat Tempoh")
+      ->markdown('emails.ticket.sla-reminder', [
         'ticket' => $this->ticket,
         'notifiable' => $notifiable,
+        'reminderMessage' => 'Tiket ini akan **TAMAT TEMPOH ESOK**. Sila ambil tindakan segera.',
       ]);
   }
 
@@ -61,7 +62,9 @@ class DueDateNotification extends Notification
     return [
       'ticket_id' => $this->ticket->id,
       'ticket_nolog' => $this->ticket->ticket_nolog,
-      'due_date' => $this->ticket->tick_duedate,
+      'due_date' => $this->ticket->latestSlaDueDate,
+      'status' => $this->ticket->tick_status,
+      'type' => 'reminder',
     ];
   }
 }

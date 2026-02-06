@@ -1,325 +1,257 @@
 <?php
 
 /*
- * Function TicketSLAReminderService.php:
- *  - Handle SLA reminder notifications (before due, due today, after due)
- *  - Menguruskan flow eskalasi Level 1 → Level 2
- *  - Prepare notification content and recipients based on chronology
- *  - Log notification status and errors
+ * TicketSLAReminderService.php - SIMPLIFIED VERSION
+ *
+ * Handles 2 types of SLA notifications ONLY:
+ * 1. REMINDER: 1 working day BEFORE sla_duedate (ALL statuses except 5, 7)
+ * 2. OVERDUE: 1 working day AFTER sla_duedate (ALL statuses except 5, 7)
+ *
+ * All notifications refer to tickets_chronologies.sla_duedate ONLY
+ * NO QUEUE - Direct email sending
+ * Scheduled to run at 7:30 AM daily
  */
 
 namespace App\Services;
 
 use App\Models\Ticket;
 use App\Models\TicketChronology;
-use App\Models\User;
-use App\Notifications\Ticket\SLAReminderNotification;
+use App\Notifications\Ticket\ReminderNotification;
 use App\Notifications\Ticket\SLAOverdueNotification;
-use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Helpers\Helpers;
 
 class TicketSLAReminderService
 {
   /**
-   * Send reminders for tickets with SLA due 1 working day from today (SLA-1)
-   * Logic: Find tickets where sla_duedate = today + 1 working day
+   * Send reminder notifications (1 working day before SLA due date)
+   * For ALL statuses except Batal (5) and Selesai (6)
    *
-   * @return array Statistics of processed tickets
+   * @return array
    */
-  public function sendBeforeDueReminders()
+  public function sendBeforeDueReminders(): array
   {
-    // Calculate tomorrow in working days (skip weekends & holidays)
-    $tomorrow = Helpers::addWorkingDays(Carbon::today(), 1);
-    $tomorrowStart = $tomorrow->startOfDay();
-    $tomorrowEnd = $tomorrow->copy()->endOfDay();
+    Log::info('=== Starting SLA Reminder Notifications (1 working day before) ===');
 
-    return $this->sendReminders($tomorrowStart, $tomorrowEnd, 'before_due', 'SLA-1 (Due 1 Working Day)');
-  }
+    try {
+      // Calculate target date (tomorrow in working days)
+      $tomorrow = Helpers::addWorkingDays(Carbon::today(), 1);
+      $tomorrowStart = $tomorrow->startOfDay();
+      $tomorrowEnd = $tomorrow->copy()->endOfDay();
 
-  /**
-   * Send reminders for tickets with SLA due today
-   * Only send if today is a working day
-   *
-   * @return array Statistics of processed tickets
-   */
-  public function sendDueTodayReminders()
-  {
-    // Only send if today is a working day
-    if (!Helpers::isWorkingDay(Carbon::today())) {
-      return [
-        'type' => 'Due Today',
-        'total_found' => 0,
+      Log::info("Target SLA due date: {$tomorrowStart->format('Y-m-d')} to {$tomorrowEnd->format('Y-m-d')}");
+
+      // Get latest chronology per ticket with sla_duedate = tomorrow
+      $chronologies = TicketChronology::select('tickets_chronologies.*')
+        ->join(DB::raw('(SELECT ticket_id, MAX(created_at) as max_created
+                                FROM tickets_chronologies
+                                WHERE deleted_at IS NULL
+                                GROUP BY ticket_id) latest'), function ($join) {
+          $join->on('tickets_chronologies.ticket_id', '=', 'latest.ticket_id')
+            ->on('tickets_chronologies.created_at', '=', 'latest.max_created');
+        })
+        ->whereBetween('tickets_chronologies.sla_duedate', [$tomorrowStart, $tomorrowEnd])
+        ->whereNotNull('tickets_chronologies.escalate_to')
+        ->whereNull('tickets_chronologies.deleted_at')
+        ->with([
+          'ticket',
+          'ticket.user',
+          'ticket.status',
+          'escalatedTo'
+        ])
+        ->get();
+
+      Log::info("Found {$chronologies->count()} chronologies with SLA due tomorrow");
+
+      $results = [
         'sent' => 0,
         'failed' => 0,
         'skipped' => 0,
-        'errors' => [],
-        'message' => 'Skipped: Today is not a working day'
+        'details' => []
       ];
-    }
-
-    $today = Carbon::today()->startOfDay();
-    $todayEnd = Carbon::today()->endOfDay();
-
-    return $this->sendReminders($today, $todayEnd, 'due_today', 'Due Today');
-  }
-
-  /**
-   * Send reminders for tickets that passed due date 1 working day ago (due date+1)
-   * Logic: Find tickets where sla_duedate = today - 1 working day (start of working day)
-   *
-   * @return array Statistics of processed tickets
-   */
-  public function sendAfterDueReminders()
-  {
-    // Calculate yesterday in working days (skip weekends & holidays)
-    $yesterday = Helpers::subtractWorkingDays(Carbon::today(), 1);
-    $yesterdayStart = $yesterday->startOfDay();
-    $yesterdayEnd = $yesterday->copy()->endOfDay();
-
-    return $this->sendReminders($yesterdayStart, $yesterdayEnd, 'after_due', 'Due Date+1 Working Day');
-  }
-
-  /**
-   * Core method to send reminders based on date range
-   *
-   * @param Carbon $startDate
-   * @param Carbon $endDate
-   * @param string $reminderType
-   * @param string $logLabel
-   * @return array
-   */
-  protected function sendReminders(Carbon $startDate, Carbon $endDate, string $reminderType, string $logLabel)
-  {
-    $stats = [
-      'type' => $logLabel,
-      'total_found' => 0,
-      'sent' => 0,
-      'failed' => 0,
-      'skipped' => 0,
-      'errors' => []
-    ];
-
-    try {
-      // Get chronologies with SLA due dates in the specified range
-      $chronologies = TicketChronology::whereNotNull('sla_duedate')
-        ->whereBetween('sla_duedate', [$startDate, $endDate])
-        ->whereHas('ticket', function ($query) {
-          // Only active tickets (not resolved/closed)
-          // Status 5 = Selesai, 6 = Tutup
-          $query->whereNotIn('tick_status', [5, 6]);
-        })
-        ->with(['ticket.status', 'ticket.user', 'escalatedTo', 'ticket.category', 'ticket.subCategory'])
-        ->get();
-
-      $stats['total_found'] = $chronologies->count();
-
-      Log::info("SLA Reminder: Found {$stats['total_found']} tickets for {$logLabel}", [
-        'start_date' => $startDate->format('Y-m-d H:i:s'),
-        'end_date' => $endDate->format('Y-m-d H:i:s'),
-      ]);
 
       foreach ($chronologies as $chronology) {
+        $ticket = $chronology->ticket;
+
+        // Skip if ticket doesn't exist
+        if (!$ticket) {
+          $results['skipped']++;
+          Log::info("Skipped chronology {$chronology->id} - Ticket not found");
+          continue;
+        }
+
+        // Skip if ticket is closed or cancelled
+        if (in_array($ticket->tick_status, [5, 7])) {
+          $results['skipped']++;
+          Log::info("Skipped ticket {$ticket->ticket_nolog} - Status: {$ticket->tick_status}");
+          continue;
+        }
+
+        // Skip if no assigned officer
+        if (!$chronology->escalate_to || !$chronology->escalatedTo) {
+          $results['skipped']++;
+          Log::info("Skipped ticket {$ticket->ticket_nolog} - No assigned officer");
+          continue;
+        }
+
         try {
-          $ticket = $chronology->ticket;
+          $officer = $chronology->escalatedTo;
 
-          if (!$ticket) {
-            $stats['skipped']++;
-            $stats['errors'][] = "Ticket not found for chronology ID: {$chronology->id}";
-            continue;
-          }
-
-          // Get recipients (Pegawai Tugasan from this chronology)
-          $recipient = $this->getRecipient($chronology);
-
-          if (!$recipient) {
-            Log::warning("No recipient found for ticket: {$ticket->ticket_nolog}", [
-              'chronology_id' => $chronology->id,
-              'escalate_to' => $chronology->escalate_to
-            ]);
-            $stats['skipped']++;
-            $stats['errors'][] = "No recipient for ticket: {$ticket->ticket_nolog}";
-            continue;
-          }
-
-          // Check if recipient has email
-          if (empty($recipient->email)) {
-            Log::warning("Recipient has no email for ticket: {$ticket->ticket_nolog}", [
-              'recipient_id' => $recipient->id,
-              'recipient_name' => $recipient->name
-            ]);
-            $stats['skipped']++;
-            $stats['errors'][] = "No email for recipient: {$recipient->name}";
+          // Skip if no email
+          if (empty($officer->email)) {
+            $results['skipped']++;
+            Log::warning("Skipped ticket {$ticket->ticket_nolog} - Officer has no email");
             continue;
           }
 
           // Send notification
-          try {
-            $recipient->notify(new SLAReminderNotification($ticket, $reminderType));
+          $officer->notify(new ReminderNotification($ticket, $chronology));
 
-            Log::info("SLA Reminder sent: {$logLabel}", [
-              'ticket_nolog' => $ticket->ticket_nolog,
-              'recipient' => $recipient->email,
-              'sla_duedate' => $chronology->sla_duedate->format('Y-m-d H:i:s'),
-              'level' => $chronology->level_pegtugas_id
-            ]);
+          $results['sent']++;
+          $results['details'][] = [
+            'ticket' => $ticket->ticket_nolog,
+            'officer' => $officer->nama,
+            'email' => $officer->email,
+            'status' => 'sent',
+            'sla_duedate' => $chronology->sla_duedate
+          ];
 
-            $stats['sent']++;
-          } catch (\Exception $e) {
-            Log::error("Failed to send SLA reminder notification", [
-              'ticket_nolog' => $ticket->ticket_nolog,
-              'recipient' => $recipient->email,
-              'error' => $e->getMessage()
-            ]);
-            $stats['failed']++;
-            $stats['errors'][] = "Failed to send to {$recipient->email}: {$e->getMessage()}";
-          }
+          Log::info("✓ Reminder sent to {$officer->email} for ticket {$ticket->ticket_nolog}");
         } catch (\Exception $e) {
-          $stats['failed']++;
-          $stats['errors'][] = "Error processing chronology {$chronology->id}: {$e->getMessage()}";
-          Log::error("Error processing chronology for SLA reminder", [
-            'chronology_id' => $chronology->id,
-            'error' => $e->getMessage()
-          ]);
+          $results['failed']++;
+          $results['details'][] = [
+            'ticket' => $ticket->ticket_nolog,
+            'error' => $e->getMessage(),
+            'status' => 'failed'
+          ];
+
+          Log::error("✗ Failed to send reminder for ticket {$ticket->ticket_nolog}: {$e->getMessage()}");
         }
       }
-    } catch (\Exception $e) {
-      Log::error("Critical error in SLA reminder service: {$logLabel}", [
-        'error' => $e->getMessage()
-      ]);
-      $stats['errors'][] = "Critical error: {$e->getMessage()}";
-    }
 
-    return $stats;
+      Log::info("=== Reminder Summary: {$results['sent']} sent, {$results['failed']} failed, {$results['skipped']} skipped ===");
+
+      return $results;
+    } catch (\Exception $e) {
+      Log::error("Error in sendBeforeDueReminders: {$e->getMessage()}");
+      throw $e;
+    }
   }
 
   /**
-   * Send overdue notifications for tickets that have passed their SLA due date
-   * by more than 1 working day (not including today's after_due reminder)
+   * Send overdue notifications (1 working day after SLA due date)
+   * For ALL statuses except Batal (5) and Selesai (6)
    *
-   * @return array Statistics of processed tickets
+   * @return array
    */
-  public function sendOverdueNotifications()
+  public function sendAfterDueReminders(): array
   {
-    $stats = [
-      'type' => 'Overdue',
-      'total_found' => 0,
-      'sent' => 0,
-      'failed' => 0,
-      'skipped' => 0,
-      'errors' => []
-    ];
+    Log::info('=== Starting SLA Overdue Notifications (1 working day after) ===');
 
     try {
-      $currentTime = Carbon::now();
+      // Calculate target date (yesterday in working days)
+      $yesterday = Helpers::subtractWorkingDays(Carbon::today(), 1);
+      $yesterdayStart = $yesterday->startOfDay();
+      $yesterdayEnd = $yesterday->copy()->endOfDay();
 
-      // Get date 1 working day ago (this is handled by after_due)
-      // So overdue should be anything before that
-      $oneDayAgo = Helpers::subtractWorkingDays(Carbon::today(), 1);
-      $overdueThreshold = $oneDayAgo->copy()->subDay()->endOfDay(); // Before yesterday working day
+      Log::info("Target SLA due date: {$yesterdayStart->format('Y-m-d')} to {$yesterdayEnd->format('Y-m-d')}");
 
-      // Get chronologies with overdue SLA (past threshold)
-      $chronologies = TicketChronology::whereNotNull('sla_duedate')
-        ->where('sla_duedate', '<', $overdueThreshold)
-        ->whereHas('ticket', function ($query) {
-          // Only active tickets
-          $query->whereNotIn('tick_status', [5, 6]);
+      // Get latest chronology per ticket with sla_duedate = yesterday
+      $chronologies = TicketChronology::select('tickets_chronologies.*')
+        ->join(DB::raw('(SELECT ticket_id, MAX(created_at) as max_created
+                                FROM tickets_chronologies
+                                WHERE deleted_at IS NULL
+                                GROUP BY ticket_id) latest'), function ($join) {
+          $join->on('tickets_chronologies.ticket_id', '=', 'latest.ticket_id')
+            ->on('tickets_chronologies.created_at', '=', 'latest.max_created');
         })
-        ->with(['ticket.status', 'ticket.user', 'escalatedTo'])
+        ->whereBetween('tickets_chronologies.sla_duedate', [$yesterdayStart, $yesterdayEnd])
+        ->whereNotNull('tickets_chronologies.escalate_to')
+        ->whereNull('tickets_chronologies.deleted_at')
+        ->with([
+          'ticket',
+          'ticket.user',
+          'ticket.status',
+          'escalatedTo'
+        ])
         ->get();
 
-      $stats['total_found'] = $chronologies->count();
+      Log::info("Found {$chronologies->count()} chronologies that became overdue yesterday");
 
-      Log::info("SLA Overdue: Found {$stats['total_found']} overdue tickets", [
-        'threshold_date' => $overdueThreshold->format('Y-m-d H:i:s')
-      ]);
+      $results = [
+        'sent' => 0,
+        'failed' => 0,
+        'skipped' => 0,
+        'details' => []
+      ];
 
       foreach ($chronologies as $chronology) {
+        $ticket = $chronology->ticket;
+
+        // Skip if ticket doesn't exist
+        if (!$ticket) {
+          $results['skipped']++;
+          Log::info("Skipped chronology {$chronology->id} - Ticket not found");
+          continue;
+        }
+
+        // Skip if ticket is closed or cancelled
+        if (in_array($ticket->tick_status, [5, 7])) {
+          $results['skipped']++;
+          Log::info("Skipped ticket {$ticket->ticket_nolog} - Status: {$ticket->tick_status}");
+          continue;
+        }
+
+        // Skip if no assigned officer
+        if (!$chronology->escalate_to || !$chronology->escalatedTo) {
+          $results['skipped']++;
+          Log::info("Skipped ticket {$ticket->ticket_nolog} - No assigned officer");
+          continue;
+        }
+
         try {
-          $ticket = $chronology->ticket;
+          $officer = $chronology->escalatedTo;
 
-          if (!$ticket) {
-            $stats['skipped']++;
+          // Skip if no email
+          if (empty($officer->email)) {
+            $results['skipped']++;
+            Log::warning("Skipped ticket {$ticket->ticket_nolog} - Officer has no email");
             continue;
           }
 
-          $recipient = $this->getRecipient($chronology);
+          // Send notification
+          $officer->notify(new SLAOverdueNotification($ticket, $chronology));
 
-          if (!$recipient || empty($recipient->email)) {
-            $stats['skipped']++;
-            continue;
-          }
+          $results['sent']++;
+          $results['details'][] = [
+            'ticket' => $ticket->ticket_nolog,
+            'officer' => $officer->nama,
+            'email' => $officer->email,
+            'status' => 'sent',
+            'sla_duedate' => $chronology->sla_duedate
+          ];
 
-          // Send overdue notification
-          $recipient->notify(new SLAOverdueNotification($ticket));
-
-          Log::info("SLA Overdue notification sent", [
-            'ticket_nolog' => $ticket->ticket_nolog,
-            'recipient' => $recipient->email,
-            'sla_duedate' => $chronology->sla_duedate->format('Y-m-d H:i:s'),
-            'days_overdue' => $currentTime->diffInDays($chronology->sla_duedate)
-          ]);
-
-          $stats['sent']++;
+          Log::info("✓ Overdue notification sent to {$officer->email} for ticket {$ticket->ticket_nolog}");
         } catch (\Exception $e) {
-          $stats['failed']++;
-          $stats['errors'][] = $e->getMessage();
-          Log::error("Error sending overdue notification: " . $e->getMessage());
+          $results['failed']++;
+          $results['details'][] = [
+            'ticket' => $ticket->ticket_nolog,
+            'error' => $e->getMessage(),
+            'status' => 'failed'
+          ];
+
+          Log::error("✗ Failed to send overdue notification for ticket {$ticket->ticket_nolog}: {$e->getMessage()}");
         }
       }
+
+      Log::info("=== Overdue Summary: {$results['sent']} sent, {$results['failed']} failed, {$results['skipped']} skipped ===");
+
+      return $results;
     } catch (\Exception $e) {
-      Log::error("Critical error in sendOverdueNotifications: " . $e->getMessage());
-      $stats['errors'][] = "Critical error: {$e->getMessage()}";
+      Log::error("Error in sendAfterDueReminders: {$e->getMessage()}");
+      throw $e;
     }
-
-    return $stats;
-  }
-
-  /**
-   * Get recipient for notification (Pegawai Tugasan from chronology)
-   *
-   * @param TicketChronology $chronology
-   * @return User|null
-   */
-  protected function getRecipient(TicketChronology $chronology)
-  {
-    // Send to the officer assigned in this chronology (escalate_to)
-    if ($chronology->escalate_to && $chronology->escalatedTo) {
-      return $chronology->escalatedTo;
-    }
-
-    return null;
-  }
-
-  /**
-   * Get all tickets with upcoming SLA due dates (for dashboard/reporting)
-   *
-   * @param int $daysAhead Number of days to look ahead
-   * @return \Illuminate\Support\Collection
-   */
-  public function getUpcomingSLATickets(int $daysAhead = 7)
-  {
-    $startDate = Carbon::now();
-    $endDate = Carbon::now()->addDays($daysAhead);
-
-    return TicketChronology::whereNotNull('sla_duedate')
-      ->whereBetween('sla_duedate', [$startDate, $endDate])
-      ->whereHas('ticket', function ($query) {
-        $query->whereNotIn('tick_status', [5, 6]);
-      })
-      ->with(['ticket.status', 'ticket.user', 'ticket.category', 'ticket.subCategory', 'escalatedTo'])
-      ->get()
-      ->map(function ($chronology) {
-        $daysUntilDue = Carbon::now()->diffInDays($chronology->sla_duedate, false);
-
-        return [
-          'ticket' => $chronology->ticket,
-          'sla_duedate' => $chronology->sla_duedate,
-          'days_until_due' => $daysUntilDue,
-          'level_pegtugas' => $chronology->level_pegtugas_id,
-          'assigned_to' => $chronology->escalatedTo?->nama ?? 'N/A',
-          'sla_severity' => $chronology->sla_severity,
-        ];
-      });
   }
 }

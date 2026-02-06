@@ -1,23 +1,20 @@
 <?php
 
 /*
- * Function SLAOverdueNotification.php:
- *  - Notification class to alert Pegawai Tugasan about overdue tickets.
- *  - Sends email with ticket details and overdue information.
+ * Function AfterDueNotification.php:
+ *  - Notification class to alert Pegawai Tugasan (Level 1 & 2) about after due tickets.
+ *  - Sends email 1 working day AFTER due date with ticket details.
+ *  - Scheduled to be sent at 7:30 AM daily
  */
 
 namespace App\Notifications\Ticket;
 
 use App\Models\Ticket;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class SLAOverdueNotification extends Notification
+class AfterDueNotification extends Notification
 {
-  use Queueable;
-
   protected $ticket;
 
   /**
@@ -44,10 +41,11 @@ class SLAOverdueNotification extends Notification
   public function toMail(object $notifiable): MailMessage
   {
     return (new MailMessage)
-      ->subject("{$this->ticket->ticket_nolog}: ⛔ Tindakan Segera - SLA (OVERDUE)")
-      ->markdown('emails.ticket.sla-overdue', [
+      ->subject("{$this->ticket->ticket_nolog}: ⛔ Tindakan Segera - SLA Tamat Tempoh (1 Hari Lepas)")
+      ->markdown('emails.ticket.sla-after-due', [
         'ticket' => $this->ticket,
         'notifiable' => $notifiable,
+        'message' => 'Tiket ini telah **MELEPASI TARIKH AKHIR SEMALAM**. Tindakan segera diperlukan.',
       ]);
   }
 
@@ -63,6 +61,7 @@ class SLAOverdueNotification extends Notification
       'ticket_nolog' => $this->ticket->ticket_nolog,
       'due_date' => $this->ticket->tick_duedate,
       'status' => $this->ticket->tick_status,
+      'type' => 'after_due',
     ];
   }
 }

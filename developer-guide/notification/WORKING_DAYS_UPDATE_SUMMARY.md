@@ -34,7 +34,7 @@ File: `app/Helpers/Helpers.php`
 - ✅ `getMalaysianPublicHolidays()` - List of Malaysian public holidays
 
 ### 2. Updated Service Logic
-File: `app/Services/TicketSLAReminderService.php`
+File: `app/Services/TicketReminderService.php`
 
 #### Updated Methods:
 
@@ -193,7 +193,7 @@ Sent: 2 (100% success rate)
    - Added `subtractWorkingDays()` method
    - Added `isWorkingDay()` method
 
-2. ✏️ `app/Services/TicketSLAReminderService.php`
+2. ✏️ `app/Services/TicketReminderService.php`
    - Updated `sendBeforeDueReminders()` logic
    - Updated `sendDueTodayReminders()` logic (added working day check)
    - Updated `sendAfterDueReminders()` logic
@@ -236,10 +236,10 @@ File: `app/Console/Kernel.php`
 ```php
 // Run at 9:00 AM daily (start of working day)
 $schedule->call(function () {
-    app(TicketSLAReminderService::class)->sendBeforeDueReminders();
-    app(TicketSLAReminderService::class)->sendDueTodayReminders();
-    app(TicketSLAReminderService::class)->sendAfterDueReminders();
-    app(TicketSLAReminderService::class)->sendOverdueNotifications();
+    app(TicketReminderService::class)->sendBeforeDueReminders();
+    app(TicketReminderService::class)->sendDueTodayReminders();
+    app(TicketReminderService::class)->sendAfterDueReminders();
+    app(TicketReminderService::class)->sendOverdueNotifications();
 })->dailyAt('09:00');
 ```
 

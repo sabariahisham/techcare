@@ -1,11 +1,15 @@
 {{-- blade-formatter-disable --}}
 @component('mail::message')
 {{-- Dynamic header based on status --}}
+{{-- @php
+    //$isClosed = (int) $ticket->tick_status === 6;
+    $isClosed = (int) ($ticket->tick_status ?? $ticket->status_id) === 6;
+@endphp --}}
 @php
-    $isClosed = (int) $ticket->tick_status === 6;
+    $isClosed = $statusName === 'Aduan Selesai';
 @endphp
 
-@component('mail::panel')
+{{-- @component('mail::panel') --}}
 {{-- Aduan Selesai(6) background Hijau & text berubah --}}
 <div style="
     background: {{ $isClosed ? '#2e7d32' : '#ffab00' }};
@@ -15,10 +19,11 @@
     font-size: 16px;
     font-weight: 600;
     border-radius: 6px;
+    margin-bottom: 18px;
 ">
     {{ $isClosed ? '📂 Tiket Ditutup' : '📌 Tiket Baru Ditugaskan' }}
 </div>
-@endcomponent
+{{-- @endcomponent --}}
 
 Assalamualaikum dan Salam Sejahtera,
 

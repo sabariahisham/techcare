@@ -53,8 +53,8 @@ Lokasi: `resources/views/emails/ticket/`
   - Panel maklumat tiket (No. Log, Tajuk, Tarikh Akhir, Status)
   - Mesej warning tentang kelewatan berterusan
   - Button "Lihat Tiket" (warna merah/error)
-- **Service**: `TicketSLAOverdueService.php`
-- **Controller**: `TicketSLAOverdueController.php`
+- **Service**: `TicketOverdueService.php`
+- **Controller**: `TicketOverdueController.php`
 - **Test Command**: `php artisan ticket:test-overdue-notification`
 
 ---
@@ -128,7 +128,7 @@ return (new MailMessage)
     ]);
 ```
 
-#### 4. **SLAOverdueNotification.php**
+#### 4. **OverdueNotification.php**
 ```php
 return (new MailMessage)
     ->subject($this->ticket->ticket_nolog . ': ⛔ Tindakan Segera - SLA (OVERDUE)')
@@ -328,8 +328,8 @@ php test_notification_detail.php {ticket_id}
 **Sebab:** Indentation dalam `@component` blocks  
 **Pe� Services & Controllers
 
-### TicketSLAOverdueService.php
-**Lokasi:** `app/Services/TicketSLAOverdueService.php`
+### TicketOverdueService.php
+**Lokasi:** `app/Services/TicketOverdueService.php`
 
 **Functions:**
 - `sendOverdueNotifications()` - Main function untuk cari dan hantar notifikasi overdue
@@ -341,12 +341,12 @@ php test_notification_detail.php {ticket_id}
 2. Filter active tickets sahaja (exclude status Selesai/Tutup)
 3. Loop through each overdue chronology
 4. Get pegawai tugasan dari `escalate_to` field
-5. Send `SLAOverdueNotification` email
+5. Send `OverdueNotification` email
 6. Log success/failure untuk setiap email
 7. Return statistics (total, sent, failed, errors)
 
-### TicketSLAOverdueController.php
-**Lokasi:** `app/Http/Controllers/Notifications/TicketSLAOverdueController.php`
+### TicketOverdueController.php
+**Lokasi:** `app/Http/Controllers/Notifications/TicketOverdueController.php`
 
 **Endpoints:**
 - `index()` - GET list of overdue tickets (JSON response)
@@ -354,8 +354,8 @@ php test_notification_detail.php {ticket_id}
 
 **Route Setup (Example):**
 ```php
-Route::get('/notifications/overdue', [TicketSLAOverdueController::class, 'index']);
-Route::post('/notifications/overdue/send', [TicketSLAOverdueController::class, 'sendNotifications']);
+Route::get('/notifications/overdue', [TicketOverdueController::class, 'index']);
+Route::post('/notifications/overdue/send', [TicketOverdueController::class, 'sendNotifications']);
 ```
 
 ### TestSLAOverdueNotification.php

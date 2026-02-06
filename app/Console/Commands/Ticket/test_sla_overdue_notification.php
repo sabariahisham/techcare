@@ -12,7 +12,7 @@
 namespace App\Console\Commands\Ticket;
 
 use Illuminate\Console\Command;
-use App\Services\TicketSLAOverdueService;
+use App\Services\TicketOverdueService;
 use App\Models\Ticket;
 use App\Models\TicketChronology;
 use Carbon\Carbon;
@@ -39,7 +39,7 @@ class TestSLAOverdueNotification extends Command
   /**
    * Create a new command instance.
    */
-  public function __construct(TicketSLAOverdueService $slaOverdueService)
+  public function __construct(TicketOverdueService $slaOverdueService)
   {
     parent::__construct();
     $this->slaOverdueService = $slaOverdueService;
@@ -192,7 +192,7 @@ class TestSLAOverdueNotification extends Command
     foreach ($overdueChronologies as $chronology) {
       if ($chronology->escalatedTo) {
         try {
-          $chronology->escalatedTo->notify(new \App\Notifications\Ticket\SLAOverdueNotification($ticket));
+          $chronology->escalatedTo->notify(new \App\Notifications\Ticket\OverdueNotification($ticket));
           $this->info("✅ Notification sent to: {$chronology->escalatedTo->email}");
         } catch (\Exception $e) {
           $this->error("❌ Failed: {$e->getMessage()}");
