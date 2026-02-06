@@ -192,7 +192,11 @@
                 @endif --}}
                 @if (Auth::check())
                     <li>
-                        <form method="POST" id="logout-form" action="{{ route('cas.logout') }}">
+                        {{-- For dev, staging and prod --}}
+                        {{-- <form method="POST" id="logout-form" action="{{ route('cas.logout') }}"> --}}
+
+                        {{-- For local --}} 
+                        <form method="POST" id="logout-form" action="{{ route('logout') }}">
                         @csrf
                             <a class="dropdown-item" href="{{ route('logout') }}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
