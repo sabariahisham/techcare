@@ -116,9 +116,9 @@ Route::middleware($authMiddleware)->group(function () {
   })->name('session.check');
 });
 
-// CAS Logout Route (only active when CAS is enabled)
+// CAS Logout Route (login page satuID)
 if (config('cas.cas_enabled')) {
-  Route::get('/cas-logout', function () {
+  Route::post('/cas-logout', function () {
     Auth::logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();
@@ -126,6 +126,14 @@ if (config('cas.cas_enabled')) {
     return redirect(config('cas.cas_logout_url'));
   })->name('cas.logout');
 }
+
+#logout untuk  sistem techcare (login page)
+// Route::post('/logout', function () {
+//   Auth::logout();
+//   request()->session()->invalidate();
+//   request()->session()->regenerateToken();
+//   return redirect('/login');
+// })->name('logout');
 // ============================================================================
 // END DYNAMIC AUTHENTICATION ROUTES
 // ============================================================================
