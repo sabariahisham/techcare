@@ -155,7 +155,7 @@ $(function () {
             }
             else if ($id === 4) {
               // Route for Senarai Rekod Laporan Helpdesk
-              viewUrl = '/report/senarai-rekod-laporan-helpdesk';
+              viewUrl = '/report/rekod-laporan';
             }
             else if ($id === 5) {
               // Route for Statistik Log Aduan

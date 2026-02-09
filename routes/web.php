@@ -286,8 +286,11 @@ Route::middleware(['auth'])->group(function () {
   Route::post('/report/laporan-status-aduan-tahunan/data', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'data'])->name('report-laporan-status-aduan-tahunan-data');
   Route::get('/report/laporan-status-aduan-tahunan/export-excel', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportExcel'])->name('report-laporan-status-aduan-tahunan-export-excel');
   Route::get('/report/laporan-status-aduan-tahunan/export-pdf', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportPdf'])->name('report-laporan-status-aduan-tahunan-export-pdf');
-});
-
+  
+  //Senarai rekod laporan
+  Route::get('/report/rekod-laporan', [App\Http\Controllers\Reports\RekodLaporanController::class, 'index'])->name('report-rekod-laporan');
+  Route::get('/report/rekod-laporan/ringkasan', [App\Http\Controllers\Reports\RekodLaporanController::class, 'ringkasan'])->name('report-rekod-laporan-ringkasan');
+  Route::get('/report/rekod-laporan/perincian', [App\Http\Controllers\Reports\RekodLaporanController::class, 'perincian'])->name('report-rekod-laporan-perincian'); 
 
 // references
 Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');
