@@ -386,6 +386,15 @@
                     ->orderBy('created_at', 'desc')
                     ->first();
 
+                // If no chronology for current status or no severity, get the latest one with severity
+                if (!$lastChronologyUpdate || !$lastChronologyUpdate->sla_severity) {
+                    $lastChronologyUpdate = $ticket
+                        ->chronologies()
+                        ->whereNotNull('sla_severity')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                }
+
                 // Set read-only view ONLY for specific statuses: Dirujuk(4), Dibatal(5), Selesai(6)
                 if (in_array($ticket->tick_status, [4, 5, 6])) {
                     $isReadOnlyView = true;
@@ -1961,9 +1970,18 @@ $timelineItems = $timelineItems
                 // Store all subcategory options
                 const allSubcategoryOptions = Array.from(subcategorySelect.options);
 
+                // Track if page is still loading
+                let isPageLoading = true;
+                setTimeout(() => {
+                    isPageLoading = false;
+                }, 150); // Set to false after initial load
+
                 // Function to load SLA data and update severity options
                 function loadSLAData(categoryId, subcategoryId) {
                     if (categoryId && subcategoryId) {
+                        // Store current severity value before updating options
+                        const currentSeverityValue = severitySelect.value;
+
                         fetch(`/api/sla-data/${categoryId}/${subcategoryId}`)
                             .then(response => response.json())
                             .then(data => {
@@ -1979,8 +1997,10 @@ $timelineItems = $timelineItems
                                         severitySelect.appendChild(option);
                                     });
 
-                                    // Clear severity selection when SLA changes
-                                    severitySelect.value = '';
+                                    // Preserve severity selection if it was already set (from database)
+                                    if (currentSeverityValue) {
+                                        severitySelect.value = currentSeverityValue;
+                                    }
 
                                     // Trigger officer filtering
                                     filterOfficersBySLA();
@@ -2138,9 +2158,11 @@ $timelineItems = $timelineItems
                         });
                     }
 
-                    // Clear severity and reset officers when category changes
-                    severitySelect.innerHTML = '<option value="">Pilih Tahap Severity</option>';
-                    resetOfficersList();
+                    // Clear severity and reset officers when category changes (but not on page load)
+                    if (!isPageLoading) {
+                        severitySelect.innerHTML = '<option value="">Pilih Tahap Severity</option>';
+                        resetOfficersList();
+                    }
                 });
 
                 // Subcategory change event
@@ -2188,8 +2210,10 @@ $timelineItems = $timelineItems
                     if (categorySelect.value && !categorySelect.disabled) {
                         categorySelect.dispatchEvent(new Event('change'));
 
-                        // If subcategory is also selected, load SLA data
-                        if (subcategorySelect.value && !subcategorySelect.disabled) {
+                        // If subcategory is also selected, load SLA data ONLY if severity is not already set
+                        // (to preserve the database value on page load)
+                        if (subcategorySelect.value && !subcategorySelect.disabled && !severitySelect
+                            .value) {
                             loadSLAData(categorySelect.value, subcategorySelect.value);
                         }
                     }
