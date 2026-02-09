@@ -50,7 +50,7 @@
           <div class="content-left">
             <span class="text-heading">Jumlah Laporan</span>
             <div class="d-flex align-items-center my-1">
-              <h4 class="mb-0 me-2">Akan datang</h4>
+              <h4 class="mb-0 me-2">6 laporan</h4>
               {{-- <p class="text-success mb-0">(100%)</p> --}}
             </div>
             <small class="mb-0">Tarikh dikemaskini : {{ date('d-m-Y') }}</small>

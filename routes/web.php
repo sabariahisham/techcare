@@ -292,6 +292,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/report/rekod-laporan/ringkasan', [App\Http\Controllers\Reports\RekodLaporanController::class, 'ringkasan'])->name('report-rekod-laporan-ringkasan');
   Route::get('/report/rekod-laporan/perincian', [App\Http\Controllers\Reports\RekodLaporanController::class, 'perincian'])->name('report-rekod-laporan-perincian'); 
 
+});
 // references
 Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');
 Route::get('/app/access-permission', [AccessPermission::class, 'index'])->name('app-access-permission');
