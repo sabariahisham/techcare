@@ -51,16 +51,61 @@ class TicketAssignmentController extends Controller
     // First, get the status name to check if it's "Aduan Dirujuk"
     $selectedStatus = RefTicketStatus::find($request->tick_status);
     $isAduanDirujuk = $selectedStatus && $selectedStatus->st_name === 'Aduan Dirujuk';
+    $isAduanBaru = $selectedStatus && $selectedStatus->st_name === 'Aduan Baru';
 
     // Dynamic validation rules based on status
     $validationRules = [
       'tick_status' => 'required|exists:ref_ticket_statuses,id',
       'sla_severity' => 'nullable|string',
-      'assigned_officers' => 'nullable|array',
-      'assigned_officers.*' => 'exists:users,id',
       'action_date' => 'nullable|date',
       'notes' => 'nullable|string|max:1000'
     ];
+
+    // For status "Aduan Baru" (ID: 1), assigned_officers is optional (can be null)
+    // For all other statuses (2, 3, 4, 5, 6), assigned_officers is required
+    // BUT: If officers already exist for this ticket (from any status), allow optional selection
+    $isStatusChanging = $ticket->tick_status != $request->tick_status;
+
+    // Check if ticket has ANY officers assigned (from current or previous statuses)
+    $hasAnyOfficersAssigned = $ticket->chronologies()
+      ->whereNotNull('escalate_to')
+      ->exists();
+
+    // Check for officers in current status specifically
+    $hasOfficersInCurrentStatus = $ticket->chronologies()
+      ->whereNotNull('escalate_to')
+      ->where('tick_status', $ticket->tick_status)
+      ->exists();
+
+    // Log validation decision
+    \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Validation Check', [
+      'ticket_id' => $ticket->id,
+      'current_status' => $ticket->tick_status,
+      'new_status' => $request->tick_status,
+      'is_status_changing' => $isStatusChanging,
+      'has_any_officers_assigned' => $hasAnyOfficersAssigned,
+      'has_officers_in_current_status' => $hasOfficersInCurrentStatus,
+      'is_aduan_baru' => $isAduanBaru,
+      'assigned_officers_provided' => $request->has('assigned_officers') ? count($request->assigned_officers) : 0
+    ]);
+
+    if ($isAduanBaru) {
+      $validationRules['assigned_officers'] = 'nullable|array';
+      $validationRules['assigned_officers.*'] = 'exists:users,id';
+    } else {
+      // Only require assigned_officers if:
+      // 1. No officers have ever been assigned to this ticket AND none provided
+      // 2. Officers field can be optional if ticket already has officers assigned
+      if (!$hasAnyOfficersAssigned) {
+        // No officers exist at all - require selection
+        $validationRules['assigned_officers'] = 'required|array|min:1';
+        $validationRules['assigned_officers.*'] = 'exists:users,id';
+      } else {
+        // Officers already exist - allow optional (will use existing officers if none provided)
+        $validationRules['assigned_officers'] = 'nullable|array';
+        $validationRules['assigned_officers.*'] = 'exists:users,id';
+      }
+    }
 
     // Add kategori and sub kategori validation only for "Aduan Dirujuk" status
     if ($isAduanDirujuk) {
@@ -78,6 +123,8 @@ class TicketAssignmentController extends Controller
       'cat_id.exists' => 'Kategori aduan yang dipilih tidak sah.',
       'subcat_id.required' => 'Sila pilih sub kategori aduan untuk status Aduan Dirujuk.',
       'subcat_id.exists' => 'Sub kategori aduan yang dipilih tidak sah.',
+      'assigned_officers.required' => 'Sila pilih sekurang-kurangnya satu pegawai tugasan untuk status ini.',
+      'assigned_officers.min' => 'Sila pilih sekurang-kurangnya satu pegawai tugasan.',
       'assigned_officers.*.exists' => 'Pegawai tugasan yang dipilih tidak sah.',
       'action_date.date' => 'Format tarikh tindakan tidak sah.',
       'notes.max' => 'Catatan tidak boleh melebihi 1000 aksara.'
@@ -112,19 +159,56 @@ class TicketAssignmentController extends Controller
 
       // Get the first assigned officer to determine level_pegtugas
       $firstOfficerId = null;
-      if ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
-        $firstOfficerId = $request->assigned_officers[0];
+      $assignedOfficerIds = [];
 
-        // Get level_pegtugas from officers table
-        $officerData = \Illuminate\Support\Facades\DB::table('officers')
-          ->where('user_id', $firstOfficerId)
-          ->where('cat_id', $catId)
-          ->where('subcat_id', $subcatId)
-          ->whereNull('deleted_at')
-          ->first();
+      // Only assign officers if status is NOT "Aduan Baru"
+      if (!$isAduanBaru) {
+        // If new officers are provided, use them
+        if ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
+          $assignedOfficerIds = $request->assigned_officers;
+          $firstOfficerId = $assignedOfficerIds[0];
+        } else {
+          // If no new officers provided, get existing officers from CURRENT status chronology
+          $assignedOfficerIds = $ticket->chronologies()
+            ->whereNotNull('escalate_to')
+            ->where('tick_status', $ticket->tick_status) // Get from current status, not new status
+            ->pluck('escalate_to')
+            ->unique()
+            ->toArray();
 
-        if ($officerData) {
-          $levelPetugas = $officerData->level_tugasan ?? 1;
+          // If no officers in current status, try to get from any previous status
+          if (empty($assignedOfficerIds)) {
+            $assignedOfficerIds = $ticket->chronologies()
+              ->whereNotNull('escalate_to')
+              ->orderBy('created_at', 'desc')
+              ->pluck('escalate_to')
+              ->unique()
+              ->toArray();
+          }
+
+          $firstOfficerId = !empty($assignedOfficerIds) ? $assignedOfficerIds[0] : null;
+
+          \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Using Existing Officers', [
+            'ticket_id' => $ticket->id,
+            'current_status' => $ticket->tick_status,
+            'new_status' => $request->tick_status,
+            'assigned_officer_ids' => $assignedOfficerIds,
+            'first_officer_id' => $firstOfficerId
+          ]);
+        }
+
+        // Get level_pegtugas from officers table if we have a first officer
+        if ($firstOfficerId) {
+          $officerData = \Illuminate\Support\Facades\DB::table('officers')
+            ->where('user_id', $firstOfficerId)
+            ->where('cat_id', $catId)
+            ->where('subcat_id', $subcatId)
+            ->whereNull('deleted_at')
+            ->first();
+
+          if ($officerData) {
+            $levelPetugas = $officerData->level_tugasan ?? 1;
+          }
         }
       }
 
@@ -254,7 +338,7 @@ class TicketAssignmentController extends Controller
           'sla_days' => $slaDays,
           'sla_duedate' => $slaDueDate,
           'level_pegtugas_id' => $levelPetugas,
-          'escalate_to' => $firstOfficerId, // Store first officer here
+          'escalate_to' => $isAduanBaru ? null : $firstOfficerId, // NULL for Aduan Baru
           'updated_by' => Auth::id(),
           'updated_at' => $request->action_date ? Carbon::parse($request->action_date) : now(),
         ]);
@@ -269,7 +353,7 @@ class TicketAssignmentController extends Controller
           'chronology_id' => $chronology->id,
           'ticket_id' => $ticket->id,
           'tick_status' => $request->tick_status,
-          'escalate_to' => $firstOfficerId,
+          'escalate_to' => $isAduanBaru ? 'NULL (Aduan Baru)' : $firstOfficerId,
           'sla_severity' => $slaSeverity,
           'sla_days' => $slaDays,
           'sla_duedate' => $slaDueDate ? $slaDueDate->format('Y-m-d H:i:s') : null
@@ -284,7 +368,7 @@ class TicketAssignmentController extends Controller
           'sla_days' => $slaDays,
           'sla_duedate' => $slaDueDate,
           'level_pegtugas_id' => $levelPetugas,
-          'escalate_to' => $firstOfficerId, // Store first officer in main entry
+          'escalate_to' => $isAduanBaru ? null : $firstOfficerId, // NULL for Aduan Baru
           'created_by' => Auth::id(),
           'updated_by' => Auth::id(),
           'created_at' => $request->action_date ? Carbon::parse($request->action_date) : now(),
@@ -301,10 +385,18 @@ class TicketAssignmentController extends Controller
       }
 
       // Handle additional officer assignments (2nd officer onwards) if provided
-      if ($request->has('assigned_officers') && count($request->assigned_officers) > 1) {
+      // Only create additional assignments if status is NOT "Aduan Baru"
+      if (!$isAduanBaru && !empty($assignedOfficerIds) && count($assignedOfficerIds) > 1) {
         // Skip the first officer as it's already stored in the main chronology entry
-        $additionalOfficers = array_slice($request->assigned_officers, 1);
+        $additionalOfficers = array_slice($assignedOfficerIds, 1);
 
+        // First, delete existing additional officer chronology entries for this status
+        TicketChronology::where('ticket_id', $ticket->id)
+          ->where('tick_status', $request->tick_status)
+          ->where('id', '!=', $chronology->id)
+          ->delete();
+
+        // Then create new entries for additional officers
         foreach ($additionalOfficers as $officerId) {
           // Create separate chronology entries for additional officers only
           TicketChronology::create([
