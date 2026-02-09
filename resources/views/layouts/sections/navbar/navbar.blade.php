@@ -196,7 +196,7 @@
                         <form method="POST" id="logout-form" action="{{ route('cas.logout') }}">
 
                         {{-- For local --}} 
-                        {{-- <form method="POST" id="logout-form" action="{{ route('logout') }}"> --}}
+                        <!-- <form method="POST" id="logout-form" action="{{ route('logout') }}"> -->
                         @csrf
                             <a class="dropdown-item" href="{{ route('logout') }}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
