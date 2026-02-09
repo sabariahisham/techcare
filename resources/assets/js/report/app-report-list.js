@@ -54,14 +54,14 @@ $(function () {
         },
         {
           id: 4,
-          name: 'Senarai Rekod Laporan Helpdesk (Dalam Pembangunan)',
-          description: 'Senarai Rekod Laporan Helpdesk ',
+          name: 'Senarai Rekod Laporan ',
+          description: 'Senarai Rekod Laporan TechCare',
           updated_at: currentDateTime
         },
         {
           id: 5,
           name: 'Statistik Log Aduan' ,
-          description: 'Statistik Log Aduan Helpdesk Mengikut Kategori ',
+          description: 'Statistik Log Aduan TechCare Mengikut Kategori ',
           updated_at: currentDateTime
         },
         {
@@ -155,7 +155,7 @@ $(function () {
             }
             else if ($id === 4) {
               // Route for Senarai Rekod Laporan Helpdesk
-              viewUrl = '/report/senarai-rekod-laporan-helpdesk';
+              viewUrl = '/report/rekod-laporan';
             }
             else if ($id === 5) {
               // Route for Statistik Log Aduan
