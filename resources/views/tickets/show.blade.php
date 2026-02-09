@@ -610,7 +610,22 @@ if ($showLevelTugasan !== null) {
 
 $filteredOfficers = $officersQuery
     ->select('users.id', 'users.nama', 'users.email')
-                                                    ->get();
+    ->get();
+
+// IMPORTANT: Always include the logged-in user in the dropdown (with green tag)
+// even if they don't match the category/subcategory filter
+                                                $currentUserId = auth()->user()->id;
+                                                $currentUserExists = $filteredOfficers->contains('id', $currentUserId);
+
+                                                if (!$currentUserExists) {
+                                                    // Add current user to the list
+                                                    $currentUser = (object) [
+                                                        'id' => auth()->user()->id,
+                                                        'nama' => auth()->user()->nama,
+                                                        'email' => auth()->user()->email,
+                                                    ];
+                                                    $filteredOfficers->prepend($currentUser);
+                                                }
                                             @endphp
                                             @foreach ($filteredOfficers as $officer)
                                                 <option value="{{ $officer->id }}"
@@ -1907,50 +1922,58 @@ $timelineItems = $timelineItems
                 }
 
                 const selectedStatusText = statusSelect.selectedOptions[0]?.text.trim();
-                // Check if status is one of the final statuses (Dirujuk, Dibatal, Selesai)
-                const isFinalStatus = selectedStatusText === 'Aduan Dirujuk' ||
-                    selectedStatusText === 'Aduan DiBatal' ||
+
+                // Kategori & Sub Kategori: Enable ONLY for "Aduan Dirujuk"
+                const isAduanDirujuk = selectedStatusText === 'Aduan Dirujuk';
+
+                // Check if status is one of the final statuses (Dibatal, Selesai) - for assigned officers
+                const isFinalStatus = selectedStatusText === 'Aduan DiBatal' ||
                     selectedStatusText === 'Aduan Selesai';
 
-                console.log('Status change - Text:', selectedStatusText, 'IsFinalStatus:', isFinalStatus);
+                console.log('Status change - Text:', selectedStatusText, 'IsAduanDirujuk:', isAduanDirujuk,
+                    'IsFinalStatus:', isFinalStatus);
 
-                // Disable all fields when status is final
-                categorySelect.disabled = isFinalStatus;
-                subcategorySelect.disabled = isFinalStatus;
-                if (severitySelect) severitySelect.disabled = isFinalStatus;
+                // Kategori & Sub Kategori: Enable ONLY for Aduan Dirujuk, disable for all other statuses
+                categorySelect.disabled = !isAduanDirujuk;
+                subcategorySelect.disabled = !isAduanDirujuk;
+
+                // Tahap Severity: Always enabled (never disabled)
+                if (severitySelect) severitySelect.disabled = false;
+
+                // Assigned Officers: Disable only for final statuses (Dibatal, Selesai)
                 if (assignedOfficersSelect) assignedOfficersSelect.disabled = isFinalStatus;
 
                 // Remove required attributes when disabled
-                if (isFinalStatus) {
+                if (!isAduanDirujuk) {
                     categorySelect.removeAttribute('required');
                     subcategorySelect.removeAttribute('required');
-                    if (severitySelect) severitySelect.removeAttribute('required');
                 }
 
-                // Add visual styling for disabled state
-                if (isFinalStatus) {
+                // Add visual styling for disabled state - Kategori & Sub Kategori
+                if (!isAduanDirujuk) {
                     categorySelect.style.backgroundColor = '#f8f9fa';
                     categorySelect.style.color = '#6c757d';
                     subcategorySelect.style.backgroundColor = '#f8f9fa';
                     subcategorySelect.style.color = '#6c757d';
-                    if (severitySelect) {
-                        severitySelect.style.backgroundColor = '#f8f9fa';
-                        severitySelect.style.color = '#6c757d';
-                    }
-                    if (assignedOfficersSelect) {
-                        assignedOfficersSelect.style.backgroundColor = '#f8f9fa';
-                        assignedOfficersSelect.style.color = '#6c757d';
-                    }
                 } else {
                     categorySelect.style.backgroundColor = '';
                     categorySelect.style.color = '';
                     subcategorySelect.style.backgroundColor = '';
                     subcategorySelect.style.color = '';
-                    if (severitySelect) {
-                        severitySelect.style.backgroundColor = '';
-                        severitySelect.style.color = '';
-                    }
-                    if (assignedOfficersSelect) {
+                }
+
+                // Tahap Severity: Always keep normal styling (never disabled)
+                if (severitySelect) {
+                    severitySelect.style.backgroundColor = '';
+                    severitySelect.style.color = '';
+                }
+
+                // Assigned Officers: Add disabled styling only for final statuses
+                if (assignedOfficersSelect) {
+                    if (isFinalStatus) {
+                        assignedOfficersSelect.style.backgroundColor = '#f8f9fa';
+                        assignedOfficersSelect.style.color = '#6c757d';
+                    } else {
                         assignedOfficersSelect.style.backgroundColor = '';
                         assignedOfficersSelect.style.color = '';
                     }
