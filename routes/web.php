@@ -286,11 +286,11 @@ Route::middleware(['auth'])->group(function () {
   Route::post('/report/laporan-status-aduan-tahunan/data', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'data'])->name('report-laporan-status-aduan-tahunan-data');
   Route::get('/report/laporan-status-aduan-tahunan/export-excel', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportExcel'])->name('report-laporan-status-aduan-tahunan-export-excel');
   Route::get('/report/laporan-status-aduan-tahunan/export-pdf', [App\Http\Controllers\Reports\LaporanStatusAduanTahunanController::class, 'exportPdf'])->name('report-laporan-status-aduan-tahunan-export-pdf');
-  
+
   //Senarai rekod laporan
   Route::get('/report/rekod-laporan', [App\Http\Controllers\Reports\RekodLaporanController::class, 'index'])->name('report-rekod-laporan');
   Route::get('/report/rekod-laporan/ringkasan', [App\Http\Controllers\Reports\RekodLaporanController::class, 'ringkasan'])->name('report-rekod-laporan-ringkasan');
-  Route::get('/report/rekod-laporan/perincian', [App\Http\Controllers\Reports\RekodLaporanController::class, 'perincian'])->name('report-rekod-laporan-perincian'); 
+  Route::get('/report/rekod-laporan/perincian', [App\Http\Controllers\Reports\RekodLaporanController::class, 'perincian'])->name('report-rekod-laporan-perincian');
 
 });
 // references
@@ -400,8 +400,10 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Tickets Routes Group: Core ticket operations (TicketController only)
-// Using 'auth' middleware for authentication
-Route::middleware(['auth'])->prefix('tickets')->group(function () {
+// Route::middleware(['auth'])->prefix('tickets')->group(function () {
+
+// Using dynamic $authMiddleware for CAS/Local authentication
+Route::middleware($authMiddleware)->prefix('tickets')->group(function () {
   Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
   Route::get('/data', [TicketController::class, 'data'])->name('tickets.data');
   Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
@@ -413,7 +415,7 @@ Route::middleware(['auth'])->prefix('tickets')->group(function () {
 });
 
 // Ticket Assignment Routes Group
-Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
+Route::middleware($authMiddleware)->prefix('ticket-assignments')->group(function () {
   Route::put('/{uuid}/update', [TicketAssignmentController::class, 'updateTicketAssignment'])->name('ticket-assignments.update');
   Route::post('/{uuid}/assign', [TicketAssignmentController::class, 'assignTicket'])->name('tickets.assign');
   Route::get('/{uuid}/assignees', [TicketAssignmentController::class, 'getAssignees'])->name('tickets.assignees');
@@ -423,7 +425,7 @@ Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
 });
 
 // Ticket Search Routes Group
-Route::middleware(['auth'])->prefix('ticket-search')->group(function () {
+Route::middleware($authMiddleware)->prefix('ticket-search')->group(function () {
   Route::post('/user-by-name', [TicketSearchController::class, 'searchUserByName'])->name('search.user.by.name');
   Route::post('/user-by-email', [TicketSearchController::class, 'searchUserByEmail'])->name('search.user.by.email');
   Route::post('/user-autocomplete', [TicketSearchController::class, 'searchUserAutocomplete'])->name('search.user.autocomplete');
@@ -433,28 +435,28 @@ Route::middleware(['auth'])->prefix('ticket-search')->group(function () {
 Route::get('/get-subcategory/{categoryId}', [RefCategoryManagementController::class, 'getSubcategories'])->name('get.subcategory');
 
 // Ticket Attachment Routes Group
-Route::middleware(['auth'])->prefix('ticket-attachments')->group(function () {
+Route::middleware($authMiddleware)->prefix('ticket-attachments')->group(function () {
   Route::post('/upload', [TicketAttachmentController::class, 'upload'])->name('ticket-attachments.upload');
   Route::delete('/{uuid}', [TicketAttachmentController::class, 'destroy'])->name('ticket-attachments.destroy');
   Route::get('/{uuid}/download', [TicketAttachmentController::class, 'download'])->name('ticket-attachments.download');
 });
 
 // Ticket Chronology Routes Group
-Route::middleware(['auth'])->prefix('ticket-chronology')->group(function () {
+Route::middleware($authMiddleware)->prefix('ticket-chronology')->group(function () {
   Route::get('/{uuid}/data', [TicketChronologyController::class, 'getChronology'])->name('ticket-chronology.data');
   Route::post('/{uuid}/store', [TicketChronologyController::class, 'store'])->name('ticket-chronology.store');
   Route::get('/{uuid}/statistics', [TicketChronologyController::class, 'getStatistics'])->name('ticket-chronology.statistics');
 });
 
 // Ticket Comment Routes Group
-Route::middleware(['auth'])->prefix('ticket-comments')->group(function () {
+Route::middleware($authMiddleware)->prefix('ticket-comments')->group(function () {
   Route::post('/{uuid}/add-comment', [TicketCommentController::class, 'store'])->name('tickets.add-comment');
   Route::post('/{uuid}/store', [TicketCommentController::class, 'store'])->name('ticket-comments.store');
   Route::get('/{uuid}/data', [TicketCommentController::class, 'getComments'])->name('ticket-comments.data');
 });
 
 // Ticket Assignment Routes Group
-Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
+Route::middleware($authMiddleware)->prefix('ticket-assignments')->group(function () {
   Route::post('/{uuid}/assign', [TicketAssignmentController::class, 'assignTicket'])->name('ticket-assignments.assign');
   Route::get('/{uuid}/assignees', [TicketAssignmentController::class, 'getAssignees'])->name('ticket-assignments.assignees');
   Route::get('/available-assignees', [TicketAssignmentController::class, 'getAvailableAssignees'])->name('ticket-assignments.available-assignees');
@@ -462,7 +464,7 @@ Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
 });
 
 // Ticket Email Notification Routes Group
-Route::middleware(['auth'])->prefix('ticket-emails')->group(function () {
+Route::middleware($authMiddleware)->prefix('ticket-emails')->group(function () {
   Route::post('/send-notification/{uuid}', [TicketStatusController::class, 'sendNotification'])->name('ticket-emails.send-notification');
 });
 
@@ -473,6 +475,6 @@ Route::middleware(['auth'])->prefix('ticket-sla')->group(function () {
 });
 
 // Ticket Cron Jobs Routes Group
-Route::middleware(['auth'])->prefix('ticket-duedate')->group(function () {
+Route::middleware($authMiddleware)->prefix('ticket-duedate')->group(function () {
   Route::post('/check-sla', [TicketDueDateController::class, 'checkSla'])->name('ticket-duedate.check-sla');
 });
