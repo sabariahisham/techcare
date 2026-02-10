@@ -19,7 +19,7 @@ $(function () {
                     <tr>
                         <td>${r.kategori}</td>
                         <td class="text-center">${r.selesai}</td>
-                        <td class="text-center fw-bold">${r.jumlah}</td>
+                        <td class="text-center fw-bold">${res.kpi.jumlah}</td>
                     </tr>`;
             });
 
