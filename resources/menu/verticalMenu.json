@@ -28,7 +28,8 @@
     },
 
     {
-      "menuHeader": "Pengurusan"
+      "menuHeader": "Pengurusan",
+      "permission": ["admin.view", "pengguna.view","capaian.view", "peranan.view", "konfigurasi.view"]
     },
 
     {
@@ -97,7 +98,8 @@
       ]
     },
     {
-      "menuHeader": "Super Admin"
+      "menuHeader": "Super Admin",
+      "permission": "admin.manage"
     },
     {
           "name": "Audit Trail",
@@ -133,7 +135,8 @@
     },
 
     {
-      "menuHeader": "#(rujukan developer)"
+      "menuHeader": "#(rujukan developer)",
+      "permission": "admin.view"
     },
     {
       "url": "https://themeselection.com/support/",
