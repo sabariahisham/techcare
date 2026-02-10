@@ -30,9 +30,11 @@ $configData = Helper::appClasses();
 
       {{-- menu headers --}}
       @if (isset($menu->menuHeader))
+        @if (!isset($menu->permission) || auth()->user()->can($menu->permission))
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">{{ __($menu->menuHeader) }}</span>
         </li>
+        @endif
       @else
 
       {{-- active menu method --}}
