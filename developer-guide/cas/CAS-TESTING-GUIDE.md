@@ -1,7 +1,16 @@
 # CAS/SATUID Testing Guide
 
 ## Overview
-This guide explains how to test SATUID authentication and toggle between CAS and local authentication modes.
+This guide explains how to test SATUID authentication and toggle between CAS and local authentication modes across different server environments.
+
+## Server Environments
+
+| Environment | Server URL | IP Address | Git Branch | CAS Enabled | Debug Mode |
+|------------|------------|------------|------------|-------------|------------|
+| **Local** | `http://ehelp.test` | N/A | N/A | false/true | true |
+| **Development** | `http://techcare-dev.treasury.gov.my` | 10.23.105.181 | `server-dev` | true | true |
+| **Staging** | `http://techcare-staging.treasury.gov.my` | 10.23.105.182 | `server-staging` | true | false |
+| **Production** | `http://techcare.treasury.gov.my` | 10.23.105.180 | `main` | true | false |
 
 ## Quick Toggle - Switch Authentication Modes
 
@@ -63,11 +72,28 @@ CAS_DEBUG=true
 
 **Important**: `CAS_CLIENT_SERVICE` must exactly match your local URL (`http://ehelp.test`)
 
-#### 2. Register Your Local URL with SATUID
-Before testing, your local URL (`http://ehelp.test`) must be registered with the SATUID system. Contact your SATUID administrator to register:
+#### 2. Register Your URL with SATUID
+Before testing, your application URL must be registered with the SATUID system. Contact your SATUID administrator to register:
+
+**For Local Testing:**
 - Service URL: `http://ehelp.test`
-- Service Name: eHelp Development
+- Service Name: eHelp Development (Local)
 - Callback URLs: `http://ehelp.test/*`
+
+**For Dev Server:**
+- Service URL: `http://techcare-dev.treasury.gov.my`
+- Service Name: Techcare Development Server
+- Callback URLs: `http://techcare-dev.treasury.gov.my/*`
+
+**For Staging Server:**
+- Service URL: `http://techcare-staging.treasury.gov.my`
+- Service Name: Techcare Staging Server
+- Callback URLs: `http://techcare-staging.treasury.gov.my/*`
+
+**For Production Server:**
+- Service URL: `http://techcare.treasury.gov.my`
+- Service Name: Techcare Production
+- Callback URLs: `http://techcare.treasury.gov.my/*`
 
 ### Testing Steps
 
@@ -268,33 +294,116 @@ php artisan config:clear
 
 ---
 
-## Development vs Production Settings
+## Environment Configuration Settings
 
-### Development (Localhost)
+### Local Development (Localhost)
 ```env
-CAS_ENABLED=false  # or true for testing
+# Toggle authentication mode
+CAS_ENABLED=false  # Set to true for testing CAS/SATUID
+
+# Local application URL
 APP_URL=http://ehelp.test
 CAS_CLIENT_SERVICE=http://ehelp.test
+
+# SATUID server settings
+CAS_HOSTNAME=satuid.treasury.gov.my
+CAS_PORT=443
+CAS_URI=/gk
+
+# Debugging and redirects
 CAS_DEBUG=true
+CAS_REDIRECT_PATH=/dashboard
+CAS_LOGOUT_URL=https://satuid.treasury.gov.my/gk/logout
 CAS_LOGOUT_REDIRECT=http://ehelp.test
+
+# Environment
+APP_ENV=local
+APP_DEBUG=true
 ```
 
-### Dev Server (techcare-dev.treasury.gov.my)
+### Development Server (techcare-dev.treasury.gov.my)
+**Server IP:** 10.23.105.181  
+**Git Branch:** `server-dev`
+
 ```env
+# Enable CAS authentication
 CAS_ENABLED=true
+
+# Server URL
 APP_URL=http://techcare-dev.treasury.gov.my
 CAS_CLIENT_SERVICE=http://techcare-dev.treasury.gov.my
+
+# SATUID server settings
+CAS_HOSTNAME=satuid.treasury.gov.my
+CAS_PORT=443
+CAS_URI=/gk
+
+# Debugging and redirects
 CAS_DEBUG=true
+CAS_REDIRECT_PATH=/dashboard
+CAS_LOGOUT_URL=https://satuid.treasury.gov.my/gk/logout
 CAS_LOGOUT_REDIRECT=http://techcare-dev.treasury.gov.my
+
+# Environment
+APP_ENV=local
+APP_DEBUG=true
 ```
 
-### Production (techcare.treasury.gov.my)
+### Staging Server (techcare-staging.treasury.gov.my)
+**Server IP:** 10.23.105.182  
+**Git Branch:** `server-staging`
+
 ```env
+# Enable CAS authentication
 CAS_ENABLED=true
+
+# Server URL
+APP_URL=http://techcare-staging.treasury.gov.my
+CAS_CLIENT_SERVICE=http://techcare-staging.treasury.gov.my
+
+# SATUID server settings
+CAS_HOSTNAME=satuid.treasury.gov.my
+CAS_PORT=443
+CAS_URI=/gk
+
+# Debugging and redirects (can be disabled in staging if needed)
+CAS_DEBUG=true
+CAS_REDIRECT_PATH=/dashboard
+CAS_LOGOUT_URL=https://satuid.treasury.gov.my/gk/logout
+CAS_LOGOUT_REDIRECT=http://techcare-staging.treasury.gov.my
+
+# Environment
+APP_ENV=staging
+APP_DEBUG=false
+```
+
+### Production Server (techcare.treasury.gov.my)
+**Server IP:** 10.23.105.180  
+**Git Branch:** `main`
+
+```env
+# Enable CAS authentication
+CAS_ENABLED=true
+
+# Server URL
 APP_URL=http://techcare.treasury.gov.my
 CAS_CLIENT_SERVICE=http://techcare.treasury.gov.my
+
+# SATUID server settings
+CAS_HOSTNAME=satuid.treasury.gov.my
+CAS_PORT=443
+CAS_URI=/gk
+
+# Production settings - disable debugging
 CAS_DEBUG=false
+CAS_REDIRECT_PATH=/dashboard
+CAS_LOGOUT_URL=https://satuid.treasury.gov.my/gk/logout
 CAS_LOGOUT_REDIRECT=http://techcare.treasury.gov.my
+
+# Environment
+APP_ENV=production
+APP_DEBUG=false
+LOG_LEVEL=error
 ```
 
 ---
@@ -323,17 +432,25 @@ CAS_LOGOUT_REDIRECT=http://techcare.treasury.gov.my
    - CAS mode: `/cas-logout` → redirects to SATUID
    - Local mode: `/logout` → standard Laravel logout
 
+8. **Environment-specific settings**:
+   - **Local:** `CAS_ENABLED=false` (or true for testing), `APP_DEBUG=true`
+   - **Dev Server:** `CAS_ENABLED=true`, `APP_DEBUG=true`, `APP_ENV=local`
+   - **Staging Server:** `CAS_ENABLED=true`, `APP_DEBUG=false`, `APP_ENV=staging`
+   - **Production Server:** `CAS_ENABLED=true`, `APP_DEBUG=false`, `APP_ENV=production`
+
 ---
 
 ## Testing Checklist
 
 ### Before Testing CAS
 - [ ] SATUID account exists and is active
-- [ ] LDAP ID exists in local database
-- [ ] Local URL registered with SATUID
-- [ ] .env settings are correct
-- [ ] APP_URL matches CAS_CLIENT_SERVICE
-- [ ] Config cache cleared
+- [ ] LDAP ID exists in database (`users.id_pgn_ldap`)
+- [ ] Application URL registered with SATUID (local/dev/staging/production)
+- [ ] .env settings are correct for the environment
+- [ ] APP_URL matches CAS_CLIENT_SERVICE exactly
+- [ ] CAS_ENABLED is set appropriately
+- [ ] Config cache cleared: `php artisan config:clear`
+- [ ] Correct git branch deployed (dev/staging/production)
 
 ### During Testing
 - [ ] Monitor Laravel logs
