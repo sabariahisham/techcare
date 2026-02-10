@@ -116,6 +116,18 @@
               "name": "Log Keseluruhan",
               "slug": "log-index",
               "permission": "audit.view"
+            },
+            {
+              "url": "audit/logs-mail",
+              "name": "Log Email",
+              "slug": "log-mail-index",
+              "permission": "audit.view"
+            },
+            {
+              "url": "audit/logs-sla",
+              "name": "Log SLA",
+              "slug": "log-sla-index",
+              "permission": "audit.view"
             }
           ]
     },

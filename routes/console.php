@@ -36,8 +36,16 @@ Schedule::command('sla:send-notifications --type=all')
   ->name('Send SLA Notifications (Reminder & Overdue)')
   ->description('Send SLA reminder (-1 working day) and overdue (+1 working day) notifications at 7:30 AM daily')
   ->onSuccess(function () {
-    \Illuminate\Support\Facades\Log::info('✓ SLA notifications executed successfully at ' . now()->toDateTimeString());
+    \Illuminate\Support\Facades\Log::channel('sla')->info('[SLA][SCHEDULER][SUCCESS] Scheduled task executed successfully', [
+      'task' => 'sla:send-notifications',
+      'executed_at' => now()->toDateTimeString(),
+      'timezone' => 'Asia/Kuala_Lumpur'
+    ]);
   })
   ->onFailure(function () {
-    \Illuminate\Support\Facades\Log::error('✗ SLA notifications failed at ' . now()->toDateTimeString());
+    \Illuminate\Support\Facades\Log::channel('sla')->error('[SLA][SCHEDULER][FAILURE] Scheduled task failed', [
+      'task' => 'sla:send-notifications',
+      'failed_at' => now()->toDateTimeString(),
+      'timezone' => 'Asia/Kuala_Lumpur'
+    ]);
   });

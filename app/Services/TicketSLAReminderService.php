@@ -17,7 +17,7 @@ namespace App\Services;
 use App\Models\Ticket;
 use App\Models\TicketChronology;
 use App\Notifications\Ticket\ReminderNotification;
-use App\Notifications\Ticket\SLAOverdueNotification;
+use App\Notifications\Ticket\AfterDueNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +33,12 @@ class TicketSLAReminderService
    */
   public function sendBeforeDueReminders(): array
   {
-    Log::info('=== Starting SLA Reminder Notifications (1 working day before) ===');
+    Log::channel('sla')->info('[SLA][REMINDER][START] Starting reminder notifications process', [
+      'process' => 'reminder',
+      'type' => 'before_due',
+      'working_days_offset' => 1,
+      'timestamp' => now()->toDateTimeString()
+    ]);
 
     try {
       // Calculate target date (tomorrow in working days)
@@ -41,7 +46,11 @@ class TicketSLAReminderService
       $tomorrowStart = $tomorrow->startOfDay();
       $tomorrowEnd = $tomorrow->copy()->endOfDay();
 
-      Log::info("Target SLA due date: {$tomorrowStart->format('Y-m-d')} to {$tomorrowEnd->format('Y-m-d')}");
+      Log::channel('sla')->info('[SLA][REMINDER][QUERY] Target SLA due date calculated', [
+        'target_date' => $tomorrowStart->format('Y-m-d'),
+        'date_range_start' => $tomorrowStart->format('Y-m-d H:i:s'),
+        'date_range_end' => $tomorrowEnd->format('Y-m-d H:i:s')
+      ]);
 
       // Get latest chronology per ticket with sla_duedate = tomorrow
       $chronologies = TicketChronology::select('tickets_chronologies.*')
@@ -63,7 +72,10 @@ class TicketSLAReminderService
         ])
         ->get();
 
-      Log::info("Found {$chronologies->count()} chronologies with SLA due tomorrow");
+      Log::channel('sla')->info('[SLA][REMINDER][FOUND] Chronologies retrieved', [
+        'count' => $chronologies->count(),
+        'target_date' => $tomorrowStart->format('Y-m-d')
+      ]);
 
       $results = [
         'sent' => 0,
@@ -102,12 +114,25 @@ class TicketSLAReminderService
           // Skip if no email
           if (empty($officer->email)) {
             $results['skipped']++;
-            Log::warning("Skipped ticket {$ticket->ticket_nolog} - Officer has no email");
+            Log::channel('sla')->warning('[SLA][REMINDER][SKIPPED] Officer has no email', [
+              'ticket' => $ticket->ticket_nolog,
+              'officer_id' => $officer->id,
+              'reason' => 'no_email_address'
+            ]);
             continue;
           }
 
           // Send notification
-          $officer->notify(new ReminderNotification($ticket, $chronology));
+          Log::channel('mail')->info('[MAIL][SLA_REMINDER][SENDING] Preparing reminder email', [
+            'ticket' => $ticket->ticket_nolog,
+            'recipient_email' => $this->maskEmail($officer->email),
+            'recipient_name' => $officer->nama,
+            'ticket_status' => $ticket->status->st_name ?? 'N/A',
+            'sla_duedate' => $chronology->sla_duedate->format('Y-m-d'),
+            'notification_type' => 'reminder'
+          ]);
+
+          $officer->notify(new ReminderNotification($ticket));
 
           $results['sent']++;
           $results['details'][] = [
@@ -118,7 +143,21 @@ class TicketSLAReminderService
             'sla_duedate' => $chronology->sla_duedate
           ];
 
-          Log::info("✓ Reminder sent to {$officer->email} for ticket {$ticket->ticket_nolog}");
+          Log::channel('sla')->info('[SLA][REMINDER][SENT] Notification sent successfully', [
+            'ticket' => $ticket->ticket_nolog,
+            'officer_id' => $officer->id,
+            'recipient_name' => $officer->nama,
+            'recipient_email' => $officer->email,
+            'ticket_status' => $ticket->status->st_name ?? 'N/A',
+            'sla_duedate' => $chronology->sla_duedate->format('Y-m-d')
+          ]);
+
+          Log::channel('mail')->info('[MAIL][SLA_REMINDER][SUCCESS] Email sent successfully', [
+            'ticket' => $ticket->ticket_nolog,
+            'recipient_email' => $this->maskEmail($officer->email),
+            'recipient_name' => $officer->nama,
+            'ticket_status' => $ticket->status->st_name ?? 'N/A'
+          ]);
         } catch (\Exception $e) {
           $results['failed']++;
           $results['details'][] = [
@@ -127,15 +166,35 @@ class TicketSLAReminderService
             'status' => 'failed'
           ];
 
-          Log::error("✗ Failed to send reminder for ticket {$ticket->ticket_nolog}: {$e->getMessage()}");
+          Log::channel('sla')->error('[SLA][REMINDER][FAILED] Failed to send notification', [
+            'ticket' => $ticket->ticket_nolog,
+            'error_message' => $e->getMessage(),
+            'error_file' => $e->getFile(),
+            'error_line' => $e->getLine()
+          ]);
+
+          Log::channel('mail')->error('[MAIL][SLA_REMINDER][FAILED] Email sending failed', [
+            'ticket' => $ticket->ticket_nolog,
+            'error_message' => $e->getMessage()
+          ]);
         }
       }
 
-      Log::info("=== Reminder Summary: {$results['sent']} sent, {$results['failed']} failed, {$results['skipped']} skipped ===");
+      Log::channel('sla')->info('[SLA][REMINDER][COMPLETE] Process completed', [
+        'sent' => $results['sent'],
+        'failed' => $results['failed'],
+        'skipped' => $results['skipped'],
+        'total_processed' => $chronologies->count()
+      ]);
 
       return $results;
     } catch (\Exception $e) {
-      Log::error("Error in sendBeforeDueReminders: {$e->getMessage()}");
+      Log::channel('sla')->critical('[SLA][REMINDER][ERROR] Critical error in reminder process', [
+        'error_message' => $e->getMessage(),
+        'error_file' => $e->getFile(),
+        'error_line' => $e->getLine(),
+        'stack_trace' => $e->getTraceAsString()
+      ]);
       throw $e;
     }
   }
@@ -148,7 +207,12 @@ class TicketSLAReminderService
    */
   public function sendAfterDueReminders(): array
   {
-    Log::info('=== Starting SLA Overdue Notifications (1 working day after) ===');
+    Log::channel('sla')->info('[SLA][OVERDUE][START] Starting overdue notifications process', [
+      'process' => 'overdue',
+      'type' => 'after_due',
+      'working_days_offset' => -1,
+      'timestamp' => now()->toDateTimeString()
+    ]);
 
     try {
       // Calculate target date (yesterday in working days)
@@ -156,7 +220,11 @@ class TicketSLAReminderService
       $yesterdayStart = $yesterday->startOfDay();
       $yesterdayEnd = $yesterday->copy()->endOfDay();
 
-      Log::info("Target SLA due date: {$yesterdayStart->format('Y-m-d')} to {$yesterdayEnd->format('Y-m-d')}");
+      Log::channel('sla')->info('[SLA][OVERDUE][QUERY] Target SLA due date calculated', [
+        'target_date' => $yesterdayStart->format('Y-m-d'),
+        'date_range_start' => $yesterdayStart->format('Y-m-d H:i:s'),
+        'date_range_end' => $yesterdayEnd->format('Y-m-d H:i:s')
+      ]);
 
       // Get latest chronology per ticket with sla_duedate = yesterday
       $chronologies = TicketChronology::select('tickets_chronologies.*')
@@ -178,7 +246,10 @@ class TicketSLAReminderService
         ])
         ->get();
 
-      Log::info("Found {$chronologies->count()} chronologies that became overdue yesterday");
+      Log::channel('sla')->info('[SLA][OVERDUE][FOUND] Chronologies retrieved', [
+        'count' => $chronologies->count(),
+        'target_date' => $yesterdayStart->format('Y-m-d')
+      ]);
 
       $results = [
         'sent' => 0,
@@ -217,12 +288,25 @@ class TicketSLAReminderService
           // Skip if no email
           if (empty($officer->email)) {
             $results['skipped']++;
-            Log::warning("Skipped ticket {$ticket->ticket_nolog} - Officer has no email");
+            Log::channel('sla')->warning('[SLA][OVERDUE][SKIPPED] Officer has no email', [
+              'ticket' => $ticket->ticket_nolog,
+              'officer_id' => $officer->id,
+              'reason' => 'no_email_address'
+            ]);
             continue;
           }
 
           // Send notification
-          $officer->notify(new SLAOverdueNotification($ticket, $chronology));
+          Log::channel('mail')->info('[MAIL][SLA_OVERDUE][SENDING] Preparing overdue email', [
+            'ticket' => $ticket->ticket_nolog,
+            'recipient_email' => $this->maskEmail($officer->email),
+            'recipient_name' => $officer->nama,
+            'ticket_status' => $ticket->status->st_name ?? 'N/A',
+            'sla_duedate' => $chronology->sla_duedate->format('Y-m-d'),
+            'notification_type' => 'overdue'
+          ]);
+
+          $officer->notify(new AfterDueNotification($ticket));
 
           $results['sent']++;
           $results['details'][] = [
@@ -233,7 +317,21 @@ class TicketSLAReminderService
             'sla_duedate' => $chronology->sla_duedate
           ];
 
-          Log::info("✓ Overdue notification sent to {$officer->email} for ticket {$ticket->ticket_nolog}");
+          Log::channel('sla')->info('[SLA][OVERDUE][SENT] Notification sent successfully', [
+            'ticket' => $ticket->ticket_nolog,
+            'officer_id' => $officer->id,
+            'recipient_name' => $officer->nama,
+            'recipient_email' => $officer->email,
+            'ticket_status' => $ticket->status->st_name ?? 'N/A',
+            'sla_duedate' => $chronology->sla_duedate->format('Y-m-d')
+          ]);
+
+          Log::channel('mail')->info('[MAIL][SLA_OVERDUE][SUCCESS] Email sent successfully', [
+            'ticket' => $ticket->ticket_nolog,
+            'recipient_email' => $this->maskEmail($officer->email),
+            'recipient_name' => $officer->nama,
+            'ticket_status' => $ticket->status->st_name ?? 'N/A'
+          ]);
         } catch (\Exception $e) {
           $results['failed']++;
           $results['details'][] = [
@@ -242,16 +340,59 @@ class TicketSLAReminderService
             'status' => 'failed'
           ];
 
-          Log::error("✗ Failed to send overdue notification for ticket {$ticket->ticket_nolog}: {$e->getMessage()}");
+          Log::channel('sla')->error('[SLA][OVERDUE][FAILED] Failed to send notification', [
+            'ticket' => $ticket->ticket_nolog,
+            'error_message' => $e->getMessage(),
+            'error_file' => $e->getFile(),
+            'error_line' => $e->getLine()
+          ]);
+
+          Log::channel('mail')->error('[MAIL][SLA_OVERDUE][FAILED] Email sending failed', [
+            'ticket' => $ticket->ticket_nolog,
+            'error_message' => $e->getMessage()
+          ]);
         }
       }
 
-      Log::info("=== Overdue Summary: {$results['sent']} sent, {$results['failed']} failed, {$results['skipped']} skipped ===");
+      Log::channel('sla')->info('[SLA][OVERDUE][COMPLETE] Process completed', [
+        'sent' => $results['sent'],
+        'failed' => $results['failed'],
+        'skipped' => $results['skipped'],
+        'total_processed' => $chronologies->count()
+      ]);
 
       return $results;
     } catch (\Exception $e) {
-      Log::error("Error in sendAfterDueReminders: {$e->getMessage()}");
+      Log::channel('sla')->critical('[SLA][OVERDUE][ERROR] Critical error in overdue process', [
+        'error_message' => $e->getMessage(),
+        'error_file' => $e->getFile(),
+        'error_line' => $e->getLine(),
+        'stack_trace' => $e->getTraceAsString()
+      ]);
       throw $e;
     }
+  }
+
+  /**
+   * Mask email address for privacy in logs
+   * Example: john.doe@example.com -> j***e@example.com
+   *
+   * @param string $email
+   * @return string
+   */
+  private function maskEmail(string $email): string
+  {
+    if (empty($email) || !str_contains($email, '@')) {
+      return '***';
+    }
+
+    [$local, $domain] = explode('@', $email, 2);
+    $localLen = strlen($local);
+
+    if ($localLen <= 2) {
+      return substr($local, 0, 1) . '***@' . $domain;
+    }
+
+    return substr($local, 0, 1) . '***' . substr($local, -1) . '@' . $domain;
   }
 }
