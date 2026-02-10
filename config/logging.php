@@ -66,11 +66,44 @@ return [
       'replace_placeholders' => true,
     ],
 
+    // ============================================================================
+    // DAILY LOG - General application log with daily rotation
+    // ============================================================================
     'daily' => [
       'driver' => 'daily',
       'path' => storage_path('logs/laravel.log'),
       'level' => env('LOG_LEVEL', 'debug'),
       'days' => env('LOG_DAILY_DAYS', 14),
+      'replace_placeholders' => true,
+    ],
+
+    // ============================================================================
+    // SLA LOG - Dedicated channel for SLA notification tracking
+    // ============================================================================
+    // Purpose: Track all SLA-related processes (reminders, overdue notifications)
+    // Format: Structured logs with tags [SLA][TYPE][STATUS]
+    // Retention: 30 days for audit compliance
+    // ============================================================================
+    'sla' => [
+      'driver' => 'daily',
+      'path' => storage_path('logs/sla.log'),
+      'level' => env('LOG_LEVEL', 'info'),
+      'days' => 30, // Keep for 30 days for government audit requirements
+      'replace_placeholders' => true,
+    ],
+
+    // ============================================================================
+    // MAIL LOG - Dedicated channel for email sending tracking
+    // ============================================================================
+    // Purpose: Track all email operations (send attempts, success, failures)
+    // Format: Structured logs with recipient info (email masked for privacy)
+    // Retention: 30 days for audit compliance
+    // ============================================================================
+    'mail' => [
+      'driver' => 'daily',
+      'path' => storage_path('logs/mail.log'),
+      'level' => env('LOG_LEVEL', 'info'),
+      'days' => 30, // Keep for 30 days for government audit requirements
       'replace_placeholders' => true,
     ],
 
