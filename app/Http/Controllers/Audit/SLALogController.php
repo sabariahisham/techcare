@@ -34,8 +34,25 @@ class SLALogController extends Controller
         return in_array($category, ['REMINDER', 'OVERDUE']);
       });
 
-      // Sort by date and time descending (newest first)
+      // Sort by category priority (OVERDUE = 1, REMINDER = 2), then by time descending
       usort($logs, function ($a, $b) {
+        // Define priority order (lower number = higher priority)
+        // OVERDUE = 1 (highest priority)
+        // REMINDER = 2 (lower priority)
+        $getPriority = function ($log) {
+          $category = strtoupper($log['category'] ?? '');
+          return $category === 'OVERDUE' ? 1 : 2;
+        };
+
+        $priorityA = $getPriority($a);
+        $priorityB = $getPriority($b);
+
+        // First sort by priority
+        if ($priorityA !== $priorityB) {
+          return $priorityA <=> $priorityB;
+        }
+
+        // If same priority, sort by time descending (newest first)
         $dateA = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $a['date'] . ' ' . $a['time']);
         $dateB = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $b['date'] . ' ' . $b['time']);
         return $dateB <=> $dateA;
@@ -86,5 +103,79 @@ class SLALogController extends Controller
       'data' => $logs,
       'statistics' => $this->logParser->getLogStatistics($logs)
     ]);
+  }
+
+  /**
+   * Manual run SLA notifications task
+   * This is a backup option to run SLA notifications manually
+   * Useful for:
+   * - Local development testing
+   * - Production backup when scheduler fails
+   * - Immediate notification sending
+   */
+  public function runTask(Request $request)
+  {
+    try {
+      // Log the manual execution
+      \Illuminate\Support\Facades\Log::channel('sla')->info('[SLA][MANUAL_RUN][START] Manual task execution triggered', [
+        'user_id' => auth()->id(),
+        'user_email' => auth()->user()->email ?? 'N/A',
+        'ip_address' => $request->ip(),
+        'timestamp' => now()->toDateTimeString()
+      ]);
+
+      // Execute the SLA notification command
+      \Illuminate\Support\Facades\Artisan::call('sla:send-notifications', [
+        '--type' => 'all'
+      ]);
+
+      // Get the output
+      $output = \Illuminate\Support\Facades\Artisan::output();
+
+      // Parse results from output (extract sent/failed/skipped counts)
+      $sent = 0;
+      $failed = 0;
+      $skipped = 0;
+
+      if (preg_match('/Total Sent: (\d+)/', $output, $matches)) {
+        $sent = (int)$matches[1];
+      }
+      if (preg_match('/Total Failed: (\d+)/', $output, $matches)) {
+        $failed = (int)$matches[1];
+      }
+      if (preg_match('/Total Skipped: (\d+)/', $output, $matches)) {
+        $skipped = (int)$matches[1];
+      }
+
+      \Illuminate\Support\Facades\Log::channel('sla')->info('[SLA][MANUAL_RUN][SUCCESS] Manual task completed', [
+        'sent' => $sent,
+        'failed' => $failed,
+        'skipped' => $skipped,
+        'user_id' => auth()->id()
+      ]);
+
+      return response()->json([
+        'success' => true,
+        'message' => 'SLA notifications task executed successfully!',
+        'results' => [
+          'sent' => $sent,
+          'failed' => $failed,
+          'skipped' => $skipped
+        ],
+        'timestamp' => now()->format('d/m/Y H:i:s')
+      ]);
+    } catch (\Exception $e) {
+      \Illuminate\Support\Facades\Log::channel('sla')->error('[SLA][MANUAL_RUN][ERROR] Manual task failed', [
+        'error_message' => $e->getMessage(),
+        'error_file' => $e->getFile(),
+        'error_line' => $e->getLine(),
+        'user_id' => auth()->id()
+      ]);
+
+      return response()->json([
+        'success' => false,
+        'message' => 'Failed to execute task: ' . $e->getMessage()
+      ], 500);
+    }
   }
 }

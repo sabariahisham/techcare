@@ -89,7 +89,8 @@ class LogParserService
       $parsed = $this->parseMailLogLine($line);
       if ($parsed) {
         // Skip SENDING status to avoid duplicates - only show final status (SENT/FAILED)
-        if ($parsed['status'] !== 'SENDING') {
+        // Also skip SLA-related emails (REMINDER/OVERDUE) as they should only appear in SLA log
+        if ($parsed['status'] !== 'SENDING' && !in_array($parsed['type'], ['REMINDER', 'OVERDUE'])) {
           $logs[] = $parsed;
         }
       }

@@ -109,9 +109,16 @@
                                         <span class="fw-semibold">{{ $log['ticket'] }}</span>
                                     </td>
                                     <td>
-                                        <span
-                                            class="badge bg-{{ strtoupper($log['type']) === 'REMINDER' ? 'warning' : 'danger' }}">
-                                            {{ strtoupper($log['type']) }}
+                                        @php
+                                            $emailType = strtoupper($log['type']);
+                                            $badgeColor = match ($emailType) {
+                                                'TICKET_CLOSED' => 'success',
+                                                'TICKET_ASSIGNED' => 'warning',
+                                                'TICKET_CREATED' => 'primary'
+                                            };
+                                        @endphp
+                                        <span class="badge bg-{{ $badgeColor }}">
+                                            {{ $emailType }}
                                         </span>
                                     </td>
                                     <td>

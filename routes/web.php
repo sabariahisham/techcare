@@ -400,15 +400,15 @@ Route::middleware(['auth'])->group(function () {
   });
 
 
-Route::prefix('audit')->middleware('auth')->group(function () {
+  Route::prefix('audit')->middleware('auth')->group(function () {
     Route::get('/logs-mail', [MailLogController::class, 'index'])->name('log-mail-index');
     Route::get('/logs-mail/data', [MailLogController::class, 'getMailLogData'])->name('log-mail-data');
 
     // Route audit log-SLA (SLA process monitoring)
     Route::get('/logs-sla', [SLALogController::class, 'index'])->name('log-sla-index');
     Route::get('/logs-sla/data', [SLALogController::class, 'getSlaLogData'])->name('log-sla-data');
+    Route::post('/logs-sla/run-task', [SLALogController::class, 'runTask'])->name('log-sla-run-task');
   });
-
 });
 // Tickets Routes Group: Core ticket operations (TicketController only)
 // Using 'auth' middleware for authentication

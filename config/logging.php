@@ -82,13 +82,13 @@ return [
     // ============================================================================
     // Purpose: Track all SLA-related processes (reminders, overdue notifications)
     // Format: Structured logs with tags [SLA][TYPE][STATUS]
-    // Retention: 30 days for audit compliance
+    // Retention: 14 days for audit compliance
     // ============================================================================
     'sla' => [
       'driver' => 'daily',
       'path' => storage_path('logs/sla.log'),
       'level' => env('LOG_LEVEL', 'info'),
-      'days' => 30, // Keep for 30 days for government audit requirements
+      'days' => 14, // Keep for 14 days for government audit requirements
       'replace_placeholders' => true,
     ],
 
@@ -97,13 +97,13 @@ return [
     // ============================================================================
     // Purpose: Track all email operations (send attempts, success, failures)
     // Format: Structured logs with recipient info (email masked for privacy)
-    // Retention: 30 days for audit compliance
+    // Retention: 14 days for audit compliance
     // ============================================================================
     'mail' => [
       'driver' => 'daily',
       'path' => storage_path('logs/mail.log'),
       'level' => env('LOG_LEVEL', 'info'),
-      'days' => 30, // Keep for 30 days for government audit requirements
+      'days' => 14, // Keep for 14 days for government audit requirements
       'replace_placeholders' => true,
     ],
 
