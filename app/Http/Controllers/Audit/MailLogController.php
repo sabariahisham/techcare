@@ -30,12 +30,12 @@ class MailLogController extends Controller
     // Sort by email type priority, then by time descending within each type
     if (!empty($logs)) {
       usort($logs, function ($a, $b) {
-        // Define priority order
-        // TICKET_CLOSED (Owner) = 1
+        // Define priority order (lower number = higher priority)
+        // TICKET_CLOSED (Owner) = 1 (highest priority)
         // TICKET_CLOSED (Officer/Level) = 2
         // TICKET_ASSIGNED (Level 2) = 3
         // TICKET_ASSIGNED (Level 1) = 4
-        // TICKET_CREATED (Owner) = 5
+        // TICKET_CREATED (Owner) = 5 (lowest priority)
 
         $getPriority = function ($log) {
           $type = $log['type'] ?? '';

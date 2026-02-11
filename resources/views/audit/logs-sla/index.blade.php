@@ -27,6 +27,37 @@
 
 @section('content')
 
+    {{-- Alert: Setup Instructions if no logs for today --}}
+    @if (!$selectedDate || $selectedDate === date('Y-m-d'))
+        @php
+            $todayLogFile = storage_path('logs/sla-' . date('Y-m-d') . '.log');
+            $hasLogsToday = file_exists($todayLogFile) && filesize($todayLogFile) > 0;
+        @endphp
+
+        @if (!$hasLogsToday)
+            <div class="alert alert-warning alert-dismissible" role="alert">
+                <h5 class="alert-heading mb-2">
+                    <i class="bx bx-info-circle"></i> Tiada Log SLA Hari Ini
+                </h5>
+                <p class="mb-2">
+                    Logs SLA tidak auto-generate kerana <strong>Laravel Scheduler belum disetup</strong>.
+                    SLA notifications dijadualkan setiap hari pada <strong>7:30 AM</strong>, tetapi memerlukan Task
+                    Scheduler untuk berjalan secara automatik.
+                </p>
+                <hr>
+                <p class="mb-2"><strong>🔧 Cara Setup (Windows):</strong></p>
+                <ol class="mb-0">
+                    <li>Buka PowerShell <strong>sebagai Administrator</strong></li>
+                    <li>Navigate ke folder project: <code>cd C:\Users\sabariah.hisham\Herd\ehelp-fork_29122025</code></li>
+                    <li>Jalankan: <code>.\setup-task-scheduler.ps1</code></li>
+                </ol>
+                <p class="mt-3 mb-2"><strong>📝 Atau test manual:</strong></p>
+                <p class="mb-0"><code>php artisan sla:send-notifications --type=all</code></p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+    @endif
+
     <div class="card mb-4">
         <div class="card-body">
             <h4 class="mb-1">LOG SLA</h4>
@@ -87,6 +118,15 @@
                     <h5 class="card-title mb-0">Senarai Log SLA</h5>
                     <p class="mb-0 text-muted">Rekod log SLA sistem</p>
                 </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-secondary" id="runTaskBtn" onclick="runSlaTask()">
+                        <i class="bx bx-play-circle"></i> <span id="btnText">RUN TASK</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal"
+                        data-bs-target="#runTaskInfoModal">
+                        <i class="bx bx-info-circle"></i>
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -96,7 +136,7 @@
                                 <th>Tarikh & Masa</th>
                                 <th>No. Tiket</th>
                                 <th>Kategori</th>
-                                <th>Langkah</th>
+                                {{-- <th>Langkah</th> --}}
                                 <th>Status Email</th>
                                 <th>Maklumat Tiket</th>
                             </tr>
@@ -114,7 +154,7 @@
                                             {{ strtoupper($log['category']) }}
                                         </span>
                                     </td>
-                                    <td>{{ $log['step'] }}</td>
+                                    {{-- <td>{{ $log['step'] }}</td> --}}
                                     <td>
                                         @if ($log['status'] === 'SENT')
                                             <span class="badge bg-success">SENT</span>
@@ -191,6 +231,65 @@
     </div>
 
     <script>
+        function runSlaTask() {
+            const btn = document.getElementById('runTaskBtn');
+            const btnText = document.getElementById('btnText');
+            const originalText = btnText.textContent;
+
+            // Confirm action
+            if (!confirm(
+                    'Adakah anda pasti untuk menjalankan SLA notifications task sekarang?\n\nIni akan menghantar email reminder dan overdue kepada pegawai yang berkaitan.'
+                )) {
+                return;
+            }
+
+            // Disable button and show loading
+            btn.disabled = true;
+            btnText.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Sedang dijalankan...';
+
+            // Make AJAX request
+            fetch("{{ route('log-sla-run-task') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message with results
+                        let message = '✅ Task berjaya dijalankan!\n\n';
+                        message += '📊 Keputusan:\n';
+                        message += `✓ Dihantar: ${data.results.sent}\n`;
+                        message += `✗ Gagal: ${data.results.failed}\n`;
+                        message += `⊘ Dilangkau: ${data.results.skipped}\n\n`;
+                        message += `⏰ Masa: ${data.timestamp}`;
+
+                        alert(message);
+
+                        // Reload page to show new logs
+                        if (data.results.sent > 0) {
+                            // Redirect to today's logs
+                            const today = new Date().toISOString().split('T')[0];
+                            window.location.href = "{{ route('log-sla-index') }}?date=" + today;
+                        }
+                    } else {
+                        alert('❌ Ralat: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('❌ Ralat: Gagal menjalankan task. Sila cuba lagi.');
+                })
+                .finally(() => {
+                    // Re-enable button
+                    btn.disabled = false;
+                    btnText.textContent = originalText;
+                });
+        }
+
         function filterByDate() {
             const selectedDate = document.getElementById('dateFilter').value;
             if (!selectedDate) {
@@ -257,5 +356,140 @@
         });
     </script>
     @include('audit.logs.partials.log-details-modal')
+
+    {{-- Modal: Run Task Info --}}
+    <div class="modal fade" id="runTaskInfoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bx bx-info-circle"></i> Maklumat: RUN TASK Button
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <strong>🎯 Tujuan Button:</strong><br>
+                        Button "RUN TASK" membolehkan anda menjalankan SLA notifications secara manual (on-demand) tanpa
+                        menunggu scheduled time (7:30 AM).
+                    </div>
+
+                    <h6 class="fw-bold mt-4 mb-3">📋 Fungsi Utama:</h6>
+                    <ul>
+                        <li><strong>Manual Execution:</strong> Menjalankan command
+                            <code>sla:send-notifications --type=all</code> dengan segera
+                        </li>
+                        <li><strong>Real-time Results:</strong> Papar keputusan (sent/failed/skipped) selepas execution
+                        </li>
+                        <li><strong>Audit Trail:</strong> Semua manual runs direkod dalam log SLA dengan user info</li>
+                        <li><strong>Direct Email:</strong> Hantar email terus kepada pegawai (NO QUEUE)</li>
+                    </ul>
+
+                    <h6 class="fw-bold mt-4 mb-3">💻 Kegunaan Untuk Local Development:</h6>
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <p class="mb-2"><strong>✅ SESUAI untuk:</strong></p>
+                            <ul class="mb-0">
+                                <li><strong>Testing:</strong> Uji SLA notifications tanpa tunggu 7:30 AM</li>
+                                <li><strong>Debugging:</strong> Check sama ada email configuration betul</li>
+                                <li><strong>Development:</strong> Test perubahan code dengan segera</li>
+                                <li><strong>Quick Verification:</strong> Verify working days calculation, email template,
+                                    dll
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mt-4 mb-3">🚀 Kegunaan Untuk Production:</h6>
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <p class="mb-2"><strong>✅ SESUAI untuk:</strong></p>
+                            <ul class="mb-3">
+                                <li><strong>Backup Solution:</strong> Jika Task Scheduler gagal atau tidak berjalan</li>
+                                <li><strong>Immediate Notifications:</strong> Hantar notifications segera tanpa tunggu
+                                    scheduled time</li>
+                                <li><strong>Recovery:</strong> Re-send notifications jika ada masalah sebelum ini</li>
+                                <li><strong>Emergency Alerts:</strong> Hantar urgent SLA reminders bila diperlukan</li>
+                            </ul>
+
+                            <div class="alert alert-warning mb-0">
+                                <strong>⚠️ AMARAN:</strong><br>
+                                <ul class="mb-0 mt-2">
+                                    <li>Button ini akan <strong>hantar email sebenar</strong> kepada pegawai</li>
+                                    <li>Elakkan gunakan berulang kali - boleh menyebabkan spam emails</li>
+                                    <li>Best practice: Hanya guna bila Task Scheduler bermasalah</li>
+                                    <li>Semua execution direkod dan boleh di-audit</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mt-4 mb-3">🔄 Workflow Normal vs Backup:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-success mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <strong>✅ Normal Operation</strong>
+                                </div>
+                                <div class="card-body">
+                                    <ol class="mb-0 small">
+                                        <li>Task Scheduler run every minute</li>
+                                        <li>Laravel checks schedule</li>
+                                        <li>At 7:30 AM → Auto-run SLA task</li>
+                                        <li>Logs generated automatically</li>
+                                        <li><em>NO manual intervention needed</em></li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-warning mb-3">
+                                <div class="card-header bg-warning">
+                                    <strong>⚠️ Backup/Emergency</strong>
+                                </div>
+                                <div class="card-body">
+                                    <ol class="mb-0 small">
+                                        <li>Task Scheduler bermasalah/tidak jalan</li>
+                                        <li>Pegawai tidak terima notifications</li>
+                                        <li>Admin click "RUN TASK" button</li>
+                                        <li>Task run manually dengan segera</li>
+                                        <li><em>Temporary solution sahaja</em></li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mt-4 mb-3">📊 Apa Yang Berlaku Bila Click Button?</h6>
+                    <ol>
+                        <li>System akan <strong>check tickets</strong> yang:
+                            <ul>
+                                <li>SLA due date = tomorrow (REMINDER)</li>
+                                <li>SLA due date = yesterday (OVERDUE)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Send emails</strong> kepada pegawai berkaitan</li>
+                        <li><strong>Generate logs</strong> di <code>storage/logs/sla-YYYY-MM-DD.log</code></li>
+                        <li><strong>Show results</strong> dalam popup (sent/failed/skipped)</li>
+                        <li><strong>Reload page</strong> untuk papar logs terkini</li>
+                    </ol>
+
+                    <div class="alert alert-success mt-4 mb-0">
+                        <strong>💡 Best Practice:</strong><br>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Development:</strong> Guna button ini sesuka hati untuk testing</li>
+                            <li><strong>Production:</strong> Setup Task Scheduler untuk auto-run (recommended)</li>
+                            <li><strong>Backup:</strong> Guna button hanya bila scheduler gagal atau emergency</li>
+                            <li><strong>Monitoring:</strong> Check logs page regularly untuk verify auto-run berjalan</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 @endsection
