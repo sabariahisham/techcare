@@ -27,9 +27,51 @@ class MailLogController extends Controller
     // Parse logs for the selected date (only if date is provided)
     $logs = $date ? $this->logParser->parseMailLog($date) : [];
 
-    // Sort by date and time descending (newest first)
+    // Sort by email type priority, then by time descending within each type
     if (!empty($logs)) {
       usort($logs, function ($a, $b) {
+        // Define priority order
+        // TICKET_CLOSED (Owner) = 1
+        // TICKET_CLOSED (Officer/Level) = 2
+        // TICKET_ASSIGNED (Level 2) = 3
+        // TICKET_ASSIGNED (Level 1) = 4
+        // TICKET_CREATED (Owner) = 5
+
+        $getPriority = function ($log) {
+          $type = $log['type'] ?? '';
+          $context = $log['context'] ?? [];
+
+          if ($type === 'TICKET_CLOSED') {
+            // Check if it's to owner (no level) or to officer (has level)
+            if (isset($context['level'])) {
+              return 2; // TICKET_CLOSED to officer
+            } else {
+              return 1; // TICKET_CLOSED to owner
+            }
+          } elseif ($type === 'TICKET_ASSIGNED') {
+            // Check level
+            $level = $context['level'] ?? 1;
+            if ($level == 2) {
+              return 3; // TICKET_ASSIGNED Level 2
+            } else {
+              return 4; // TICKET_ASSIGNED Level 1
+            }
+          } elseif ($type === 'TICKET_CREATED') {
+            return 5; // TICKET_CREATED (always owner)
+          }
+
+          return 99; // Unknown types go to the end
+        };
+
+        $priorityA = $getPriority($a);
+        $priorityB = $getPriority($b);
+
+        // First sort by priority
+        if ($priorityA !== $priorityB) {
+          return $priorityA <=> $priorityB;
+        }
+
+        // If same priority, sort by time descending (newest first)
         $dateA = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $a['date'] . ' ' . $a['time']);
         $dateB = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $b['date'] . ' ' . $b['time']);
         return $dateB <=> $dateA;

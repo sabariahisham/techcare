@@ -113,6 +113,14 @@ class TicketNotificationService
         'status' => 1
       ]);
 
+      // Log to mail channel - SENDING
+      Log::channel('mail')->info('[MAIL][TICKET_CREATED][SENDING] Preparing email to ticket owner', [
+        'ticket' => $ticket->ticket_nolog,
+        'recipient_email' => $this->maskEmail($ticketOwner->email),
+        'recipient_name' => $ticketOwner->nama,
+        'ticket_status' => 'Aduan Baru'
+      ]);
+
       $ticketOwner->notify(new PengaduStatusChangedNotification(
         $ticket,
         null, // No old status (new ticket)
@@ -120,6 +128,14 @@ class TicketNotificationService
         $changedBy,
         $notificationMessage
       ));
+
+      // Log to mail channel - SUCCESS
+      Log::channel('mail')->info('[MAIL][TICKET_CREATED][SUCCESS] Email sent successfully to ticket owner', [
+        'ticket' => $ticket->ticket_nolog,
+        'recipient_email' => $this->maskEmail($ticketOwner->email),
+        'recipient_name' => $ticketOwner->nama,
+        'ticket_status' => 'Aduan Baru'
+      ]);
 
       Log::info('New ticket notification sent to owner SUCCESSFULLY', [
         'ticket_id' => $ticket->id,
@@ -131,6 +147,12 @@ class TicketNotificationService
 
       return true;
     } catch (\Exception $e) {
+      // Log to mail channel - FAILED
+      Log::channel('mail')->error('[MAIL][TICKET_CREATED][FAILED] Email sending failed to ticket owner', [
+        'ticket' => $ticket->ticket_nolog,
+        'error_message' => $e->getMessage()
+      ]);
+
       Log::error('Failed to send notification to ticket owner', [
         'ticket_id' => $ticket->id,
         'ticket_nolog' => $ticket->ticket_nolog,
@@ -177,6 +199,16 @@ class TicketNotificationService
         return false;
       }
 
+      // Log to mail channel - SENDING
+      Log::channel('mail')->info('[MAIL][TICKET_ASSIGNED][SENDING] Preparing email to assigned officer', [
+        'ticket' => $ticket->ticket_nolog,
+        'recipient_email' => $this->maskEmail($assignedOfficer->email),
+        'recipient_name' => $assignedOfficer->nama,
+        'level' => 1,
+        'new_status' => 1, // Aduan Baru
+        'tick_status' => 1
+      ]);
+
       $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
         $ticket,
         null,
@@ -185,6 +217,16 @@ class TicketNotificationService
         'Tiket baru telah ditugaskan kepada anda. Sila ambil tindakan yang sewajarnya.',
         1 // Level 1
       ));
+
+      // Log to mail channel - SUCCESS
+      Log::channel('mail')->info('[MAIL][TICKET_ASSIGNED][SUCCESS] Email sent successfully to assigned officer', [
+        'ticket' => $ticket->ticket_nolog,
+        'recipient_email' => $this->maskEmail($assignedOfficer->email),
+        'recipient_name' => $assignedOfficer->nama,
+        'level' => 1,
+        'new_status' => 1, // Aduan Baru
+        'tick_status' => 1
+      ]);
 
       Log::info('New ticket notification sent to assigned Level 1 officer', [
         'ticket_id' => $ticket->id,
@@ -197,6 +239,12 @@ class TicketNotificationService
 
       return true;
     } catch (\Exception $e) {
+      // Log to mail channel - FAILED
+      Log::channel('mail')->error('[MAIL][TICKET_ASSIGNED][FAILED] Email sending failed to assigned officer', [
+        'ticket' => $ticket->ticket_nolog,
+        'error_message' => $e->getMessage()
+      ]);
+
       Log::error('Failed to send notification to assigned Level 1 officer', [
         'ticket_id' => $ticket->id,
         'ticket_nolog' => $ticket->ticket_nolog,
@@ -236,9 +284,20 @@ class TicketNotificationService
 
       $ticketOwner = $ticket->user;
 
-      // Send to ticket owner (Pengadu)
+      // Send to ticket owner (Pengadu) - ONLY for Status 5 (Dibatal) & 6 (Selesai)
       $ownerNotified = false;
-      if ($ticketOwner && $ticketOwner->email) {
+      if ($ticketOwner && $ticketOwner->email && in_array($newStatus, [5, 6])) {
+        $notificationType = 'TICKET_CLOSED';
+
+        // Log to mail channel - SENDING
+        Log::channel('mail')->info("[MAIL][{$notificationType}][SENDING] Preparing email to ticket owner", [
+          'ticket' => $ticket->ticket_nolog,
+          'recipient_email' => $this->maskEmail($ticketOwner->email),
+          'recipient_name' => $ticketOwner->nama,
+          'old_status' => $oldStatus,
+          'new_status' => $newStatus
+        ]);
+
         $ticketOwner->notify(new PengaduStatusChangedNotification(
           $ticket,
           $oldStatus,
@@ -247,7 +306,16 @@ class TicketNotificationService
           $notes
         ));
 
-        Log::info('Status change notification sent to owner', [
+        // Log to mail channel - SUCCESS
+        Log::channel('mail')->info("[MAIL][{$notificationType}][SUCCESS] Email sent to ticket owner", [
+          'ticket' => $ticket->ticket_nolog,
+          'recipient_email' => $this->maskEmail($ticketOwner->email),
+          'recipient_name' => $ticketOwner->nama,
+          'old_status' => $oldStatus,
+          'new_status' => $newStatus
+        ]);
+
+        Log::info('Closure notification sent to owner', [
           'ticket_id' => $ticket->id,
           'ticket_nolog' => $ticket->ticket_nolog,
           'old_status' => $oldStatus,
@@ -256,18 +324,26 @@ class TicketNotificationService
         ]);
 
         $ownerNotified = true;
-      } else {
-        Log::warning('Ticket owner has no email for status change notification', [
+      } elseif ($ticketOwner && in_array($newStatus, [5, 6])) {
+        Log::warning('Ticket owner has no email for closure notification', [
           'ticket_id' => $ticket->id,
-          'ticket_nolog' => $ticket->ticket_nolog
+          'ticket_nolog' => $ticket->ticket_nolog,
+          'new_status' => $newStatus
         ]);
       }
 
       // Send to assigned officer (Pegawai Tugasan) for certain status changes
-      // Status: 3 (Serahan Kepada), 4 (Dirujuk), 5 (Aduan Dibatal), 6 (Selesai)
+      // Status: 3 (Serahan Kepada), 4 (Dirujuk) -> Officer Assignment (TICKET_ASSIGNED)
+      // Status: 5 (Aduan Dibatal), 6 (Selesai) -> Ticket Closure (TICKET_CLOSED)
       $officerNotified = false;
       if (in_array($newStatus, [3, 4, 5, 6])) {
-        $officerNotified = $this->sendStatusChangeToOfficer($ticket, $oldStatus, $newStatus, $changedBy, $notes);
+        // Determine notification type based on status
+        if (in_array($newStatus, [5, 6])) {
+          $notificationType = 'TICKET_CLOSED';
+        } elseif (in_array($newStatus, [3, 4])) {
+          $notificationType = 'TICKET_ASSIGNED';
+        }
+        $officerNotified = $this->sendStatusChangeToOfficer($ticket, $oldStatus, $newStatus, $changedBy, $notes, $notificationType);
       }
 
       Log::info('Status change notifications completed', [
@@ -278,6 +354,12 @@ class TicketNotificationService
 
       return $ownerNotified || $officerNotified;
     } catch (\Exception $e) {
+      // Log to mail channel - FAILED
+      Log::channel('mail')->error('[MAIL][STATUS_CHANGE][FAILED] Status change notification process failed', [
+        'ticket' => $ticket->ticket_nolog ?? 'unknown',
+        'error_message' => $e->getMessage()
+      ]);
+
       Log::error('Failed to send status change notification', [
         'ticket_id' => $ticket->id,
         'error' => $e->getMessage()
@@ -294,6 +376,7 @@ class TicketNotificationService
    * @param int $newStatus
    * @param User $changedBy
    * @param string|null $notes
+   * @param string $notificationType (TICKET_ASSIGNED, TICKET_CLOSED)
    * @return bool
    */
   private function sendStatusChangeToOfficer(
@@ -301,7 +384,8 @@ class TicketNotificationService
     int $oldStatus,
     int $newStatus,
     User $changedBy,
-    ?string $notes = null
+    ?string $notes = null,
+    string $notificationType = 'TICKET_ASSIGNED'
   ): bool {
     try {
       // For Status 5 (Aduan Dibatal) and 6 (Aduan Selesai), notify opposite level officers
@@ -370,6 +454,16 @@ class TicketNotificationService
             continue;
           }
 
+          // Log to mail channel - SENDING
+          Log::channel('mail')->info("[MAIL][{$notificationType}][SENDING] Preparing email to Level {$targetLevel} officer", [
+            'ticket' => $ticket->ticket_nolog,
+            'recipient_email' => $this->maskEmail($assignedOfficer->email),
+            'recipient_name' => $assignedOfficer->nama,
+            'old_status' => $oldStatus,
+            'new_status' => $newStatus,
+            'level' => $targetLevel
+          ]);
+
           $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
             $ticket,
             $oldStatus,
@@ -378,6 +472,16 @@ class TicketNotificationService
             $notes,
             $targetLevel
           ));
+
+          // Log to mail channel - SUCCESS
+          Log::channel('mail')->info("[MAIL][{$notificationType}][SUCCESS] Email sent to Level {$targetLevel} officer", [
+            'ticket' => $ticket->ticket_nolog,
+            'recipient_email' => $this->maskEmail($assignedOfficer->email),
+            'recipient_name' => $assignedOfficer->nama,
+            'old_status' => $oldStatus,
+            'new_status' => $newStatus,
+            'level' => $targetLevel
+          ]);
 
           $actionType = ($newStatus == 5) ? 'Cancellation' : 'Completion';
           Log::info("{$actionType} notification sent to Level {$targetLevel} officer", [
@@ -419,6 +523,16 @@ class TicketNotificationService
         return false;
       }
 
+      // Log to mail channel - SENDING
+      Log::channel('mail')->info("[MAIL][{$notificationType}][SENDING] Preparing email to assigned officer", [
+        'ticket' => $ticket->ticket_nolog,
+        'recipient_email' => $this->maskEmail($assignedOfficer->email),
+        'recipient_name' => $assignedOfficer->nama,
+        'old_status' => $oldStatus,
+        'new_status' => $newStatus,
+        'level' => $latestChronology->level_pegtugas_id ?? 1
+      ]);
+
       $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
         $ticket,
         $oldStatus,
@@ -427,6 +541,16 @@ class TicketNotificationService
         $notes,
         $latestChronology->level_pegtugas_id ?? 1
       ));
+
+      // Log to mail channel - SUCCESS
+      Log::channel('mail')->info("[MAIL][{$notificationType}][SUCCESS] Email sent to assigned officer", [
+        'ticket' => $ticket->ticket_nolog,
+        'recipient_email' => $this->maskEmail($assignedOfficer->email),
+        'recipient_name' => $assignedOfficer->nama,
+        'old_status' => $oldStatus,
+        'new_status' => $newStatus,
+        'level' => $latestChronology->level_pegtugas_id ?? 1
+      ]);
 
       Log::info('Status change notification sent to officer', [
         'ticket_id' => $ticket->id,
@@ -437,12 +561,41 @@ class TicketNotificationService
       ]);
 
       return true;
-    } catch (\Exception $e) {
+    } catch (\Exception $e) {      // Log to mail channel - FAILED
+      Log::channel('mail')->error('[MAIL][STATUS_CHANGE][FAILED] Status change email failed for ticket owner', [
+        'ticket' => $ticket->ticket_nolog,
+        'error_message' => $e->getMessage()
+      ]);
       Log::error('Failed to send status change notification to officer', [
         'ticket_id' => $ticket->id,
         'error' => $e->getMessage()
       ]);
       return false;
     }
+  }
+
+  /**
+   * Mask email address for privacy in logs
+   * Example: john.doe@example.com => j***e@example.com
+   *
+   * @param string $email
+   * @return string
+   */
+  private function maskEmail(string $email): string
+  {
+    $parts = explode('@', $email);
+    if (count($parts) !== 2) {
+      return $email; // Invalid email, return as is
+    }
+
+    $username = $parts[0];
+    $domain = $parts[1];
+
+    if (strlen($username) <= 2) {
+      return $email; // Too short to mask meaningfully
+    }
+
+    $maskedUsername = $username[0] . str_repeat('*', strlen($username) - 2) . $username[strlen($username) - 1];
+    return $maskedUsername . '@' . $domain;
   }
 }
