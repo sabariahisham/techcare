@@ -412,7 +412,7 @@ Route::middleware(['auth'])->group(function () {
 });
 // Tickets Routes Group: Core ticket operations (TicketController only)
 // Using 'auth' middleware for authentication
-Route::middleware(['auth'])->prefix('tickets')->group(function () {
+Route::middleware($authMiddleware)->prefix('tickets')->group(function () {
   Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
   Route::get('/data', [TicketController::class, 'data'])->name('tickets.data');
   Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
