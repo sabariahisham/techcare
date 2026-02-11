@@ -15,6 +15,26 @@ use Illuminate\Support\Facades\DB;
 class LogParserService
 {
   /**
+   * Map status ID to status name
+   *
+   * @param int $statusId
+   * @return string
+   */
+  private function mapStatusIdToName(int $statusId): string
+  {
+    $statusMap = [
+      1 => 'Aduan Baru',
+      2 => 'Aduan Diproses',
+      3 => 'Serahan Kepada',
+      4 => 'Aduan Dirujuk',
+      5 => 'Aduan Dibatal',
+      6 => 'Aduan Selesai'
+    ];
+
+    return $statusMap[$statusId] ?? 'Status ' . $statusId;
+  }
+
+  /**
    * Parse SLA log file
    *
    * @param string $date Date in format Y-m-d (e.g., 2026-02-09)
@@ -173,14 +193,14 @@ class LogParserService
   private function parseMailLogLine(string $line): ?array
   {
     // Match pattern: [timestamp] channel.LEVEL: [TAG1][TAG2][TAG3] message {context}
-    if (!preg_match('/^\[([^\]]+)\]\s+\w+\.(\w+):\s+\[([^\]]+)\]\[([^\]]+)\]\[([^\]]+)\]\s+(.+?)(\s+\{.+\})?$/', $line, $matches)) {
+    if (!preg_match('/^\[([^\]]+)\]\s+\w+\.(\w+):\s+\[([^\]]+)\]\[([^\]]+)\]\[([^\]]+)\]\s+(.+?)\s+(\{.+\})\s*$/', $line, $matches)) {
       return null;
     }
 
     $timestamp = $matches[1];
     $level = $matches[2];
     $category = $matches[3]; // MAIL
-    $type = $matches[4]; // SLA_REMINDER, SLA_OVERDUE
+    $type = $matches[4]; // SLA_REMINDER, SLA_OVERDUE, TICKET_CREATED, TICKET_ASSIGNED, TICKET_CLOSED
     $status = $matches[5]; // SENDING, SUCCESS, FAILED
     $message = $matches[6];
     $context = isset($matches[7]) ? json_decode($matches[7], true) : [];
@@ -192,13 +212,60 @@ class LogParserService
     // Parse date and time separately
     $dt = \Carbon\Carbon::parse($timestamp);
 
+    // Get ticket status from log context FIRST (historical status at time of email)
+    $ticketStatus = null;
+    $statusFromLog = false;
+
+    // Priority 1: Use status from context (historical)
+    if (isset($context['new_status'])) {
+      $ticketStatus = $this->mapStatusIdToName($context['new_status']);
+      $statusFromLog = true;
+    } elseif (isset($context['tick_status'])) {
+      $ticketStatus = $this->mapStatusIdToName($context['tick_status']);
+      $statusFromLog = true;
+    } elseif (isset($context['ticket_status'])) {
+      // For old logs that have ticket_status as string
+      $ticketStatus = $context['ticket_status'];
+      $statusFromLog = true;
+    }
+
+    // For TICKET_CREATED, always status 1
+    if ($type === 'TICKET_CREATED') {
+      $ticketStatus = 'Aduan Baru';
+      $statusFromLog = true;
+    }
+
+    // For TICKET_ASSIGNED: Detect based on level and presence of old_status
+    if ($type === 'TICKET_ASSIGNED') {
+      // Initial assignment (level 1, no old_status) = Status 1 (Aduan Baru)
+      if (isset($context['level']) && $context['level'] == 1 && !isset($context['old_status'])) {
+        $ticketStatus = 'Aduan Baru';
+        $statusFromLog = true;
+      }
+      // If has new_status, use that (for status 3 or 4 assignments)
+      elseif (isset($context['new_status'])) {
+        $ticketStatus = $this->mapStatusIdToName($context['new_status']);
+        $statusFromLog = true;
+      }
+    }
+
     // Fetch actual data from database tables
     $recipientName = null;
-    $ticketStatus = null;
+    $creatorName = null;
+    $creatorEmail = null;
+    $assignedOfficerName = null;
+    $assignedOfficerEmail = null;
+    $chronologies = [];
+
+    // Priority 1: Use recipient_name from context if available (for TICKET_CREATED and TICKET_CLOSED to owner)
+    if (isset($context['recipient_name'])) {
+      $recipientName = $context['recipient_name'];
+    }
 
     if ($ticket) {
-      // Get ticket data from database
+      // Get ticket data with creator and latest assigned officer
       $ticketData = DB::table('tickets')
+        ->leftJoin('users as creator', 'tickets.user_id', '=', 'creator.id')
         ->leftJoin('tickets_chronologies', function ($join) {
           $join->on('tickets.id', '=', 'tickets_chronologies.ticket_id')
             ->whereNull('tickets_chronologies.deleted_at')
@@ -209,21 +276,81 @@ class LogParserService
               AND tc.deleted_at IS NULL
             )');
         })
-        ->leftJoin('users', 'tickets_chronologies.escalate_to', '=', 'users.id')
+        ->leftJoin('users as officer', 'tickets_chronologies.escalate_to', '=', 'officer.id')
         ->leftJoin('ref_ticket_statuses', 'tickets_chronologies.tick_status', '=', 'ref_ticket_statuses.id')
         ->where('tickets.ticket_nolog', $ticket)
         ->whereNull('tickets.deleted_at')
         ->select(
-          'users.nama as recipient_name',
-          'users.email as recipient_email',
-          'ref_ticket_statuses.st_name as ticket_status'
+          'tickets.id as ticket_id',
+          'creator.nama as creator_name',
+          'creator.email as creator_email',
+          'officer.nama as assigned_officer_name',
+          'officer.email as officer_email',
+          'ref_ticket_statuses.st_name as current_ticket_status'
         )
         ->first();
 
       if ($ticketData) {
-        $recipientName = $ticketData->recipient_name;
-        $email = $ticketData->recipient_email ?? $email;
-        $ticketStatus = $ticketData->ticket_status;
+        $creatorName = $ticketData->creator_name;
+        $creatorEmail = $ticketData->creator_email;
+        $assignedOfficerName = $ticketData->assigned_officer_name;
+        $assignedOfficerEmail = $ticketData->officer_email;
+
+        // Determine the correct unmasked email based on email type and recipient name
+        // Match recipient name to find the correct email
+        if ($recipientName) {
+          // Try to find the matching user email by name
+          if ($recipientName === $creatorName) {
+            $email = $creatorEmail;
+          } elseif ($recipientName === $assignedOfficerName) {
+            $email = $assignedOfficerEmail;
+          } else {
+            // Search for user by name in the database
+            $matchedUser = DB::table('users')
+              ->where('nama', $recipientName)
+              ->whereNull('deleted_at')
+              ->value('email');
+            $email = $matchedUser ?? $context['recipient_email'] ?? null;
+          }
+        } else {
+          // Fallback logic based on email type
+          if (in_array($type, ['TICKET_CREATED']) || ($type === 'TICKET_CLOSED' && !isset($context['level']))) {
+            // Email to ticket owner (creator)
+            $email = $creatorEmail;
+            $recipientName = $creatorName;
+          } else {
+            // Email to assigned officer
+            $email = $assignedOfficerEmail;
+            $recipientName = $assignedOfficerName;
+          }
+        }
+
+        // Final fallback to masked email if unmasked email is not available
+        if (!$email) {
+          $email = $context['recipient_email'] ?? null;
+        }
+
+        // Only use current status if we don't have historical status from log
+        if (!$statusFromLog) {
+          $ticketStatus = $ticketData->current_ticket_status;
+        }
+
+        // Get all chronologies for this ticket (status 1 to 6)
+        $chronologies = DB::table('tickets_chronologies')
+          ->join('ref_ticket_statuses', 'tickets_chronologies.tick_status', '=', 'ref_ticket_statuses.id')
+          ->leftJoin('users', 'tickets_chronologies.escalate_to', '=', 'users.id')
+          ->where('tickets_chronologies.ticket_id', $ticketData->ticket_id)
+          ->whereIn('tickets_chronologies.tick_status', [1, 2, 3, 4, 5, 6]) // Status 1-6 only
+          ->whereNull('tickets_chronologies.deleted_at')
+          ->select(
+            'ref_ticket_statuses.st_name',
+            'ref_ticket_statuses.id as status_id',
+            'users.nama as officer_name',
+            'tickets_chronologies.created_at'
+          )
+          ->orderBy('tickets_chronologies.created_at', 'asc')
+          ->get()
+          ->toArray();
       }
     }
 
@@ -236,9 +363,17 @@ class LogParserService
       'status' => $this->mapMailStatus($status),
       'level' => $level,
       'message' => $message,
+      'info' => $message, // Add info field for display
       'context' => $context,
       'recipient_name' => $recipientName,
-      'ticket_status' => $ticketStatus
+      'recipient_email' => $email, // Add recipient_email field
+      'ticket_status' => $ticketStatus,
+      'creator_name' => $creatorName,
+      'creator_email' => $creatorEmail ?? null,
+      'assigned_officer_name' => $assignedOfficerName,
+      'assigned_officer_email' => $assignedOfficerEmail ?? null,
+      'chronologies' => $chronologies,
+      'tick_status' => $context['tick_status'] ?? $context['new_status'] ?? $context['old_status'] ?? null
     ];
   }
 
