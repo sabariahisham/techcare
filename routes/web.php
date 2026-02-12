@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\apps\UserList;
 use App\Http\Controllers\apps\AccessRoles;
 use App\Http\Controllers\apps\AccessPermission;
@@ -361,6 +363,37 @@ Route::middleware(['auth'])->group(function () {
       abort(403, 'Unauthorized action.');
     }
 
+    // Log impersonation start to audit trail
+    try {
+      DB::table('audits')->insert([
+        'user_type' => 'App\\Models\\User',
+        'user_id' => $currentUser->id,
+        'event' => 'impersonate_start',
+        'auditable_type' => 'App\\Models\\User',
+        'auditable_id' => $userToImpersonate->id,
+        'old_values' => '{}',
+        'new_values' => json_encode([
+          'impersonator_id' => $currentUser->id,
+          'impersonator_name' => $currentUser->nama,
+          'impersonated_id' => $userToImpersonate->id,
+          'impersonated_name' => $userToImpersonate->nama,
+        ]),
+        'url' => request()->fullUrl(),
+        'ip_address' => request()->ip(),
+        'user_agent' => request()->userAgent(),
+        'tags' => 'impersonation',
+        'created_at' => now(),
+        'updated_at' => now(),
+      ]);
+      Log::info('Impersonation start logged successfully', ['user' => $currentUser->id, 'target' => $userToImpersonate->id]);
+    } catch (\Exception $e) {
+      Log::error('Failed to log impersonation start', [
+        'error' => $e->getMessage(),
+        'user' => $currentUser->id,
+        'target' => $userToImpersonate->id
+      ]);
+    }
+
     $currentUser->impersonate($userToImpersonate);
 
     return redirect('/dashboard')->with('impersonate_success', 'You are now impersonating ' . $userToImpersonate->nama);
@@ -370,7 +403,49 @@ Route::middleware(['auth'])->group(function () {
     $currentUser = Auth::user();
 
     if ($currentUser->isImpersonated()) {
+      // Get impersonator info before leaving
+      $manager = app(\Lab404\Impersonate\Services\ImpersonateManager::class);
+      $impersonatorId = $manager->getImpersonatorId();
+      $impersonatedId = $currentUser->getKey();
+      $impersonatedName = $currentUser->nama;
+
+      // Leave impersonation
       $currentUser->leaveImpersonation();
+
+      // Get impersonator user for audit log
+      $impersonator = App\Models\User::find($impersonatorId);
+
+      // Log impersonation end to audit trail
+      try {
+        DB::table('audits')->insert([
+          'user_type' => 'App\\Models\\User',
+          'user_id' => $impersonatorId,
+          'event' => 'impersonate_end',
+          'auditable_type' => 'App\\Models\\User',
+          'auditable_id' => $impersonatedId,
+          'old_values' => json_encode([
+            'impersonated_id' => $impersonatedId,
+            'impersonated_name' => $impersonatedName,
+          ]),
+          'new_values' => json_encode([
+            'impersonator_id' => $impersonatorId,
+            'impersonator_name' => $impersonator ? $impersonator->nama : 'Unknown',
+          ]),
+          'url' => request()->fullUrl(),
+          'ip_address' => request()->ip(),
+          'user_agent' => request()->userAgent(),
+          'tags' => 'impersonation',
+          'created_at' => now(),
+          'updated_at' => now(),
+        ]);
+        Log::info('Impersonation end logged successfully', ['impersonator' => $impersonatorId, 'impersonated' => $impersonatedId]);
+      } catch (\Exception $e) {
+        Log::error('Failed to log impersonation end', [
+          'error' => $e->getMessage(),
+          'impersonator' => $impersonatorId,
+          'impersonated' => $impersonatedId
+        ]);
+      }
     }
 
     return redirect('/dashboard')->with('impersonate_leave', 'You have stopped impersonating.');
