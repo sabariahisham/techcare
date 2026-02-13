@@ -3,6 +3,28 @@
 $(function () {
   const editCategoryForm = document.getElementById('editCategoryForm');
 
+  // Auto-uppercase name input
+  const nameInput = editCategoryForm.querySelector('[name="name"]');
+  if (nameInput) {
+    nameInput.addEventListener('input', function (e) {
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.toUpperCase();
+      this.setSelectionRange(start, end);
+    });
+  }
+
+  // Auto-uppercase description input
+  const descriptionInput = editCategoryForm.querySelector('[name="description"]');
+  if (descriptionInput) {
+    descriptionInput.addEventListener('input', function (e) {
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.toUpperCase();
+      this.setSelectionRange(start, end);
+    });
+  }
+
   // Form Validation
   const fv = FormValidation.formValidation(editCategoryForm, {
     fields: {
@@ -15,7 +37,7 @@ $(function () {
             message: 'Nama kategori telah wujud. Sila pilih nama yang lain.',
             method: 'POST',
             url: '/ref-category-management/check-duplicate',
-            data: function() {
+            data: function () {
               return {
                 name: editCategoryForm.querySelector('[name="name"]').value,
                 id: $('#edit-category-id').val(),
@@ -42,7 +64,7 @@ $(function () {
       submitButton: new FormValidation.plugins.SubmitButton(),
       autoFocus: new FormValidation.plugins.AutoFocus()
     }
-  }).on('core.form.valid', function() {
+  }).on('core.form.valid', function () {
     const formData = new FormData(editCategoryForm);
     const categoryId = $('#edit-category-id').val();
 
@@ -55,7 +77,7 @@ $(function () {
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
-      success: function(response) {
+      success: function (response) {
         if (response.success) {
           $('#offcanvasEditCategory').offcanvas('hide');
           editCategoryForm.reset();
@@ -78,7 +100,7 @@ $(function () {
           });
         }
       },
-      error: function(xhr, status, error) {
+      error: function (xhr, status, error) {
         let errorMessage = 'Ralat berlaku semasa mengemaskini kategori';
 
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -104,20 +126,20 @@ $(function () {
   });
 
   // Load category data when edit button is clicked
-  $(document).on('click', '.edit-record', function() {
+  $(document).on('click', '.edit-record', function () {
     const categoryId = $(this).data('id');
 
     $.ajax({
       url: `/ref-category-management/${categoryId}/edit`,
       type: 'GET',
-      success: function(response) {
+      success: function (response) {
         $('#edit-category-id').val(response.id);
         $('#edit-category-name').val(response.cat_name);
         $('#edit-category-description').val(response.cat_desc);
 
         $('#offcanvasEditCategory').offcanvas('show');
       },
-      error: function(xhr) {
+      error: function (xhr) {
         toastr.error('Ralat memuat data kategori', 'Ralat!', {
           closeButton: true,
           tapToDismiss: false,
