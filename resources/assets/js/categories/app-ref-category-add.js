@@ -6,6 +6,28 @@
   const addNewCategoryForm = document.getElementById('addNewCategoryForm');
 
   if (addNewCategoryForm) {
+    // Auto-uppercase name input
+    const nameInput = addNewCategoryForm.querySelector('[name="name"]');
+    if (nameInput) {
+      nameInput.addEventListener('input', function (e) {
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        this.value = this.value.toUpperCase();
+        this.setSelectionRange(start, end);
+      });
+    }
+
+    // Auto-uppercase description input
+    const descriptionInput = addNewCategoryForm.querySelector('[name="description"]');
+    if (descriptionInput) {
+      descriptionInput.addEventListener('input', function (e) {
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        this.value = this.value.toUpperCase();
+        this.setSelectionRange(start, end);
+      });
+    }
+
     const fv = FormValidation.formValidation(addNewCategoryForm, {
       fields: {
         name: {
@@ -17,7 +39,7 @@
               message: 'Nama kategori telah wujud. Sila pilih nama yang lain.',
               method: 'POST',
               url: '/ref-category-management/check-duplicate',
-              data: function() {
+              data: function () {
                 return {
                   name: addNewCategoryForm.querySelector('[name="name"]').value,
                   _token: $('meta[name="csrf-token"]').attr('content')
@@ -45,7 +67,7 @@
         submitButton: new FormValidation.plugins.SubmitButton(),
         autoFocus: new FormValidation.plugins.AutoFocus()
       }
-    }).on('core.form.valid', function() {
+    }).on('core.form.valid', function () {
       // Submit form data
       $.ajax({
         url: '/ref-category-management/store',
@@ -54,7 +76,7 @@
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
+        success: function (response) {
           if (response.success) {
             // Close offcanvas
             $('#offcanvasAddCategory').offcanvas('hide');
@@ -80,7 +102,7 @@
             });
           }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
           let errorMessage = 'Ralat berlaku semasa menambah kategori';
 
           if (xhr.responseJSON && xhr.responseJSON.message) {
