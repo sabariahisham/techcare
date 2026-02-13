@@ -200,4 +200,9 @@ $(function () {
       fv.revalidateField('subcat_name');
     }
   });
+
+  // Convert description to uppercase as user types
+  document.querySelector('#edit_subcat_desc').addEventListener('input', function() {
+    this.value = this.value.toUpperCase();
+  });
 });

@@ -180,6 +180,11 @@ const messages = {
       }
     });
 
+    // Convert description to uppercase as user types
+    document.querySelector('[name="subcat_desc"]').addEventListener('input', function() {
+      this.value = this.value.toUpperCase();
+    });
+
     // Cleanup when offcanvas is hidden
     $('#offcanvasAddSubCategory').on('hidden.bs.offcanvas', function () {
       // Cancel pending duplicate check requests
