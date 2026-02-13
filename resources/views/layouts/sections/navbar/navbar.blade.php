@@ -193,7 +193,7 @@
                 @if (Auth::check())
                     <li>
                         {{-- For dev, staging and prod --}}
-                        <form method="POST" id="logout-form" action="{{ route('cas.logout') }}">
+                        {{-- <form method="POST" id="logout-form" action="{{ route('cas.logout') }}"> --}}
 
                         {{-- For local --}} 
                         {{-- <form method="POST" id="logout-form" action="{{ route('logout') }}"> --}}
