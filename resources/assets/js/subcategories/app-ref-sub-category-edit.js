@@ -40,7 +40,7 @@ $(function () {
           },
           callback: {
             message: messages.duplicateError,
-            callback: function(value, validator, $field) {
+            callback: function (value, validator, $field) {
               const catId = document.querySelector('#edit_cat_id').value;
               const subcategoryId = document.querySelector('#edit_subcategory_id').value;
 
@@ -50,9 +50,9 @@ $(function () {
               }
 
               // Use promise with debouncing
-              return new Promise(function(resolve) {
+              return new Promise(function (resolve) {
                 clearTimeout(window.duplicateCheckEditTimeout);
-                window.duplicateCheckEditTimeout = setTimeout(function() {
+                window.duplicateCheckEditTimeout = setTimeout(function () {
                   // Show loading indicator
                   $field.siblings('.fv-plugins-message-container').find('.fv-help-block').html('<i class="bx bx-loader bx-spin"></i> Memeriksa...');
 
@@ -65,9 +65,9 @@ $(function () {
                       id: subcategoryId,
                       _token: document.querySelector('meta[name="csrf-token"]').content
                     }
-                  }).done(function(response) {
+                  }).done(function (response) {
                     resolve(!response.exists);
-                  }).fail(function() {
+                  }).fail(function () {
                     resolve(true); // On error, assume valid to not block form
                   });
                 }, 500); // Increased debounce to 500ms for better performance
@@ -97,7 +97,7 @@ $(function () {
       submitButton: new FormValidation.plugins.SubmitButton(),
       autoFocus: new FormValidation.plugins.AutoFocus()
     }
-  }).on('core.form.valid', function() {
+  }).on('core.form.valid', function () {
     const formData = new FormData(editSubCategoryForm);
     const subcategoryId = $('#edit_subcategory_id').val();
 
@@ -111,7 +111,7 @@ $(function () {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
         'X-HTTP-Method-Override': 'PUT'
       },
-      success: function(response) {
+      success: function (response) {
         if (response.success) {
           // Close offcanvas
           var editOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasEditSubCategory'));
@@ -137,7 +137,7 @@ $(function () {
           toastr.error(messages.updateError, messages.errorTitle);
         }
       },
-      error: function(xhr) {
+      error: function (xhr) {
         if (xhr.status === 422) {
           if (xhr.responseJSON.duplicate) {
             toastr.error(messages.duplicateError, messages.errorTitle);
@@ -158,13 +158,13 @@ $(function () {
   });
 
   // Load subcategory data when edit button is clicked
-  $(document).on('click', '.edit-record', function() {
+  $(document).on('click', '.edit-record', function () {
     const subcategoryId = $(this).data('id');
 
     $.ajax({
       url: `/ref-sub-category-management/${subcategoryId}/edit`,
       type: 'GET',
-      success: function(response) {
+      success: function (response) {
         $('#edit_subcategory_id').val(response.id);
         $('#edit_cat_id').val(response.cat_id);
         $('#edit_subcat_name').val(response.subcat_name);
@@ -172,7 +172,7 @@ $(function () {
 
         $('#offcanvasEditSubCategory').offcanvas('show');
       },
-      error: function(xhr) {
+      error: function (xhr) {
         toastr.error(messages.loadError, messages.errorTitle, {
           closeButton: true,
           tapToDismiss: false,
@@ -195,9 +195,14 @@ $(function () {
   });
 
   // Revalidate sub-category name when category changes
-  document.querySelector('#edit_cat_id').addEventListener('change', function() {
+  document.querySelector('#edit_cat_id').addEventListener('change', function () {
     if (fv) {
       fv.revalidateField('subcat_name');
     }
+  });
+
+  // Convert description to uppercase as user types
+  document.querySelector('#edit_subcat_desc').addEventListener('input', function () {
+    this.value = this.value.toUpperCase();
   });
 });

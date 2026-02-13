@@ -53,7 +53,7 @@ const messages = {
             },
             callback: {
               message: messages.duplicateError,
-              callback: function(value, validator, $field) {
+              callback: function (value, validator, $field) {
                 const catId = document.querySelector('[name="cat_id"]').value;
 
                 // Skip validation if no value, no category, or value is too short
@@ -62,9 +62,9 @@ const messages = {
                 }
 
                 // Use promise with debouncing
-                return new Promise(function(resolve) {
+                return new Promise(function (resolve) {
                   clearTimeout(window.duplicateCheckTimeout);
-                  window.duplicateCheckTimeout = setTimeout(function() {
+                  window.duplicateCheckTimeout = setTimeout(function () {
                     // Show loading indicator
                     $field.siblings('.fv-plugins-message-container').find('.fv-help-block').html('<i class="bx bx-loader bx-spin"></i> Memeriksa...');
 
@@ -76,9 +76,9 @@ const messages = {
                         subcat_name: value.trim(),
                         _token: document.querySelector('meta[name="csrf-token"]').content
                       }
-                    }).done(function(response) {
+                    }).done(function (response) {
                       resolve(!response.exists);
-                    }).fail(function() {
+                    }).fail(function () {
                       resolve(true); // On error, assume valid to not block form
                     });
                   }, 500); // Increased debounce to 500ms for better performance
@@ -110,7 +110,7 @@ const messages = {
         submitButton: new FormValidation.plugins.SubmitButton(),
         autoFocus: new FormValidation.plugins.AutoFocus()
       }
-    }).on('core.form.valid', function() {
+    }).on('core.form.valid', function () {
       // Submit form data
       const formData = new FormData(addNewSubCategoryForm);
 
@@ -123,7 +123,7 @@ const messages = {
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
+        success: function (response) {
           if (response.success) {
             // Close offcanvas
             var addOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('offcanvasAddSubCategory'));
@@ -153,7 +153,7 @@ const messages = {
             toastr.error(messages.addError, messages.errorTitle);
           }
         },
-        error: function(xhr) {
+        error: function (xhr) {
           if (xhr.status === 422) {
             if (xhr.responseJSON.duplicate) {
               toastr.error(messages.duplicateError, messages.errorTitle);
@@ -174,10 +174,15 @@ const messages = {
     });
 
     // Revalidate sub-category name when category changes
-    document.querySelector('[name="cat_id"]').addEventListener('change', function() {
+    document.querySelector('[name="cat_id"]').addEventListener('change', function () {
       if (fv) {
         fv.revalidateField('subcat_name');
       }
+    });
+
+    // Convert description to uppercase as user types
+    document.querySelector('[name="subcat_desc"]').addEventListener('input', function () {
+      this.value = this.value.toUpperCase();
     });
 
     // Cleanup when offcanvas is hidden
