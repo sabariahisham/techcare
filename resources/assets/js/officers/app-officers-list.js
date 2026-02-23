@@ -29,6 +29,7 @@ $(function () {
       processing: true,
       serverSide: true,
       ajax: '/officer/data',
+      pageLength: 50,
       columns: [{
           // For Responsive
           data: null,
@@ -71,8 +72,7 @@ $(function () {
                 levelText = 'Level 3';
                 break;
               default:
-                badgeClass = 'bg-label-secondary';
-                levelText = data;
+                return data;
             }
             return '<span class="badge ' + badgeClass + '">' + levelText + '</span>';
           }
@@ -89,12 +89,19 @@ $(function () {
         }
       ],
       order: [
+        [2, 'asc'],
         [3, 'asc']
-      ], // Order by sub kategori
+      ], // Order by kategori and subkategori
       rowGroup: {
-        dataSrc: 'subcat_name',
-        startRender: function (rows, group) {
-          return '<strong>' + group + '</strong>';
+        dataSrc: ['cat_name', 'subcat_name'],
+        startRender: function (rows, group, level) {
+          if (level === 0) {
+            // Main category header
+            return '<strong>' + group + '</strong>';
+          } else {
+            // Sub-category header with indentation
+            return '<strong style="padding-left: 20px; font-size: 0.9em; color: ' + headingColor + ';">' + group + '</strong>';
+          }
         }
       },
       dom: '<"row"' +
