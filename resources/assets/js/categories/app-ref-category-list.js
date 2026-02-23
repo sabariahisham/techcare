@@ -36,8 +36,8 @@ $(function () {
       processing: true,
       serverSide: true,
       ajax: '/ref-category-management/data',
-      columns: [
-        {
+      pageLength: 50,
+      columns: [{
           // For Responsive
           data: null,
           defaultContent: '',
@@ -52,13 +52,23 @@ $(function () {
           searchable: false
         },
 
-        { data: 'cat_name', name: 'cat_name' },
-        { data: 'cat_desc', name: 'cat_desc' },
-        
-        { data: 'action', name: 'action', orderable: false, searchable: false }
+        {
+          data: 'cat_name',
+          name: 'cat_name'
+        },
+        {
+          data: 'cat_desc',
+          name: 'cat_desc'
+        },
+
+        {
+          data: 'action',
+          name: 'action',
+          orderable: false,
+          searchable: false
+        }
       ],
-      dom:
-        '<"row"' +
+      dom: '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"fB>>' +
         '>t' +
@@ -66,13 +76,11 @@ $(function () {
         '<"col-sm-12 col-md-6"i>' +
         '<"col-sm-12 col-md-6"p>' +
         '>',
-      buttons: [
-        {
+      buttons: [{
           extend: 'collection',
           className: 'btn btn-label-secondary dropdown-toggle me-4 d-none', // Add d-none class to hide the button
           text: '<i class="bx bx-export me-2 bx-sm"></i>Export',
-          buttons: [
-            {
+          buttons: [{
               extend: 'print',
               text: '<i class="bx bx-printer me-2" ></i>Print',
               className: 'dropdown-item'
@@ -116,8 +124,8 @@ $(function () {
           .every(function () {
             var column = this;
             var select = $(
-              '<select id="UserRole" class="form-select text-capitalize"><option value=""> Select Role </option></select>'
-            )
+                '<select id="UserRole" class="form-select text-capitalize"><option value=""> Select Role </option></select>'
+              )
               .appendTo('.user_role')
               .on('change', function () {
                 var val = $.fn.dataTable.util.escapeRegex($(this).val());

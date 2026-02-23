@@ -16,6 +16,7 @@ $(function () {
       ajax: '/admin/roles/data', // Point to your backend route
       serverSide: false, // Changed to false since backend doesn't support server-side processing
       processing: true,
+      pageLength: 50,
       columns: [{
           data: ''
         },
@@ -50,7 +51,7 @@ $(function () {
         }
       ],
       order: [
-        [2, 'asc']
+        [1, 'asc']
       ],
       dom: '<"row"' +
         '<"col-sm-12 col-md-3" l>' +
@@ -96,7 +97,7 @@ $(function () {
           // Bil. (Row Number)
           targets: 1,
           searchable: false,
-          orderable: false,
+          orderable: true,
           render: function (data, type, full, meta) {
             return meta.row + 1;
           }
