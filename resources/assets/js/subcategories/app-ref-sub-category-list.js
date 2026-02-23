@@ -39,6 +39,7 @@ $(function () {
       processing: true,
       serverSide: true,
       ajax: '/ref-sub-category-management/data',
+      pageLength: 50,
       columns: [
         {
           // For Responsive
@@ -64,7 +65,7 @@ $(function () {
       rowGroup: {
         dataSrc: 'cat_name',
         startRender: function (rows, group) {
-          return '<strong style="color: ' + headingColor + '; background-color: ' + bodyBg + '; padding: 8px; display: block; border-left: 4px solid #696cff;">' +
+          return '<strong style="color: ' + headingColor + '; background-color: #d3d3d3; padding: 8px; display: block; border-left: 4px solid #696cff;">' +
                  'Kategori: ' + group + ' (' + rows.count() + ' sub kategori)</strong>';
         }
       },
