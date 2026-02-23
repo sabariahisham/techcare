@@ -1,6 +1,6 @@
 @extends('layouts/layoutMaster')
 
-@section('title', 'Senarai Level Pegawai Tugasan &  Level Keterukan')
+@section('title', 'Senarai SLA & Severity')
 
 @section('vendor-style')
 @vite([
@@ -116,7 +116,7 @@
         <tr>
           <th></th>
           <th>Bil.</th>
-          {{-- <th>Kategori</th> --}}
+          <th style="display:none;">Kategori</th>
           <th>Sub Kategori</th>
           <th>Level Pegawai Tugasan</th>
           <th>Severity</th>
