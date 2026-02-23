@@ -41,6 +41,7 @@ $(function () {
     var dt_user = dt_user_table.DataTable({
       processing: true,
       serverSide: true,
+      pageLength: 100,
       ajax: {
         url: '/user-management/data',
         error: function(xhr, error, code) {
