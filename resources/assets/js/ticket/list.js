@@ -39,6 +39,7 @@ $(function () {
     dt_my_tickets = dt_my_tickets_table.DataTable({
       processing: true,
       serverSide: true,
+      //pageLength: 50,
       ajax: {
         url: '/tickets/data',
         data: function (d) {
@@ -64,7 +65,7 @@ $(function () {
       dom:
         '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +
-        '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"f<"ticket-filter-container">B>>' +
+        '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"fB>>' +
         '>t' +
         '<"row"' +
         '<"col-sm-12 col-md-6"i>' +
@@ -73,7 +74,45 @@ $(function () {
       buttons: [
         {
           extend: 'collection',
-          className: 'btn btn-label-secondary dropdown-toggle me-4 d-none',
+          className: 'btn btn-label-primary dropdown-toggle me-4',
+          text: '<i class="bx bx-filter me-2 bx-sm"></i>Tapis Tiket',
+          autoClose: true,
+          buttons: [
+            {
+              text: 'Semua Tiket',
+              className: 'dropdown-item',
+              action: function (e, dt, node, config) {
+                $('#ticketFilterSelect').val('all').trigger('change');
+                // Close the dropdown
+                $('.dt-button-collection').hide();
+                $('.dt-button-background').remove();
+              }
+            },
+            {
+              text: 'Diri Sendiri',
+              className: 'dropdown-item',
+              action: function (e, dt, node, config) {
+                $('#ticketFilterSelect').val('diri_sendiri').trigger('change');
+                // Close the dropdown
+                $('.dt-button-collection').hide();
+                $('.dt-button-background').remove();
+              }
+            },
+            {
+              text: 'Bagi Pihak',
+              className: 'dropdown-item',
+              action: function (e, dt, node, config) {
+                $('#ticketFilterSelect').val('bagi_pihak').trigger('change');
+                // Close the dropdown
+                $('.dt-button-collection').hide();
+                $('.dt-button-background').remove();
+              }
+            }
+          ]
+        },
+        {
+          extend: 'collection',
+          className: 'btn btn-label-secondary dropdown-toggle me-4',
           text: '<i class="bx bx-export me-2 bx-sm"></i>Export',
           buttons: [
             { extend: 'print', text: '<i class="bx bx-printer me-2" ></i>Print', className: 'dropdown-item' },
@@ -82,20 +121,13 @@ $(function () {
             { extend: 'pdf', text: '<i class="bx bxs-file-pdf me-2"></i>Pdf', className: 'dropdown-item' },
             { extend: 'copy', text: '<i class="bx bx-copy me-2" ></i>Copy', className: 'dropdown-item' }
           ]
-        },
-        {
-          text: '<i class="bx bx-plus bx-sm me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">ADUAN BARU</span>',
-          className: 'add-new btn btn-primary',
-          attr: {
-            'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddTicket'
-          }
         }
       ],
+
       responsive: true,
       language: {
         search: '',
-        searchPlaceholder: 'Carian Tiket Saya',
+        searchPlaceholder: 'Carian..',
         emptyTable: 'Tiada data tersedia dalam jadual',
         info: 'Menunjukkan _START_ hingga _END_ daripada _TOTAL_ entri',
         infoEmpty: 'Menunjukkan 0 hingga 0 daripada 0 entri',
@@ -111,18 +143,9 @@ $(function () {
     window.dt_my_tickets = dt_my_tickets;
     console.log('My Tickets DataTable initialized and exposed globally');
 
-    // Add the filter dropdown to the ticket-filter-container
-    if (dt_my_tickets) {
-      $('.ticket-filter-container').html(`
-        <div class="d-flex align-items-center gap-2 me-3">
-          <label for="ticketFilterSelect" class="form-label mb-0 text-nowrap" style="font-size: 0.875rem;">Tapis Tiket:</label>
-          <select id="ticketFilterSelect" class="form-select form-select-sm" style="min-width: 200px;">
-            <option value="all">Semua Tiket</option>
-            <option value="diri_sendiri">Diri Sendiri</option>
-            <option value="bagi_pihak">Bagi Pihak</option>
-          </select>
-        </div>
-      `);
+    // Create hidden select for filter tracking
+    if ($('#ticketFilterSelect').length === 0) {
+      $('body').append('<select id="ticketFilterSelect" style="display:none;"><option value="all">Semua Tiket</option><option value="diri_sendiri">Diri Sendiri</option><option value="bagi_pihak">Bagi Pihak</option></select>');
     }
   }
 
@@ -132,6 +155,7 @@ $(function () {
     dt_manage_tickets = dt_manage_tickets_table.DataTable({
       processing: true,
       serverSide: true,
+      //pageLength: 50,
       ajax: {
         url: '/tickets/data',
         data: { type: 'manage' },
@@ -177,7 +201,7 @@ $(function () {
       responsive: true,
       language: {
         search: '',
-        searchPlaceholder: 'Carian Tiket untuk Diurus',
+        searchPlaceholder: 'Carian..',
         emptyTable: 'Tiada data tersedia dalam jadual',
         info: 'Menunjukkan _START_ hingga _END_ daripada _TOTAL_ entri',
         infoEmpty: 'Menunjukkan 0 hingga 0 daripada 0 entri',

@@ -75,6 +75,12 @@ TASK:
                     <p class="mb-0">Paparan ini memaparkan rumusan aktiviti, statistik dan prestasi semasa sistem untuk
                         rujukan pantas anda.</p>
                 </div>
+                {{-- <div class="p-3 ms-auto">
+                    <button onclick="window.location.href='{{ route('tickets.index') }}'" type="button"
+                        class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="tooltip"
+                        data-bs-title="Termasuk aduan yang dicipta untuk anda"><i class="bx bx-plus-circle"></i> Aduan
+                        Baharu</button>
+                </div> --}}
             </div>
         </div>
         <!-- Session Timer Display -->
@@ -156,9 +162,9 @@ TASK:
     <div class="row g-4 mb-4">
         @include('dashboard/partials/card-status-user')
     </div>
-    
+
     @if ($sections['pegawai'] ?? false)
-    <!-- Pegawai Tugasan Specific Section -->
+        <!-- Pegawai Tugasan Specific Section -->
         <div class="card text-dark mb-2"
             style="background-color: rgba(136, 57, 111, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
             <div class="card-header">
@@ -175,10 +181,10 @@ TASK:
                 </div>
             </div>
         </div>
-    @endif  
-   
-    @if ($sections['admin'] ?? false) 
-     <!-- Administrator Section -->
+    @endif
+
+    @if ($sections['admin'] ?? false)
+        <!-- Administrator Section -->
         <div class="card mb-6 text-dark"
             style="background-color: rgba(27, 27, 31, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
             <div class="card-header">
@@ -204,9 +210,9 @@ TASK:
                     @include('dashboard/partials/table-ticket-overdue') <!-- Overdue Tickets Table -->
                 </div>
             </div>
-        </div>    
+        </div>
     @elseif($sections['pengurusan'] ?? false)
-    <!-- Pengurusan MOF Section -->
+        <!-- Pengurusan MOF Section -->
         <div class="card mb-6 text-dark"
             style="background-color: rgba(30, 58, 138, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
             <div class="card-header">
@@ -228,9 +234,9 @@ TASK:
                     @include('dashboard/partials/chart-total')
                 </div>
             </div>
-        </div>    
+        </div>
     @elseif($sections['helpdesk'] ?? false)
-    <!-- Helpdesk On Duty / Penyelia Helpdesk Section -->
+        <!-- Helpdesk On Duty / Penyelia Helpdesk Section -->
         <div class="card mb-6 text-dark"
             style="background-color: rgba(30, 58, 138, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
             <div class="card-header">
