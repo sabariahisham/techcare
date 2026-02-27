@@ -706,11 +706,11 @@ $filteredOfficers = $officersQuery
                             @if (!$isReadOnlyView)
                                 <div class="row mb-3">
                                     <div class="col-sm-3">
-                                        <h6 class="mb-0">Catatan</h6>
+                                        <h6 class="mb-0">Catatan Tindakan Yang Diambil</h6>
                                     </div>
                                     <div class="col-sm-9 text-secondary">
                                         <textarea class="form-control" name="notes" id="notes" rows="3"
-                                            placeholder="Masukkan catatan tambahan (pilihan)"></textarea>
+                                            placeholder="Masukkan catatan tindakan tambahan (pilihan)"></textarea>
                                     </div>
                                 </div>
                             @endif

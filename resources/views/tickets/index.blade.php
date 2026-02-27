@@ -34,10 +34,29 @@
     <!-- My Tickets Table -->
     <div class="card mb-4">
         <div class="card-header">
-            <div>
-                <h5 class="card-title mb-0">Tiket Saya [<strong class="text-primary">Direkod (Log) oleh:
-                        {{ auth()->user()->nama }}</strong>]</h5>
-                <p class="text-muted small mb-0">Senarai semua tiket yang di log oleh anda</p>
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+
+                <!-- Bahagian Kiri -->
+                <div>
+                    <h5 class="card-title mb-0">
+                        Tiket Saya
+                        [<strong class="text-primary">
+                            Direkod (Log) oleh: {{ auth()->user()->nama }}
+                        </strong>]
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Senarai semua tiket yang direkod oleh anda
+                    </p>
+                </div>
+
+                <!-- Bahagian Kanan -->
+                <div>
+                    <a href="javascript:;" class="btn btn-primary add-new" data-bs-toggle="offcanvas"
+                        data-bs-target="#offcanvasAddTicket" aria-controls="offcanvasAddTicket">
+                        <i class="bx bx-plus me-1"></i> Aduan Baharu
+                    </a>
+                </div>
+
             </div>
         </div>
         <div class="card-datatable table-responsive">

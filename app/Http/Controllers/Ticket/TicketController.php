@@ -133,7 +133,7 @@ class TicketController extends Controller
         })
         ->filterColumn('status', function ($query, $keyword) {
           $statusMap = [
-            'Aduan Baru' => 1,
+            'Aduan Baharu' => 1,
             'Aduan Diproses' => 2,
             'Serahan Kepada' => 3,
             'Aduan Dirujuk' => 4,
@@ -174,7 +174,7 @@ class TicketController extends Controller
         })
         ->addColumn('status', function ($ticket) {
           $statusName = match ($ticket->tick_status) {
-            1 => 'Aduan Baru',
+            1 => 'Aduan Baharu',
             2 => 'Aduan Diproses',
             3 => 'Serahan Kepada',
             4 => 'Aduan Dirujuk',
@@ -296,7 +296,7 @@ class TicketController extends Controller
         })
         ->filterColumn('status', function ($query, $keyword) {
           $statusMap = [
-            'Aduan Baru' => 1,
+            'Aduan Baharu' => 1,
             'Aduan Diproses' => 2,
             'Serahan Kepada' => 3,
             'Aduan Dirujuk' => 4,
@@ -331,7 +331,7 @@ class TicketController extends Controller
         })
         ->addColumn('status', function ($ticket) {
           $statusName = match ($ticket->tick_status) {
-            1 => 'Aduan Baru',
+            1 => 'Aduan Baharu',
             2 => 'Aduan Diproses',
             3 => 'Serahan Kepada',
             4 => 'Aduan Dirujuk',

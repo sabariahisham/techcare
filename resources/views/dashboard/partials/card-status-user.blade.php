@@ -3,19 +3,23 @@
         <div class="card-body d-flex flex-column">
             <div class="d-flex align-items-start justify-content-between">
                 <div class="content-left flex-grow-1">
-                    <span class="text-heading">Baru</span>
+                    <span class="text-heading">Baharu</span>                    
                     <div class="d-flex align-items-center my-1">
                         <h4 class="mb-0 me-2">{{ number_format($newTickets + $newTicketsOnBehalf) }}</h4>
                     </div>
                 </div>
-                <div class="avatar flex-shrink-0" data-bs-toggle="tooltip" data-bs-title="Aduan Baru">
-                    <a href="{{ route('tickets.index') }}">
-                        <span class="avatar-initial rounded bg-label-primary">
-                            <i class="bx bx-plus-circle bx-lg"></i>
-                        </span>
+                <div class="avatar flex-shrink-0">
+                    <span class="avatar-initial rounded bg-label-primary">
+                        <i class="bx bx-plus-circle bx-sm"></i>
+                    </span>
                     </a>
                 </div>
             </div>
+
+            <a href="{{ route('tickets.index') }}" class="btn btn-outline-primary btn-sm d-block w-100 mt-2 mb-2"
+                data-bs-toggle="tooltip" data-bs-title="Klik untuk log aduan baharu.">
+                <i class="bx bx-plus me-1"></i> Aduan Baharu
+            </a>
             <small class="text-muted mt-auto">Termasuk aduan yang dicipta untuk anda</small>
         </div>
     </div>
