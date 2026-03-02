@@ -71,18 +71,62 @@ class TicketController extends Controller
     $this->notificationService = $notificationService;
   }
 
+  /**
+   * Display tickets index - default route (Pentadbir Utama / Administrator)
+   * Shows all tickets for all roles
+   */
   public function index()
   {
     $categories = RefCategory::all();
-    return view('tickets.index', compact('categories'));
+    $viewType = 'all'; // Show all tables
+    $pageTitle = 'Senarai Tiket Keseluruhan';
+    return view('tickets.index', compact('categories', 'viewType', 'pageTitle'));
+  }
+
+  /**
+   * Display user's own tickets (Tiket Saya)
+   * Shows only tickets created by or for the authenticated user
+   */
+  public function userTickets()
+  {
+    $categories = RefCategory::all();
+    $viewType = 'user'; // Show only user's tickets
+    $pageTitle = 'Tiket Saya';
+    return view('tickets.index', compact('categories', 'viewType', 'pageTitle'));
+  }
+
+  /**
+   * Display assigned tickets (Tiket Pegawai Tugasan)
+   * Shows only tickets assigned to the authenticated Pegawai Tugasan, Penyelia Helpdesk, Helpdesk On Duty
+   */
+  public function assignedTickets()
+  {
+    $categories = RefCategory::all();
+    $viewType = 'assigned'; // Show only assigned tickets
+    $pageTitle = 'Tiket Pegawai Tugasan, Penyelia Helpdesk, Helpdesk On Duty';
+    return view('tickets.index', compact('categories', 'viewType', 'pageTitle'));
+  }
+
+  /**
+   * Display admin tickets (Tiket Pentadbir Sistem)
+   * Shows all tickets for Pentadbir Sistem
+   */
+  public function adminTickets()
+  {
+    $categories = RefCategory::all();
+    $viewType = 'admin'; // Show all tickets for admin roles
+    $pageTitle = 'Tiket Pentadbir Sistem';
+    return view('tickets.index', compact('categories', 'viewType', 'pageTitle'));
   }
 
   /**
    * Get DataTables data for tickets listing
+   * Supports different view types: user, assigned, admin, all
    */
   public function data(Request $request)
   {
     $type = $request->get('type', 'my');
+    $viewType = $request->get('view_type', 'all'); // New parameter for role-based filtering
     $ticketFilter = $request->get('ticket_filter', 'all');
 
     if ($type === 'my') {
@@ -248,22 +292,69 @@ class TicketController extends Controller
         ->rawColumns(['status', 'action'])
         ->make(true);
     } else {
-      // Manage Tickets - for administrators and helpdesk staff
+      // Manage Tickets - for Pegawai Tugasan, Penyelia Helpdesk, Helpdesk On Duty, Pentadbir Sistem, Administrator
       $user = Auth::user();
 
-      $query = Ticket::with(['user', 'category', 'subCategory', 'status', 'createdBy', 'chronologies.escalatedTo']);
+      // Start with base query
+      $query = Ticket::query();
 
-      // Apply role-based filtering
-      if ($user->hasRole('Administrator')) {
-        // Administrator sees all tickets
-      } elseif ($user->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
-        // These roles see all tickets except maybe some restricted ones
-      } elseif ($user->hasRole('Pegawai Tugasan')) {
-        // Only tickets assigned to this officer
+      // For Administrator/Pentadbir Sistem, show ALL tickets including soft deleted ones
+      if ($viewType === 'admin' && $user->hasAnyRole(['Administrator', 'Pentadbir Sistem'])) {
+        $query->withTrashed(); // Include soft deleted tickets for admin
+      }
+
+      // Apply role-based filtering based on viewType
+      if ($viewType === 'assigned') {
+        // Only tickets assigned to this Pegawai Tugasan, Penyelia Helpdesk, Helpdesk On Duty
         $query->whereHas('chronologies', function ($q) use ($user) {
           $q->where('escalate_to', $user->id);
         });
+      } elseif ($viewType === 'admin') {
+        // For Pentadbir Sistem & Administrator - show ALL tickets without any filtering
+        // Explicitly no filtering - show all records
+        Log::info('Admin view - showing all tickets', [
+          'user_id' => $user->id,
+          'roles' => $user->roles->pluck('name'),
+          'view_type' => $viewType,
+          'includes_trashed' => true
+        ]);
+      } else {
+        // Default fallback to role-based filtering
+        if ($user->hasAnyRole(['Administrator', 'Pentadbir Sistem'])) {
+          // These roles see all tickets
+        } elseif ($user->hasAnyRole(['Pegawai Tugasan', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
+          // Only tickets assigned to this officer
+          $query->whereHas('chronologies', function ($q) use ($user) {
+            $q->where('escalate_to', $user->id);
+          });
+        }
       }
+
+      // DIAGNOSTIC: Count total records BEFORE DataTables processing
+      $totalRecordsBeforeDataTables = $query->count();
+
+      Log::info('DIAGNOSTIC: Record counts BEFORE DataTables', [
+        'total_records_in_query' => $totalRecordsBeforeDataTables,
+        'view_type' => $viewType,
+        'includes_trashed' => $viewType === 'admin' && $user->hasAnyRole(['Administrator', 'Pentadbir Sistem'])
+      ]);
+
+      // Add eager loading AFTER filtering to avoid N+1 issues
+      // Include soft-deleted users since tickets might belong to deleted users
+      $query->with([
+        'user' => function ($q) {
+          $q->withTrashed();
+        },
+        'category',
+        'subCategory',
+        'status',
+        'createdBy' => function ($q) {
+          $q->withTrashed();
+        },
+        'chronologies.escalatedTo' => function ($q) {
+          $q->withTrashed();
+        }
+      ]);
 
       // Order by latest date first
       $query->orderBy('created_at', 'desc');
@@ -281,7 +372,7 @@ class TicketController extends Controller
         })
         ->filterColumn('nama_pengadu', function ($query, $keyword) {
           $query->whereHas('user', function ($q) use ($keyword) {
-            $q->where('nama', 'like', "%{$keyword}%");
+            $q->withTrashed()->where('nama', 'like', "%{$keyword}%");
           });
         })
         ->filterColumn('kategori', function ($query, $keyword) {
@@ -310,18 +401,42 @@ class TicketController extends Controller
           }
         })
         ->filterColumn('pegawai_tugasan', function ($query, $keyword) {
-          $query->whereHas('chronologies.escalatedTo', function ($q) use ($keyword) {
-            $q->where('nama', 'like', "%{$keyword}%");
-          });
+          // Search in assigned officers OR include "Belum Ditugaskan" keyword
+          if (stripos('Belum Ditugaskan', $keyword) !== false) {
+            // If searching for "Belum Ditugaskan", show tickets without assignment
+            $query->where(function ($q) use ($keyword) {
+              $q->whereDoesntHave('chronologies', function ($chronology) {
+                $chronology->whereNotNull('escalate_to');
+              })
+                ->orWhereHas('chronologies.escalatedTo', function ($assigned) use ($keyword) {
+                  $assigned->withTrashed()->where('nama', 'like', "%{$keyword}%");
+                });
+            });
+          } else {
+            // Normal search in officer names (include soft-deleted users)
+            $query->whereHas('chronologies.escalatedTo', function ($q) use ($keyword) {
+              $q->withTrashed()->where('nama', 'like', "%{$keyword}%");
+            });
+          }
         })
         ->addColumn('no_log_tiket', function ($ticket) {
-          return $ticket->ticket_nolog ?? 'N/A';
+          $ticketNo = $ticket->ticket_nolog ?? 'N/A';
+          // Add indicator if ticket is soft deleted (for admin view only)
+          if ($ticket->trashed()) {
+            return $ticketNo . ' <span class="badge badge-sm bg-danger ms-1">Deleted</span>';
+          }
+          return $ticketNo;
         })
         ->addColumn('tarikh_aduan', function ($ticket) {
           return $ticket->created_at ? $ticket->created_at->format('d/m/Y H:i') : '-';
         })
         ->addColumn('nama_pengadu', function ($ticket) {
-          return $ticket->user->nama ?? 'N/A';
+          $nama = $ticket->user->nama ?? 'N/A';
+          // Add indicator if user is soft deleted
+          if ($ticket->user && $ticket->user->trashed()) {
+            return $nama . ' <span class="badge badge-sm bg-warning ms-1">User Deleted</span>';
+          }
+          return $nama;
         })
         ->addColumn('kategori', function ($ticket) {
           return $ticket->category->cat_name ?? 'N/A';
@@ -366,43 +481,65 @@ class TicketController extends Controller
           return 'Belum Ditugaskan';
         })
         ->addColumn('action', function ($ticket) {
+
           $user = Auth::user();
+          $uuid = e($ticket->uuid); // Laravel helper untuk escape
           $actions = '<div class="d-flex gap-1">';
 
-          // Escape UUID for HTML attributes
-          $escapedUuid = htmlspecialchars($ticket->uuid, ENT_QUOTES, 'UTF-8');
+          //-- Button Urus (Semua boleh nampak) --//
+          $actions .= '
+        <a class="btn btn-sm manage-ticket"
+           data-uuid="' . $uuid . '"
+           data-bs-toggle="tooltip"
+           title="Urus">
+           <i class="bx bx-cog text-primary"></i>
+        </a>
+    ';
 
-          // Manage button - for helpdesk staff
-          $actions .= '<a class="btn btn-sm manage-ticket" data-uuid="' . $escapedUuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Urus"><i class="bx bx-cog text-primary"></i></a>';
-
-          // Admin can edit any ticket
+          //-- Semak Kebenaran Edit --//
           $canEdit = false;
+
+          // Administrator boleh edit semua
           if ($user->hasRole('Administrator')) {
             $canEdit = true;
-          } elseif ($user->hasRole('Pegawai Tugasan')) {
-            // Pegawai Tugasan can only edit if assigned to this ticket
-            $isAssigned = $ticket->chronologies()
-              ->where('escalate_to', $user->id)
-              ->where('tick_status', $ticket->tick_status)
-              ->exists();
-            if ($isAssigned) {
-              $canEdit = true;
-            }
           }
+
+          // Pegawai Tugasan hanya boleh edit jika ditugaskan
+          // if ($user->hasRole('Pegawai Tugasan') && !$canEdit) {
+          //   $canEdit = $ticket->chronologies()
+          //     ->where('escalate_to', $user->id)
+          //     ->where('tick_status', $ticket->tick_status)
+          //     ->exists();
+          // }
 
           if ($canEdit) {
-            $actions .= '<a class="btn btn-sm edit-record" data-uuid="' . $escapedUuid . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Kemaskini"><i class="bx bx-edit-alt text-secondary"></i></a>';
+            $actions .= '
+            <a class="btn btn-sm edit-record"
+               data-uuid="' . $uuid . '"
+               data-bs-toggle="tooltip"
+               title="Kemaskini (Administrator only)">
+               <i class="bx bx-edit-alt text-secondary"></i>
+            </a>
+        ';
           }
 
-          // Only Administrator and higher level roles can delete
-          if ($user->hasAnyRole(['Administrator'])) {
-            $actions .= '<a class="btn btn-sm delete-record" data-id="' . htmlspecialchars($ticket->uuid, ENT_QUOTES, 'UTF-8') . '" data-ticket-uuid="' . htmlspecialchars($ticket->uuid, ENT_QUOTES, 'UTF-8') . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Padam"><i class="bx bx-trash text-danger"></i></a>';
+          //-- Delete (Administrator sahaja) --//
+          if ($user->hasRole('Administrator')) {
+            $actions .= '
+            <a class="btn btn-sm delete-record"
+               data-id="' . $uuid . '"
+               data-ticket-uuid="' . $uuid . '"
+               data-bs-toggle="tooltip"
+               title="Padam (Administrator only)">
+               <i class="bx bx-trash text-danger"></i>
+            </a>
+        ';
           }
 
           $actions .= '</div>';
           return $actions;
         })
-        ->rawColumns(['status', 'action'])
+        ->rawColumns(['no_log_tiket', 'nama_pengadu', 'status', 'action']) // Include HTML columns for rendering
         ->make(true);
     }
   }

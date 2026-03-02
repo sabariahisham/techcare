@@ -488,14 +488,34 @@ Route::middleware(['auth'])->group(function () {
 // Tickets Routes Group: Core ticket operations (TicketController only)
 // Using 'auth' middleware for authentication
 Route::middleware($authMiddleware)->prefix('tickets')->group(function () {
-  Route::get('/', [TicketController::class, 'index'])->name('tickets.index');
+  // Role-based ticket listing routes (reusing same view with different parameters)
+  Route::get('/user', [TicketController::class, 'userTickets'])->name('tickets.user');
+  Route::get('/assigned', [TicketController::class, 'assignedTickets'])->name('tickets.assigned');
+  Route::get('/admin', [TicketController::class, 'adminTickets'])->name('tickets.admin');
+  Route::get('/index', [TicketController::class, 'index'])->name('tickets.index'); // Administrator - all tickets
+
+  // Data endpoint for DataTables
   Route::get('/data', [TicketController::class, 'data'])->name('tickets.data');
+
+  // CRUD operations
   Route::post('/', [TicketController::class, 'store'])->name('tickets.store');
   Route::get('/{uuid}', [TicketController::class, 'show'])->name('tickets.show');
   Route::get('/{uuid}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
   Route::put('/{uuid}', [TicketController::class, 'update'])->name('tickets.update');
   Route::delete('/{uuid}', [TicketController::class, 'destroy'])->name('tickets.destroy');
   Route::post('/{uuid}/update-status', [TicketController::class, 'updateTicketStatus'])->name('tickets.update-status');
+
+  // Redirect root /tickets to appropriate view based on role
+  Route::get('/', function() {
+    $user = Auth::user();
+    if ($user->hasAnyRole(['Pentadbir Sistem', 'Administrator'])) {
+      return redirect()->route('tickets.admin');
+    } elseif ($user->hasAnyRole(['Pegawai Tugasan', 'Penyelia Helpdesk', 'Helpdesk On Duty'])) {
+      return redirect()->route('tickets.assigned');
+    } else {
+      return redirect()->route('tickets.user');
+    }
+  });
 });
 
 // Ticket Assignment Routes Group
