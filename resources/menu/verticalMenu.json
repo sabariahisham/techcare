@@ -11,7 +11,25 @@
       "url": "tickets",
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
-      "slug": "ticket"
+      "slug": "ticket",
+      "submenu": [
+        {
+          "url": "tickets/user",
+          "name": "Tiket Saya",
+          "slug": "ticket-user"
+        },
+        {
+          "url": "tickets/assigned",
+          "name": "Tiket Pegawai Tugasan",
+          "slug": "ticket-assigned"
+        },
+        {
+          "url": "tickets/admin",
+          "name": "Tiket Pentadbir Sistem",
+          "slug": "ticket-admin",
+          "permission": "admin.view"
+        }
+      ]
     },
     {
       "url": "knowledgebase",

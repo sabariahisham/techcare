@@ -45,6 +45,7 @@ $(function () {
         data: function (d) {
           d.type = 'my';
           d.ticket_filter = $('#ticketFilterSelect').val(); // Add filter parameter
+          d.view_type = window.ticketViewType || 'all'; // Add view type parameter
         },
         error: function (xhr, error, code) {
           console.error('DataTable AJAX Error:', error, code);
@@ -158,7 +159,10 @@ $(function () {
       //pageLength: 50,
       ajax: {
         url: '/tickets/data',
-        data: { type: 'manage' },
+        data: function (d) {
+          d.type = 'manage';
+          d.view_type = window.ticketViewType || 'all'; // Add view type parameter
+        },
         error: function (xhr, error, code) {
           console.error('DataTable AJAX Error:', error, code);
           console.error('Response:', xhr.responseText);

@@ -1,6 +1,6 @@
 @extends('layouts/layoutMaster')
 
-@section('title', 'Senarai Tiket')
+@section('title', $pageTitle ?? 'Senarai Tiket')
 
 @section('vendor-style')
     @vite(['resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss', 'resources/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.scss', 'resources/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.scss', 'resources/assets/vendor/libs/select2/select2.scss', 'resources/assets/vendor/libs/@form-validation/form-validation.scss', 'resources/assets/vendor/libs/toastr/toastr.scss', 'resources/assets/vendor/libs/animate-css/animate.scss', 'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss', 'resources/assets/scss/components/offcanvas-tickets.scss', 'resources/assets/scss/pages/tickets.scss', 'resources/assets/css/ticket.css'])
@@ -17,89 +17,111 @@
 
 @section('page-script')
     @vite(['resources/assets/js/ticket/list.js', 'resources/assets/js/ticket/config.js', 'resources/assets/js/ticket/create.js', 'resources/assets/js/ticket/edit.js', 'resources/assets/js/ticket/search-user.js', 'resources/assets/js/ticket/attachment.js'])
+    <script>
+        // Pass viewType to JavaScript for DataTables configuration
+        window.ticketViewType = '{{ $viewType ?? 'all' }}';
+    </script>
 @endsection
 
 @section('content')
 
     <div class="card mb-4">
         <div class="card-body">
-            <h4 class="mb-1">Senarai Tiket</h4>
+            <h4 class="mb-1">{{ $pageTitle ?? 'Senarai Tiket' }}</h4>
             <p class="mb-0 text-muted">
-                Papar dan tambah tiket berdasarkan peranan pengguna.
-                Tiket yang telah dihantar tidak boleh diedit.
+                @if (($viewType ?? 'all') === 'user')
+                    Senarai semua tiket yang direkod oleh anda. Anda boleh menambah aduan baharu dan melihat status tiket
+                    anda.
+                @elseif(($viewType ?? 'all') === 'assigned')
+                    Senarai tiket yang ditugaskan kepada anda untuk tindakan lanjut sebagai Pegawai Tugasan.
+                @elseif(($viewType ?? 'all') === 'admin')
+                    Senarai tiket yang memerlukan pemantauan dan tindakan lanjut oleh Pentadbir Sistem.
+                 @else {{-- Administrator --}}
+                    Paparan keseluruhan semua tiket yang direkodkan dalam sistem untuk pemantauan Administrator.
+                @endif
             </p>
         </div>
     </div>
 
-    <!-- My Tickets Table -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    @php
+        $viewType = $viewType ?? 'all';
+        $showMyTickets = in_array($viewType, ['user']); // Only show "Tiket Saya" for 'user' viewType
+        $showManageTickets =
+            in_array($viewType, ['admin', 'assigned']) &&
+            auth()
+                ->user()
+                ->hasAnyRole([
+                    'Administrator',  // admin
+                    'Pentadbir Sistem', // admin
+                    'Penyelia Helpdesk', // assigned
+                    'Helpdesk On Duty', // assigned
+                    'Pegawai Tugasan', // assigned
+                ]);
+    @endphp
 
-                <!-- Bahagian Kiri -->
-                <div>
-                    <h5 class="card-title mb-0">
-                        Tiket Saya
-                        [<strong class="text-primary">
-                            Direkod (Log) oleh: {{ auth()->user()->nama }}
-                        </strong>]
-                    </h5>
-                    <p class="text-muted small mb-0">
-                        Senarai semua tiket yang direkod oleh anda
-                    </p>
+    @if ($showMyTickets)
+        <!-- My Tickets Table -->
+        <div class="card {{ $showManageTickets ? 'mb-4' : '' }}">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                    <div>
+                        <h5 class="card-title mb-0">
+                            Tiket Saya
+                            [<strong class="text-primary">
+                                Direkod (Log) oleh: {{ auth()->user()->nama }}
+                            </strong>]
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            Senarai semua tiket yang direkod oleh anda
+                        </p>
+                    </div>
+                    <div>
+                        <a href="javascript:;" class="btn btn-primary add-new" data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvasAddTicket" aria-controls="offcanvasAddTicket">
+                            <i class="bx bx-plus me-1"></i> Aduan Baharu
+                        </a>
+                    </div>
+
                 </div>
-
-                <!-- Bahagian Kanan -->
-                <div>
-                    <a href="javascript:;" class="btn btn-primary add-new" data-bs-toggle="offcanvas"
-                        data-bs-target="#offcanvasAddTicket" aria-controls="offcanvasAddTicket">
-                        <i class="bx bx-plus me-1"></i> Aduan Baharu
-                    </a>
-                </div>
-
+            </div>
+            <div class="card-datatable table-responsive">
+                <table class="datatables-my-tickets table border-top">
+                    <thead class="border-top">
+                        <tr>
+                            <th>Bil</th>
+                            <th>No. Log Tiket</th>
+                            <th>Tarikh Aduan</th>
+                            <th>Jenis Tiket</th>
+                            <th>Kategori</th>
+                            <th>Sub Kategori</th>
+                            <th>Status</th>
+                            <th>Pegawai Tugasan</th>
+                            <th>Tindakan</th>
+                        </tr>
+                    </thead>
+                </table>
             </div>
         </div>
-        <div class="card-datatable table-responsive">
-            <table class="datatables-my-tickets table border-top">
-                <thead class="border-top">
-                    <tr>
-                        <th>Bil</th>
-                        <th>No. Log Tiket</th>
-                        <th>Tarikh Aduan</th>
-                        <th>Jenis Tiket</th>
-                        <th>Kategori</th>
-                        <th>Sub Kategori</th>
-                        <th>Status</th>
-                        <th>Pegawai Tugasan</th>
-                        <th>Tindakan</th>
-                    </tr>
-                </thead>
-            </table>
-        </div>
-    </div>
+    @endif
 
-    @if (auth()->user()->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty', 'Pegawai Tugasan']))
+    @if ($showManageTickets)
         <!-- Tickets to Manage Table -->
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    @if (auth()->user()->hasRole('Administrator'))
-                        Semua Tiket [<strong class="text-danger">Administrator</strong>]
-                    @elseif(auth()->user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
-                        Tiket Untuk Tindakan [<strong
+                    @if ($viewType === 'assigned')
+                        Tiket Tugasan Anda [<strong class="text-primary">Ditugaskan kepada:
+                            {{ auth()->user()->nama }}</strong>]
+                    @else
+                        Semua Tiket Untuk Tindakan [<strong
                             class="text-warning">{{ auth()->user()->roles->first()->name }}</strong>]
-                    @elseif(auth()->user()->hasRole('Pegawai Tugasan'))
-                        Tiket Tugasan Anda [<strong class="text-primary">Ditugaskan kepada: </strong> <strong
-                            class="text-primary">{{ auth()->user()->nama }}</strong>]
                     @endif
                 </h5>
                 <p class="text-muted small mb-0">
-                    @if (auth()->user()->hasRole('Administrator'))
-                        Paparan keseluruhan tiket yang direkodkan dalam sistem
-                    @elseif(auth()->user()->hasAnyRole(['Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty']))
-                        Senarai tiket yang memerlukan pemantauan dan tindakan lanjut
-                    @elseif(auth()->user()->hasRole('Pegawai Tugasan'))
+                    @if ($viewType === 'assigned')
                         Senarai tiket yang ditugaskan kepada anda untuk tindakan lanjut
+                    @else
+                        Senarai tiket yang memerlukan pemantauan dan tindakan lanjut Paparan keseluruhan tiket yang direkodkan dalam sistem yang memerlukan pemantauan dan tindakan lanjut
                     @endif
                 </p>
             </div>
