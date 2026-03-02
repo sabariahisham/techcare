@@ -42,22 +42,58 @@ $(function () {
           d.tahun = $('#filter-tahun').val();
         }
       },
-      columns: [
-        { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-        { data: 'pegawai_tugasan', name: 'u.nama' },
-        { data: 'bulan', name: 'pp.bulan' },
-        { data: 'tahun', name: 'pp.tahun' },
-        { data: 'tiket_diterima', name: 'pp.tiket_diterima' },
-        { data: 'tiket_selesai', name: 'pp.tiket_selesai' },
-        { data: 'tiket_dalam_tindakan', name: 'pp.tiket_dalam_tindakan' },
-        { data: 'tiket_lewat_sla', name: 'pp.tiket_lewat_sla' },
-        { data: 'tiket_selesai_dalam_sla', name: 'pp.tiket_selesai_dalam_sla' },
-        { data: 'high', name: 'pp.high' },
-        { data: 'medium', name: 'pp.medium' },
-        { data: 'low', name: 'pp.low' }
-      ],
-      columnDefs: [
+      columns: [{
+          data: 'DT_RowIndex',
+          name: 'DT_RowIndex',
+          orderable: false,
+          searchable: false
+        },
         {
+          data: 'pegawai_tugasan',
+          name: 'u.nama'
+        },
+        {
+          data: 'bulan',
+          name: 'pp.bulan'
+        },
+        {
+          data: 'tahun',
+          name: 'pp.tahun'
+        },
+        {
+          data: 'tiket_diterima',
+          name: 'pp.tiket_diterima'
+        },
+        {
+          data: 'tiket_selesai',
+          name: 'pp.tiket_selesai'
+        },
+        {
+          data: 'tiket_dalam_tindakan',
+          name: 'pp.tiket_dalam_tindakan'
+        },
+        {
+          data: 'tiket_lewat_sla',
+          name: 'pp.tiket_lewat_sla'
+        },
+        {
+          data: 'tiket_selesai_dalam_sla',
+          name: 'pp.tiket_selesai_dalam_sla'
+        },
+        {
+          data: 'high',
+          name: 'pp.high'
+        },
+        {
+          data: 'medium',
+          name: 'pp.medium'
+        },
+        {
+          data: 'low',
+          name: 'pp.low'
+        }
+      ],
+      columnDefs: [{
           // Bil
           targets: 0,
           searchable: false,
@@ -145,9 +181,11 @@ $(function () {
           }
         }
       ],
-      order: [[4, 'desc']], // Sort by tiket diterima descending
-      dom:
-        '<"row"' +
+      order: [
+        [4, 'desc']
+      ], // Sort by tiket diterima descending
+      pageLength: 50,
+      dom: '<"row"' +
         '<"col-md-2"<"me-3"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-4"fB>>' +
         '>t' +
@@ -158,7 +196,7 @@ $(function () {
       language: {
         sLengthMenu: '_MENU_',
         search: '',
-        searchPlaceholder: 'Carian...',
+        searchPlaceholder: 'Carian (e.g Pegawai Tugasan, Bulan, Tahun, dll)',
         paginate: {
           next: '<i class="bx bx-chevron-right bx-18px"></i>',
           previous: '<i class="bx bx-chevron-left bx-18px"></i>'
@@ -168,8 +206,7 @@ $(function () {
         infoFiltered: '(ditapis daripada _MAX_ jumlah rekod)',
         processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>'
       },
-      buttons: [
-        {
+      buttons: [{
           text: '<i class="bx bx-file me-1"></i>EXCEL',
           className: 'btn btn-success btn-sm mb-6 mb-md-0 waves-effect waves-light me-2',
           action: function (e, dt, button, config) {
@@ -191,7 +228,7 @@ $(function () {
                 title: 'Memproses...',
                 text: 'Sila tunggu sebentar',
                 allowOutsideClick: false,
-                didOpen: function() {
+                didOpen: function () {
                   Swal.showLoading();
                 }
               });
@@ -200,7 +237,7 @@ $(function () {
               window.location.href = exportUrl;
 
               // Close loading after a short delay
-              setTimeout(function() {
+              setTimeout(function () {
                 Swal.close();
               }, 2000);
             } else {
@@ -231,7 +268,7 @@ $(function () {
                 title: 'Memproses PDF...',
                 text: 'Sila tunggu sebentar',
                 allowOutsideClick: false,
-                didOpen: function() {
+                didOpen: function () {
                   Swal.showLoading();
                 }
               });
@@ -240,11 +277,11 @@ $(function () {
               var pdfWindow = window.open(exportUrl, '_blank');
 
               // Close loading after a short delay
-              setTimeout(function() {
+              setTimeout(function () {
                 Swal.close();
                 if (pdfWindow) {
                   // Auto-trigger print dialog after page loads
-                  setTimeout(function() {
+                  setTimeout(function () {
                     pdfWindow.print();
                   }, 1000);
                 }
@@ -256,6 +293,9 @@ $(function () {
           }
         }
       ],
+      initComplete: function () {
+        $('.dataTables_filter input').css('min-width', '400px');
+      },
       responsive: {
         details: {
           display: $.fn.dataTable.Responsive.display.modal({
@@ -267,21 +307,21 @@ $(function () {
           type: 'column',
           renderer: function (api, rowIdx, columns) {
             var data = $.map(columns, function (col, i) {
-              return col.title !== ''
-                ? '<tr data-dt-row="' +
-                    col.rowIndex +
-                    '" data-dt-column="' +
-                    col.columnIndex +
-                    '">' +
-                    '<td>' +
-                    col.title +
-                    ':' +
-                    '</td> ' +
-                    '<td>' +
-                    col.data +
-                    '</td>' +
-                    '</tr>'
-                : '';
+              return col.title !== '' ?
+                '<tr data-dt-row="' +
+                col.rowIndex +
+                '" data-dt-column="' +
+                col.columnIndex +
+                '">' +
+                '<td>' +
+                col.title +
+                ':' +
+                '</td> ' +
+                '<td>' +
+                col.data +
+                '</td>' +
+                '</tr>' :
+                '';
             }).join('');
 
             return data ? $('<table class="table"/><tbody />').append(data) : false;
