@@ -130,6 +130,12 @@
               "name": "Log SLA",
               "slug": "log-sla-index",
               "permission": "audit.view"
+            },
+            {
+              "url": "audit/logs-sync-spp",
+              "name": "Log Sync SPPUser ",
+              "slug": "log-sync-spp-index",
+              "permission": "audit.view"
             }
           ]
     },
