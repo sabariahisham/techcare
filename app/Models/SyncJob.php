@@ -20,5 +20,10 @@ class SyncJob extends Model
         'message',
     ];
 
-    public $timestamps = false; 
+    protected $casts = [
+        'started_at' => 'datetime',
+        'finished_at' => 'datetime',
+    ];
+
+    public $timestamps = true; 
 }

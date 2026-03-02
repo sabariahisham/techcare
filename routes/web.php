@@ -12,6 +12,7 @@ use App\Http\Controllers\user_interface\Toasts;
 use App\Http\Controllers\Audit\SLALogController;
 use App\Http\Controllers\extended_ui\SweetAlert;
 use App\Http\Controllers\Audit\MailLogController;
+use App\Http\Controllers\Audit\SyncSPPLogController;
 use App\Http\Controllers\Ticket\TicketController;
 use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Audit\AuditTrailController;
@@ -483,6 +484,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/logs-sla', [SLALogController::class, 'index'])->name('log-sla-index');
     Route::get('/logs-sla/data', [SLALogController::class, 'getSlaLogData'])->name('log-sla-data');
     Route::post('/logs-sla/run-task', [SLALogController::class, 'runTask'])->name('log-sla-run-task');
+
+    // Route audit log-Sync SPP (Sync User SPP job monitoring)
+    Route::get('/logs-sync-spp', [SyncSPPLogController::class, 'index'])->name('log-sync-spp-index');
+    Route::get('/logs-sync-spp/data', [SyncSPPLogController::class, 'getSyncSppLogData'])->name('log-sync-spp-data');
+    Route::post('/logs-sync-spp/run-task', [SyncSPPLogController::class, 'runTask'])->name('log-sync-spp-run-task');
+    Route::post('/logs-sync-spp/kill-stuck-jobs', [SyncSPPLogController::class, 'killStuckJobs'])->name('log-sync-spp-kill-stuck-jobs');
   });
 });
 // Tickets Routes Group: Core ticket operations (TicketController only)
