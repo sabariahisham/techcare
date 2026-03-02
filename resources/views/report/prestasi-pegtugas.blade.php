@@ -39,6 +39,10 @@
 
 @section('content')
 
+<style>
+  .avatar-initial { cursor: default !important; }
+</style>
+
 <div class="row g-6 mb-6">
   <div class="col-12">
     <div class="card">
