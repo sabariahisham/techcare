@@ -1,6 +1,5 @@
 {
-    "menu": [
-    {
+  "menu": [{
       "url": "dashboard",
       "icon": "menu-icon tf-icons bx bx-home-smile",
       "name": "Dashboard",
@@ -12,8 +11,7 @@
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
       "slug": "ticket",
-      "submenu": [
-        {
+      "submenu": [{
           "url": "tickets/user",
           "name": "Tiket Saya",
           "slug": "ticket-user"
@@ -21,13 +19,15 @@
         {
           "url": "tickets/assigned",
           "name": "Tiket Pegawai Tugasan",
-          "slug": "ticket-assigned"
+          "slug": "ticket-assigned",
+          "role": ["Administrator", "Pegawai Tugasan", "Helpdesk On Duty"]
+
         },
         {
           "url": "tickets/admin",
           "name": "Tiket Pentadbir Sistem",
           "slug": "ticket-admin",
-          "permission": "admin.view"
+          "role": ["Pentadbir Sistem", "Administrator"]
         }
       ]
     },
@@ -46,39 +46,38 @@
     },
 
     {
-      "menuHeader": "Pengurusan",
-      "permission": ["admin.view", "pengguna.view","capaian.view", "peranan.view", "konfigurasi.view"]
+      "menuHeader": "Pengurusan"
     },
 
     {
       "name": "Pentadbir",
       "icon": "menu-icon tf-icons bx bx-check-shield",
       "slug": "acl",
-      "permission": "admin.view",
-      "submenu": [
-        {
+      "role": ["Pentadbir Sistem", "Administrator"],
+      "submenu": [{
           "name": "Pengurusan Pengguna",
           "slug": "user-management",
           "permission": "pengguna.view",
-          "submenu": [
-            {
+          "submenu": [{
               "url": "user-management/index",
               "name": "Pengguna",
               "slug": "user-management-index",
-              "permission": "pengguna.view"
+              "role": ["Pentadbir Sistem", "Administrator"]
             },
 
             {
               "url": "acl/permissions/index",
               "name": "Modul & Capaian",
               "slug": "acl-permissions-index",
-              "permission": "capaian.view"
+              "permission": "capaian.view",
+              "role": ["Administrator"]
             },
             {
               "url": "acl/roles/index",
               "name": "Peranan",
               "slug": "acl-roles-index",
-              "permission": "peranan.view"
+              "permission": "peranan.view",
+              "role": ["Pentadbir Sistem", "Administrator"]
             }
           ]
         },
@@ -86,8 +85,7 @@
           "name": "Konfigurasi",
           "slug": "configuration",
           "permission": "konfigurasi.view",
-          "submenu": [
-            {
+          "submenu": [{
               "url": "ref-category-management/index",
               "name": "Kategori",
               "slug": "ref-category-management-index",
@@ -117,57 +115,57 @@
     },
     {
       "menuHeader": "Super Admin",
-      "permission": "admin.manage"
+      "role": "Administrator"
     },
     {
-          "name": "Audit Trail",
-          "slug": "audit-trail",
-          "icon": "menu-icon icon-base bx bx-list-check",
-          "permission" : "audit.view",
-          "submenu": [
-            {
-              "url": "audit-trail",
-              "name": "Senarai Audit Trail",
-              "slug": "audit-trail-index",
-              "permission": "audit.view"
-            },
-            {
-              "url": "audit/logs",
-              "name": "Log Keseluruhan",
-              "slug": "log-index",
-              "permission": "audit.view"
-            },
-            {
-              "url": "audit/logs-mail",
-              "name": "Log Email",
-              "slug": "log-mail-index",
-              "permission": "audit.view"
-            },
-            {
-              "url": "audit/logs-sla",
-              "name": "Log SLA",
-              "slug": "log-sla-index",
-              "permission": "audit.view"
-            },
-            {
-              "url": "audit/logs-sync-spp",
-              "name": "Log Sync SPPUser ",
-              "slug": "log-sync-spp-index",
-              "permission": "audit.view"
-            }
-          ]
+      "name": "Audit Trail",
+      "slug": "audit-trail",
+      "icon": "menu-icon icon-base bx bx-list-check",
+      " permission": "audit.view",
+       "role":  "Administrator",
+      "submenu": [{
+          "url": "audit-trail",
+          "name": "Senarai Audit Trail",
+          "slug": "audit-trail-index",
+          "permission": "audit.view"
+        },
+        {
+          "url": "audit/logs",
+          "name": "Log Keseluruhan",
+          "slug": "log-index",
+          "permission": "audit.view"
+        },
+        {
+          "url": "audit/logs-mail",
+          "name": "Log Email",
+          "slug": "log-mail-index",
+          "permission": "audit.view"
+        },
+        {
+          "url": "audit/logs-sla",
+          "name": "Log SLA",
+          "slug": "log-sla-index",
+          "permission": "audit.view"
+        },
+        {
+          "url": "audit/logs-sync-spp",
+          "name": "Log Sync SPPUser ",
+          "slug": "log-sync-spp-index",
+          "permission": "audit.view"
+        }
+      ]
     },
 
     {
       "menuHeader": "#(rujukan developer)",
-      "permission": "admin.view"
+      "role": ["Pentadbir Sistem", "Administrator"]
     },
     {
       "url": "https://themeselection.com/support/",
       "icon": "menu-icon tf-icons bx bx-support",
       "name": "Support",
       "slug": "support",
-      "permission": "admin.view",
+      "role": ["Pentadbir Sistem", "Administrator"],
       "target": "_blank"
     },
     {
@@ -175,7 +173,7 @@
       "icon": "menu-icon tf-icons bx bx-file",
       "name": "Documentation",
       "slug": "documentation",
-      "permission": "admin.view",
+      "role": ["Pentadbir Sistem", "Administrator"],
       "target": "_blank"
     }
   ]

@@ -38,15 +38,20 @@ $(function () {
         {
           data: null,
           render: function (data, type, row) {
-            return `
-                    <div class="d-flex justify-content-center gap-1">
-                        <button class="btn btn-sm btn-icon edit-role" data-id="${row.id}" data-name="${row.name}" title="Kemaskini Peranan">
-                            <i class="bx bx-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-icon delete-record text-danger" data-id="${row.id}" title="Padam Peranan">
-                            <i class="bx bx-trash"></i>
-                        </button>
-                    </div>`;
+            const userRoles = window.currentUserRoles || [];
+            const isPentadbirSistem = userRoles.includes('Pentadbir Sistem');
+            const isAdministratorRole = row.name === 'Administrator';
+            const canModify = !(isPentadbirSistem && isAdministratorRole);
+
+            const editBtn = canModify ?
+              `<button class="btn btn-sm btn-icon edit-role" data-id="${row.id}" data-name="${row.name}" title="Kemaskini Peranan"><i class="bx bx-edit"></i></button>` :
+              `<button class="btn btn-sm btn-icon" disabled title="Tiada kebenaran" style="opacity:0.4;cursor:not-allowed"><i class="bx bx-edit"></i></button>`;
+
+            const deleteBtn = canModify ?
+              `<button class="btn btn-sm btn-icon delete-record text-danger" data-id="${row.id}" title="Padam Peranan"><i class="bx bx-trash"></i></button>` :
+              `<button class="btn btn-sm btn-icon text-danger" disabled title="Tiada kebenaran" style="opacity:0.4;cursor:not-allowed"><i class="bx bx-trash"></i></button>`;
+
+            return `<div class="d-flex justify-content-center gap-1">${editBtn}${deleteBtn}</div>`;
           }
         }
       ],

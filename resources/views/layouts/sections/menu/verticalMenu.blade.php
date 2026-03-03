@@ -30,7 +30,7 @@
 
             {{-- menu headers --}}
             @if (isset($menu->menuHeader))
-                @if (!isset($menu->permission) || auth()->user()->can($menu->permission))
+                @if ((!isset($menu->permission) && !isset($menu->role)) || (isset($menu->permission) && auth()->user()->can($menu->permission)) || (isset($menu->role) && auth()->user()->hasAnyRole((array)$menu->role)))
                     <li class="menu-header small text-uppercase">
                         <span class="menu-header-text">{{ __($menu->menuHeader) }}</span>
                     </li>
@@ -62,7 +62,7 @@
                 @endphp
 
                 {{-- main menu --}}
-                @if (!isset($menu->permission) || auth()->user()->can($menu->permission))
+                @if ((!isset($menu->permission) && !isset($menu->role)) || (isset($menu->permission) && auth()->user()->can($menu->permission)) || (isset($menu->role) && auth()->user()->hasAnyRole((array)$menu->role)))
                     <li class="menu-item {{ $activeClass }}">
                         <a href="{{ isset($menu->url) ? url($menu->url) : 'javascript:void(0);' }}"
                             class="{{ isset($menu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }}"
