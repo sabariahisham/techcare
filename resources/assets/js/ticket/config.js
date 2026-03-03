@@ -236,19 +236,58 @@ window.displayValidationErrors = function (errors) {
         // Add error message after the field
         field.after('<div class="invalid-feedback d-block">' + errorMessage + '</div>');
       }
-
-      // Focus on the first invalid field
-      if ($('.is-invalid').length === 1) {
-        // Scroll to the field and focus
-        setTimeout(function () {
-          $('html, body').animate({
-            scrollTop: field.offset().top - 100
-          }, 500);
-          field.focus();
-        }, 100);
-      }
     }
   });
+
+  // Scroll to and focus on the first invalid field after all errors are displayed
+  setTimeout(function () {
+    var firstInvalidField = $('.is-invalid').first();
+    if (firstInvalidField.length > 0) {
+      var scrollTarget = firstInvalidField;
+
+      // If it's a Select2 field, scroll to the container instead
+      if (firstInvalidField.hasClass('select2-hidden-accessible')) {
+        scrollTarget = firstInvalidField.siblings('.select2-container').first();
+      }
+
+      // Determine which offcanvas is open
+      var offcanvasBody = $('#offcanvasAddTicket .offcanvas-body');
+      if (!offcanvasBody.is(':visible')) {
+        offcanvasBody = $('#offcanvasEditTicket .offcanvas-body');
+      }
+
+      // Scroll within offcanvas if available, otherwise scroll the page
+      if (offcanvasBody.length > 0 && offcanvasBody.is(':visible') && scrollTarget.length > 0) {
+        var fieldTop = scrollTarget.offset().top;
+        var offcanvasTop = offcanvasBody.offset().top;
+        var scrollPosition = offcanvasBody.scrollTop() + (fieldTop - offcanvasTop) - 100;
+
+        offcanvasBody.animate({
+          scrollTop: scrollPosition
+        }, 500);
+      } else if (scrollTarget.length > 0) {
+        // Fallback to page scroll
+        $('html, body').animate({
+          scrollTop: scrollTarget.offset().top - 100
+        }, 500);
+      }
+
+      // Focus on the field if it's not Select2 or file input
+      if (!firstInvalidField.hasClass('select2-hidden-accessible') && firstInvalidField.attr('type') !== 'file') {
+        firstInvalidField.focus();
+      } else if (firstInvalidField.hasClass('select2-hidden-accessible')) {
+        // Open Select2 dropdown briefly to draw attention
+        try {
+          firstInvalidField.select2('open');
+          setTimeout(function () {
+            firstInvalidField.select2('close');
+          }, 100);
+        } catch (e) {
+          console.log('Could not open Select2:', e);
+        }
+      }
+    }
+  }, 150);
 };
 
 // Function to override HTML5 validation messages to Bahasa Melayu

@@ -28,8 +28,10 @@
 
             <!-- Auto papar jika Diri Sendiri -->
             <div id="selfInfo" class="mb-4">
-                <h6>Maklumat Pengadu</h6>
                 <div class="row g-3">
+                    <span class="badge badge-lg bg-secondary text-start d-inline-block py-2 px-2">Maklumat Pengadu (Diri
+                        Sendiri)</span>
+
                     <div class="col-12">
                         <label class="form-label">Nama Pengadu</label>
                         <input type="text" class="form-control" name="name" value="{{ auth()->user()->nama }}"
@@ -94,8 +96,10 @@
 
             <!-- Papar hanya jika Bagi Pihak -->
             <div id="otherInfo" class="d-none mb-4">
-                <h6>Maklumat Pengadu (Bagi Pihak)</h6>
                 <div class="row g-3">
+                    <span class="badge badge-lg bg-secondary text-start d-inline-block py-2 px-2">Maklumat Pengadu (Bagi
+                        Pihak)</span>
+
                     <!-- Username search field -->
                     <div class="col-12">
                         <label class="form-label">Cari Nama Pengguna</label>
@@ -215,69 +219,123 @@
                     </div>
                 </div>
             </div>
+            <hr class="mt-5 mb-5">
 
             <!-- Ticket Form Fields (hidden when Bagi Pihak is selected but no user found) -->
             <div id="ticketFormFields">
-                <!-- Tajuk -->
-                <div class="mb-3">
-                    <label class="form-label">Tajuk</label>
-                    <input type="text" name="tick_title" class="form-control" required>
-                </div>
+                <div class="row g-3">
+                    <span class="badge badge-lg bg-primary text-start d-inline-block py-2 px-2">Maklumat Aduan</span>
+                    <!-- Tajuk -->
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Tajuk</label>
+                        <input type="text" name="tick_title" class="form-control" required>
+                    </div>
 
-                <!-- Kategori -->
-                <div class="mb-3">
-                    <label class="form-label">Kategori</label>
-                    <select name="cat_id" id="cat_id" class="form-select" data-validation="custom">
-                        <option value="">Pilih Kategori</option>
-                        @if (isset($categories))
-                            @foreach ($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->cat_name }}</option>
-                            @endforeach
-                        @endif
-                    </select>
-                </div>
+                    <!-- Kategori -->
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Kategori</label>
+                        <select name="cat_id" id="cat_id" class="form-select" data-validation="custom">
+                            <option value="">Pilih Kategori</option>
+                            @if (isset($categories))
+                                @foreach ($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->cat_name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
 
-                <!-- Sub Kategori -->
-                <div class="mb-3">
-                    <label class="form-label">Sub Kategori</label>
-                    <select name="subcat_id" id="subcat_id" class="form-select" data-validation="custom">
-                        <option value="">Pilih Sub Kategori</option>
-                    </select>
-                </div>
+                    <!-- Sub Kategori -->
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Sub Kategori</label>
+                        <select name="subcat_id" id="subcat_id" class="form-select" data-validation="custom">
+                            <option value="">Pilih Sub Kategori</option>
+                        </select>
+                    </div>
 
-                <!-- No Siri -->
-                <div class="mb-3" id="serialNumberField" style="display: none;">
-                    <label class="form-label">No. Siri <small>(Sewaan)</small></label>
-                    <input type="text" name="no_siri" class="form-control">
-                </div>
+                    <!-- No Siri (Kategori Sewaan) -->
+                    <div class="col-12 mb-3" id="serialNumberField" style="display: none;">
+                        <label class="form-label">No. Siri <small>(Sewaan)</small></label>
+                        <input type="text" name="no_siri" class="form-control">
+                    </div>
 
-                <!-- Keterangan -->
-                <div class="mb-3">
-                    <label class="form-label">Keterangan Aduan</label>
-                    <textarea name="tick_desc" id="tick_desc" class="form-control" rows="4" required></textarea>
-                </div>
-
-                <!-- Lampiran -->
-                <div class="form-field-wrapper mb-3">
-                    <label class="form-label">Lampiran</label>
-                    <div class="file-upload-wrapper">
-                        <input type="file" id="ticket-attachments" name="attachments[]"
-                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple class="file-input d-none">
-                        <div id="attachment-drop-zone"
-                            class="file-drop-zone border-2 border-dashed border-secondary rounded-3 p-4 text-center"
-                            style="cursor: pointer;">
-                            <div class="drop-zone-content">
-                                <i class="bx bx-file-find display-4 text-muted mb-3 d-block"></i>
-                                <h6 class="text-muted mb-2">Seret dan lepaskan fail di sini </h6>
-                                <p class="text-muted mb-2">atau <span class="text-primary fw-semibold">Muat naik
-                                        fail</span></p>
-                                <small class="text-muted">Format yang dibenarkan: PDF, DOC, DOCX, JPG, JPEG, PNG (Maks:
-                                    2MB setiap fail, maksimum 5 fail)</small>
-                            </div>
-                        </div>
-                        <div id="attachments-preview" class="files-preview mt-3"></div>
+                    <!-- Lokasi: Bangunan/Blok/Aras (dropdown) -->
+                    <div class="col-4 mb-3">
+                        <label class="form-label">Bangunan</label>
+                        <select name="building_loc" id="building_id" class="form-select" data-validation="custom"
+                            required>
+                            <option value="">Pilih Lokasi</option>
+                            <option value="P1">Perbendaharaan 1</option>
+                            <option value="P2">Perbendaharaan 2</option>
+                        </select>
                         <div class="invalid-feedback"></div>
-                        </input>
+                    </div>
+
+                    <div class="col-4 mb-3">
+                        <label class="form-label">Blok</label>
+                        <select name="block_loc" id="block_id" class="form-select" data-validation="custom"
+                            required>
+                            <option value="">Pilih Blok</option>
+                            <option value="U">Utara</option>
+                            <option value="TU">Tengah-Utara</option>
+                            <option value="T">Tengah</option>
+                            <option value="TS">Tengah-Selatan</option>
+                            <option value="S">Selatan</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="col-4 mb-3">
+                        <label class="form-label">Aras</label>
+                        <select name="level_loc" id="level_id" class="form-select" data-validation="custom"
+                            required>
+                            <option value="">Pilih Aras</option>
+                            <option value="G">G</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="8.5">8.5</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <!-- Keterangan -->
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Keterangan Aduan</label>
+                        <textarea name="tick_desc" id="tick_desc" class="form-control" rows="4" required></textarea>
+                    </div>
+
+                    <!-- Lampiran -->
+                    <div class="form-field-wrapper mb-3">
+                        <label class="form-label">Lampiran</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="ticket-attachments" name="attachments[]"
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple class="file-input d-none">
+                            <div id="attachment-drop-zone"
+                                class="file-drop-zone border-2 border-dashed border-secondary rounded-3 p-4 text-center"
+                                style="cursor: pointer;">
+                                <div class="drop-zone-content">
+                                    <i class="bx bx-file-find display-4 text-muted mb-3 d-block"></i>
+                                    <h6 class="text-muted mb-2">Seret dan lepaskan fail di sini </h6>
+                                    <p class="text-muted mb-2">atau <span class="text-primary fw-semibold">Muat naik
+                                            fail</span></p>
+                                    <small class="text-muted">Format yang dibenarkan: PDF, DOC, DOCX, JPG, JPEG, PNG
+                                        (Maks:
+                                        2MB setiap fail, maksimum 5 fail)</small>
+                                </div>
+                            </div>
+                            <div id="attachments-preview" class="files-preview mt-3"></div>
+                            <div class="invalid-feedback"></div>
+                            </input>
+                        </div>
                     </div>
 
                     <!-- Butang -->
@@ -361,29 +419,119 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const tickDescTextarea = document.getElementById('tick_desc');
+                const tickDescTextarea = document.getElementById('tick_desc');
 
-        if (tickDescTextarea) {
-            tickDescTextarea.addEventListener('input', function(e) {
-                let value = this.value;
-                let cursorPos = this.selectionStart;
+                if (tickDescTextarea) {
+                    tickDescTextarea.addEventListener('input', function(e) {
+                        let value = this.value;
+                        let cursorPos = this.selectionStart;
 
-                // Capitalize first letter
-                if (value.length > 0) {
-                    value = value.charAt(0).toUpperCase() + value.slice(1);
+                        // Capitalize first letter
+                        if (value.length > 0) {
+                            value = value.charAt(0).toUpperCase() + value.slice(1);
+                        }
+
+                        // Capitalize letter after period followed by space
+                        value = value.replace(/\.\s+([a-z])/g, function(match) {
+                            return match.toUpperCase();
+                        });
+
+                        // Only update if value changed to avoid cursor jumping
+                        if (this.value !== value) {
+                            this.value = value;
+                            this.setSelectionRange(cursorPos, cursorPos);
+                        }
+                    });
                 }
 
-                // Capitalize letter after period followed by space
-                value = value.replace(/\.\s+([a-z])/g, function(match) {
-                    return match.toUpperCase();
-                });
+                /* // Handle building location change to filter block and level options
+        const buildingSelect = document.getElementById('building_id');
+        const blockSelect = document.getElementById('block_id');
+        const levelSelect = document.getElementById('level_id');
 
-                // Only update if value changed to avoid cursor jumping
-                if (this.value !== value) {
-                    this.value = value;
-                    this.setSelectionRange(cursorPos, cursorPos);
+        //Store all original options (using arrays to maintain order)
+        const allBlockOptions = [
+            ['', 'Pilih Blok'],
+            ['U', 'Utara'],
+            ['TU', 'Tengah-Utara'],
+            ['T', 'Tengah'],
+            ['TS', 'Tengah-Selatan'],
+            ['S', 'Selatan']
+        ];
+
+        const allLevelOptions = [
+            ['', 'Pilih Aras'],
+            ['G', 'G'],
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3'],
+            ['4', '4'],
+            ['5', '5'],
+            ['6', '6'],
+            ['7', '7'],
+            ['8', '8'],
+            ['8.5', '8.5'],
+            ['9', '9'],
+            ['10', '10'],
+            ['11', '11'],
+            ['12', '12']
+        ];
+
+        Options for P2
+        const p2BlockOptions = [
+            ['', 'Pilih Blok'],
+            ['U', 'Utara'],
+            ['S', 'Selatan']
+        ];
+
+        const p2LevelOptions = [
+            ['', 'Pilih Aras'],
+            ['G', 'G'],
+            ['1', '1'],
+            ['2', '2'],
+            ['3', '3'],
+            ['4', '4'],
+            ['5', '5'],
+            ['6', '6'],
+            ['7', '7'],
+            ['8', '8'],
+            ['9', '9']
+        ];
+
+        function updateOptions(selectElement, options) {
+            const currentValue = selectElement.value;
+            selectElement.innerHTML = '';
+
+            for (let [value, text] of options) {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = text;
+                selectElement.appendChild(option);
+            }
+
+            // Restore previous value if it exists in new options
+            const validValues = options.map(opt => opt[0]);
+            if (validValues.includes(currentValue)) {
+                selectElement.value = currentValue;
+            } else {
+                selectElement.value = '';
+            }
+        }
+
+        if (buildingSelect && blockSelect && levelSelect) {
+            buildingSelect.addEventListener('change', function() {
+                const selectedBuilding = this.value;
+
+                if (selectedBuilding === 'P2') {
+                    // Perbendaharaan 2: Show only Utara & Selatan, Aras G to 9
+                    updateOptions(blockSelect, p2BlockOptions);
+                    updateOptions(levelSelect, p2LevelOptions);
+                } else {
+                    // Perbendaharaan 1 or no selection: Show all options
+                    updateOptions(blockSelect, allBlockOptions);
+                    updateOptions(levelSelect, allLevelOptions);
                 }
             });
         }
-    });
+    }); */
 </script>

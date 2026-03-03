@@ -36,6 +36,9 @@ class UpdateTicketRequest extends FormRequest
       'no_siri' => 'nullable|string|max:255',
       'escalate_to' => 'nullable|exists:users,id', // For manual officer assignment by authorized users
       'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
+      'building_loc' => 'required|in:P1,P2',
+      'block_loc' => 'required|in:U,TU,T,TS,S',
+      'level_loc' => 'required|in:G,1,2,3,4,5,6,7,8,8.5,9,10,11,12',
 
       // These fields should NOT be editable, but we accept them to avoid errors
       // They will be ignored in the controller
@@ -65,6 +68,9 @@ class UpdateTicketRequest extends FormRequest
       'no_siri' => 'no siri',
       'escalate_to' => 'pegawai tugasan',
       'attachments.*' => 'lampiran',
+      'building_loc' => 'lokasi bangunan',
+      'block_loc' => 'lokasi blok',
+      'level_loc' => 'lokasi tingkat',
     ];
   }
 
@@ -89,6 +95,12 @@ class UpdateTicketRequest extends FormRequest
       'attachments.*.file' => 'Lampiran mestilah fail yang sah.',
       'attachments.*.mimes' => 'Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG.',
       'attachments.*.max' => 'Saiz lampiran tidak boleh melebihi 2MB.',
+      'building_loc.required' => 'Sila pilih lokasi bangunan.',
+      'building_loc.in' => 'Lokasi bangunan yang dipilih tidak sah.',
+      'block_loc.required' => 'Sila pilih blok.',
+      'block_loc.in' => 'Blok yang dipilih tidak sah.',
+      'level_loc.required' => 'Sila pilih aras.',
+      'level_loc.in' => 'Aras yang dipilih tidak sah.',
     ];
   }
 }

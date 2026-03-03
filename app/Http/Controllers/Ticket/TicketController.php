@@ -35,32 +35,32 @@
 
 namespace App\Http\Controllers\Ticket;
 
-use App\Models\User;
-use App\Models\Ticket;
-use App\Models\TicketComment;
-use App\Models\Document;
-use App\Models\RefCategory;
-use App\Models\RefSubCategory;
-use App\Models\Sla;
-use App\Models\TicketChronology;
-use App\Models\Officer;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Models\RefTicketStatus;
+use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
-use App\Notifications\Ticket\PengaduStatusChangedNotification;
-use App\Services\TicketNotificationService;
-use Yajra\DataTables\Facades\DataTables;
-use App\Http\Requests\Ticket\StoreTicketRequest;
-use App\Http\Requests\Ticket\UpdateTicketRequest;
 use App\Http\Controllers\Ticket\TicketAttachmentController;
 use App\Http\Controllers\Ticket\TicketChronologyController;
-use App\Helpers\Helpers;
+use App\Http\Requests\Ticket\StoreTicketRequest;
+use App\Http\Requests\Ticket\UpdateTicketRequest;
+use App\Models\Document;
+use App\Models\Officer;
+use App\Models\RefCategory;
+use App\Models\RefSubCategory;
+use App\Models\RefTicketStatus;
+use App\Models\Sla;
+use App\Models\Ticket;
+use App\Models\TicketChronology;
+use App\Models\TicketComment;
+use App\Models\TicketLocation;
+use App\Models\User;
+use App\Services\TicketNotificationService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Yajra\DataTables\Facades\DataTables;
 
 class TicketController extends Controller
 {
@@ -614,9 +614,18 @@ class TicketController extends Controller
           'tick_duedate' => $tickDuedate,
           'created_by' => Auth::id(),
         ];
-
         // Create ticket
         $ticket = Ticket::create($data);
+
+        $dataLocation = [
+          'ticket_id' => $ticket->id,
+          'building_loc' => $validated['building_loc'],
+          'block_loc' => $validated['block_loc'],
+          'level_loc' => $validated['level_loc'],
+        ];
+        // Create ticket location
+        TicketLocation::create($dataLocation);
+
 
         // Situasi 1: Create ticket - sla_severity = null, sla_days = 3 working days
         $slaDays = 3; // Default 3 working days
@@ -719,13 +728,16 @@ class TicketController extends Controller
     // Load ticket with relationships including additional user fields
     $ticket->load(['user.skim', 'category', 'subCategory', 'status', 'attachments']);
 
-    // Enhance user data with additional fields
-    if ($ticket->user) {
-      $ticket->user->jawatan_name = $ticket->user->jawatan_name ?? '-';
-      $ticket->user->kod_skim = $ticket->user->kod_skim ?? '-';
-      $ticket->user->nama_skim = $ticket->user->skim?->nama_skim ?? null;
-      $ticket->user->nama_gred = $ticket->user->nama_gred ?? '-';
-    }
+    // Load ticket location
+    $location = TicketLocation::where('ticket_id', $ticket->id)->first();
+
+    // Enhance user data with additional fields (read-only for display)
+    // if ($ticket->user) {
+    //   $ticket->user->jawatan_name = $ticket->user->jawatan_name ?? '-';
+    //   $ticket->user->kod_skim = $ticket->user->kod_skim ?? '-';
+    //   $ticket->user->nama_skim = $ticket->user->skim?->nama_skim ?? null;
+    //   $ticket->user->nama_gred = $ticket->user->nama_gred ?? '-';
+    // }
 
     // Get categories and subcategories
     $categories = RefCategory::all();
@@ -775,6 +787,7 @@ class TicketController extends Controller
     return response()->json([
       'success' => true,
       'ticket' => $ticket,
+      'location' => $location,
       'categories' => $categories,
       'subCategories' => $subCategories,
       'available_officers' => $availableOfficers,
@@ -866,6 +879,18 @@ class TicketController extends Controller
     }
 
     $ticket->update($updateData);
+
+    // Update ticket location
+    $locationData = [
+      'building_loc' => $validated['building_loc'],
+      'block_loc' => $validated['block_loc'],
+      'level_loc' => $validated['level_loc'],
+    ];
+
+    TicketLocation::updateOrCreate(
+      ['ticket_id' => $ticket->id],
+      $locationData
+    );
 
     // Create chronology entry for category change OR manual officer assignment
     if ($categoryChanged || $manualOfficerAssignment) {
@@ -1056,6 +1081,9 @@ class TicketController extends Controller
     // Find ticket by UUID
     $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
 
+    // Find location
+    $location = TicketLocation::where('ticket_id', $ticket->id)->first();
+
     // Load ticket with comprehensive relationships
     $ticket->load([
       'user.sektor',
@@ -1073,6 +1101,7 @@ class TicketController extends Controller
       'chronologies.escalatedTo',
       'comments.user'
     ]);
+
 
     // Force reload comments to ensure they are current
     $ticket->load('comments.user');
@@ -1109,7 +1138,7 @@ class TicketController extends Controller
       'comments_count' => $ticket->comments->count()
     ]);
 
-    return view('tickets.show', compact('ticket', 'ticketHistory', 'allStatuses', 'allCategories', 'allSubCategories', 'officers', 'currentSLA'));
+    return view('tickets.show', compact('ticket', 'location', 'ticketHistory', 'allStatuses', 'allCategories', 'allSubCategories', 'officers', 'currentSLA'));
   }
 
   /**
