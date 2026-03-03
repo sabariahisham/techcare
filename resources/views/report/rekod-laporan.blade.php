@@ -116,12 +116,15 @@
 
         <div class="row g-2 align-items-center">
             <div class="col-md-3">
+                <label for="filter-from" class="form-label">Tarikh Dari:</label>
                 <input type="date" id="filter-from" class="form-control">
             </div>
             <div class="col-md-3">
+                <label for="filter-to" class="form-label">Tarikh Hingga:</label>
                 <input type="date" id="filter-to" class="form-control">
             </div>
             <div class="col-md-3">
+                <label for="filter-category" class="form-label">Kategori:</label>
                 <select id="filter-category" class="form-select">
                     <option value="">Semua Kategori</option>
                     @foreach($categories as $c)
