@@ -33,6 +33,9 @@
 @endsection
 
 @section('page-script')
+<script>
+  window.currentUserRoles = @json(auth()->user()->getRoleNames());
+</script>
 @vite([
   'resources/assets/js/roles/app-roles-validation.js',
   'resources/assets/js/roles/app-roles-list.js',

@@ -14,6 +14,17 @@
                         <span class="text-muted">({{ auth()->user()->email }})</span>
                     @endif
                 </p>
+                <p class="mb-2">
+                    <strong>Peranan:</strong>
+                    @php $roles = auth()->user()->getRoleNames(); @endphp
+                    @if($roles->isEmpty())
+                        <span class="badge bg-secondary">Pengadu</span>
+                    @else
+                        @foreach($roles as $role)
+                            <span class="badge bg-label-primary">{{ $role }}</span>
+                        @endforeach
+                    @endif
+                </p>
                 <p class="mb-0 text-muted small">
                     <i class="bx bx-info-circle me-1"></i>
                     Semua tindakan yang dilakukan akan dikaitkan dengan akaun pengguna yang sedang diambil alih.
