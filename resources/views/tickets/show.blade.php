@@ -59,6 +59,21 @@
             background-color: #218838 !important;
             color: white !important;
         }
+
+        /* Location info alignment */
+        .location-info .d-flex {
+            margin-bottom: 0.25rem;
+        }
+
+        .location-label {
+            display: inline-block;
+            min-width: 90px;
+            font-weight: 500;
+        }
+
+        .location-value {
+            margin-left: 0.5rem;
+        }
     </style>
 @endsection
 
@@ -104,7 +119,7 @@
                     <p class="mb-0 text-muted">{{ $ticket->ticket_nolog }}</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('tickets.index') }}" class="btn btn-outline-secondary">
+                    <a href="{{ route('tickets.user') }}" class="btn btn-outline-secondary">
                         <i class="bx bx-arrow-back me-1"></i>Kembali ke Senarai
                     </a>
                     <button type="button" class="btn btn-primary" onclick="window.print()">
@@ -220,57 +235,87 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <h6 class="mb-0">Tajuk Aduan</h6>
                         </div>
-                        <div class="col-sm-9 text-secondary">
+                        <div class="col-sm-8 text-secondary">
                             {{ $ticket->ticket_title }}
                         </div>
                     </div>
                     <hr>
                     <div class="row">
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <h6 class="mb-0">Kategori</h6>
                         </div>
-                        <div class="col-sm-9 text-secondary">
+                        <div class="col-sm-8 text-secondary">
                             {{ $ticket->category->cat_name ?? '-' }}
                         </div>
                     </div>
                     <hr>
                     <div class="row">
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <h6 class="mb-0">Sub Kategori</h6>
                         </div>
-                        <div class="col-sm-9 text-secondary">
+                        <div class="col-sm-8 text-secondary">
                             {{ $ticket->subCategory->subcat_name ?? '-' }}
                         </div>
                     </div>
                     @if ($ticket->category && $ticket->category->cat_name === 'Sewaan')
                         <hr>
                         <div class="row">
-                            <div class="col-sm-3">
+                            <div class="col-sm-4">
                                 <h6 class="mb-0">No. Siri <br> <small>(Sewaan)</small></h6>
                             </div>
-                            <div class="col-sm-9 text-secondary">
+                            <div class="col-sm-8 text-secondary">
                                 {{ $ticket->serial_number ?? '-' }}
                             </div>
                         </div>
                     @endif
                     <hr>
                     <div class="row">
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
+                            <h6 class="mb-0">Lokasi</h6>
+                        </div>
+                        <div class="col-sm-8 text-secondary">
+                            @if ($location)
+                                @php
+                                    // Mapping for building codes
+                                    $buildingMap = [
+                                        'P1' => 'Perbendaharaan 1',
+                                        'P2' => 'Perbendaharaan 2',
+                                    ];
+
+                                    // Mapping for block codes
+                                    $blockMap = [
+                                        'U' => 'Utara',
+                                        'TU' => 'Tengah-Utara',
+                                        'T' => 'Tengah',
+                                        'TS' => 'Tengah-Selatan',
+                                        'S' => 'Selatan',
+                                    ];
+                                @endphp
+                                Aras {{ $location->level_loc ?? '-' }} {{ $location->block_loc ? ', Blok ' . ($blockMap[$location->block_loc] ?? $location->block_loc) : '' }}
+                                     {{ $location->building_loc ? ', ' . ($buildingMap[$location->building_loc] ?? $location->building_loc) : '' }}
+                            @else
+                                -
+                            @endif
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-4">
                             <h6 class="mb-0">Keterangan Aduan</h6>
                         </div>
-                        <div class="col-sm-9 text-secondary">
+                        <div class="col-sm-8 text-secondary">
                             {!! nl2br(e(ucfirst($ticket->ticket_desc))) !!}
                         </div>
                     </div>
                     <hr>
                     <div class="row">
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
                             <h6 class="mb-0">Lampiran</h6>
                         </div>
-                        <div class="col-sm-9">
+                        <div class="col-sm-8">
                             @if ($ticket->attachments && $ticket->attachments->count() > 0)
                                 <div class="attachment-list">
                                     @foreach ($ticket->attachments as $attachment)
@@ -402,7 +447,7 @@
             @endphp
 
             @if ($canSeeTindakanPegawai)
-                <div class="card mb-0">
+                <div class="card mb-4">
                     <div class="card-header {{ $isReadOnlyView ? 'bg-label-secondary' : '' }} mb-4">
 
                         <div class="d-flex align-items-start">

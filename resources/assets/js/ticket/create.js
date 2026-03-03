@@ -264,6 +264,26 @@ $(function () {
       isValid = false;
     }
 
+    // Validate location fields
+    var buildingLoc = $('[name="building_loc"]').val();
+    var blockLoc = $('[name="block_loc"]').val();
+    var levelLoc = $('[name="level_loc"]').val();
+
+    if (!buildingLoc || buildingLoc === '') {
+      errors['building_loc'] = ['Sila pilih lokasi bangunan.'];
+      isValid = false;
+    }
+
+    if (!blockLoc || blockLoc === '') {
+      errors['block_loc'] = ['Sila pilih blok.'];
+      isValid = false;
+    }
+
+    if (!levelLoc || levelLoc === '') {
+      errors['level_loc'] = ['Sila pilih aras.'];
+      isValid = false;
+    }
+
     // Validate file attachments using attachment.js function
     var attachmentValidation = validateAttachments();
     if (!attachmentValidation.isValid) {
@@ -478,14 +498,39 @@ $(function () {
 
         // Scroll to first error if validation errors exist
         setTimeout(function () {
-          var firstError = $('.is-invalid').first();
-          if (firstError.length > 0) {
-            $('html, body').animate({
-              scrollTop: firstError.offset().top - 150
-            }, 500);
-            firstError.focus();
+          var firstInvalidField = $('#addTicketForm .is-invalid').first();
+          if (firstInvalidField.length > 0) {
+            var scrollTarget = firstInvalidField;
+
+            // If it's a Select2 field, scroll to the container instead
+            if (firstInvalidField.hasClass('select2-hidden-accessible')) {
+              scrollTarget = firstInvalidField.siblings('.select2-container').first();
+            }
+
+            // Scroll to the field within offcanvas
+            var offcanvasBody = $('#offcanvasAddTicket .offcanvas-body');
+            if (offcanvasBody.length > 0 && scrollTarget.length > 0) {
+              var fieldTop = scrollTarget.offset().top;
+              var offcanvasTop = offcanvasBody.offset().top;
+              var scrollPosition = offcanvasBody.scrollTop() + (fieldTop - offcanvasTop) - 100;
+
+              offcanvasBody.animate({
+                scrollTop: scrollPosition
+              }, 500);
+            }
+
+            // Focus on the field if it's not Select2
+            if (!firstInvalidField.hasClass('select2-hidden-accessible')) {
+              firstInvalidField.focus();
+            } else {
+              // Open Select2 dropdown to draw attention
+              firstInvalidField.select2('open');
+              setTimeout(function () {
+                firstInvalidField.select2('close');
+              }, 100);
+            }
           }
-        }, 100);
+        }, 150);
       },
       complete: function () {
         // Re-enable submit button and remove loading spinner

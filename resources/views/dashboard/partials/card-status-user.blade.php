@@ -16,7 +16,7 @@
                 </div>
             </div>
 
-            <a href="{{ route('tickets.index') }}" class="btn btn-outline-primary btn-sm d-block w-100 mt-2 mb-2"
+            <a href="{{ route('tickets.user') }}" class="btn btn-outline-primary btn-sm d-block w-100 mt-2 mb-2"
                 data-bs-toggle="tooltip" data-bs-title="Klik untuk log aduan baharu.">
                 <i class="bx bx-plus me-1"></i> Aduan Baharu
             </a>

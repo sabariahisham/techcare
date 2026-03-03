@@ -11,34 +11,84 @@ $(function () {
   // Validation helper functions
   function clearValidationErrors() {
     $('#editTicketForm .is-invalid').removeClass('is-invalid');
-    $('#editTicketForm .invalid-feedback').text('').hide();
+    $('#editTicketForm .invalid-feedback').removeClass('d-block').text('').hide();
     $('#editTicketForm .was-validated').removeClass('was-validated');
+    // Clear Select2 validation styling
+    $('#editTicketForm .select2-container').removeClass('is-invalid');
   }
 
   function displayValidationErrors(errors) {
     clearValidationErrors();
 
-    // Clear Select2 custom validation classes
-    $('#editCatId, #editSubcatId').removeClass('is-invalid');
-
     Object.keys(errors).forEach(function (fieldName) {
       var fieldElement = $('#editTicketForm [name="' + fieldName + '"]');
       var errorMessages = errors[fieldName];
+      var errorMessage = errorMessages[0];
 
       if (fieldElement.length > 0) {
-        fieldElement.addClass('is-invalid');
-        var feedbackElement = fieldElement.siblings('.invalid-feedback');
-
-        if (feedbackElement.length > 0) {
-          feedbackElement.text(errorMessages[0]).show();
+        // Skip validation display for readonly fields
+        if (fieldElement.prop('readonly')) {
+          return;
         }
+
+        fieldElement.addClass('is-invalid');
 
         // Handle Select2 fields specially
         if (fieldElement.hasClass('select2-hidden-accessible')) {
           fieldElement.siblings('.select2-container').addClass('is-invalid');
+          var feedbackElement = fieldElement.siblings('.invalid-feedback');
+          if (feedbackElement.length > 0) {
+            feedbackElement.addClass('d-block').text(errorMessage).show();
+          } else {
+            fieldElement.siblings('.select2-container').after('<div class="invalid-feedback d-block">' + errorMessage + '</div>');
+          }
+        } else {
+          // Handle regular fields
+          var feedbackElement = fieldElement.siblings('.invalid-feedback');
+          if (feedbackElement.length > 0) {
+            feedbackElement.addClass('d-block').text(errorMessage).show();
+          } else {
+            fieldElement.after('<div class="invalid-feedback d-block">' + errorMessage + '</div>');
+          }
         }
       }
     });
+
+    // Scroll to and focus on the first invalid field
+    setTimeout(function () {
+      var firstInvalidField = $('#editTicketForm .is-invalid').first();
+      if (firstInvalidField.length > 0) {
+        var scrollTarget = firstInvalidField;
+        
+        // If it's a Select2 field, scroll to the container instead
+        if (firstInvalidField.hasClass('select2-hidden-accessible')) {
+          scrollTarget = firstInvalidField.siblings('.select2-container').first();
+        }
+        
+        // Scroll to the field
+        var offcanvasBody = $('#offcanvasEditTicket .offcanvas-body');
+        if (offcanvasBody.length > 0 && scrollTarget.length > 0) {
+          var fieldTop = scrollTarget.offset().top;
+          var offcanvasTop = offcanvasBody.offset().top;
+          var scrollPosition = offcanvasBody.scrollTop() + (fieldTop - offcanvasTop) - 100;
+          
+          offcanvasBody.animate({
+            scrollTop: scrollPosition
+          }, 500);
+        }
+        
+        // Focus on the field if it's not Select2
+        if (!firstInvalidField.hasClass('select2-hidden-accessible')) {
+          firstInvalidField.focus();
+        } else {
+          // Open Select2 dropdown to draw attention
+          firstInvalidField.select2('open');
+          setTimeout(function () {
+            firstInvalidField.select2('close');
+          }, 100);
+        }
+      }
+    }, 150);
   }
 
   function validateEditForm() {
@@ -53,7 +103,10 @@ $(function () {
       { name: 'tick_title', label: 'Tajuk aduan' },
       { name: 'tick_desc', label: 'Keterangan aduan' },
       { name: 'cat_id', label: 'Kategori' },
-      { name: 'subcat_id', label: 'Sub kategori' }
+      { name: 'subcat_id', label: 'Sub kategori' },
+      { name: 'building_loc', label: 'Lokasi bangunan' },
+      { name: 'block_loc', label: 'Blok' },
+      { name: 'level_loc', label: 'Aras' }
     ];
 
     // Add conditional required fields based on ticket type
@@ -185,7 +238,7 @@ $(function () {
         console.log('Ticket data loaded:', response);
 
         if (response.success) {
-          populateEditForm(response.ticket, response.categories, response.subCategories);
+          populateEditForm(response.ticket, response.location, response.categories, response.subCategories);
           hideEditTicketLoading();
           $('#offcanvasEditTicket').offcanvas('show');
         } else {
@@ -218,7 +271,7 @@ $(function () {
   }
 
   // Populate edit form with ticket data
-  function populateEditForm(ticket, categories, subCategories) {
+  function populateEditForm(ticket, location, categories, subCategories) {
     // Reset attachments before populating form
     $('#editTicketAttachments').val(''); // Clear file input
     window.editSelectedAttachments = []; // Reset global array
@@ -233,6 +286,17 @@ $(function () {
     $('#editTicketType').val(ticket.ticket_type);
     $('#editTicketTypeHidden').val(ticket.ticket_type); // Set hidden input for form submission
     $('#editNoSiri').val(ticket.serial_number);
+
+    // Populate location fields
+    if (location) {
+      $('#edit_building_loc').val(location.building_loc || '');
+      $('#edit_block_loc').val(location.block_loc || '');
+      $('#edit_level_loc').val(location.level_loc || '');
+    } else {
+      $('#edit_building_loc').val('');
+      $('#edit_block_loc').val('');
+      $('#edit_level_loc').val('');
+    }
 
     // Populate categories dropdown
     var categoriesOptions = '<option value=\"\">Pilih Kategori</option>';

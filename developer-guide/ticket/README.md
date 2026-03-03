@@ -34,9 +34,14 @@ Dokumentasi lengkap untuk sistem tiket eHelp.
    - User details view
 
 ### System Features
-9. [**UUID Implementation Guide**](09_UUID_IMPLEMENTATION_GUIDE.md)
+8. [**UUID Implementation Guide**](08_UUID_IMPLEMENTATION_GUIDE.md)
    - UUID usage dalam sistem
    - Security dan unique identifiers
+
+9. [**Ticket Form Validation**](09_TICKET_FORM_VALIDATION.md) ⭐ NEW
+   - Client & server-side validation
+   - Auto-scroll to validation errors
+   - Error display & handling
 
 ## 📧 Email & Notifications
 
@@ -55,6 +60,7 @@ Including:
 
 ### For Developers
 - **Starting new?** → Start with [01_TICKET_LIST_DATATABLE.md](01_TICKET_LIST_DATATABLE.md)
+- **Working on forms?** → Check [09_TICKET_FORM_VALIDATION.md](09_TICKET_FORM_VALIDATION.md)
 - **Working on notifications?** → Check [../notification/README.md](../notification/README.md)
 - **Chronology tracking** → [04_VIEW_KRONOLOGI_TIKET.md](04_VIEW_KRONOLOGI_TIKET.md)
 - **Officer actions** → [06_VIEW_TINDAKAN_PEGAWAI.md](06_VIEW_TINDAKAN_PEGAWAI.md)
@@ -66,6 +72,12 @@ Including:
 
 ## 🆕 Latest Updates
 
+### March 3, 2026
+- ✅ **Form Validation Enhancement** - Added auto-scroll to validation errors
+- ✅ **New Documentation** - [09_TICKET_FORM_VALIDATION.md](09_TICKET_FORM_VALIDATION.md)
+- ✅ **Improved Error Display** - Consistent error styling for Add & Edit forms
+- ✅ **Select2 Validation** - Enhanced dropdown field validation
+
 ### January 27, 2026
 - ✅ **Documentation Reorganization** - Separated ticket and notification docs
 - ✅ **SLA Notification System** - Moved to [../notification/](../notification/)
@@ -75,9 +87,11 @@ Including:
 
 ### Ticket Management
 - Create ticket: [02_TICKET_FORM_LOG_BARU.md](02_TICKET_FORM_LOG_BARU.md)
+- Form validation: [09_TICKET_FORM_VALIDATION.md](09_TICKET_FORM_VALIDATION.md)
 - List tickets: [01_TICKET_LIST_DATATABLE.md](01_TICKET_LIST_DATATABLE.md)
 - View ticket: [05_VIEW_MAKLUMAT_ADUAN.md](05_VIEW_MAKLUMAT_ADUAN.md)
 - Track history: [04_VIEW_KRONOLOGI_TIKET.md](04_VIEW_KRONOLOGI_TIKET.md)
+- Attachments: [03_TICKET_ATTACHMENT.md](03_TICKET_ATTACHMENT.md)
 
 ### Officer Features
 - Assign tickets: [06_VIEW_TINDAKAN_PEGAWAI.md](06_VIEW_TINDAKAN_PEGAWAI.md)
@@ -127,6 +141,6 @@ For questions or issues:
 
 ---
 
-**Last Updated**: January 27, 2026  
-**Version**: 1.0.0  
+**Last Updated**: March 3, 2026  
+**Version**: 1.1.0  
 **Status**: ✅ Production Ready
