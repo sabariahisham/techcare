@@ -62,8 +62,9 @@ Schedule::command('sla:send-notifications --type=all')
 // ============================================================================
 
 //disable dulu, sebab nak buat manual sync dahulu, akan enable balik bila dah confirm semua data betul dan sync berjalan lancar
+//untuk sync users sekali sehari pun dah cukup, tak perlu real-time, sebab data users jarang berubah, mostly bila ada penambahan user baru je, jarang sekali ada perubahan pada user yang sedia ada
 // Schedule::command('sync:users-spp')
-//  ->dailyAt('2:00')
+//  ->dailyAt('2:00') 
 //   ->timezone('Asia/Kuala_Lumpur')
 //   ->name('Sync Users from SPP Database')
 //   ->description('Sync users data from spp_db.users to ehelp.users at 2:00 AM daily')
