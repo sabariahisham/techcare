@@ -61,14 +61,16 @@ Schedule::command('sla:send-notifications --type=all')
 // - Uses updateOrInsert to prevent duplicates
 // ============================================================================
 
-Schedule::command('sync:users-spp')
-  ->dailyAt('2:00')
-  ->timezone('Asia/Kuala_Lumpur')
-  ->name('Sync Users from SPP Database')
-  ->description('Sync users data from spp_db.users to ehelp.users at 2:00 AM daily')
-  ->onSuccess(function () {
-    \Illuminate\Support\Facades\Log::info('✓ Users sync from SPP executed successfully at ' . now()->toDateTimeString());
-  })
-  ->onFailure(function () {
-    \Illuminate\Support\Facades\Log::error('✗ Users sync from SPP failed at ' . now()->toDateTimeString());
-  });
+//disable dulu, sebab nak buat manual sync dahulu, akan enable balik bila dah confirm semua data betul dan sync berjalan lancar
+//untuk sync users sekali sehari pun dah cukup, tak perlu real-time, sebab data users jarang berubah, mostly bila ada penambahan user baru je, jarang sekali ada perubahan pada user yang sedia ada
+// Schedule::command('sync:users-spp')
+//  ->dailyAt('2:00') 
+//   ->timezone('Asia/Kuala_Lumpur')
+//   ->name('Sync Users from SPP Database')
+//   ->description('Sync users data from spp_db.users to ehelp.users at 2:00 AM daily')
+//   ->onSuccess(function () {
+//     \Illuminate\Support\Facades\Log::info('✓ Users sync from SPP executed successfully at ' . now()->toDateTimeString());
+//   })
+//   ->onFailure(function () {
+//     \Illuminate\Support\Facades\Log::error('✗ Users sync from SPP failed at ' . now()->toDateTimeString());
+//   });
