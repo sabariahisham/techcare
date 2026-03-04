@@ -45,24 +45,21 @@ class LaporanStatusAduanTahunanController extends Controller
 
         /**
          * SUBQUERY:
-         * Ambil STATUS TERKINI bagi setiap ticket
+         * Ambil SEMUA STATUS yang pernah ada bagi setiap ticket
+         * (bukan hanya status terkini, konsisten dengan RekodLaporanController)
          */
-        $latestStatus = DB::table('tickets_chronologies as tc1')
-            ->select('tc1.ticket_id', 'tc1.tick_status')
-            ->whereNull('tc1.deleted_at')
-            ->whereRaw('tc1.created_at = (
-                SELECT MAX(tc2.created_at)
-                FROM tickets_chronologies tc2
-                WHERE tc2.ticket_id = tc1.ticket_id
-                  AND tc2.deleted_at IS NULL
-            )');
+        $allStatuses = DB::table('tickets_chronologies as tc')
+            ->select('tc.ticket_id', 'tc.tick_status')
+            ->whereNull('tc.deleted_at')
+            ->groupBy('tc.ticket_id', 'tc.tick_status'); // Distinct combination
 
         /**
          * QUERY UTAMA:
          * Kira jumlah aduan mengikut
          * - Kategori
-         * - Status terkini
+         * - SEMUA status yang pernah ada (bukan hanya status terkini)
          * - Tahun & Bulan (ikut tarikh tiket dicipta)
+         * Nota: Setiap ticket boleh dikira dalam multiple status jika pernah ada rekod status tersebut
          */
         $data = DB::table('ref_categories as c')
             ->whereNull('c.deleted_at')
@@ -80,12 +77,12 @@ class LaporanStatusAduanTahunanController extends Controller
                 }
             })
 
-            ->leftJoinSub($latestStatus, 'ls', function ($join) {
-                $join->on('ls.ticket_id', '=', 't.id');
+            ->leftJoinSub($allStatuses, 'als', function ($join) {
+                $join->on('als.ticket_id', '=', 't.id');
             })
 
             ->leftJoin('ref_ticket_statuses as s', function ($join) {
-                $join->on('s.id', '=', 'ls.tick_status')
+                $join->on('s.id', '=', 'als.tick_status')
                      ->whereNull('s.deleted_at');
             })
 
