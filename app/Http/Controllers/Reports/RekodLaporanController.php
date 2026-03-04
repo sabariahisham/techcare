@@ -35,25 +35,18 @@ class RekodLaporanController extends Controller
         $to     = $request->to;
         $catId  = $request->category;
 
-        // Subquery untuk rank SEMUA rekod chronology untuk setiap ticket
-        // Kemudian filter yang status 6 DAN bukan rekod pertama overall
-        // SAMA SEPERTI FUNCTION PERINCIAN
-        $chronologySelesai = DB::table(DB::raw('(
-            SELECT 
-                tc.*,
-                ROW_NUMBER() OVER (PARTITION BY tc.ticket_id ORDER BY tc.created_at ASC) as row_num
-            FROM tickets_chronologies tc
-            WHERE tc.deleted_at IS NULL
-        ) as ranked_tc'))
-        ->where('tick_status', 6)     // Hanya status SELESAI
-        ->where('row_num', '>', 1)     // Bukan rekod pertama overall
-        ->whereNotNull('escalate_to')
-        ->select(
-            'ticket_id',
-            'tick_status',
-            'created_at as tarikh_chronology',
-            'updated_at as tarikh_updated'
-        );
+        // Subquery untuk ambil rekod chronology dengan status SELESAI (status 6)
+        // Filter berdasarkan tarikh ticket dicipta (konsisten dengan LaporanStatusAduanTahunan)
+        $chronologySelesai = DB::table('tickets_chronologies as tc')
+            ->where('tick_status', 6)     // Hanya status SELESAI
+            ->whereNull('deleted_at')
+            ->select(
+                'ticket_id',
+                'tick_status',
+                'created_at as tarikh_chronology',
+                'updated_at as tarikh_updated',
+                'escalate_to'
+            );
 
         $base = DB::table('tickets as t')
             ->joinSub($chronologySelesai, 'tc2', function ($join) {
@@ -94,13 +87,13 @@ class RekodLaporanController extends Controller
             );
 
 
-        // Apply filters (sama seperti perincian)
+        // Apply filters - GUNA t.created_at (bila ticket dicipta)
         if ($from) {
-            $base->whereDate('tc2.tarikh_chronology', '>=', $from);
+            $base->whereDate('t.created_at', '>=', $from);
         }
 
         if ($to) {
-            $base->whereDate('tc2.tarikh_chronology', '<=', $to);
+            $base->whereDate('t.created_at', '<=', $to);
         }
 
         if ($catId) {
@@ -112,6 +105,15 @@ class RekodLaporanController extends Controller
         // Count jumlah tickets yang tidak soft-deleted
         $jumlahTickets = DB::table('tickets')
             ->whereNull('deleted_at');
+
+        // Apply date filter pada created_at tickets
+        if ($from) {
+            $jumlahTickets->whereDate('created_at', '>=', $from);
+        }
+
+        if ($to) {
+            $jumlahTickets->whereDate('created_at', '<=', $to);
+        }
 
         if ($catId) {
             $jumlahTickets->where('cat_id', $catId);
@@ -126,6 +128,15 @@ class RekodLaporanController extends Controller
             ->select('c.cat_name', DB::raw('COUNT(*) as total'))
             ->groupBy('c.cat_name');
 
+        // Apply same date filters
+        if ($from) {
+            $jumlahPerCategory->whereDate('t.created_at', '>=', $from);
+        }
+
+        if ($to) {
+            $jumlahPerCategory->whereDate('t.created_at', '<=', $to);
+        }
+
         if ($catId) {
             $jumlahPerCategory->where('t.cat_id', $catId);
         }
@@ -135,7 +146,7 @@ class RekodLaporanController extends Controller
         // ================= KPI =================
         $kpi = [
             'jumlah'  => $jumlahTotal,
-            'selesai' => $rows->count(),
+            'selesai' => $rows->unique('id')->count(), // Count DISTINCT ticket_id
             'purata'  => round($rows->avg('tempoh_minit'), 2),
             'purata_jam'  => round($rows->avg('tempoh_jam'), 2),    
         ];
@@ -146,7 +157,7 @@ class RekodLaporanController extends Controller
             ->map(function ($items, $cat) use ($jumlahPerCategory) {
                 return [
                     'kategori' => $cat,
-                    'selesai'  => $items->count(),
+                    'selesai'  => $items->unique('id')->count(), // Count DISTINCT ticket_id
                     'jumlah'   => $jumlahPerCategory[$cat]->total ?? 0,
                 ];
             })
@@ -166,7 +177,7 @@ class RekodLaporanController extends Controller
     public function perincian(Request $request)
     {
         // Subquery untuk rank SEMUA rekod chronology untuk setiap ticket
-        // Kemudian filter yang status 6 DAN bukan rekod pertama overall
+        // Ambil semua status bukan rekod pertama overall
         $chronologySelesai = DB::table(DB::raw('(
             SELECT 
                 tc.*,
@@ -174,7 +185,6 @@ class RekodLaporanController extends Controller
             FROM tickets_chronologies tc
             WHERE tc.deleted_at IS NULL
         ) as ranked_tc'))
-        ->where('tick_status', 6)     // Hanya status SELESAI
         ->where('row_num', '>', 1)     // Bukan rekod pertama overall
         ->whereNotNull('escalate_to')  
         ->select(
@@ -186,7 +196,7 @@ class RekodLaporanController extends Controller
         );
 
         $query = DB::table('tickets as t')
-            // Join dengan rekod SELESAI (kecuali yang pertama overall)
+            // Join dengan rekod chronology (kecuali yang pertama overall)
             ->joinSub($chronologySelesai, 'tc2', function ($join) {
                 $join->on('t.id', '=', 'tc2.ticket_id');
             })
@@ -200,7 +210,7 @@ class RekodLaporanController extends Controller
                 $j->on('tech.id', '=', 'tc2.escalate_to');
             })
 
-            ->leftJoin('ref_ticket_statuses as s', 's.id', '=', 't.tick_status')
+            ->leftJoin('ref_ticket_statuses as s', 's.id', '=', 'tc2.tick_status')
 
             ->select(
                 't.id',
@@ -224,15 +234,8 @@ class RekodLaporanController extends Controller
                 // Tindakan diambil (rekod kedua - which is tc2)
                 DB::raw('tc2.tarikh_updated as tindakan_diambil'),
 
-                // Tarikh selesai (rekod status 6)
-                DB::raw('(
-                    SELECT tc6.created_at
-                    FROM tickets_chronologies tc6
-                    WHERE tc6.ticket_id = t.id
-                    AND tc6.tick_status = 6
-                    AND tc6.deleted_at IS NULL
-                    LIMIT 1
-                ) as tarikh_selesai'),
+                // Tarikh status terakhir (dari tc2)
+                DB::raw('tc2.tarikh_chronology as tarikh_selesai'),
 
                 // Tempoh tindakan dalam minit
                 DB::raw('TIMESTAMPDIFF(
@@ -266,12 +269,12 @@ class RekodLaporanController extends Controller
             );
 
 
-        // Apply filters (filter by rekod ke-2 chronology date)
+        // Apply filters - GUNA t.created_at (bila ticket dicipta)
         if ($request->from) {
-            $query->whereDate('tc2.tarikh_chronology', '>=', $request->from);
+            $query->whereDate('t.created_at', '>=', $request->from);
         }
         if ($request->to) {
-            $query->whereDate('tc2.tarikh_chronology', '<=', $request->to);
+            $query->whereDate('t.created_at', '<=', $request->to);
         }
         if ($request->category) {
             $query->where('t.cat_id', $request->category);
@@ -295,8 +298,18 @@ class RekodLaporanController extends Controller
                 return $r->tempoh_jam . ' jam';
             })
             ->addColumn('status_display', function ($r) {
-                $statusLabel = $r->chronology_status == 6 ? 'Selesai' : 'Status ' . $r->chronology_status;
-                $statusClass = $r->chronology_status == 6 ? 'text-success' : 'text-warning';
+                // Tentukan warna berdasarkan status
+                $statusClass = 'text-secondary'; // default
+                switch($r->chronology_status) {
+                    case 1: $statusClass = 'text-info'; break;      // Baru
+                    case 2: $statusClass = 'text-warning'; break;   // Dalam Proses
+                    case 3: $statusClass = 'text-secondary'; break; // Pending
+                    case 4: $statusClass = 'text-purple'; break;    // Escalate
+                    case 5: $statusClass = 'text-danger'; break;    // Reject
+                    case 6: $statusClass = 'text-success'; break;   // Selesai
+                }
+                
+                $statusLabel = $r->status ?? 'Status ' . $r->chronology_status;
                 
                 return '<div class="' . $statusClass . ' fw-bold">' . $statusLabel . '</div>' .
                        '<div class="text-muted small">' . date('d-m-Y : h:i:s A', strtotime($r->tarikh_mula)) . '</div>' .

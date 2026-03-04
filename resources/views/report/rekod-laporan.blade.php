@@ -23,6 +23,7 @@
 @section('vendor-script')
 @vite([
   'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js',
+  'resources/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.js',
   'resources/assets/vendor/libs/@form-validation/popular.js',
   'resources/assets/vendor/libs/@form-validation/bootstrap5.js',
   'resources/assets/vendor/libs/@form-validation/auto-focus.js',
@@ -115,6 +116,7 @@
         </h5>
 
         <div class="row g-2 align-items-center">
+            
             <div class="col-md-3">
                 <label for="filter-from" class="form-label">Tarikh Dari:</label>
                 <input type="date" id="filter-from" class="form-control">
@@ -131,6 +133,12 @@
                         <option value="{{ $c->id }}">{{ $c->cat_name }}</option>
                     @endforeach
                 </select>
+            </div>
+            <div class="col-md-2">
+                <label for="btn-back" class="form-label d-block">&nbsp;</label>
+                <a href="{{ route('report-index') }}" class="btn btn-secondary w-100">
+                    <i class="bx bx-arrow-back me-1"></i>Kembali
+                </a>
             </div>
             <div class="col-md-3 text-end" id="export-btn">
                 {{-- Button export di-render oleh JS --}}
@@ -170,7 +178,6 @@
                         <tr>
                             <th>Kategori</th>
                             <th>Aduan Selesai</th>
-                            <th>Jumlah Aduan</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -184,7 +191,8 @@
 
             {{-- PERINCIAN --}}
             <div class="tab-pane fade" id="tab-perincian">
-                <table class="table table-striped align-middle" id="table-perincian">
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle" id="table-perincian">
                     <thead>
                         <tr>
                             <th>Bil</th>
@@ -198,7 +206,9 @@
                             <th>Pegawai Tugasan</th>
                         </tr>
                     </thead>
+                    <tbody></tbody>
                 </table>
+                </div>
             </div>
 
         </div>

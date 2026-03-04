@@ -48,7 +48,7 @@ $(function () {
         },
         {
           id: 3,
-          name: 'Laporan Bulanan Aduan',
+          name: 'Laporan Aduan Tahunan',
           description: 'Laporan bulanan aduan yang diterima mengikut kategori dan tahunan',
           updated_at: currentDateTime
         },
