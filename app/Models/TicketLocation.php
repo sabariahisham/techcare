@@ -12,7 +12,7 @@ class TicketLocation extends Model implements Auditable
   use HasFactory, SoftDeletes;
   use \OwenIt\Auditing\Auditable;
 
-  protected $table = 'ticket_locations';
+  protected $table = 'tickets_locations';
 
   protected $fillable = [
     'ticket_id',
