@@ -1,12 +1,14 @@
 # Dashboard Documentation - Index
 
-Dokumentasi lengkap untuk Dashboard sistem eHelp.
+Dokumentasi lengkap untuk Dashboard Management sistem eHelp (Admin, Helpdesk, Pengurusan MOF).
+
+> **Note**: Untuk dokumentasi Dashboard Pegawai Tugasan, sila rujuk [Dashboard Pegawai Tugasan](../dashboard-pegawai-tugasan/README.md)
 
 ## Kandungan
 
 ### [01 - Gambaran Keseluruhan](01-overview.md)
 - Tujuan dan matlamat dashboard
-- Sokongan peranan (6 roles)
+- Sokongan peranan (5 roles: Admin, Helpdesk, Pengurusan)
 - Ciri-ciri utama
 - Komponen dashboard
 - Struktur fail
@@ -50,10 +52,8 @@ Dokumentasi lengkap untuk Dashboard sistem eHelp.
 - Role-specific services:
   - AdminDashboard
   - HelpdeskDashboard
-  - PegawaiTugasanDashboard
   - PengurusanDashboard
 - Widget services:
-  - TugasanAndaWidget
   - TrendBulananWidget
   - TicketSummaryWidget
   - SLAWidget
@@ -61,6 +61,8 @@ Dokumentasi lengkap untuk Dashboard sistem eHelp.
   - PegawaiPerformanceWidget
 - Service testing
 - Best practices
+
+> **Note**: PegawaiTugasanDashboard dan TugasanAndaWidget didokumentasikan di [dashboard-pegawai-tugasan](../dashboard-pegawai-tugasan/03-services.md)
 
 ### [05 - Frontend (Blade & JavaScript)](05-frontend.md)
 - Blade templates structure
@@ -70,7 +72,6 @@ Dokumentasi lengkap untuk Dashboard sistem eHelp.
   - Status cards
   - Chart partials
   - Table partials
-  - Pegawai tugasan partials
 - JavaScript (dashboard.js):
   - Load card data
   - Initialize charts (Chart.js)
@@ -175,9 +176,7 @@ Dashboard
 │   │   ├── HelpdeskDashboard
 │   │   ├── PegawaiTugasanDashboard
 │   │   └── PengurusanDashboard
-│   └── Widgets
-│       ├── TugasanAndaWidget
-│       ├── TrendBulananWidget
+│   └── Widgetst
 │       ├── TicketSummaryWidget
 │       ├── SLAWidget
 │       ├── KategoriWidget
@@ -189,8 +188,7 @@ Dashboard
 │       ├── cards-status.blade.php
 │       ├── chart-*.blade.php
 │       └── pegawai-tugasan/
-└── JavaScript
-    └── dashboard.js
+└── Java└── chart-*.blade.php
 ```
 
 ---
@@ -199,8 +197,8 @@ Dashboard
 
 ### PHP
 - **Controllers**: `DashboardController`
-- **Services**: `DashboardService`, `AdminDashboard`
-- **Widgets**: `TugasanAndaWidget`, `SLAWidget`
+- **Services**: `DashboardService`, `AdminDashboard`, `HelpdeskDashboard`
+- **Widgets**: `TicketSummaryWidget`, `SLAWidget`, `TrendBulananWidget`
 - **Methods**: camelCase (`getData`, `getTodayLogsCount`)
 
 ### Database
@@ -269,6 +267,14 @@ Untuk soalan atau bantuan:
 
 ---
 
+## Dokumentasi Berkaitan
+
+- **[Dashboard Pegawai Tugasan](../dashboard-pegawai-tugasan/README.md)** - Dokumentasi dashboard untuk Pegawai Tugasan (berasingan)
+- **[Ticket System](../ticket/README.md)** - Sistem tiket keseluruhan
+- **[Notification System](../notification/README.md)** - Sistem notifikasi
+
+---
+
 ## Changelog
 
 ### Version 1.0.0 (2026-01-28)
@@ -288,5 +294,5 @@ Internal use only - Kementerian Kewangan Malaysia
 
 ---
 
-**Dokumentasi ini dikemaskini pada**: 28 Januari 2026
-**Versi**: 1.0.0
+**Dokumentasi ini dikemaskini pada**: 5 Mac 2026
+**Versi**: 1.1.0 (Separated Pegawai Tugasan documentation)

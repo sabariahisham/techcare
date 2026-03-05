@@ -1,3 +1,5 @@
+{{-- CLOSED AFTER UAT (04032026) - KEEPING FILE FOR FUTURE USE --}}
+{{-- This chart is currently not displayed but kept for potential future requirements --}}
 <div class="col-lg-4 col-md-12 d-flex align-items-stretch dashboard-main-cards chart-card">
     <div class="card flex-fill">
         <div class="card-header">

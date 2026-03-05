@@ -195,11 +195,28 @@ if (typeof window.config === 'undefined') {
         if (data.success) {
           const labels = data.data.map(item => item.cat_name);
           const counts = data.data.map(item => item.count);
+          const categoryIds = data.data.map(item => item.id); // Store category IDs for drill-down
           const colors = data.data.map((item, index) => categoryColors[index % categoryColors.length]);
 
           console.log('Category labels:', labels);
           console.log('Category counts:', counts);
+          console.log('Category IDs:', categoryIds);
           console.log('Category colors:', colors);
+
+          // Determine legend position based on screen size
+          const isSmallScreen = window.innerWidth < 992; // Bootstrap lg breakpoint
+          const legendPosition = isSmallScreen ? 'bottom' : 'right';
+          const legendMaxWidth = isSmallScreen ? null : 180;
+
+          // Variables for drill-down feature
+          let currentHoverIndex = -1;
+          let categoryDrilldownModal = null;
+
+          // Initialize Bootstrap modal
+          const modalElement = document.getElementById('categoryDrilldownModal');
+          if (modalElement && typeof bootstrap !== 'undefined') {
+            categoryDrilldownModal = new bootstrap.Modal(modalElement);
+          }
 
           // Create the category doughnut chart (different style from status chart)
           const categoryChartVar = new Chart(categoryChart, {
@@ -227,40 +244,72 @@ if (typeof window.config === 'undefined') {
                 animateScale: false
               },
               cutout: '60%', // Different cutout from status chart (75%)
+              layout: {
+                padding: {
+                  right: isSmallScreen ? 0 : 10
+                }
+              },
+              // Enable click events for drill-down modal
+              onClick: (event, activeElements) => {
+                if (activeElements.length > 0) {
+                  const index = activeElements[0].index;
+                  const categoryId = categoryIds[index];
+                  const categoryName = labels[index];
+                  
+                  // Load and show subcategory data in modal
+                  loadSubcategoryData(categoryId, categoryName);
+                }
+              },
               plugins: {
                 legend: {
                   display: true,
-                  position: 'right',
-                  align: 'center',
+                  position: legendPosition,
+                  align: 'start',
+                  maxWidth: legendMaxWidth,
                   labels: {
                     usePointStyle: true,
                     pointStyle: 'circle',
-                    padding: 15,
-                    boxWidth: 10,
-                    boxHeight: 10,
+                    padding: 8,
+                    boxWidth: 8,
+                    boxHeight: 8,
                     color: headingColor,
                     font: {
-                      size: 11,
+                      size: 10,
                       weight: '500'
-                    },
+         },
+                    textAlign: 'left',
                     generateLabels: function (chart) {
                       const data = chart.data;
                       if (data.labels.length && data.datasets.length) {
                         return data.labels.map((label, index) => {
                           const dataset = data.datasets[0];
                           const value = dataset.data[index];
+                          // Truncate long labels on small screens
+                          let displayLabel = label;
+                          if (window.innerWidth < 576 && label.length > 25) {
+                            displayLabel = label.substring(0, 22) + '...';
+                          }
                           return {
-                            text: `${label}: ${value}`,
+                            text: `${displayLabel}: ${value}`,
                             fillStyle: dataset.backgroundColor[index],
                             strokeStyle: dataset.borderColor,
                             lineWidth: dataset.borderWidth,
-                            hidden: isNaN(value) || value === 0,
+                            hidden: false,
                             index: index
                           };
                         });
                       }
                       return [];
                     }
+                  },
+                  // Add click event to legend items as well
+                  onClick: (event, legendItem) => {
+                    const index = legendItem.index;
+                    const categoryId = categoryIds[index];
+                    const categoryName = labels[index];
+                    
+                    // Load and show subcategory data in modal
+                    loadSubcategoryData(categoryId, categoryName);
                   }
                 },
                 tooltip: {
@@ -291,6 +340,100 @@ if (typeof window.config === 'undefined') {
           });
 
           console.log('Category chart created successfully');
+
+          // Function to load subcategory data for drill-down modal
+          function loadSubcategoryData(categoryId, categoryName) {
+            console.log(`Loading subcategories for category ID: ${categoryId}, Name: ${categoryName}`);
+            
+            fetch(`/dashboard/category/${categoryId}/subcategories`)
+              .then(response => response.json())
+              .then(data => {
+                if (data.success && data.data.length > 0) {
+                  displaySubcategoryModal(data.data, categoryName);
+                } else {
+                  // No subcategories found, show message
+                  displaySubcategoryModal([], categoryName);
+                }
+              })
+              .catch(error => {
+                console.error('Error fetching subcategory data:', error);
+                alert('Ralat memuatkan data sub kategori. Sila cuba lagi.');
+              });
+          }
+
+          // Function to display subcategory data in modal
+          function displaySubcategoryModal(subcategories, categoryName) {
+            const tableBody = document.getElementById('categoryDrilldownTableBody');
+            const tableTitle = document.getElementById('categoryDrilldownTitle');
+            const totalElement = document.getElementById('categoryDrilldownTotal');
+            
+            if (!tableBody || !categoryDrilldownModal) {
+              return;
+            }
+
+            // Update title with category name
+            if (tableTitle) {
+              tableTitle.textContent = `Sub Kategori: ${categoryName}`;
+            }
+
+            // Clear existing rows
+            tableBody.innerHTML = '';
+
+            // Filter subcategories to show only those with tickets (count > 0)
+            const subcategoriesWithTickets = subcategories.filter(subcat => subcat.count > 0);
+
+            // Calculate total tickets
+            const totalTickets = subcategoriesWithTickets.reduce((sum, subcat) => sum + subcat.count, 0);
+
+            // Update total in footer
+            if (totalElement) {
+              totalElement.textContent = totalTickets;
+            }
+
+            if (subcategoriesWithTickets.length === 0) {
+              // Show no data message
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                <td colspan="3" class="text-center text-muted py-4">
+                  <i class="ti ti-inbox me-2"></i>
+                  Tiada sub kategori dengan tiket dijumpai
+                </td>
+              `;
+              tableBody.appendChild(row);
+            } else {
+              // Populate table with subcategory data (only those with tickets)
+              subcategoriesWithTickets.forEach((subcat, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td class="text-center">${index + 1}</td>
+                  <td class="text-start">${subcat.subcat_name}</td>
+                  <td class="text-center"><strong>${subcat.count}</strong></td>
+                `;
+                tableBody.appendChild(row);
+              });
+            }
+
+            // Show the modal
+            categoryDrilldownModal.show();
+            
+            console.log(`Displaying ${subcategoriesWithTickets.length} subcategories (with tickets) for ${categoryName} in modal`);
+            console.log(`Total tickets: ${totalTickets}`);
+          }
+
+          // Handle window resize for responsive legend positioning
+          let resizeTimeout;
+          window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+              if (categoryChartVar) {
+                const isSmallScreen = window.innerWidth < 992;
+                categoryChartVar.options.plugins.legend.position = isSmallScreen ? 'bottom' : 'right';
+                categoryChartVar.options.plugins.legend.maxWidth = isSmallScreen ? null : 180;
+                categoryChartVar.options.layout.padding.right = isSmallScreen ? 0 : 10;
+                categoryChartVar.update();
+              }
+            }, 250);
+          });
         } else {
           console.error('Category API returned success: false');
         }
@@ -1283,8 +1426,8 @@ if (typeof window.config === 'undefined') {
           const ctx = chartCanvas.getContext('2d');
 
           // Ensure canvas has proper height
-          chartCanvas.style.height = '80px';
-          chartCanvas.height = 80;
+          chartCanvas.style.height = '50px';
+          chartCanvas.height = 50;
 
           const completedPercentage = 100 - data.percentage;
           const completedCount = data.total_count - data.pending_count;
@@ -1543,8 +1686,8 @@ if (typeof window.config === 'undefined') {
           const ctx = chartCanvas.getContext('2d');
 
           // Ensure canvas has proper height
-          chartCanvas.style.height = '80px';
-          chartCanvas.height = 80;
+          chartCanvas.style.height = '50px';
+          chartCanvas.height = 50;
 
           const completedPercentage = 100 - data.percentage;
           const completedCount = data.total_count - data.pending_count;
@@ -1669,6 +1812,14 @@ if (typeof window.config === 'undefined') {
               indexAxis: 'y',
               responsive: true,
               maintainAspectRatio: false,
+              layout: {
+                padding: {
+                  top: 5,
+                  bottom: 5,
+                  left: 0,
+                  right: 0
+                }
+              },
               animation: {
                 duration: 800
               },
@@ -1682,7 +1833,7 @@ if (typeof window.config === 'undefined') {
                   ticks: {
                     color: labelColor,
                     font: {
-                      size: 11
+                      size: 10
                     },
                     stepSize: 1,
                     callback: function (value) {
@@ -1697,12 +1848,12 @@ if (typeof window.config === 'undefined') {
                   ticks: {
                     color: headingColor,
                     font: {
-                      size: 11,
+                      size: 10,
                       weight: '500'
                     },
                     callback: function (value, index) {
                       const label = this.getLabelForValue(value);
-                      return label.length > 15 ? label.substring(0, 15) + '...' : label;
+                      return label.length > 12 ? label.substring(0, 12) + '...' : label;
                     }
                   }
                 }
@@ -1725,11 +1876,11 @@ if (typeof window.config === 'undefined') {
                   borderWidth: 1,
                   borderColor: borderColor,
                   titleFont: {
-                    size: 12,
+                    size: 11,
                     weight: '600'
                   },
                   bodyFont: {
-                    size: 11
+                    size: 10
                   }
                 }
               }
@@ -1744,7 +1895,11 @@ if (typeof window.config === 'undefined') {
       });
   }
 
+  // ============================================================================
+  // CLOSED AFTER UAT (04032026) - KEEPING CODE FOR FUTURE USE
   // Kategori Tiket Chart for Pegawai Tugasan (Doughnut Chart)
+  // ============================================================================
+  /*
   const pegawaiCategoryChart = document.getElementById('pegawaiCategoryChart');
   if (pegawaiCategoryChart) {
     console.log('Pegawai category chart canvas found, initializing...');
@@ -1760,7 +1915,7 @@ if (typeof window.config === 'undefined') {
       '#d4a5ff'   // Soft Lavender (Additional)
     ];
 
-    // Fetch data from pegawai endpoint
+    // Fetch data from pegawai category endpoint
     fetch('/dashboard/pegawai/category-tickets')
       .then(response => {
         console.log('Pegawai category response received:', response);
@@ -1770,6 +1925,7 @@ if (typeof window.config === 'undefined') {
         console.log('Pegawai category chart data received:', data);
 
         if (data.success) {
+          // Display all categories assigned to this Pegawai Tugasan (including count = 0)
           const labels = data.data.map(item => item.cat_name);
           const counts = data.data.map(item => item.count);
           const colors = data.data.map((item, index) => categoryColors[index % categoryColors.length]);
@@ -1830,7 +1986,7 @@ if (typeof window.config === 'undefined') {
                             fillStyle: dataset.backgroundColor[index],
                             strokeStyle: dataset.borderColor,
                             lineWidth: dataset.borderWidth,
-                            hidden: isNaN(value) || value === 0,
+                            hidden: false,
                             index: index
                           };
                         });
@@ -1871,6 +2027,153 @@ if (typeof window.config === 'undefined') {
       })
       .catch(error => {
         console.error('Error fetching pegawai category data:', error);
+      });
+  }
+  */
+
+  // Sub Kategori Tiket Chart for Pegawai Tugasan (Doughnut Chart)
+  const pegawaiSubcategoryChart = document.getElementById('pegawaiSubcategoryChart');
+  if (pegawaiSubcategoryChart) {
+    console.log('Pegawai subcategory chart canvas found, initializing...');
+
+    // Subcategory colors using lighter/softer Sneat template colors
+    const subcategoryColors = [
+      '#a5abff',  // Soft Purple (Primary)
+      '#ffc947',  // Soft Orange (Warning)
+      '#26d0f0',  // Soft Cyan (Info)
+      '#98e85d',  // Soft Green (Success)
+      '#ff6b47',  // Soft Red (Danger)
+      '#a8b1ba',  // Soft Gray (Secondary)
+      '#d4a5ff',  // Soft Lavender (Additional)
+      '#ffb1c1',  // Soft Pink
+      '#b8e994',  // Soft Lime
+      '#74b9ff',  // Soft Blue
+      '#fdcb6e',  // Soft Yellow
+      '#fd79a8'   // Soft Rose
+    ];
+
+    // Fetch data from pegawai subcategory endpoint
+    fetch('/dashboard/pegawai/subcategory-tickets')
+      .then(response => {
+        console.log('Pegawai subcategory response received:', response);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Pegawai subcategory chart data received:', data);
+
+        if (data.success) {
+          // Display all subcategories assigned to this Pegawai Tugasan (including count = 0)
+          const labels = data.data.map(item => item.subcat_name);
+          const counts = data.data.map(item => item.count);
+          const colors = data.data.map((item, index) => subcategoryColors[index % subcategoryColors.length]);
+
+          console.log('Pegawai subcategory labels:', labels);
+          console.log('Pegawai subcategory counts:', counts);
+
+          // Create the subcategory doughnut chart for pegawai
+          const pegawaiSubcategoryChartVar = new Chart(pegawaiSubcategoryChart, {
+            type: 'doughnut',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  data: counts,
+                  backgroundColor: colors,
+                  borderWidth: 2,
+                  borderColor: cardColor,
+                  hoverBorderWidth: 3,
+                  hoverBorderColor: '#fff',
+                  pointStyle: 'rectRounded'
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              layout: {
+                padding: {
+                  top: 5,
+                  bottom: 5,
+                  left: 5,
+                  right: 5
+                }
+              },
+              animation: {
+                duration: 1000,
+                animateRotate: true,
+                animateScale: false
+              },
+              cutout: '60%',
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'right',
+                  align: 'center',
+                  labels: {
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    padding: 8,
+                    boxWidth: 8,
+                    boxHeight: 8,
+                    color: headingColor,
+                    font: {
+                      size: 10,
+                      weight: '500'
+                    },
+                    generateLabels: function (chart) {
+                      const data = chart.data;
+                      if (data.labels.length && data.datasets.length) {
+                        return data.labels.map((label, index) => {
+                          const dataset = data.datasets[0];
+                          const value = dataset.data[index];
+                          // Truncate long labels
+                          const displayLabel = label.length > 15 ? label.substring(0, 15) + '...' : label;
+                          return {
+                            text: `${displayLabel}: ${value}`,
+                            fillStyle: dataset.backgroundColor[index],
+                            strokeStyle: dataset.borderColor,
+                            lineWidth: dataset.borderWidth,
+                            hidden: false,
+                            index: index
+                          };
+                        });
+                      }
+                      return [];
+                    }
+                  }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      const label = context.label || '';
+                      const value = context.parsed;
+                      const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                      const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                      return ` ${label}: ${value} tiket (${percentage}%)`;
+                    }
+                  },
+                  backgroundColor: cardColor,
+                  titleColor: headingColor,
+                  bodyColor: bodyColor,
+                  borderWidth: 1,
+                  borderColor: borderColor,
+                  titleFont: {
+                    size: 11,
+                    weight: '600'
+                  },
+                  bodyFont: {
+                    size: 10
+                  }
+                }
+              }
+            }
+          });
+
+          console.log('Pegawai subcategory chart created successfully');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching pegawai subcategory data:', error);
       });
   }
 

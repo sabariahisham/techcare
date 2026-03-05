@@ -1,17 +1,18 @@
 {
-  "menu": [{
+  "menu": [
+    {
       "url": "dashboard",
       "icon": "menu-icon tf-icons bx bx-home-smile",
       "name": "Dashboard",
       "slug": "dashboard"
-
     },
     {
       "url": "tickets",
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
       "slug": "ticket",
-      "submenu": [{
+      "submenu": [
+        {
           "url": "tickets/user",
           "name": "Tiket Saya",
           "slug": "ticket-user"
@@ -20,14 +21,20 @@
           "url": "tickets/assigned",
           "name": "Tiket Pegawai Tugasan",
           "slug": "ticket-assigned",
-          "role": ["Administrator", "Pegawai Tugasan", "Helpdesk On Duty"]
-
+          "role": [
+            "Administrator",
+            "Pegawai Tugasan",
+            "Helpdesk On Duty"
+          ]
         },
         {
           "url": "tickets/admin",
           "name": "Tiket Pentadbir Sistem",
           "slug": "ticket-admin",
-          "role": ["Pentadbir Sistem", "Administrator"]
+          "role": [
+            "Pentadbir Sistem",
+            "Administrator"
+          ]
         }
       ]
     },
@@ -44,40 +51,54 @@
       "slug": "report-index",
       "permission": "laporan.view"
     },
-
     {
-      "menuHeader": "Pengurusan"
+      "menuHeader": "Pengurusan",
+      "role": [
+        "Pentadbir Sistem",
+        "Administrator"
+      ]
     },
-
     {
       "name": "Pentadbir",
       "icon": "menu-icon tf-icons bx bx-check-shield",
       "slug": "acl",
-      "role": ["Pentadbir Sistem", "Administrator"],
-      "submenu": [{
+      "role": [
+        "Pentadbir Sistem",
+        "Administrator"
+      ],
+      "submenu": [
+        {
           "name": "Pengurusan Pengguna",
           "slug": "user-management",
           "permission": "pengguna.view",
-          "submenu": [{
+          "submenu": [
+            {
               "url": "user-management/index",
               "name": "Pengguna",
               "slug": "user-management-index",
-              "role": ["Pentadbir Sistem", "Administrator"]
+              "role": [
+                "Pentadbir Sistem",
+                "Administrator"
+              ]
             },
-
             {
               "url": "acl/permissions/index",
               "name": "Modul & Capaian",
               "slug": "acl-permissions-index",
               "permission": "capaian.view",
-              "role": ["Administrator"]
+              "role": [
+                "Administrator"
+              ]
             },
             {
               "url": "acl/roles/index",
               "name": "Peranan",
               "slug": "acl-roles-index",
               "permission": "peranan.view",
-              "role": ["Pentadbir Sistem", "Administrator"]
+              "role": [
+                "Pentadbir Sistem",
+                "Administrator"
+              ]
             }
           ]
         },
@@ -85,7 +106,8 @@
           "name": "Konfigurasi",
           "slug": "configuration",
           "permission": "konfigurasi.view",
-          "submenu": [{
+          "submenu": [
+            {
               "url": "ref-category-management/index",
               "name": "Kategori",
               "slug": "ref-category-management-index",
@@ -122,8 +144,9 @@
       "slug": "audit-trail",
       "icon": "menu-icon icon-base bx bx-list-check",
       " permission": "audit.view",
-       "role":  "Administrator",
-      "submenu": [{
+      "role": "Administrator",
+      "submenu": [
+        {
           "url": "audit-trail",
           "name": "Senarai Audit Trail",
           "slug": "audit-trail-index",
@@ -155,17 +178,22 @@
         }
       ]
     },
-
     {
       "menuHeader": "#(rujukan developer)",
-      "role": ["Pentadbir Sistem", "Administrator"]
+      "role": [
+        "Pentadbir Sistem",
+        "Administrator"
+      ]
     },
     {
       "url": "https://themeselection.com/support/",
       "icon": "menu-icon tf-icons bx bx-support",
       "name": "Support",
       "slug": "support",
-      "role": ["Pentadbir Sistem", "Administrator"],
+      "role": [
+        "Pentadbir Sistem",
+        "Administrator"
+      ],
       "target": "_blank"
     },
     {
@@ -173,7 +201,10 @@
       "icon": "menu-icon tf-icons bx bx-file",
       "name": "Documentation",
       "slug": "documentation",
-      "role": ["Pentadbir Sistem", "Administrator"],
+      "role": [
+        "Pentadbir Sistem",
+        "Administrator"
+      ],
       "target": "_blank"
     }
   ]

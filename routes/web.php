@@ -151,6 +151,7 @@ Route::middleware($authMiddleware)->prefix('dashboard')->name('dashboard.')->gro
   Route::get('/current-status', [DashboardController::class, 'getCurrentStatus'])->name('current-status');
   Route::get('/status-tickets', [DashboardController::class, 'getStatusTickets'])->name('status-tickets');
   Route::get('/category-tickets', [DashboardController::class, 'getCategoryTickets'])->name('category-tickets');
+  Route::get('/category/{categoryId}/subcategories', [DashboardController::class, 'getSubcategoriesByCategory'])->name('category.subcategories');
   Route::get('/total-tickets', [DashboardController::class, 'getTotalTickets'])->name('total-tickets');
   Route::get('/monthly-trend', [DashboardController::class, 'getMonthlyTrends'])->name('monthly-trend');
   Route::get('/total-assigned', [DashboardController::class, 'getTotalAssigned'])->name('total-assigned');
@@ -169,6 +170,7 @@ Route::middleware($authMiddleware)->prefix('dashboard')->name('dashboard.')->gro
   Route::get('/pegawai/overdue-sla-count', [DashboardController::class, 'getOverdueSLACountPegawai'])->name('pegawai.overdue-sla-count');
   Route::get('/pegawai/status-tickets', [DashboardController::class, 'getStatusTicketsPegawai'])->name('pegawai.status-tickets');
   Route::get('/pegawai/category-tickets', [DashboardController::class, 'getCategoryTicketsPegawai'])->name('pegawai.category-tickets');
+  Route::get('/pegawai/subcategory-tickets', [DashboardController::class, 'getSubcategoryTicketsPegawai'])->name('pegawai.subcategory-tickets');
   Route::get('/pegawai/list-overdue', [DashboardController::class, 'getListOverduePegawai'])->name('pegawai.list-overdue');
 });
 
@@ -513,7 +515,7 @@ Route::middleware($authMiddleware)->prefix('tickets')->group(function () {
   Route::post('/{uuid}/update-status', [TicketController::class, 'updateTicketStatus'])->name('tickets.update-status');
 
   // Redirect root /tickets to appropriate view based on role
-  Route::get('/', function() {
+  Route::get('/', function () {
     $user = Auth::user();
     if ($user->hasAnyRole(['Pentadbir Sistem', 'Administrator'])) {
       return redirect()->route('tickets.admin');
