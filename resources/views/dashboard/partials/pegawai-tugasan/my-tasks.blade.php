@@ -6,8 +6,12 @@
 {{-- Status Tiket (Tugasan Anda) --}}
 @include('dashboard/partials/pegawai-tugasan/chart-status-pegawai')
 
+{{-- close this chart after UAT(04032026)  --}}
 {{-- Kategori Tiket (Tugasan Anda) --}}
-@include('dashboard/partials/pegawai-tugasan/chart-category-pegawai')
+{{-- @include('dashboard/partials/pegawai-tugasan/chart-category-pegawai') --}}
+
+{{-- Sub Kategori Tiket (Tugasan Anda) --}}
+@include('dashboard/partials/pegawai-tugasan/chart-subcategory-pegawai')
 
 {{-- Jadual Tiket Lewat (Tugasan Anda) --}}
 @include('dashboard/partials/pegawai-tugasan/table-ticket-overdue-pegawai')

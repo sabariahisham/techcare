@@ -204,7 +204,8 @@ class DashboardController extends Controller
             )');
         })
         ->whereNull('t.deleted_at')
-        ->whereNull('tc.deleted_at');
+        ->whereNull('tc.deleted_at')
+        ->whereYear('t.created_at', Carbon::now()->year);
 
       // Base query for pending tickets
       $pendingTicketsQuery = DB::table('tickets as t')
@@ -219,7 +220,8 @@ class DashboardController extends Controller
         })
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->whereNotIn('tc.tick_status', [5, 6]); // Not cancelled or completed
+        ->whereNotIn('tc.tick_status', [5, 6])
+        ->whereYear('t.created_at', Carbon::now()->year); // Not cancelled or completed
 
       // Filter logic:
       // - If user has admin roles → show ALL data (overall)
@@ -325,7 +327,8 @@ class DashboardController extends Controller
         ->select('rts.id', 'rts.st_name', DB::raw('COUNT(DISTINCT t.id) as count'))
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->whereNull('rts.deleted_at');
+        ->whereNull('rts.deleted_at')
+        ->whereYear('t.created_at', Carbon::now()->year);
 
       // Filter logic:
       // - If user has admin roles → show ALL data (overall)
@@ -391,7 +394,8 @@ class DashboardController extends Controller
         ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
         ->select('rc.id', DB::raw('COUNT(t.id) as count'))
         ->whereNull('t.deleted_at')
-        ->whereNull('rc.deleted_at');
+        ->whereNull('rc.deleted_at')
+        ->whereYear('t.created_at', Carbon::now()->year);
 
       // Filter logic:
       // - If user has admin roles → show ALL data (overall)
@@ -1017,6 +1021,64 @@ class DashboardController extends Controller
     }
   }
 
+  // Get subcategories with ticket counts for a specific category (for drill-down)
+  // -----------------------------------------------------------------------------
+  public function getSubcategoriesByCategory($categoryId)
+  {
+    try {
+      $userId = Auth::id();
+      $user = Auth::user();
+
+      // Get all subcategories for this category
+      $allSubcategories = \App\Models\RefSubCategory::where('cat_id', $categoryId)
+        ->whereNull('deleted_at')
+        ->orderBy('subcat_name')
+        ->get(['id', 'subcat_name']);
+
+      // Get ticket counts per subcategory
+      $subcategoryQuery = DB::table('tickets as t')
+        ->join('ref_sub_categories as rsc', 't.subcat_id', '=', 'rsc.id')
+        ->where('t.cat_id', $categoryId)
+        ->whereNull('t.deleted_at')
+        ->whereYear('t.created_at', Carbon::now()->year);
+
+      // Filter logic:
+      // - If user has admin roles → show ALL data (overall)
+      // - If user ONLY has Pegawai Tugasan → show filtered data (assigned to them only)
+      if (
+        !$user->hasAnyRole(['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty', 'Pengurusan MOF']) &&
+        $user->hasRole('Pegawai Tugasan')
+      ) {
+        $subcategoryQuery->where('t.escalate_to', $userId);
+      }
+
+      $subcategoryCounts = $subcategoryQuery->groupBy('rsc.id')
+        ->selectRaw('rsc.id, COUNT(t.id) as count')
+        ->pluck('count', 'id');
+
+      // Build complete data with zero counts for subcategories with no tickets
+      $subcategoryData = [];
+      foreach ($allSubcategories as $subcategory) {
+        $subcategoryData[] = [
+          'id' => $subcategory->id,
+          'subcat_name' => $subcategory->subcat_name,
+          'count' => $subcategoryCounts->get($subcategory->id, 0)
+        ];
+      }
+
+      return response()->json([
+        'success' => true,
+        'data' => $subcategoryData
+      ]);
+    } catch (\Exception $e) {
+      return response()->json([
+        'success' => false,
+        'message' => 'Error retrieving subcategory data: ' . $e->getMessage(),
+        'data' => []
+      ]);
+    }
+  }
+
   // =============================================================================
   // PEGAWAI TUGASAN SPECIFIC ENDPOINTS
   // These methods ALWAYS filter by escalate_to (assigned tasks only)
@@ -1163,6 +1225,7 @@ class DashboardController extends Controller
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
         ->where('tc.escalate_to', $userId)
+        ->whereYear('t.created_at', Carbon::now()->year)
         ->count();
 
       // Base query for pending tickets assigned to this user
@@ -1180,6 +1243,7 @@ class DashboardController extends Controller
         ->whereNull('tc.deleted_at')
         ->whereNotIn('tc.tick_status', [5, 6]) // Not cancelled or completed
         ->where('tc.escalate_to', $userId)
+        ->whereYear('t.created_at', Carbon::now()->year)
         ->count();
 
       // Calculate percentage
@@ -1268,7 +1332,8 @@ class DashboardController extends Controller
         ->select('rts.id', 'rts.st_name', DB::raw('COUNT(DISTINCT t.id) as count'))
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->whereNull('rts.deleted_at');
+        ->whereNull('rts.deleted_at')
+        ->whereYear('t.created_at', Carbon::now()->year);
 
       $statusCounts = $statusQuery->groupBy('rts.id', 'rts.st_name')
         ->orderBy('rts.id')
@@ -1311,6 +1376,8 @@ class DashboardController extends Controller
 
   /**
    * Get category tickets for Pegawai Tugasan (assigned tasks only)
+   * CLOSED AFTER UAT (04032026) - KEEPING METHOD FOR FUTURE USE
+   * Currently not being called from frontend, but kept for potential future requirements
    */
   public function getCategoryTicketsPegawai()
   {
@@ -1338,6 +1405,7 @@ class DashboardController extends Controller
         ->whereNull('t.deleted_at')
         ->whereNull('rc.deleted_at')
         ->whereNull('tc.deleted_at')
+        ->whereYear('t.created_at', Carbon::now()->year)
         ->groupBy('rc.id');
 
       $categoryCounts = $categoryQuery->pluck('count', 'id');
@@ -1371,6 +1439,70 @@ class DashboardController extends Controller
       return response()->json([
         'success' => true,
         'data' => $sampleData
+      ]);
+    }
+  }
+
+  /**
+   * Get subcategory tickets for Pegawai Tugasan (assigned tasks only)
+   */
+  public function getSubcategoryTicketsPegawai()
+  {
+    try {
+      $userId = Auth::id();
+
+      // Get subcategories assigned to this user from officers table
+      $assignedSubcategories = DB::table('officers as o')
+        ->join('ref_sub_categories as rsc', 'o.subcat_id', '=', 'rsc.id')
+        ->select('rsc.id', 'rsc.subcat_name')
+        ->where('o.user_id', $userId)
+        ->whereNull('o.deleted_at')
+        ->whereNull('rsc.deleted_at')
+        ->groupBy('rsc.id', 'rsc.subcat_name')
+        ->orderBy('rsc.id')
+        ->get();
+
+      // Get current ticket counts per subcategory (latest chronology only)
+      $subcategoryQuery = DB::table('tickets as t')
+        ->join('ref_sub_categories as rsc', 't.subcat_id', '=', 'rsc.id')
+        ->join('tickets_chronologies as tc', function ($join) use ($userId) {
+          $join->on('t.id', '=', 'tc.ticket_id')
+            ->where('tc.escalate_to', $userId)
+            ->whereRaw('tc.id = (
+              SELECT MAX(tc2.id)
+              FROM tickets_chronologies tc2
+              WHERE tc2.ticket_id = t.id
+              AND tc2.deleted_at IS NULL
+            )');
+        })
+        ->select('rsc.id', DB::raw('COUNT(DISTINCT t.id) as count'))
+        ->whereNull('t.deleted_at')
+        ->whereNull('rsc.deleted_at')
+        ->whereNull('tc.deleted_at')
+        ->whereYear('t.created_at', Carbon::now()->year)
+        ->groupBy('rsc.id');
+
+      $subcategoryCounts = $subcategoryQuery->pluck('count', 'id');
+
+      // Build data only for subcategories assigned to this user from officers table
+      $subcategoryData = [];
+      foreach ($assignedSubcategories as $subcategory) {
+        $subcategoryData[] = [
+          'id' => $subcategory->id,
+          'subcat_name' => $subcategory->subcat_name,
+          'count' => $subcategoryCounts[$subcategory->id] ?? 0
+        ];
+      }
+
+      return response()->json([
+        'success' => true,
+        'data' => $subcategoryData
+      ]);
+    } catch (\Exception $e) {
+      // Fallback with empty data
+      return response()->json([
+        'success' => true,
+        'data' => []
       ]);
     }
   }

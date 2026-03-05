@@ -60,6 +60,11 @@ TASK:
         };
     </script>
     @vite(['resources/assets/js/dashboard.js', 'resources/assets/js/session-timeout.js'])
+
+    {{-- Load Pegawai Tugasan specific JavaScript if user has Pegawai section --}}
+    @if ($sections['pegawai'] ?? false)
+        @vite(['resources/assets/js/dashboard-pegawai-tugasan.js'])
+    @endif
 @endsection
 
 @section('content')
@@ -176,7 +181,7 @@ TASK:
                 </div>
             </div>
             <div class="card-body">
-                <div class="row g-4 mb-2 dashboard-row-consistent">
+                <div class="row g-3 mb-1 dashboard-row-consistent">
                     @include('dashboard/partials/pegawai-tugasan/my-tasks')
                 </div>
             </div>
@@ -186,7 +191,7 @@ TASK:
     @if ($sections['admin'] ?? false)
         <!-- Administrator Section -->
         <div class="card mb-6 text-dark"
-            style="background-color: rgba(27, 27, 31, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
+            style="background-color: rgba(31, 3, 58, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
             <div class="card-header">
                 <div class="p-3 rounded shadow-sm d-flex align-items-center"
                     style="background-color: rgba(255,255,255,0.9);box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);     border-bottom: 2px solid #1431eb;
@@ -198,7 +203,7 @@ TASK:
                 </div>
             </div>
             <div class="card-body">
-                <div class="row g-4 mb-2 dashboard-row-consistent">
+                <div class="row g-3 mb-1 dashboard-row-consistent">
                     @include('dashboard/partials/cards-status') <!-- Card Status -->
                     @include('dashboard/partials/chart-status') <!-- Ticket Status -->
                     @include('dashboard/partials/chart-category') <!-- Ticket Category -->
@@ -214,7 +219,8 @@ TASK:
     @elseif($sections['pengurusan'] ?? false)
         <!-- Pengurusan MOF Section -->
         <div class="card mb-6 text-dark"
-            style="background-color: rgba(30, 58, 138, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
+            style="background-color: rgba(136, 57, 111, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);">
+            {{-- style="background-color: rgba(30, 58, 138, 0.5); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0);"> --}}
             <div class="card-header">
                 <div class="p-3 rounded shadow-sm d-flex align-items-center"
                     style="background-color: rgba(255,255,255,0.9);box-shadow: 0 2px 8px rgba(30, 58, 138, 0.15);     border-bottom: 2px solid #1431eb;

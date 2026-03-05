@@ -3,14 +3,15 @@
 ## Tujuan
 Dashboard sistem eHelp menyediakan paparan ringkas aktiviti, statistik dan prestasi semasa untuk rujukan pantas pengguna berdasarkan peranan mereka.
 
+> **Note**: Dashboard Pegawai Tugasan mempunyai dokumentasi berasingan. Lihat [Dashboard Pegawai Tugasan](../dashboard-pegawai-tugasan/README.md)
+
 ## Sokongan Peranan (Roles)
-Dashboard menyokong 6 peranan utama:
+Dashboard Management menyokong 5 peranan utama:
 1. **Administrator** - Paparan pentadbiran penuh
 2. **Pentadbir Sistem** - Paparan helpdesk dan sistem
 3. **Penyelia Helpdesk** - Paparan penyeliaan helpdesk
 4. **Helpdesk On Duty** - Paparan operasi helpdesk
-5. **Pegawai Tugasan** - Paparan tugasan yang diperuntukkan kepada pegawai
-6. **Pengurusan MOF** - Paparan pengurusan dan laporan eksekutif
+5. **Pengurusan MOF** - Paparan pengurusan dan laporan eksekutif
 
 ## Ciri-ciri Utama
 - **Role-Based Dashboard**: Setiap peranan mempunyai pandangan yang disesuaikan

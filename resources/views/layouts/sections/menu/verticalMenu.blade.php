@@ -9,8 +9,12 @@
     @if (!isset($navbarFull))
         <div class="app-brand demo">
             <a href="{{ url('/') }}" class="app-brand-link">
+                {{-- Full logo with text - shown when menu is expanded --}}
                 <img src="{{ asset('assets/img/logos/techcare.png') }}" alt="TechCare Logo"
-                    style="height: 60px; width: auto;">
+                    class="app-brand-logo-img logo-expanded">
+                {{-- Icon only - shown when menu is collapsed --}}
+                <img src="{{ asset('assets/img/logos/logo-techcare.png') }}" alt="TechCare"
+                    class="app-brand-logo-img logo-collapsed">
                 {{-- <span class="app-brand-logo demo">@include('_partials.macros',["width"=>25,"withbg"=>'var(--bs-primary)'])</span> --}}
                 {{-- <img src="{{ asset('assets/img/logos/logoShield.png') }}" alt="Your Logo" style="height: 200px; width: auto;"> --}}
                 {{-- <span class="app-brand-text demo menu-text fw-bold ms-2">{{config('variables.templateName')}}</span> --}}

@@ -1,4 +1,4 @@
-<div class="col-lg-12 col-md-12 mt-6 d-flex align-items-stretch">
+<div class="col-lg-12 col-md-12 mt-3 d-flex align-items-stretch">
     <div class="card flex-fill">
         <div class="card-header d-flex align-items-center justify-content-between">
             <div class="card-title mb-0">

@@ -1,5 +1,6 @@
 {{-- modal dialog box for action comment datatable --}}
-<div class="modal fade" id="actionComment" tabindex="-1" aria-labelledby="actionCommentLabel" aria-hidden="true">
+<div class="modal fade" id="actionComment" tabindex="-1" aria-labelledby="actionCommentLabel" aria-hidden="true"
+    style="display: none;">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header border-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
