@@ -11,7 +11,7 @@
     border-radius: 6px;
     margin-bottom: 18px;
 ">
-    ❕Tindakan Segera - SLA Tamat Tempoh (1 Hari Lepas)
+   ⚠️ Tindakan Segera - SLA Tamat Tempoh (1 Hari Lepas)
 </div>
 
 Assalamualaikum dan Salam Sejahtera,
@@ -23,17 +23,12 @@ Assalamualaikum dan Salam Sejahtera,
 @component('mail::panel')
 ## **Maklumat Tiket**
 
-**No. Log** : <strong>{{ $ticket->ticket_nolog }}</strong>
-
-**Tajuk** : <strong>{{ $ticket->ticket_title }}</strong>
-
-**Status** : <strong>{{ $ticket->status->st_name ?? 'N/A' }}</strong>
-
-**Pengadu** : <strong>{{ $ticket->user->nama ?? 'N/A' }}</strong>
-
-**Pegawai Tugasan** : <strong>{{ $ticket->assignedUser->name ?? 'Belum Ditugaskan' }}</strong> 
-
-**Tarikh Akhir SLA** : <strong>{{ $ticket->tick_duedate? \Carbon\Carbon::parse($ticket->tick_duedate)->format('d/m/Y') : 'Tiada' }}</strong>
+**No. Log** : <strong>{{ $ticket->ticket_nolog }}</strong><br>
+**Tajuk** : <strong>{{ $ticket->ticket_title }}</strong><br>
+**Status** : <strong>{{ $ticket->status->st_name }}</strong><br>
+**Pengadu** : <strong>{{ $ticket->user->nama }}</strong><br>
+**Pegawai Tugasan** : <strong>{{ $ticket->assignedUser->nama ?? 'Tiada rekod' }}</strong><br>
+**Tarikh Akhir SLA** : <strong>{{ $ticket->tick_duedate? \Carbon\Carbon::parse($ticket->tick_duedate)->format('d/m/Y') : 'Tiada rekod' }}</strong>
 @endcomponent
 
 Mohon **tindakan segera** kerana isu ini telah melepasi **tempoh penyelesaian (SLA) yang telah ditetapkan**. Terima kasih atas perhatian tuan/puan.

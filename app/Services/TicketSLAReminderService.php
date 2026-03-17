@@ -41,7 +41,26 @@ class TicketSLAReminderService
     ]);
 
     try {
+      // Check if today is a working day - skip if weekend or public holiday
+      $today = Carbon::today();
+      if (!Helpers::isWorkingDay($today)) {
+        Log::channel('sla')->info('[SLA][REMINDER][SKIPPED] Not a working day - no emails sent', [
+          'date' => $today->format('Y-m-d'),
+          'day' => $today->format('l'),
+          'reason' => 'Weekend or public holiday'
+        ]);
+
+        return [
+          'sent' => 0,
+          'failed' => 0,
+          'skipped' => 0,
+          'details' => [],
+          'reason' => 'Not a working day (weekend or public holiday)'
+        ];
+      }
+
       // Calculate target date (tomorrow in working days)
+      // Example: If today is Friday, tomorrow = Monday (skips weekend)
       $tomorrow = Helpers::addWorkingDays(Carbon::today(), 1);
       $tomorrowStart = $tomorrow->startOfDay();
       $tomorrowEnd = $tomorrow->copy()->endOfDay();
@@ -94,8 +113,8 @@ class TicketSLAReminderService
           continue;
         }
 
-        // Skip if ticket is closed or cancelled
-        if (in_array($ticket->tick_status, [5, 7])) {
+        // Skip if ticket is Aduan DiBatal or Aduan Selesai
+        if (in_array($ticket->tick_status, [5, 6])) {
           $results['skipped']++;
           Log::info("Skipped ticket {$ticket->ticket_nolog} - Status: {$ticket->tick_status}");
           continue;
@@ -215,6 +234,24 @@ class TicketSLAReminderService
     ]);
 
     try {
+      // Check if today is a working day - skip if weekend or public holiday
+      $today = Carbon::today();
+      if (!Helpers::isWorkingDay($today)) {
+        Log::channel('sla')->info('[SLA][OVERDUE][SKIPPED] Not a working day - no emails sent', [
+          'date' => $today->format('Y-m-d'),
+          'day' => $today->format('l'),
+          'reason' => 'Weekend or public holiday'
+        ]);
+
+        return [
+          'sent' => 0,
+          'failed' => 0,
+          'skipped' => 0,
+          'details' => [],
+          'reason' => 'Not a working day (weekend or public holiday)'
+        ];
+      }
+
       // Calculate target date (yesterday in working days)
       $yesterday = Helpers::subtractWorkingDays(Carbon::today(), 1);
       $yesterdayStart = $yesterday->startOfDay();
@@ -268,8 +305,8 @@ class TicketSLAReminderService
           continue;
         }
 
-        // Skip if ticket is closed or cancelled
-        if (in_array($ticket->tick_status, [5, 7])) {
+        // Skip if ticket is Aduan DiBatal or Aduan Selesai
+        if (in_array($ticket->tick_status, [5, 6])) {
           $results['skipped']++;
           Log::info("Skipped ticket {$ticket->ticket_nolog} - Status: {$ticket->tick_status}");
           continue;

@@ -40,19 +40,13 @@
                     <i class="bx bx-info-circle"></i> Tiada Log SLA Hari Ini
                 </h5>
                 <p class="mb-2">
-                    Logs SLA tidak auto-generate kerana <strong>Laravel Scheduler belum disetup</strong>.
-                    SLA notifications dijadualkan setiap hari pada <strong>7:30 AM</strong>, tetapi memerlukan Task
-                    Scheduler untuk berjalan secara automatik.
+                    SLA notifications belum auto-run kerana <strong>Laravel Scheduler belum disetup</strong> (dijadualkan
+                    7:30 AM).
                 </p>
-                <hr>
-                <p class="mb-2"><strong>🔧 Cara Setup (Windows):</strong></p>
-                <ol class="mb-0">
-                    <li>Buka PowerShell <strong>sebagai Administrator</strong></li>
-                    <li>Navigate ke folder project: <code>cd C:\Users\sabariah.hisham\Herd\ehelp-fork_29122025</code></li>
-                    <li>Jalankan: <code>.\setup-task-scheduler.ps1</code></li>
-                </ol>
-                <p class="mt-3 mb-2"><strong>📝 Atau test manual:</strong></p>
-                <p class="mb-0"><code>php artisan sla:send-notifications --type=all</code></p>
+                <p class="mb-0">
+                    <strong>Setup:</strong> <code>.\setup-task-scheduler.ps1</code> (PowerShell Admin) |
+                    <strong>Test manual:</strong> <code>php artisan sla:send-notifications --type=all</code>
+                </p>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif

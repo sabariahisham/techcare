@@ -31,6 +31,25 @@ class TicketOverdueService
    */
   public function sendAfterDueNotifications()
   {
+    // Check if today is a working day - skip if weekend or public holiday
+    $today = Carbon::today();
+    if (!Helpers::isWorkingDay($today)) {
+      Log::info('After Due Notification: Skipped - Today is not a working day (weekend or public holiday)', [
+        'date' => $today->format('Y-m-d'),
+        'day' => $today->format('l')
+      ]);
+
+      return [
+        'type' => 'After Due (1 Working Day Past Due)',
+        'total_found' => 0,
+        'sent' => 0,
+        'failed' => 0,
+        'skipped' => 0,
+        'errors' => [],
+        'reason' => 'Not a working day'
+      ];
+    }
+
     // Calculate yesterday in working days (skip weekends & holidays)
     $yesterday = Helpers::subtractWorkingDays(Carbon::today(), 1);
     $yesterdayStart = $yesterday->startOfDay();

@@ -67,7 +67,7 @@
                             <span class="placeholder-glow">
                                 <span class="placeholder placeholder-xs col-2"></span>
                             </span>
-                        </span> tugasan anda
+                        </span> tugasan
                     </small>
 
                     <div class="mt-auto text-center">

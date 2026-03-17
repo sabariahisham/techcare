@@ -33,8 +33,23 @@ Artisan::command('inspire', function () {
 Schedule::command('sla:send-notifications --type=all')
   ->dailyAt('07:30')
   ->timezone('Asia/Kuala_Lumpur')
+  ->skip(function () {
+    // Skip weekends - no need to send emails on Saturday and Sunday
+    $today = \Carbon\Carbon::now('Asia/Kuala_Lumpur');
+    $isWeekend = $today->isSaturday() || $today->isSunday();
+
+    if ($isWeekend) {
+      \Illuminate\Support\Facades\Log::channel('sla')->info('[SLA][SCHEDULER][SKIPPED] Skipped execution on weekend', [
+        'day' => $today->format('l'),
+        'date' => $today->format('Y-m-d'),
+        'reason' => 'Weekend - No email sending on Saturday/Sunday'
+      ]);
+    }
+
+    return $isWeekend;
+  })
   ->name('Send SLA Notifications (Reminder & Overdue)')
-  ->description('Send SLA reminder (-1 working day) and overdue (+1 working day) notifications at 7:30 AM daily')
+  ->description('Send SLA reminder (-1 working day) and overdue (+1 working day) notifications at 7:30 AM daily (weekdays only)')
   ->onSuccess(function () {
     \Illuminate\Support\Facades\Log::channel('sla')->info('[SLA][SCHEDULER][SUCCESS] Scheduled task executed successfully', [
       'task' => 'sla:send-notifications',
@@ -64,7 +79,7 @@ Schedule::command('sla:send-notifications --type=all')
 //disable dulu, sebab nak buat manual sync dahulu, akan enable balik bila dah confirm semua data betul dan sync berjalan lancar
 //untuk sync users sekali sehari pun dah cukup, tak perlu real-time, sebab data users jarang berubah, mostly bila ada penambahan user baru je, jarang sekali ada perubahan pada user yang sedia ada
 // Schedule::command('sync:users-spp')
-//  ->dailyAt('2:00') 
+//  ->dailyAt('2:00')
 //   ->timezone('Asia/Kuala_Lumpur')
 //   ->name('Sync Users from SPP Database')
 //   ->description('Sync users data from spp_db.users to ehelp.users at 2:00 AM daily')
