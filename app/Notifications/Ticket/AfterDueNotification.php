@@ -41,11 +41,11 @@ class AfterDueNotification extends Notification
   public function toMail(object $notifiable): MailMessage
   {
     return (new MailMessage)
-      ->subject("{$this->ticket->ticket_nolog}: ⛔ Tindakan Segera - SLA Tamat Tempoh (1 Hari Lepas)")
+      ->subject("[Peringatan] {$this->ticket->ticket_nolog}: Tindakan Segera - SLA Tamat Tempoh")
       ->markdown('emails.ticket.sla-after-due', [
         'ticket' => $this->ticket,
         'notifiable' => $notifiable,
-        'message' => 'Tiket ini telah **MELEPASI TARIKH AKHIR SEMALAM**. Tindakan segera diperlukan.',
+        'message' => 'Tiket ini telah **MELEPASI TARIKH AKHIR**. Tindakan segera diperlukan.',
       ]);
   }
 

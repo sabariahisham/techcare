@@ -43,12 +43,21 @@ class ReminderNotification extends Notification
    */
   public function toMail(object $notifiable): MailMessage
   {
+    // Determine the reminder message based on due date
+    $dueDate = $this->ticket->latestSlaDueDate ? Carbon::parse($this->ticket->latestSlaDueDate) : null;
+    $reminderMessage = 'Tiket ini akan **TAMAT TEMPOH ESOK** (1 hari bekerja lagi). Sila ambil tindakan segera.';
+
+    // If due date is Monday and today is Friday, adjust message
+    if ($dueDate && $dueDate->isMonday() && Carbon::today()->isFriday()) {
+      $reminderMessage = 'Tiket ini akan **TAMAT TEMPOH PADA HARI ISNIN** (1 hari bekerja lagi). Sila ambil tindakan segera.';
+    }
+
     return (new MailMessage)
-      ->subject("{$this->ticket->ticket_nolog}: ⚠️ Peringatan SLA - Hampir Tamat Tempoh")
+      ->subject("[Peringatan] {$this->ticket->ticket_nolog}: SLA - Hampir Tamat Tempoh")
       ->markdown('emails.ticket.sla-reminder', [
         'ticket' => $this->ticket,
         'notifiable' => $notifiable,
-        'reminderMessage' => 'Tiket ini akan **TAMAT TEMPOH ESOK**. Sila ambil tindakan segera.',
+        'reminderMessage' => $reminderMessage,
       ]);
   }
 

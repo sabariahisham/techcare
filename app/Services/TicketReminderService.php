@@ -31,7 +31,27 @@ class TicketReminderService
    */
   public function sendBeforeDueReminders()
   {
+    // Check if today is a working day - skip if weekend
+    $today = Carbon::today();
+    if (!Helpers::isWorkingDay($today)) {
+      Log::info('SLA Reminder: Skipped - Today is not a working day (weekend or public holiday)', [
+        'date' => $today->format('Y-m-d'),
+        'day' => $today->format('l')
+      ]);
+
+      return [
+        'type' => 'Reminder (1 Day Before Due)',
+        'total_found' => 0,
+        'sent' => 0,
+        'failed' => 0,
+        'skipped' => 0,
+        'errors' => [],
+        'reason' => 'Not a working day'
+      ];
+    }
+
     // Calculate tomorrow in working days (skip weekends & holidays)
+    // Example: If today is Friday, tomorrow = Monday (skips Saturday & Sunday)
     $tomorrow = Helpers::addWorkingDays(Carbon::today(), 1);
     $tomorrowStart = $tomorrow->startOfDay();
     $tomorrowEnd = $tomorrow->copy()->endOfDay();

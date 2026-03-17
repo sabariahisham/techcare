@@ -38,14 +38,10 @@ Tiket aduan baru telah direkodkan dan ditugaskan kepada anda. **Sila ambil tinda
 @component('mail::panel')
 ## **Maklumat Tiket**
 
-**No. Log** : <strong>{{ $ticket->ticket_nolog }}</strong>
-
-**Tajuk** : <strong>{{ $ticket->ticket_title }}</strong>
-
-**Status** : <strong>{{ $ticket->status->st_name ?? 'N/A' }} {{-- $ticket->tick_status --}}</strong>
-
-**Pengadu** : <strong>{{ $ticket->user->nama ?? 'N/A' }}</strong>
-
+**No. Log** : <strong>{{ $ticket->ticket_nolog }}</strong><br>
+**Tajuk** : <strong>{{ $ticket->ticket_title }}</strong><br>
+**Status** : <strong>{{ $ticket->status->st_name }} {{-- $ticket->tick_status --}}</strong><br>
+**Pengadu** : <strong>{{ $ticket->user->nama }}</strong><br>
 **Catatan** : <strong>{{ $ticket->ticket_desc ?? 'Tiada catatan' }}</strong>
 @endcomponent
 

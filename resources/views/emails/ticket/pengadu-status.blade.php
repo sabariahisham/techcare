@@ -38,13 +38,10 @@ Tiket aduan telah berjaya direkodkan dan akan diproses.
 @component('mail::panel')
 ## **Maklumat Tiket**
 
-**No. Log** : <strong>{{ $ticket->ticket_nolog }}</strong>
-
-**Tajuk** : <strong>{{ $ticket->ticket_title }}</strong>
-
-**Status** : <strong>{{ $statusName ?? ($ticket->status->st_name ?? 'N/A') }}</strong>
-
-**Pegawai Tugasan** : <strong>{{ $assignedUser->nama ?? 'Belum Ditugaskan' }}</strong>
+**No. Log** : <strong>{{ $ticket->ticket_nolog }}</strong><br>
+**Tajuk** : <strong>{{ $ticket->ticket_title }}</strong><br>
+**Status** : <strong>{{ $statusName ?? ($ticket->status->st_name) }}</strong><br>
+**Pegawai Tugasan** : <strong>{{ $assignedUser->nama ?? 'Tiada rekod' }}</strong>
 @endcomponent
 
 Sila semak status tiket melalui pautan berikut:
