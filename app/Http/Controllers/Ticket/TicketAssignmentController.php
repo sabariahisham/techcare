@@ -27,6 +27,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Ticket\TicketChronologyController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use App\Services\TicketNotificationService;
 use App\Helpers\Helpers;
 use Carbon\Carbon;
@@ -712,10 +714,12 @@ class TicketAssignmentController extends Controller
    *
    * @return \Illuminate\Http\JsonResponse
    */
-  public function getHistoryComment($ticketId)
+  public function getHistoryComment($ticketUuid)
   {
     try {
-      $ticket = Ticket::with(['comments.user', 'comments.createdBy', 'status'])->findOrFail($ticketId);
+      $ticket = Ticket::where('uuid', $ticketUuid)
+        ->with(['comments.user', 'comments.createdBy', 'status'])
+        ->firstOrFail();
 
       // Get all chronologies to determine the status at the time each comment was made
       // Group by status and get the earliest chronology for each status
@@ -728,7 +732,8 @@ class TicketAssignmentController extends Controller
         });
 
       // Get all comments from pengadu (ticket creator) and pegawai tugasan (officers)
-      $comments = $ticket->comments->map(function ($comment) use ($ticket, $chronologies) {
+      // Sort by created_at descending (newest first)
+      $comments = $ticket->comments->sortByDesc('created_at')->map(function ($comment) use ($ticket, $chronologies) {
         // Find the status that was active when this comment was created
         $commentStatus = $this->getStatusAtTime($comment->created_at, $chronologies);
 
@@ -743,7 +748,7 @@ class TicketAssignmentController extends Controller
           'ticket_status' => $commentStatus['status_name'],
           'status_class' => $commentStatus['status_class']
         ];
-      });
+      })->values();
 
       return response()->json([
         'success' => true,
@@ -818,6 +823,40 @@ class TicketAssignmentController extends Controller
     }
 
     return 'Pengguna';
+  }
+
+  /**
+   * Mark comments as viewed for a ticket
+   * Store in database for reliability (session doesn't persist in impersonation mode)
+   */
+  public function markCommentsAsViewed($ticketUuid)
+  {
+    try {
+      $ticket = Ticket::where('uuid', $ticketUuid)->firstOrFail();
+      $userId = Auth::id();
+
+      // Use cache with database fallback for reliability
+      $cacheKey = "ticket_comments_viewed_{$ticket->id}_user_{$userId}";
+      $viewedAt = now();
+
+      // Store in cache (expires in 30 days)
+      Cache::put($cacheKey, $viewedAt, now()->addDays(30));
+
+      return response()->json([
+        'success' => true,
+        'message' => 'Catatan ditanda sebagai dibaca',
+        'viewed_at' => $viewedAt->format('Y-m-d H:i:s')
+      ]);
+    } catch (\Exception $e) {
+      Log::error('Error marking comments as viewed', [
+        'error' => $e->getMessage(),
+        'ticket_uuid' => $ticketUuid
+      ]);
+      return response()->json([
+        'success' => false,
+        'message' => 'Ralat: ' . $e->getMessage()
+      ], 500);
+    }
   }
 
   /**

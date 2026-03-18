@@ -28,6 +28,8 @@ Dokumentasi lengkap untuk sistem tiket eHelp.
 6. [**View Tindakan Pegawai**](06_VIEW_TINDAKAN_PEGAWAI.md)
    - Officer action interface
    - Assignment dan escalation
+   - **Badge notification for new comments** ⭐ NEW
+   - Cache-based comment tracking
 
 7. [**View Maklumat Pengadu**](07_VIEW_MAKLUMAT_PENGADU.md)
    - Complainant information display
@@ -71,6 +73,13 @@ Including:
 - **API Documentation** → See individual feature docs
 
 ## 🆕 Latest Updates
+
+### March 18, 2026
+- ✅ **Badge Notification for Comments** - New badge system on "Catatan Tindakan" button
+- ✅ **Cache-based Persistence** - Badge state survives impersonation mode
+- ✅ **Role-based Badge Logic** - Pengadu sees officer comments badge, officers see pengadu badge
+- ✅ **Comments Sorted by Latest** - Newest comments displayed first in modal
+- ✅ **Documentation Update** - Added comprehensive badge feature section to [06_VIEW_TINDAKAN_PEGAWAI.md](06_VIEW_TINDAKAN_PEGAWAI.md)
 
 ### March 3, 2026
 - ✅ **Form Validation Enhancement** - Added auto-scroll to validation errors

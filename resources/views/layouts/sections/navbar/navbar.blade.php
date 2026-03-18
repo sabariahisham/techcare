@@ -165,9 +165,16 @@
                                 <h6 class="mb-0">
                                     @if (Auth::check())
                                         {{ Auth::user()->nama }}<br>
-                                        <small class="text-muted">{{ Auth::user()->email }}</small><br>
-                                        <small
-                                            class="text-muted"><i>[{{ Auth::user()->getRoleNames()->join(', ') }}]</i></small>
+                                        <small class="text-muted">{{ Auth::user()->email }}</small><br>                                        
+                                        @php
+                                            $roles = Auth::user()->getRoleNames();
+                                        @endphp
+
+                                        @if ($roles->isNotEmpty())
+                                            <small class="text-muted">
+                                                <i>[{{ $roles->join(', ') }}]</i>
+                                            </small>
+                                        @endif
                                     @endif
                                 </h6>
                             </div>
@@ -195,9 +202,9 @@
                         {{-- For dev, staging and prod --}}
                         <form method="POST" id="logout-form" action="{{ route('cas.logout') }}">
 
-                        {{-- For local --}} 
-                        {{-- <form method="POST" id="logout-form" action="{{ route('logout') }}"> --}}
-                        @csrf
+                            {{-- For local --}}
+                            {{-- <form method="POST" id="logout-form" action="{{ route('logout') }}"> --}}
+                            @csrf
                             <a class="dropdown-item" href="{{ route('logout') }}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class='bx bx-power-off bx-md me-3'></i><span>Logout</span>

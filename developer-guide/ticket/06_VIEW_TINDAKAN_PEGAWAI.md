@@ -890,6 +890,514 @@ protected function sendNotifications($ticket, $newStatus, $escalateTo)
 }
 ```
 
+## 🔔 Badge Notification untuk Catatan Tindakan (NEW - March 18, 2026)
+
+### 📋 Overview
+Feature badge notification yang dipaparkan pada button "Catatan Tindakan" untuk memberitahu user tentang komen/catatan baharu yang belum dibaca. Badge ini menggunakan **cache-based persistence** untuk memastikan ia berfungsi dengan betul walaupun dalam impersonation mode.
+
+### 🎯 Key Features
+- **Real-time badge display** dengan count komen yang belum dibaca
+- **Role-based logic**: Pengadu nampak badge untuk komen pegawai, Pegawai Tugasan nampak badge untuk komen pengadu
+- **Cache persistence**: Badge persistence survive across page refreshes dan impersonation mode
+- **Automatic badge removal**: Badge hilang selepas user buka modal dan di-refresh
+- **Pulse animation**: Visual feedback untuk menarik perhatian user
+- **Comments sorted by latest**: Catatan terkini dipaparkan di atas
+
+### 🔐 Badge Visibility Logic
+
+#### Who Sees the Badge?
+
+**1. Pengadu (Ticket Creator)**
+- Sees badge for comments from **Pegawai Tugasan** only
+- Pegawai roles: 'Pegawai Tugasan', 'Penyelia Helpdesk', 'Helpdesk On Duty', 'Administrator', 'Pentadbir Sistem'
+- Does NOT see badge for their own comments
+
+**2. Pegawai Tugasan (Assigned Officer)**
+- ONLY assigned officers see the badge
+- Sees badge for comments from **Pengadu (ticket creator)** only
+- Does NOT see badge if not assigned to the ticket
+
+**3. Other Users**
+- NO badge displayed
+- Users yang tidak berkaitan dengan ticket tidak nampak badge
+
+### 📂 Files Modified
+
+```
+app/Http/Controllers/Ticket/TicketController.php
+├── show() method
+│   ├── Calculate badge count based on user role
+│   ├── Check if user is Pengadu or Assigned Officer
+│   ├── Query comments from relevant users only
+│   ├── Filter by last viewed time from cache
+│   └── Pass $newCommentsCount to view
+
+app/Http/Controllers/Ticket/TicketAssignmentController.php
+├── markCommentsAsViewed($ticketUuid)
+│   ├── Store viewed timestamp in cache (30-day expiry)
+│   ├── Cache key: "ticket_comments_viewed_{ticket_id}_user_{user_id}"
+│   └── Return success response
+│
+├── getHistoryComment($ticketUuid)
+│   ├── Retrieve all ticket comments
+│   ├── Sort by created_at DESC (newest first)
+│   └── Return comments with user info and status
+
+resources/views/tickets/show.blade.php
+├── Button with badge display
+│   └── Lines ~383-391: Badge HTML with conditional display
+│
+└── CSS animations (Lines ~79-97)
+    ├── pulse-badge animation
+    └── shake animation
+
+resources/views/tickets/partials/action-comment-modal.blade.php
+├── Modal structure for displaying comments
+├── markCommentsAsViewed() JavaScript function
+│   └── Calls POST endpoint when modal shown
+└── loadActionComments() function
+    └── Fetches comments via AJAX
+
+routes/web.php
+└── POST /ticket-assignments/{uuid}/mark-comments-viewed
+```
+
+### 💻 Code Implementation
+
+#### 1. Badge Count Calculation (TicketController.php)
+
+```php
+// Calculate badge count in show() method
+$newCommentsCount = 0;
+
+if (Auth::check()) {
+    $currentUser = Auth::user();
+    $currentUserId = $currentUser->id;
+    
+    // Get last viewed time from cache
+    $cacheKey = "ticket_comments_viewed_{$ticket->id}_user_{$currentUserId}";
+    $lastViewedAt = Cache::get($cacheKey);
+
+    // Determine if current user is Pengadu
+    $isPengadu = ($currentUserId === $ticket->user_id);
+
+    // Check if user is assigned officer
+    $isAssignedOfficer = $ticket->chronologies()
+        ->whereNotNull('escalate_to')
+        ->where('escalate_to', $currentUserId)
+        ->exists();
+
+    if ($isPengadu) {
+        // Pengadu: Count comments from officers
+        $officerIds = User::whereHas('roles', function ($query) {
+            $query->whereIn('name', [
+                'Pegawai Tugasan',
+                'Penyelia Helpdesk',
+                'Helpdesk On Duty',
+                'Administrator',
+                'Pentadbir Sistem'
+            ]);
+        })->pluck('id')->toArray();
+
+        $commentsQuery = $ticket->comments()->whereIn('user_id', $officerIds);
+
+        if ($lastViewedAt) {
+            $newCommentsCount = $commentsQuery->where('created_at', '>', $lastViewedAt)->count();
+        } else {
+            // Fallback: Use last user interaction time
+            $lastUserInteraction = $ticket->chronologies()
+                ->where('frm_user_id', $currentUserId)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($lastUserInteraction) {
+                $newCommentsCount = $commentsQuery
+                    ->where('created_at', '>', $lastUserInteraction->created_at)
+                    ->count();
+            } else {
+                $newCommentsCount = $commentsQuery->count();
+            }
+        }
+    } elseif ($isAssignedOfficer) {
+        // Assigned Officer: Count comments from pengadu only
+        $commentsQuery = $ticket->comments()->where('user_id', $ticket->user_id);
+
+        if ($lastViewedAt) {
+            $newCommentsCount = $commentsQuery->where('created_at', '>', $lastViewedAt)->count();
+        } else {
+            // Fallback: Use last user interaction time
+            $lastUserInteraction = $ticket->chronologies()
+                ->where('frm_user_id', $currentUserId)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($lastUserInteraction) {
+                $newCommentsCount = $commentsQuery
+                    ->where('created_at', '>', $lastUserInteraction->created_at)
+                    ->count();
+            } else {
+                $newCommentsCount = $commentsQuery->count();
+            }
+        }
+    } else {
+        // Other users: No badge
+        $newCommentsCount = 0;
+    }
+}
+
+// Pass to view
+return view('tickets.show', compact(
+    'ticket', 
+    'location', 
+    'ticketHistory', 
+    'allStatuses', 
+    'allCategories', 
+    'allSubCategories', 
+    'officers', 
+    'currentSLA', 
+    'newCommentsCount'
+));
+```
+
+#### 2. Mark Comments as Viewed (TicketAssignmentController.php)
+
+```php
+/**
+ * Mark comments as viewed for current user
+ * Uses Cache for persistence (30-day expiry)
+ */
+public function markCommentsAsViewed($ticketUuid)
+{
+    try {
+        $ticket = Ticket::where('uuid', $ticketUuid)->firstOrFail();
+        $userId = Auth::id();
+        
+        // Store viewed timestamp in cache (30-day expiry)
+        $cacheKey = "ticket_comments_viewed_{$ticket->id}_user_{$userId}";
+        $viewedAt = now();
+        
+        Cache::put($cacheKey, $viewedAt, now()->addDays(30));
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Catatan ditanda sebagai dibaca',
+            'viewed_at' => $viewedAt->format('Y-m-d H:i:s')
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error marking comments as viewed', [
+            'error' => $e->getMessage(),
+            'ticket_uuid' => $ticketUuid
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Ralat: ' . $e->getMessage()
+        ], 500);
+    }
+}
+```
+
+#### 3. Get Comment History with Latest First (TicketAssignmentController.php)
+
+```php
+public function getHistoryComment($ticketUuid)
+{
+    try {
+        $ticket = Ticket::where('uuid', $ticketUuid)
+            ->with(['comments.user', 'comments.createdBy', 'status'])
+            ->firstOrFail();
+
+        // Get chronologies for status tracking
+        $chronologies = $ticket->chronologies()
+            ->with('status')
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->unique(function ($item) {
+                return $item->tick_status;
+            });
+
+        // Get comments sorted by newest first
+        $comments = $ticket->comments
+            ->sortByDesc('created_at')
+            ->map(function ($comment) use ($ticket, $chronologies) {
+                $commentStatus = $this->getStatusAtTime($comment->created_at, $chronologies);
+
+                return [
+                    'id' => $comment->id,
+                    'created_at' => $comment->created_at->format('d/m/Y H:i'),
+                    'user_name' => $comment->user ? $comment->user->nama : 'Tidak diketahui',
+                    'user_unit' => $comment->user ? ($comment->user->unit->nama_unit ?? $comment->user->kod_unit ?? '-') : '-',
+                    'user_type' => $this->getUserType($comment->user, $ticket),
+                    'comment' => $comment->comment_text,
+                    'created_by' => $comment->createdBy ? $comment->createdBy->nama : 'Tidak diketahui',
+                    'ticket_status' => $commentStatus['status_name'],
+                    'status_class' => $commentStatus['status_class']
+                ];
+            })
+            ->values(); // Reset array keys
+
+        return response()->json([
+            'success' => true,
+            'comments' => $comments
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Ralat semasa mendapatkan catatan tindakan: ' . $e->getMessage()
+        ], 500);
+    }
+}
+```
+
+#### 4. Badge Display HTML (show.blade.php)
+
+```blade
+{{-- Button Catatan Tindakan with Badge --}}
+<button type="button" 
+        class="btn btn-primary position-relative" 
+        data-bs-toggle="modal" 
+        data-bs-target="#actionComment">
+    <i class="bx bx-message-dots me-1"></i>Catatan Tindakan
+    
+    @if(isset($newCommentsCount) && $newCommentsCount > 0)
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger pulse-badge">
+            {{ $newCommentsCount }}
+            <span class="visually-hidden">unread comments</span>
+        </span>
+    @endif
+</button>
+```
+
+#### 5. Badge Animation CSS (show.blade.php)
+
+```css
+/* Badge pulse animation */
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+.pulse-badge {
+    animation: pulse-badge 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+    20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+.badge.pulse-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+}
+```
+
+#### 6. JavaScript - Mark as Viewed (action-comment-modal.blade.php)
+
+```javascript
+function markCommentsAsViewed() {
+    const ticketUuid = window.ticketData?.uuid || null;
+    if (!ticketUuid) {
+        console.error('Ticket UUID not found');
+        return;
+    }
+
+    // Call API to mark comments as viewed
+    fetch('/ticket-assignments/' + ticketUuid + '/mark-comments-viewed', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            console.error('❌ Failed to mark comments as viewed:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error marking comments as viewed:', error);
+    });
+}
+
+// Trigger when modal is shown
+$('#actionComment').on('shown.bs.modal', function () {
+    loadActionComments();
+    markCommentsAsViewed(); // Mark as viewed immediately
+});
+```
+
+#### 7. Route Definition (web.php)
+
+```php
+// Mark comments as viewed (Cache-based)
+Route::post('/{uuid}/mark-comments-viewed', [
+    TicketAssignmentController::class, 
+    'markCommentsAsViewed'
+])->name('ticket-assignments.mark-comments-viewed');
+```
+
+### 🔍 Cache Key Structure
+
+```
+Format: ticket_comments_viewed_{ticket_id}_user_{user_id}
+
+Examples:
+- ticket_comments_viewed_44_user_48
+- ticket_comments_viewed_123_user_5
+
+Cache Duration: 30 days
+Storage: Laravel Cache (file/redis/memcached based on config)
+```
+
+### ⚡ Why Cache Instead of Session?
+
+**Problem with Session**:
+- Session tidak persist dalam Laravel impersonation mode
+- Session data hilang selepas context switch
+- Log evidence: `viewed_at` set pada 13:36:01, tetapi jadi `null` pada 13:36:05
+
+**Solution: Cache-based Storage**:
+```php
+// Session (FAILED in impersonation mode)
+session(['ticket_comments_viewed_' . $ticket->id => now()]);
+session()->save(); // ❌ Not persistent
+
+// Cache (WORKS in all modes)
+Cache::put($cacheKey, now(), now()->addDays(30)); // ✅ Persistent
+```
+
+### 🧪 Testing Instructions
+
+#### Test Case 1: Pengadu sees Officer Comments
+1. Login sebagai Pengadu (ticket creator)
+2. Navigate ke ticket detail page
+3. Officer add comment dalam ticket
+4. Reload page → Badge dengan count muncul pada button "Catatan Tindakan"
+5. Click button → Modal opens
+6. Close modal → Refresh page
+7. **Expected**: Badge hilang (no longer displayed)
+
+#### Test Case 2: Assigned Officer sees Pengadu Comments
+1. Login sebagai Pegawai Tugasan yang di-assign ke ticket
+2. Navigate ke ticket detail page
+3. Pengadu add comment
+4. Reload page → Badge dengan count muncul
+5. Click button → Modal opens
+6. Close modal → Refresh page
+7. **Expected**: Badge hilang
+
+#### Test Case 3: Non-Assigned Officer
+1. Login sebagai Pegawai Tugasan yang TIDAK di-assign
+2. Navigate ke ticket detail page
+3. **Expected**: NO badge displayed (even if there are new comments)
+
+#### Test Case 4: Impersonation Mode
+1. Admin impersonate sebagai Pengadu
+2. Navigate ke ticket dengan new comments
+3. Badge muncul dengan count yang betul
+4. Click button → Modal opens
+5. Stop impersonation → Impersonate again
+6. Refresh page
+7. **Expected**: Badge TIDAK muncul (still marked as viewed)
+
+#### Test Case 5: Multiple Users
+1. User A (Pengadu) and User B (Officer) on same ticket
+2. Both have new comments to see
+3. User A opens modal → Badge hilang untuk User A only
+4. User B still sees badge (independent tracking)
+5. User B opens modal → Badge hilang untuk User B
+6. **Expected**: Each user has independent badge state
+
+### 🐛 Troubleshooting
+
+#### Issue: Badge masih appear selepas view
+**Check**:
+```php
+// Verify cache is set
+$cacheKey = "ticket_comments_viewed_{$ticket_id}_user_{$user_id}";
+$cached = Cache::get($cacheKey);
+dd($cached); // Should return Carbon instance
+```
+
+#### Issue: Badge tidak muncul untuk new comments
+**Check**:
+1. Comment created_at > last viewed time?
+2. User role betul (Pengadu atau Assigned Officer)?
+3. Comment user_id matching role logic?
+
+```sql
+-- Check comments
+SELECT id, ticket_id, user_id, created_at 
+FROM ticket_comments 
+WHERE ticket_id = ?;
+
+-- Check chronology assignments
+SELECT escalate_to, created_at
+FROM ticket_chronologies
+WHERE ticket_id = ? AND escalate_to IS NOT NULL;
+```
+
+#### Issue: Cache not working
+**Check cache configuration**:
+```bash
+# .env file
+CACHE_DRIVER=file # or redis, memcached
+
+# Clear cache
+php artisan cache:clear
+
+# Test cache manually
+Cache::put('test_key', 'test_value', now()->addMinutes(5));
+dd(Cache::get('test_key')); // Should return 'test_value'
+```
+
+### 📊 Badge Count Formula
+
+```
+For Pengadu:
+  Badge Count = Comments WHERE 
+    - user_id IN (officer role IDs)
+    - created_at > last_viewed_at (from cache)
+    - ticket_id = current ticket
+
+For Assigned Officer:
+  Badge Count = Comments WHERE
+    - user_id = ticket.user_id (pengadu)
+    - created_at > last_viewed_at (from cache)
+    - ticket_id = current ticket
+
+For Other Users:
+  Badge Count = 0 (no badge)
+```
+
+### 🎯 Business Logic Summary
+
+| User Type | Sees Badge For | Badge Count Logic |
+|-----------|----------------|-------------------|
+| Pengadu (Creator) | Officer comments | Count comments from officer roles after last view |
+| Assigned Officer | Pengadu comments | Count comments from ticket creator after last view |
+| Non-Assigned Officer | Nothing | Always 0 |
+| Other Users | Nothing | Always 0 |
+
+### 📝 Notes & Considerations
+
+- **Cache expiry**: 30 days (can be adjusted)
+- **Per-user tracking**: Each user has independent badge state
+- **Impersonation safe**: Cache persists across impersonation sessions
+- **Performance**: Minimal queries (cached data, indexed lookups)
+- **Real-time**: Badge updates on page load (not websocket/polling)
+- **Sorting**: Comments displayed newest first for better UX
+- **Animation**: Pulse effect draws user attention to new comments
+
 ## 🎨 Form Styling
 
 ### Card Layout

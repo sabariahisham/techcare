@@ -535,6 +535,7 @@ Route::middleware(['auth'])->prefix('ticket-assignments')->group(function () {
   Route::get('/available-assignees', [TicketAssignmentController::class, 'getAvailableAssignees'])->name('tickets.available-assignees');
   Route::get('/available-assignees-by-sla', [TicketAssignmentController::class, 'getAvailableAssigneesBySLA'])->name('tickets.available-assignees-by-sla');
   Route::get('/{uuid}/history-comments', [TicketAssignmentController::class, 'getHistoryComment'])->name('tickets.history-comments');
+  Route::post('/{uuid}/mark-comments-viewed', [TicketAssignmentController::class, 'markCommentsAsViewed'])->name('tickets.mark-comments-viewed');
 });
 
 // Ticket Search Routes Group
