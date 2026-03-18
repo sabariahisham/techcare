@@ -137,4 +137,13 @@ return [
     'Helper' => App\Helpers\Helpers::class,
   ],
 
+      /*
+    |--------------------------------------------------------------------------
+    | Custom Scheduler Flags
+    |--------------------------------------------------------------------------
+    */
+
+    'enable_sync_users_spp' => env('ENABLE_SYNC_USERS_SPP', false),
+    // 'enable_sync_refs_spp'  => env('ENABLE_SYNC_REFS_SPP', false),
+
 ];

@@ -59,14 +59,26 @@ return [
       ]) : [],
     ],
 
+    //connection spp di local sahaja
+    // 'spp' => [
+    //   'driver' => env('DB_SPP_CONNECTION', 'mysql'),
+    //   'url' => env('DB_URL'),
+    //   'host' => env('DB_SPP_HOST', '127.0.0.1'),
+    //   'port' => env('DB_SPP_PORT', '3306'),
+    //   'database' => env('DB_SPP_DATABASE', 'spp_db'),
+    //   'username' => env('DB_SPP_USERNAME', 'root'),
+    //   'password' => env('DB_SPP_PASSWORD', ''),
+    // ],
+
+    //connection untuk server dev, staging dan production
     'spp' => [
       'driver' => env('DB_SPP_CONNECTION', 'mysql'),
       'url' => env('DB_URL'),
-      'host' => env('DB_SPP_HOST', '127.0.0.1'),
+      'host' => env('DB_SPP_HOST', '10.23.104.36'),
       'port' => env('DB_SPP_PORT', '3306'),
-      'database' => env('DB_SPP_DATABASE', 'spp_db'),
-      'username' => env('DB_SPP_USERNAME', 'root'),
-      'password' => env('DB_SPP_PASSWORD', ''),
+      'database' => env('DB_SPP_DATABASE', 'sppdb'),
+      'username' => env('DB_SPP_USERNAME', 'apps2'),
+      'password' => env('DB_SPP_PASSWORD', 'Aplik@si*2025'),
     ],
 
     'mariadb' => [
