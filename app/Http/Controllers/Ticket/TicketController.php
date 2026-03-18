@@ -59,6 +59,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -1133,12 +1134,86 @@ class TicketController extends Controller
       $query->whereIn('name', ['Administrator', 'Pentadbir Sistem', 'Penyelia Helpdesk', 'Helpdesk On Duty', 'Pegawai Tugasan']);
     })->select('id', 'nama', 'email')->get();
 
-    Log::info('Showing ticket with comments', [
-      'ticket_id' => $ticket->id,
-      'comments_count' => $ticket->comments->count()
-    ]);
+    // Count new/unread comments for notification badge
+    // Badge logic (ONLY for relevant users):
+    // - Pengadu (ticket creator): Show badge for comments from Pegawai Tugasan
+    // - Pegawai Tugasan ASSIGNED to ticket: Show badge for comments from Pengadu
+    // - Other users: NO badge
+    $newCommentsCount = 0;
 
-    return view('tickets.show', compact('ticket', 'location', 'ticketHistory', 'allStatuses', 'allCategories', 'allSubCategories', 'officers', 'currentSLA'));
+    if (Auth::check()) {
+      $currentUser = Auth::user();
+      $currentUserId = $currentUser->id;
+      $cacheKey = "ticket_comments_viewed_{$ticket->id}_user_{$currentUserId}";
+      $lastViewedAt = Cache::get($cacheKey);
+
+      // Determine if current user is the ticket creator (Pengadu)
+      $isPengadu = ($currentUserId === $ticket->user_id);
+
+      // Check if current user is assigned to this ticket as Pegawai Tugasan
+      $isAssignedOfficer = $ticket->chronologies()
+        ->whereNotNull('escalate_to')
+        ->where('escalate_to', $currentUserId)
+        ->exists();
+
+      // Only show badge for Pengadu OR Assigned Officers
+      // Other users will see 0 badge
+      if ($isPengadu) {
+        // Pengadu: Show comments from officers only
+        // Get all officer user IDs who have roles
+        $officerIds = User::whereHas('roles', function ($query) {
+          $query->whereIn('name', [
+            'Pegawai Tugasan',
+            'Penyelia Helpdesk',
+            'Helpdesk On Duty',
+            'Administrator',
+            'Pentadbir Sistem'
+          ]);
+        })->pluck('id')->toArray();
+
+        $commentsQuery = $ticket->comments()->whereIn('user_id', $officerIds);
+
+        // Apply time filter
+        if ($lastViewedAt) {
+          $newCommentsCount = $commentsQuery->where('created_at', '>', $lastViewedAt)->count();
+        } else {
+          $lastUserInteraction = $ticket->chronologies()
+            ->where('frm_user_id', $currentUserId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+          if ($lastUserInteraction) {
+            $newCommentsCount = $commentsQuery->where('created_at', '>', $lastUserInteraction->created_at)->count();
+          } else {
+            $newCommentsCount = $commentsQuery->count();
+          }
+        }
+      } elseif ($isAssignedOfficer) {
+        // Assigned Officer: Show comments from pengadu (ticket creator) only
+        $commentsQuery = $ticket->comments()->where('user_id', $ticket->user_id);
+
+        // Apply time filter
+        if ($lastViewedAt) {
+          $newCommentsCount = $commentsQuery->where('created_at', '>', $lastViewedAt)->count();
+        } else {
+          $lastUserInteraction = $ticket->chronologies()
+            ->where('frm_user_id', $currentUserId)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+          if ($lastUserInteraction) {
+            $newCommentsCount = $commentsQuery->where('created_at', '>', $lastUserInteraction->created_at)->count();
+          } else {
+            $newCommentsCount = $commentsQuery->count();
+          }
+        }
+      } else {
+        // Other users (not related to ticket): NO BADGE
+        $newCommentsCount = 0;
+      }
+    }
+
+    return view('tickets.show', compact('ticket', 'location', 'ticketHistory', 'allStatuses', 'allCategories', 'allSubCategories', 'officers', 'currentSLA', 'newCommentsCount'));
   }
 
   /**

@@ -274,15 +274,53 @@
         if (actionCommentModal) {
             actionCommentModal.addEventListener('shown.bs.modal', function() {
                 loadActionComments();
+
+                // Mark comments as viewed when modal is opened
+                markCommentsAsViewed();
+
+                // Hide the new comments badge when modal is opened
+                const badge = document.querySelector('[onclick*="actionComment"] .badge');
+                if (badge) {
+                    badge.style.display = 'none';
+                }
             });
+        }
+
+        // Function to mark comments as viewed
+        function markCommentsAsViewed() {
+            const ticketUuid = window.ticketData?.uuid || null;
+            if (!ticketUuid) {
+                console.error('Ticket UUID not found');
+                return;
+            }
+
+            // Call API to mark comments as viewed (use UUID)
+            fetch('/ticket-assignments/' + ticketUuid + '/mark-comments-viewed', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute(
+                            'content') || ''
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        console.error('❌ Failed to mark comments as viewed:', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error marking comments as viewed:', error);
+                });
         }
 
         // Load action comments when modal is shown
         function loadActionComments() {
-            const ticketId = window.ticketData?.id || null;
+            const ticketUuid = window.ticketData?.uuid || null;
             const contentDiv = document.getElementById('actionCommentContent');
-            if (!ticketId) {
-                contentDiv.innerHTML = '<div class="alert alert-warning">ID tiket tidak ditemui.</div>';
+            if (!ticketUuid) {
+                contentDiv.innerHTML = '<div class="alert alert-warning">UUID tiket tidak ditemui.</div>';
                 return;
             }
 
@@ -296,8 +334,8 @@
             </div>
         `;
 
-            // Fetch comments from server
-            fetch('/ticket-assignments/' + ticketId + '/history-comments', {
+            // Fetch comments from server (use UUID)
+            fetch('/ticket-assignments/' + ticketUuid + '/history-comments', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

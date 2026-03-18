@@ -74,6 +74,42 @@
         .location-value {
             margin-left: 0.5rem;
         }
+
+        /* Notification badge animation for new comments */
+        @keyframes pulse-badge {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(220, 53, 69, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+
+        /* Badge shake animation on hover */
+        .btn:hover .badge {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-3px);
+            }
+
+            75% {
+                transform: translateX(3px);
+            }
+        }
     </style>
 @endsection
 
@@ -294,8 +330,9 @@
                                         'S' => 'Selatan',
                                     ];
                                 @endphp
-                                Aras {{ $location->level_loc ?? '-' }} {{ $location->block_loc ? ', Blok ' . ($blockMap[$location->block_loc] ?? $location->block_loc) : '' }}
-                                     {{ $location->building_loc ? ', ' . ($buildingMap[$location->building_loc] ?? $location->building_loc) : '' }}
+                                Aras {{ $location->level_loc ?? '-' }}
+                                {{ $location->block_loc ? ', Blok ' . ($blockMap[$location->block_loc] ?? $location->block_loc) : '' }}
+                                {{ $location->building_loc ? ', ' . ($buildingMap[$location->building_loc] ?? $location->building_loc) : '' }}
                             @else
                                 -
                             @endif
@@ -383,6 +420,12 @@
                             <button type="button" class="btn btn-primary btn-sm float-end"
                                 onclick="$('#actionComment').modal('show')">
                                 <i class="bx bx-save me-1"></i>Catatan Tindakan
+                                @if (isset($newCommentsCount) && $newCommentsCount > 0)
+                                    <span class="badge bg-danger ms-2 position-relative"
+                                        style="font-size: 0.7rem; padding: 0.25rem 0.5rem; border-radius: 10px; animation: pulse-badge 2s infinite;">
+                                        {{ $newCommentsCount > 9 ? '9+' : $newCommentsCount }}
+                                    </span>
+                                @endif
                             </button>
                         </div>
                     </div>
@@ -1866,7 +1909,8 @@ $timelineItems = $timelineItems
     <script>
         // Make ticket data available globally for modals
         window.ticketData = {
-            id: {{ $ticket->id ?? 'null' }}
+            id: {{ $ticket->id ?? 'null' }},
+            uuid: '{{ $ticket->uuid ?? '' }}'
         };
 
         // Auto-resize textarea functionality
