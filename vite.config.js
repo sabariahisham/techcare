@@ -17,6 +17,9 @@ function GetFilesArray(query) {
 // Page JS Files
 const pageJsFiles = GetFilesArray('resources/assets/js/*.js');
 
+// Dashboard JS Files (subfolder)
+const dashboardJsFiles = GetFilesArray('resources/assets/js/dashboard/*.js');
+
 // Processing Vendor JS Files
 const vendorJsFiles = GetFilesArray('resources/assets/vendor/js/*.js');
 
@@ -104,6 +107,7 @@ export default defineConfig({
     laravel({
       input: [
         ...pageJsFiles,
+        ...dashboardJsFiles,
         ...vendorJsFiles,
         ...LibsJsFiles,
         ...CoreScssFiles,

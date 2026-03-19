@@ -1,5 +1,8 @@
 {{-- /* TUGASAN ANDA! - Pegawai Tugasan Dashboard */ --}}
 
+{{-- Auto-Refresh Controls --}}
+@include('dashboard/partials/pegawai-tugasan/refresh-controls')
+
 {{-- Aduan Hari Ini / Lewat SLA / Tiket Belum Selesai / Selesai Minggu Ini --}}
 @include('dashboard/partials/pegawai-tugasan/cards-status-pegawai')
 
