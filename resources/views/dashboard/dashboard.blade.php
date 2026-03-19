@@ -59,11 +59,16 @@ TASK:
             lifetime: {{ config('session.lifetime', 120) }}
         };
     </script>
-    @vite(['resources/assets/js/dashboard.js', 'resources/assets/js/session-timeout.js'])
+    @vite(['resources/assets/js/dashboard/dashboard.js', 'resources/assets/js/session-timeout.js'])
 
-    {{-- Load Pegawai Tugasan specific JavaScript if user has Pegawai section --}}
+    {{-- Load Pegawai Tugasan specific JavaScript with AUTO-REFRESH if user has Pegawai section --}}
     @if ($sections['pegawai'] ?? false)
-        @vite(['resources/assets/js/dashboard-pegawai-tugasan.js'])
+        @vite(['resources/assets/js/dashboard/dashboard-pegawai-tugasan-auto-refresh.js'])
+    @endif
+
+    {{-- Load Admin/Helpdesk/Pengurusan specific JavaScript with AUTO-REFRESH --}}
+    @if (($sections['admin'] ?? false) || ($sections['helpdesk'] ?? false) || ($sections['pengurusan'] ?? false))
+        @vite(['resources/assets/js/dashboard/dashboard-admin-auto-refresh.js'])
     @endif
 @endsection
 
@@ -203,6 +208,9 @@ TASK:
                 </div>
             </div>
             <div class="card-body">
+                {{-- Auto-Refresh Controls --}}
+                @include('dashboard/partials/admin-refresh-controls')
+
                 <div class="row g-3 mb-1 dashboard-row-consistent">
                     @include('dashboard/partials/cards-status') <!-- Card Status -->
                     @include('dashboard/partials/chart-status') <!-- Ticket Status -->
@@ -232,6 +240,9 @@ TASK:
                 </div>
             </div>
             <div class="card-body">
+                {{-- Auto-Refresh Controls --}}
+                @include('dashboard/partials/admin-refresh-controls')
+
                 <div class="row g-4 mb-2 dashboard-row-consistent">
                     @include('dashboard/partials/cards-status')
                     @include('dashboard/partials/chart-status')
@@ -256,6 +267,9 @@ TASK:
                 </div>
             </div>
             <div class="card-body">
+                {{-- Auto-Refresh Controls --}}
+                @include('dashboard/partials/admin-refresh-controls')
+
                 <div class="row g-4 mb-2 dashboard-row-consistent">
                     @include('dashboard/partials/cards-status')
                     @include('dashboard/partials/chart-status')
