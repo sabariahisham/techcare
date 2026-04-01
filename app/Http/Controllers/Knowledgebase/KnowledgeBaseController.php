@@ -24,21 +24,21 @@ class KnowledgeBaseController extends Controller
     public function getData(Request $request)
     {
         if ($request->ajax()) {
-            $data = KnowledgeBase::with(['category', 'subCategory', 'creator'])
+            $data = KnowledgeBase::with(['category', 'subCategory', 'creator.roles', 'updater'])
                 ->select('knowledge_base.*');
 
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function($row) {
                     $user = Auth::user();
-                    $hasRole = $user && $user->roles->isNotEmpty();
+                    $canEditDelete = $user && ($user->hasRole('Administrator') || $user->id === $row->created_by);
 
                     $btn = '<div class="d-flex align-items-center">';
                     // View button - always visible to all users
                     $btn .= '<a href="javascript:void(0);" class="text-body show-record" data-id="'.$row->id.'" title="View Details"><i class="bx bx-show mx-1"></i></a>';
 
-                    // Edit and Delete buttons - only visible to users with roles
-                    if ($hasRole) {
+                    // Edit and Delete buttons - only visible to Administrator or the article's author
+                    if ($canEditDelete) {
                         $btn .= '<a href="javascript:void(0);" class="text-body edit-record" data-id="'.$row->id.'" title="Edit"><i class="bx bx-edit mx-1"></i></a>';
                         $btn .= '<a href="javascript:void(0);" class="text-body delete-record" data-id="'.$row->id.'" data-title="'.htmlspecialchars($row->kb_title, ENT_QUOTES, 'UTF-8').'" title="Delete"><i class="bx bx-trash mx-1"></i></a>';
                     }
@@ -57,6 +57,30 @@ class KnowledgeBaseController extends Controller
                         return $row->creator->nama;
                     }
                     return $row->created_by ? 'Unknown User (ID: ' . $row->created_by . ')' : '-';
+                })
+                ->editColumn('created_at', function($row) {
+                    return $row->created_at ? $row->created_at->format('d/m/Y H:i') : '-';
+                })
+                ->addColumn('updated_by_name', function($row) {
+                    if ($row->updater) {
+                        return $row->updater->nama;
+                    }
+                    return $row->updated_by ? 'Unknown User (ID: ' . $row->updated_by . ')' : '-';
+                })
+                ->editColumn('updated_at', function($row) {
+                    return $row->updated_at ? $row->updated_at->format('d/m/Y H:i') : '-';
+                })
+                ->addColumn('creator_roles', function($row) {
+                    if (!$row->creator) {
+                        return '-';
+                    }
+                    $roles = $row->creator->roles->pluck('name');
+                    if ($roles->isEmpty()) {
+                        return '<span class="badge bg-label-secondary">Tiada Peranan</span>';
+                    }
+                    return $roles->map(function($role) {
+                        return '<span class="badge bg-label-primary me-1">' . htmlspecialchars($role) . '</span>';
+                    })->implode('');
                 })
                 ->editColumn('kb_status', function($row) {
                     $statusClass = $row->kb_status == 'aktif' ? 'bg-label-success' : 'bg-label-secondary';
@@ -84,7 +108,7 @@ class KnowledgeBaseController extends Controller
 
                     return $tagBadges ?: '<span class="badge bg-label-secondary">Tiada Tag</span>';
                 })
-                ->rawColumns(['action', 'kb_status', 'kb_tag_formatted'])
+                ->rawColumns(['action', 'kb_status', 'kb_tag_formatted', 'creator_roles'])
                 ->make(true);
         }
     }
@@ -157,7 +181,7 @@ class KnowledgeBaseController extends Controller
             }
         }
 
-        return response()->json(['success' => true, 'message' => 'Knowledge Base created successfully']);
+        return response()->json(['success' => true]);
     }
 
     public function show($id)
@@ -191,16 +215,15 @@ class KnowledgeBaseController extends Controller
 
     public function edit($id)
     {
-        // Check if user has a role
         $user = Auth::user();
-        if (!$user || $user->roles->isEmpty()) {
+        $knowledgeBase = KnowledgeBase::with(['category', 'subCategory', 'documents'])->findOrFail($id);
+
+        if (!$user || (!$user->hasRole('Administrator') && $user->id !== $knowledgeBase->created_by)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Anda tidak mempunyai kebenaran untuk mengedit artikel. Hanya pengguna dengan peranan yang ditetapkan boleh mengedit artikel.'
+                'message' => 'Anda tidak mempunyai kebenaran untuk mengedit artikel ini. Hanya pentadbir atau penulis artikel boleh mengedit artikel.'
             ], 403);
         }
-
-        $knowledgeBase = KnowledgeBase::with(['category', 'subCategory', 'documents'])->findOrFail($id);
 
         $data = [
             'id' => $knowledgeBase->id,
@@ -226,12 +249,13 @@ class KnowledgeBaseController extends Controller
 
     public function update(Request $request, $id)
     {
-        // Check if user has a role
         $user = Auth::user();
-        if (!$user || $user->roles->isEmpty()) {
+        $knowledgeBase = KnowledgeBase::findOrFail($id);
+
+        if (!$user || (!$user->hasRole('Administrator') && $user->id !== $knowledgeBase->created_by)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Anda tidak mempunyai kebenaran untuk mengedit artikel. Hanya pengguna dengan peranan yang ditetapkan boleh mengedit artikel.'
+                'message' => 'Anda tidak mempunyai kebenaran untuk mengedit artikel ini. Hanya pentadbir atau penulis artikel boleh mengedit artikel.'
             ], 403);
         }
 
@@ -246,7 +270,6 @@ class KnowledgeBaseController extends Controller
             'pdf_files.*' => 'file|mimes:pdf|max:2048' // 2MB max per file
         ]);
 
-        $knowledgeBase = KnowledgeBase::findOrFail($id);
         $knowledgeBase->update([
             'cat_id' => $request->cat_id,
             'subcat_id' => $request->subcat_id,
@@ -301,21 +324,20 @@ class KnowledgeBaseController extends Controller
             }
         }
 
-        return response()->json(['success' => true, 'message' => 'Knowledge Base updated successfully']);
+        return response()->json(['success' => true]);
     }
 
     public function destroy($id)
     {
-        // Check if user has a role
         $user = Auth::user();
-        if (!$user || $user->roles->isEmpty()) {
+        $knowledgeBase = KnowledgeBase::with('documents')->findOrFail($id);
+
+        if (!$user || (!$user->hasRole('Administrator') && $user->id !== $knowledgeBase->created_by)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Anda tidak mempunyai kebenaran untuk menghapus artikel. Hanya pengguna dengan peranan yang ditetapkan boleh menghapus artikel.'
+                'message' => 'Anda tidak mempunyai kebenaran untuk menghapus artikel ini. Hanya pentadbir atau penulis artikel boleh menghapus artikel.'
             ], 403);
         }
-
-        $knowledgeBase = KnowledgeBase::with('documents')->findOrFail($id);
 
         // Delete associated files from storage only (keep database records)
         foreach ($knowledgeBase->documents as $document) {
@@ -328,7 +350,7 @@ class KnowledgeBaseController extends Controller
 
         // Note: Knowledge base record is kept in database
 
-        return response()->json(['success' => true, 'message' => 'Files deleted from storage successfully. Database records preserved.']);
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -360,16 +382,15 @@ class KnowledgeBaseController extends Controller
      */
     public function softDelete(Request $request, $id)
     {
-        // Check if user has a role
         $user = Auth::user();
-        if (!$user || $user->roles->isEmpty()) {
+        $knowledgeBase = KnowledgeBase::with('documents')->findOrFail($id);
+
+        if (!$user || (!$user->hasRole('Administrator') && $user->id !== $knowledgeBase->created_by)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Anda tidak mempunyai kebenaran untuk menghapus artikel. Hanya pengguna dengan peranan yang ditetapkan boleh menghapus artikel.'
+                'message' => 'Anda tidak mempunyai kebenaran untuk menghapus artikel ini. Hanya pentadbir atau penulis artikel boleh menghapus artikel.'
             ], 403);
         }
-
-        $knowledgeBase = KnowledgeBase::with('documents')->findOrFail($id);
 
         $unlinkFiles = $request->boolean('unlink_files', false);
         $deletedDocuments = 0;
@@ -395,13 +416,8 @@ class KnowledgeBaseController extends Controller
         // Soft delete knowledge base record
         $knowledgeBase->delete();
 
-        $message = $unlinkFiles
-            ? 'Artikel Knowledge Base telah berjaya dipadam (soft delete). Fail dokumen telah dibuang kekal dari storage.'
-            : 'Artikel Knowledge Base telah berjaya dipadam (soft delete).';
-
         return response()->json([
             'success' => true,
-            'message' => $message,
             'deleted_documents' => $deletedDocuments,
             'unlinked_files' => $unlinkedFiles
         ]);
@@ -424,7 +440,7 @@ class KnowledgeBaseController extends Controller
         // Delete document record
         $document->delete();
 
-        return response()->json(['success' => true, 'message' => 'Document deleted successfully']);
+        return response()->json(['success' => true]);
     }
 
     public function downloadDocument($documentId)

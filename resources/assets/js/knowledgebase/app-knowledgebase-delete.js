@@ -115,11 +115,15 @@ $(function () {
         if (result.isConfirmed && result.value) {
           resolve(result.value);
         } else {
-          resolve({confirmed: false, unlinkFiles: false});
+          resolve({
+            confirmed: false,
+            unlinkFiles: false
+          });
         }
       });
     });
-  }  /**
+  }
+  /**
    * Perform the actual article soft deletion
    * @param {number} articleId - The ID of the article to delete
    * @returns {Promise<Object>} - Returns the response data
@@ -140,14 +144,9 @@ $(function () {
         }
       });
 
-      let message = response.message;
-      if (!message) {
-        message = 'Artikel Knowledge Base telah berjaya dipadam (soft delete). Fail dokumen telah dibuang kekal dari storage.';
-      }
-
       return {
         success: true,
-        message: message,
+        message: 'Artikel Knowledge Base telah berjaya dipadam (soft delete). Fail dokumen telah dibuang kekal dari storage.',
         deletedDocuments: response.deleted_documents || 0,
         unlinkedFiles: response.unlinked_files || 0
       };
@@ -186,7 +185,8 @@ $(function () {
     if (window.dt_knowledgebase && typeof window.dt_knowledgebase.ajax === 'object') {
       window.dt_knowledgebase.ajax.reload();
     }
-  }  /**
+  }
+  /**
    * Show error notification
    * @param {string} message - Error message to display
    */
@@ -264,7 +264,7 @@ $(function () {
    * Event handler for delete buttons
    * Handles clicks on elements with class 'delete-record' or 'delete-article'
    */
-  $(document).on('click', '.delete-record, .delete-article', function(e) {
+  $(document).on('click', '.delete-record, .delete-article', function (e) {
     e.preventDefault();
 
     // Check if user has a role

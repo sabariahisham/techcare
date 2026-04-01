@@ -33,7 +33,7 @@
   });
 
   // Handle category change to populate subcategories in edit modal
-  $(document).on('change', '#edit-kb-category', function() {
+  $(document).on('change', '#edit-kb-category', function () {
     var categoryId = $(this).val();
     loadSubcategories(categoryId, null);
   });
@@ -50,15 +50,15 @@
       $.ajax({
         url: `/categories/${categoryId}/subcategories`,
         type: 'GET',
-        success: function(response) {
+        success: function (response) {
           if (response.success) {
-            response.data.forEach(function(subcategory) {
+            response.data.forEach(function (subcategory) {
               var selected = selectedSubcatId == subcategory.id ? 'selected' : '';
               subcategorySelect.append(`<option value="${subcategory.id}" ${selected}>${subcategory.subcat_name}</option>`);
             });
           }
         },
-        error: function(xhr) {
+        error: function (xhr) {
           console.error('Error fetching subcategories:', xhr);
           toastr.error('Gagal memuatkan sub kategori. Sila cuba lagi.');
         }
@@ -67,7 +67,7 @@
   }
 
   // Handle edit form submission
-  $(document).on('submit', '#editKnowledgeBaseForm', function(e) {
+  $(document).on('submit', '#editKnowledgeBaseForm', function (e) {
     e.preventDefault();
     console.log('Edit form submission started'); // Debug log
 
@@ -149,13 +149,13 @@
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
-      success: function(response) {
+      success: function (response) {
         console.log('Edit Success Response:', response); // Debug log
 
         if (response.success) {
           // Show success message first with proper styling
           if (typeof toastr !== 'undefined') {
-            toastr.success(response.message || 'Artikel Knowledge Base telah berjaya dikemas kini.', 'Berjaya!', {
+            toastr.success('Artikel Knowledge Base telah berjaya dikemas kini.', 'Berjaya!', {
               closeButton: true,
               timeOut: 3000,
               progressBar: true,
@@ -169,7 +169,7 @@
               "progressClass": "toast-progress"
             });
           } else {
-            toastr.success(response.message || 'Artikel Knowledge Base telah berjaya dikemas kini.', 'Berjaya!', {
+            toastr.success('Artikel Knowledge Base telah berjaya dikemas kini.', 'Berjaya!', {
               closeButton: true,
               timeOut: 3000,
               progressBar: true,
@@ -178,7 +178,7 @@
           }
 
           // Close the modal
-          $('#editKnowledgeBaseModal').modal('hide');
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('editKnowledgeBaseModal')).hide();
 
           // Reset the form and file selections
           $('#editKnowledgeBaseForm')[0].reset();
@@ -190,13 +190,13 @@
           }
 
           // Reload the DataTable with callback to ensure it's refreshed
-          setTimeout(function() {
+          setTimeout(function () {
             if (typeof window.dt_knowledgebase !== 'undefined') {
-              window.dt_knowledgebase.ajax.reload(function() {
+              window.dt_knowledgebase.ajax.reload(function () {
                 console.log('DataTable refreshed after update');
               }, false);
             } else if ($.fn.DataTable.isDataTable('.datatables-knowledgebase')) {
-              $('.datatables-knowledgebase').DataTable().ajax.reload(function() {
+              $('.datatables-knowledgebase').DataTable().ajax.reload(function () {
                 console.log('DataTable refreshed after update (fallback)');
               }, false);
             } else {
@@ -214,12 +214,12 @@
           });
         }
       },
-      error: function(xhr) {
+      error: function (xhr) {
         console.log('Edit Error Response:', xhr); // Debug log
 
-        var errors = xhr.responseJSON?.errors;
+        var errors = xhr.responseJSON && xhr.responseJSON.errors;
         if (errors) {
-          Object.keys(errors).forEach(function(key) {
+          Object.keys(errors).forEach(function (key) {
             toastr.error(errors[key][0], 'Ralat Validasi!', {
               closeButton: true,
               timeOut: 5000,
@@ -228,7 +228,7 @@
             });
           });
         } else {
-          var errorMessage = xhr.responseJSON?.message || 'Ralat berlaku semasa mengemaskini artikel Knowledge Base. Sila cuba lagi.';
+          var errorMessage = (xhr.responseJSON && xhr.responseJSON.message) || 'Ralat berlaku semasa mengemaskini artikel Knowledge Base. Sila cuba lagi.';
           toastr.error(errorMessage, 'Ralat!', {
             closeButton: true,
             timeOut: 5000,
@@ -237,7 +237,7 @@
           });
         }
       },
-      complete: function() {
+      complete: function () {
         console.log('Edit AJAX request completed'); // Debug log
         // Re-enable submit button
         submitButton.prop('disabled', false).html(originalText);
@@ -246,7 +246,7 @@
   });
 
   // Handle delete document button click
-  $(document).on('click', '.delete-document-btn', function(e) {
+  $(document).on('click', '.delete-document-btn', function (e) {
     e.preventDefault();
     var documentId = $(this).data('doc-id');
     var documentItem = $(this).closest('.document-item');
@@ -262,10 +262,10 @@
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
+        success: function (response) {
           if (response.success) {
             // Remove the document item from the display
-            documentItem.fadeOut(300, function() {
+            documentItem.fadeOut(300, function () {
               $(this).remove();
 
               // Check if no documents left
@@ -276,7 +276,7 @@
             });
 
             // Show success message
-            toastr.success(response.message || 'Dokumen telah berjaya dipadamkan.');
+            toastr.success('Dokumen telah berjaya dipadamkan.');
 
             // Refresh DataTable to update any document counts or indicators
             if (typeof window.dt_knowledgebase !== 'undefined') {
@@ -286,8 +286,8 @@
             }
           }
         },
-        error: function(xhr) {
-          toastr.error(xhr.responseJSON?.message || 'Gagal memadamkan dokumen. Sila cuba lagi.');
+        error: function (xhr) {
+          toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Gagal memadamkan dokumen. Sila cuba lagi.');
           // Re-enable the button on error
           $(this).prop('disabled', false);
         }
@@ -328,14 +328,25 @@
     form.find('.invalid-feedback').remove();
 
     // Validate required fields
-    var requiredFields = [
-      { id: 'edit-kb-title', message: 'Title is required' },
-      { id: 'edit-kb-category', message: 'Category is required' },
-      { id: 'edit-kb-subcategory', message: 'Sub category is required' },
-      { id: 'edit-kb-desc', message: 'Description is required' }
+    var requiredFields = [{
+        id: 'edit-kb-title',
+        message: 'Title is required'
+      },
+      {
+        id: 'edit-kb-category',
+        message: 'Category is required'
+      },
+      {
+        id: 'edit-kb-subcategory',
+        message: 'Sub category is required'
+      },
+      {
+        id: 'edit-kb-desc',
+        message: 'Description is required'
+      }
     ];
 
-    requiredFields.forEach(function(field) {
+    requiredFields.forEach(function (field) {
       var element = $('#' + field.id);
       var value = element.val().trim();
 
@@ -352,7 +363,7 @@
 
 
   // Real-time validation on input change
-  $(document).on('input change', '#editKnowledgeBaseForm input, #editKnowledgeBaseForm select, #editKnowledgeBaseForm textarea', function() {
+  $(document).on('input change', '#editKnowledgeBaseForm input, #editKnowledgeBaseForm select, #editKnowledgeBaseForm textarea', function () {
     var element = $(this);
     if (element.hasClass('is-invalid') && element.val().trim()) {
       element.removeClass('is-invalid');
@@ -361,13 +372,13 @@
   });
 
   // Handle submit button click
-  $(document).on('click', 'button[form="editKnowledgeBaseForm"]', function(e) {
+  $(document).on('click', 'button[form="editKnowledgeBaseForm"]', function (e) {
     e.preventDefault();
     $('#editKnowledgeBaseForm').trigger('submit');
   });
 
   // Additional event handlers for edit buttons (fallback)
-  $(document).on('click', '[data-bs-target="#editKnowledgeBaseModal"], .btn-edit, .edit-btn, a[title="Edit"]', function(e) {
+  $(document).on('click', '[data-bs-target="#editKnowledgeBaseModal"], .btn-edit, .edit-btn, a[title="Edit"]', function (e) {
     e.preventDefault();
     var id = $(this).data('id');
     console.log('Fallback edit handler triggered, ID:', id);
@@ -378,7 +389,7 @@
   });
 
   // Debug: Check for any elements with bx-edit icon
-  $(document).on('click', '.bx-edit', function(e) {
+  $(document).on('click', '.bx-edit', function (e) {
     console.log('Edit icon clicked:', this);
     var parent = $(this).closest('a, button');
     if (parent.length) {
@@ -392,7 +403,7 @@
   });
 
   // Listen for custom edit event
-  $(document).on('editKnowledgeBase', function(e, data) {
+  $(document).on('editKnowledgeBase', function (e, data) {
     console.log('Custom edit event triggered with ID:', data.id);
     loadKnowledgeBaseData(data.id);
   });
@@ -405,13 +416,15 @@
     }
 
     // Show loading message
-    toastr.info('Memuatkan data Knowledge Base...', '', { timeOut: 1000 });
+    toastr.info('Memuatkan data Knowledge Base...', '', {
+      timeOut: 1000
+    });
 
     // Get knowledge base data
     $.ajax({
       url: `/knowledgebase/${id}/edit`,
       type: 'GET',
-      success: function(response) {
+      success: function (response) {
         console.log('AJAX response:', response); // Debug log
         if (response.success) {
           var data = response.data;
@@ -436,12 +449,12 @@
           initializeEditFileUpload();
 
           // Show the edit modal
-          $('#editKnowledgeBaseModal').modal('show');
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('editKnowledgeBaseModal')).show();
         } else {
           toastr.error('Gagal memuatkan data Knowledge Base: ' + (response.message || 'Ralat tidak diketahui'));
         }
       },
-      error: function(xhr) {
+      error: function (xhr) {
         console.error('AJAX Error:', xhr); // Debug log
         var errorMsg = 'Gagal memuatkan data Knowledge Base. Sila cuba lagi.';
         if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -462,7 +475,7 @@
     }
 
     var html = '';
-    documents.forEach(function(doc) {
+    documents.forEach(function (doc) {
       var iconClass = getFileIcon(doc.doc_mime);
       var downloadUrl = `/knowledgebase/document/${doc.id}/download`;
 
@@ -523,7 +536,7 @@
 
     // Toastr helper object
     const showToastr = {
-      success: function(message) {
+      success: function (message) {
         toastr.success(message, '', {
           closeButton: true,
           timeOut: 3000,
@@ -531,7 +544,7 @@
           positionClass: 'toast-top-right'
         });
       },
-      error: function(message) {
+      error: function (message) {
         toastr.error(message, 'Ralat!', {
           closeButton: true,
           timeOut: 5000,
@@ -539,7 +552,7 @@
           positionClass: 'toast-top-right'
         });
       },
-      warning: function(message) {
+      warning: function (message) {
         toastr.warning(message, 'Amaran!', {
           closeButton: true,
           timeOut: 4000,
@@ -547,7 +560,7 @@
           positionClass: 'toast-top-right'
         });
       },
-      info: function(message) {
+      info: function (message) {
         toastr.info(message, '', {
           closeButton: true,
           timeOut: 2000,
@@ -585,7 +598,7 @@
 
     // Handle drop
     dropZone.addEventListener('drop', handleDrop, false);
-    fileInput.addEventListener('change', function(e) {
+    fileInput.addEventListener('change', function (e) {
       handleFiles(e.target.files);
     });
 
@@ -610,12 +623,12 @@
       let hasErrors = false;
 
       // Check if adding these files would exceed the limit
-        if (selectedFiles.length + files.length > maxFiles) {
+      if (selectedFiles.length + files.length > maxFiles) {
         const message = `Maksimum ${maxFiles} fail dibenarkan. Anda sudah mempunyai ${selectedFiles.length} fail dipilih. Sila buang beberapa fail sebelum menambah fail baru.`;
         showError(message);
         showToastr.error(message);
         return;
-      }      // Validate each file
+      } // Validate each file
       files.forEach(file => {
         // Check if file is already selected
         const isDuplicate = selectedFiles.some(selectedFile =>
@@ -697,14 +710,14 @@
     }
 
     // Make removeEditFile globally accessible
-    window.removeEditFile = function(index) {
+    window.removeEditFile = function (index) {
       selectedFiles.splice(index, 1);
       updateFilesPreview();
       showToastr.info('Fail telah dibuang');
     };
 
     // Make removeAllEditFiles globally accessible
-    window.removeAllEditFiles = function() {
+    window.removeAllEditFiles = function () {
       selectedFiles.length = 0;
       updateFilesPreview();
       if (dropZone) {

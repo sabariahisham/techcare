@@ -15,7 +15,7 @@
     $.ajax({
       url: `/knowledgebase/${id}`,
       type: 'GET',
-      success: function(response) {
+      success: function (response) {
         if (response.success) {
           var data = response.data;
 
@@ -28,7 +28,7 @@
           if (data.kb_tag && data.kb_tag.trim() !== '') {
             var tags = data.kb_tag.split(',');
             var tagBadges = '';
-            tags.forEach(function(tag) {
+            tags.forEach(function (tag) {
               tag = tag.trim();
               if (tag !== '') {
                 tagBadges += '<span class="badge bg-primary me-1 mb-1">' + tag + '</span>';
@@ -41,16 +41,16 @@
           // $('#show-kb-created-date').text(data.kb_created_date || 'N/A');
 
           // Set status with badge
-          var statusBadge = data.kb_status === 'aktif'
-            ? '<span class="badge bg-success">Active</span>'
-            : '<span class="badge bg-warning">Inactive</span>';
+          var statusBadge = data.kb_status === 'aktif' ?
+            '<span class="badge bg-success">Active</span>' :
+            '<span class="badge bg-warning">Inactive</span>';
           $('#show-kb-status').html(statusBadge);
 
           // Handle attachments/documents
           var attachmentsHtml = '';
           if (data.documents && data.documents.length > 0) {
             attachmentsHtml = '<div class="attachment-list">';
-            data.documents.forEach(function(doc) {
+            data.documents.forEach(function (doc) {
               var downloadUrl = `/knowledgebase/document/${doc.id}/download`;
               var iconClass = getFileIcon(doc.doc_mime);
               attachmentsHtml += `
@@ -73,10 +73,10 @@
           // $('#show-kb-created-date').text(data.created_at ? new Date(data.created_at).toLocaleDateString() : 'N/A');
 
           // Show the modal
-          $('#showKnowledgeBaseModal').modal('show');
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('showKnowledgeBaseModal')).show();
         }
       },
-      error: function(xhr) {
+      error: function (xhr) {
         toastr.error('Failed to load knowledge base details. Please try again.');
         console.error(xhr);
       }
