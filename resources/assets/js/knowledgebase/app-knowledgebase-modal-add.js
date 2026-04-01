@@ -10,7 +10,7 @@
   let fv;
 
   // Handle category change to populate subcategories
-  $(document).on('change', '#add-kb-category', function() {
+  $(document).on('change', '#add-kb-category', function () {
     var categoryId = $(this).val();
     var subcategorySelect = $('#add-kb-subcategory');
 
@@ -38,16 +38,16 @@
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
+        success: function (response) {
           if (response.success && response.data && response.data.length > 0) {
-            response.data.forEach(function(subcategory) {
+            response.data.forEach(function (subcategory) {
               subcategorySelect.append(`<option value="${subcategory.id}">${subcategory.subcat_name}</option>`);
             });
           } else {
             subcategorySelect.html('<option value="">Tiada sub kategori tersedia</option>');
           }
         },
-        error: function(xhr) {
+        error: function (xhr) {
           console.error('Error fetching subcategories:', xhr);
           toastr.error('Gagal memuatkan sub kategori. Sila cuba lagi.');
           subcategorySelect.html('<option value="">Gagal memuatkan sub kategori</option>');
@@ -112,7 +112,7 @@
         bootstrap5: new FormValidation.plugins.Bootstrap5({
           eleValidClass: '',
           eleInvalidClass: 'is-invalid',
-          rowSelector: function(field, ele) {
+          rowSelector: function (field, ele) {
             return '.mb-4';
           }
         }),
@@ -124,7 +124,7 @@
 
   // Handle form submission with FormValidation
   if (fv) {
-    fv.on('core.form.valid', function() {
+    fv.on('core.form.valid', function () {
       const form = fv.form;
       const formData = new FormData(form);
       const submitButton = $(form).find('button[type="submit"]');
@@ -187,11 +187,11 @@
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
+        success: function (response) {
           if (response.success) {
             // Close the modal/offcanvas
-            $('#knowledgeBaseModal').modal('hide');
-            $('#offcanvasAddKnowledgeBase').offcanvas('hide');
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('knowledgeBaseModal')).hide();
+            bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvasAddKnowledgeBase')).hide();
 
             // Reset the form and validation
             form.reset();
@@ -206,14 +206,14 @@
             }
 
             // Show success message
-            toastr.success(response.message || 'Artikel Knowledge Base berjaya ditambah.');
+            toastr.success('Artikel Knowledge Base berjaya ditambah.');
           }
         },
-        error: function(xhr) {
-          var errors = xhr.responseJSON?.errors;
+        error: function (xhr) {
+          var errors = xhr.responseJSON ? .errors;
           if (errors) {
             // Display server validation errors
-            Object.keys(errors).forEach(function(key) {
+            Object.keys(errors).forEach(function (key) {
               const fieldName = key;
               const errorMessage = errors[key][0];
 
@@ -240,10 +240,10 @@
               toastr.error(errorMessage);
             });
           } else {
-            toastr.error(xhr.responseJSON?.message || 'Ralat berlaku semasa menyimpan artikel.');
+            toastr.error(xhr.responseJSON ? .message || 'Ralat berlaku semasa menyimpan artikel.');
           }
         },
-        complete: function() {
+        complete: function () {
           // Re-enable submit button
           submitButton.prop('disabled', false).html(originalText);
         }
@@ -269,7 +269,7 @@
     $(this).find('.invalid-feedback').remove();
 
     // Reset all form fields validation state
-    $(this).find('input, select, textarea').each(function() {
+    $(this).find('input, select, textarea').each(function () {
       $(this).removeClass('is-invalid is-valid');
       if (fv) {
         fv.resetField($(this).attr('name'));
@@ -280,13 +280,13 @@
   // Handle modal show event to focus on first input
   $(document).on('shown.bs.modal shown.bs.offcanvas', '#knowledgeBaseModal, #offcanvasAddKnowledgeBase', function () {
     // Focus on first input after a small delay to ensure modal is fully rendered
-    setTimeout(function() {
+    setTimeout(function () {
       $('#add-kb-title').focus();
     }, 100);
   });
 
   // Handle subcategory change for validation
-  $(document).on('change', '#add-kb-subcategory', function() {
+  $(document).on('change', '#add-kb-subcategory', function () {
     // Clear any existing validation messages
     $(this).removeClass('is-invalid is-valid');
     $(this).closest('.mb-4').find('.invalid-feedback').remove();
@@ -297,7 +297,7 @@
   });
 
   // Real-time validation revalidation for FormValidation
-  $(document).on('input change blur', '#addNewKnowledgeBaseForm input, #addNewKnowledgeBaseForm select, #addNewKnowledgeBaseForm textarea', function() {
+  $(document).on('input change blur', '#addNewKnowledgeBaseForm input, #addNewKnowledgeBaseForm select, #addNewKnowledgeBaseForm textarea', function () {
     const $field = $(this);
     const fieldName = $field.attr('name');
 
@@ -309,7 +309,7 @@
 
     if (fv && fieldName) {
       // Revalidate field after a short delay for better UX
-      setTimeout(function() {
+      setTimeout(function () {
         fv.revalidateField(fieldName);
       }, 100);
     }

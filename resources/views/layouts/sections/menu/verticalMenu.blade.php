@@ -8,9 +8,9 @@
     <!-- ! Hide app brand if navbar-full -->
     @if (!isset($navbarFull))
         <div class="app-brand demo">
-            <a href="{{ url('/') }}" class="app-brand-link">
+            <a href="{{ url('/') }}" class="app-brand-link"> 
                 {{-- Full logo with text - shown when menu is expanded --}}
-                <img src="{{ asset('assets/img/logos/techcare.png') }}" alt="TechCare Logo"
+                <img src="{{ asset('assets/img/logos/btm-techcare.png') }}" alt="btm-TechCare Logo"
                     class="app-brand-logo-img logo-expanded">
                 {{-- Icon only - shown when menu is collapsed --}}
                 <img src="{{ asset('assets/img/logos/logo-techcare.png') }}" alt="TechCare"

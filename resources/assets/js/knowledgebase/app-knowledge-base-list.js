@@ -36,8 +36,7 @@ $(function () {
       processing: true,
       serverSide: true,
       ajax: '/knowledgebase/data',
-      columns: [
-        {
+      columns: [{
           // For Responsive
           data: null,
           defaultContent: '',
@@ -51,38 +50,118 @@ $(function () {
           orderable: false,
           searchable: false
         },
-        { data: 'kb_title', name: 'kb_title' },
-        { data: 'category_name', name: 'category_name' },
-        { data: 'subcategory_name', name: 'subcategory_name' },
-        { data: 'kb_desc', name: 'kb_desc' },
-        { data: 'kb_tag_formatted', name: 'kb_tag', orderable: false },
-        { data: 'action', name: 'action', orderable: false, searchable: false },
-        { data: 'kb_status', name: 'kb_status' },
-        { data: 'created_by', name: 'created_by' }
-      ],
-      columnDefs: [
         {
-          targets: 5, // kb_desc column (0-indexed)
-          width: '300px',
+          data: 'kb_title',
+          name: 'kb_title'
+        },
+        {
+          data: 'category_name',
+          name: 'category_name'
+        },
+        {
+          data: 'subcategory_name',
+          name: 'subcategory_name'
+        },
+        {
+          data: 'kb_desc',
+          name: 'kb_desc'
+        },
+        {
+          data: 'kb_tag_formatted',
+          name: 'kb_tag',
+          orderable: false
+        },
+        {
+          data: 'action',
+          name: 'action',
+          orderable: false,
+          searchable: false
+        },
+        {
+          data: 'kb_status',
+          name: 'kb_status'
+        },
+        {
+          data: 'created_by',
+          name: 'created_by'
+        },
+        {
+          data: 'created_at',
+          name: 'created_at'
+        },
+        {
+          data: 'updated_by_name',
+          name: 'updated_by_name',
+          orderable: false,
+          searchable: false
+        },
+        {
+          data: 'updated_at',
+          name: 'updated_at'
+        },
+        {
+          data: 'creator_roles',
+          name: 'creator_roles',
+          orderable: false,
+          searchable: false
+        }
+      ],
+      columnDefs: [{
+          // Responsive control column
+          targets: 0,
+          className: 'dtr-control',
+          orderable: false,
+          searchable: false,
+          responsivePriority: 2
+        },
+        {
+          targets: 1, // Bil.
+          responsivePriority: 3
+        },
+        {
+          targets: 2, // Tajuk
+          responsivePriority: 1
+        },
+        {
+          targets: 3, // Kategori
+          responsivePriority: 5
+        },
+        {
+          targets: 4, // Sub Kategori
+          responsivePriority: 6
+        },
+        {
+          targets: 5, // Deskripsi
           className: 'text-wrap',
-          render: function(data, type, row) {
-            if (type === 'display' && data && data.length > 100) {
-              return data.substr(0, 100) + '...';
+          responsivePriority: 8,
+          render: function (data, type, row) {
+            if (type === 'display' && data && data.length > 60) {
+              return data.substr(0, 60) + '...';
             }
             return data;
           }
         },
         {
-          targets: 6, // kb_tag_formatted column (0-indexed)
-          width: '200px',
+          targets: 6, // Tag
           className: 'text-wrap',
-          orderable: false
+          orderable: false,
+          responsivePriority: 9
+        },
+        {
+          targets: 7, // Tindakan
+          responsivePriority: 4
+        },
+        {
+          targets: 8, // Status
+          responsivePriority: 7
+        },
+        {
+          targets: [9, 10, 11, 12, 13], // Ditulis oleh, Tarikh Ditulis, Kemaskini oleh, Tarikh Kemaskini, Peranan
+          responsivePriority: 10
         }
       ],
       autoWidth: false,
-      scrollX: true,
-      dom:
-        '<"row"' +
+      dom: '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"fB>>' +
         '>t' +
@@ -90,13 +169,11 @@ $(function () {
         '<"col-sm-12 col-md-6"i>' +
         '<"col-sm-12 col-md-6"p>' +
         '>',
-      buttons: [
-        {
+      buttons: [{
           extend: 'collection',
           className: 'btn btn-label-secondary dropdown-toggle me-4 d-none', // Add d-none class to hide the button
           text: '<i class="bx bx-export me-2 bx-sm"></i>Export',
-          buttons: [
-            {
+          buttons: [{
               extend: 'print',
               text: '<i class="bx bx-printer me-2" ></i>Print',
               className: 'dropdown-item'
@@ -130,7 +207,7 @@ $(function () {
             'data-bs-toggle': 'modal',
             'data-bs-target': '#knowledgeBaseModal'
           },
-          init: function(api, node, config) {
+          init: function (api, node, config) {
             // Hide the button if user doesn't have a role
             if (typeof window.userHasRole !== 'undefined' && !window.userHasRole) {
               $(node).hide();
@@ -146,8 +223,8 @@ $(function () {
           .every(function () {
             var column = this;
             var select = $(
-              '<select id="KbStatus" class="form-select text-capitalize"><option value=""> Select Status </option></select>'
-            )
+                '<select id="KbStatus" class="form-select text-capitalize"><option value=""> Select Status </option></select>'
+              )
               .appendTo('.kb_status')
               .on('change', function () {
                 var val = $.fn.dataTable.util.escapeRegex($(this).val());
@@ -170,76 +247,11 @@ $(function () {
       }
     });
 
-    // Debug: Log DataTable draw events and inspect action buttons
-    window.dt_knowledgebase.on('draw', function() {
-      console.log('DataTable drawn, checking for action buttons...');
-      $('.datatables-knowledgebase tbody .edit-record').each(function(index, element) {
-        console.log('Found edit button:', element, 'ID:', $(element).data('id'));
-      });
 
-      // Also check for any elements with bx-edit
-      $('.datatables-knowledgebase tbody .bx-edit').each(function(index, element) {
-        var parent = $(element).closest('a, button');
-        console.log('Found edit icon:', element, 'Parent:', parent[0], 'ID:', parent.data('id'));
-      });
-    });
-
-    // Add custom CSS for column widths
-    $('<style>')
-      .prop('type', 'text/css')
-      .html(`
-        .datatables-knowledgebase th:nth-child(6),
-        .datatables-knowledgebase td:nth-child(6) {
-          min-width: 300px !important;
-          max-width: 350px !important;
-          word-wrap: break-word !important;
-        }
-        .datatables-knowledgebase th:nth-child(7),
-        .datatables-knowledgebase td:nth-child(7) {
-          min-width: 200px !important;
-          max-width: 250px !important;
-          word-wrap: break-word !important;
-        }
-        .datatables-knowledgebase td:nth-child(7) .badge {
-          white-space: nowrap;
-          font-size: 0.75rem;
-        }
-      `)
-      .appendTo('head');
   }
 
-  // Edit Record - Add direct handler here too
-  $('.datatables-knowledgebase tbody').on('click', '.edit-record', function (e) {
-    e.preventDefault();
-    var id = $(this).data('id');
-    console.log('Edit clicked from main list, ID:', id);
-
-    if (!id) {
-      toastr.error('No ID found for edit operation');
-      return;
-    }
-
-    // Trigger the edit modal functionality
-    $(document).trigger('editKnowledgeBase', {id: id});
-  });
-
-  // Test handler for any edit icon clicks
-  $('.datatables-knowledgebase tbody').on('click', '.bx-edit', function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Edit icon clicked directly');
-
-    var parent = $(this).closest('a');
-    var id = parent.data('id');
-    console.log('Parent element:', parent[0], 'ID:', id);
-
-    if (id) {
-      $(document).trigger('editKnowledgeBase', {id: id});
-    }
-  });
-
   // Prevent opening add modal for users without roles
-  $(document).on('click', '.add-new', function(e) {
+  $(document).on('click', '.add-new', function (e) {
     if (typeof window.userHasRole !== 'undefined' && !window.userHasRole) {
       e.preventDefault();
       e.stopPropagation();
@@ -261,5 +273,3 @@ $(function () {
     $('.dataTables_length .form-select').removeClass('form-select-sm');
   }, 300);
 });
-
-

@@ -296,6 +296,9 @@
 <hr class="mb-3">
           <div class="mb-4">
             <h6>Pengguna Dalam Peranan</h6>
+            <div class="mb-2">
+              <input type="text" id="editRoleUsersSearch" class="form-control form-control-sm" placeholder="Cari pengguna dalam peranan...">
+            </div>
             <div id="editRoleUsers" class="mb-3">
               <!-- Current users will be loaded here -->
             </div>

@@ -146,6 +146,10 @@
           <th>Tindakan</th>
           <th>Status</th>
           <th>Ditulis oleh</th>
+          <th>Tarikh Ditulis</th>
+          <th>Kemaskini oleh</th>
+          <th>Tarikh Kemaskini</th>
+          <th>Peranan</th>
         </tr>
       </thead>
     </table>
