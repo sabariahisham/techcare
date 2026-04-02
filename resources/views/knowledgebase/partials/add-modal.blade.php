@@ -7,7 +7,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form class="add-new-knowledgebase" id="addNewKnowledgeBaseForm" onsubmit="return false">
+        <form class="add-new-knowledgebase" id="addNewKnowledgeBaseForm" onsubmit="return false" novalidate>
           <!-- Hidden field for kb_jenis -->
           <input type="hidden" name="kb_jenis" value="doc_kb">
 
@@ -32,7 +32,7 @@
             </div>
             <div class="col-md-6 mb-4">
               <label class="form-label" for="add-kb-subcategory">Sub Kategori <span class="text-danger">*</span></label>
-              <select id="add-kb-subcategory" class="form-select" name="subcat_id" required>
+              <select id="add-kb-subcategory" class="form-select" name="subcat_id" required disabled>
                 <option value="">Pilih Sub Kategori</option>
               </select>
               <div class="invalid-feedback"></div>
@@ -52,7 +52,7 @@
               <label class="form-label" for="add-kb-file">Muat Naik Fail PDF</label>
               <div class="file-upload-wrapper">
                 <div id="pdf-drop-zone" class="file-drop-zone border-2 border-dashed border-secondary rounded-3 p-4 text-center position-relative">
-                  <input type="file" id="add-kb-file" name="pdf_files[]" accept=".pdf" multiple class="file-input position-absolute w-100 h-100 opacity-0" style="cursor: pointer; z-index: 2;">
+                  <input type="file" id="add-kb-file" name="pdf_files[]" accept=".pdf" multiple class="file-input position-absolute w-100 h-100 opacity-0" style="pointer-events: none; z-index: -1;">
                   <div class="drop-zone-content">
                     <i class="bx bx-file-find display-4 text-muted mb-3"></i>
                     <h6 class="text-muted mb-2">Seret & Letak fail PDF di sini</h6>
@@ -85,7 +85,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">BATAL</button>
-        <button type="submit" form="addNewKnowledgeBaseForm" class="btn btn-primary">
+        <button type="button" id="btnAddKnowledgeBase" class="btn btn-primary">
           <i class="bx bx-plus me-2"></i>TAMBAH ARTIKEL
         </button>
       </div>
@@ -114,6 +114,7 @@
 
 .file-input {
   cursor: pointer !important;
+  pointer-events: none;
 }
 
 .files-preview {
@@ -184,6 +185,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   };
+
+  // Click on drop zone to open file browser (file input is pointer-events:none)
+  dropZone.addEventListener('click', function() {
+    fileInput.click();
+  });
 
   // Prevent default drag behaviors
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {

@@ -77,7 +77,7 @@
               <label class="form-label" for="edit-kb-file">Muat Naik Fail PDF Baru (Pilihan)</label>
               <div class="file-upload-wrapper">
                 <div id="edit-pdf-drop-zone" class="file-drop-zone border-2 border-dashed border-secondary rounded-3 p-4 text-center position-relative">
-                  <input type="file" id="edit-kb-file" name="pdf_files[]" accept=".pdf" multiple class="file-input position-absolute w-100 h-100 opacity-0" style="cursor: pointer; z-index: 2;">
+                  <input type="file" id="edit-kb-file" name="pdf_files[]" accept=".pdf,application/pdf" multiple class="file-input position-absolute w-100 h-100 opacity-0" style="pointer-events: none; z-index: -1;">
                   <div class="drop-zone-content">
                     <i class="bx bx-file-find display-4 text-muted mb-3"></i>
                     <h6 class="text-muted mb-2">Seret & Letak fail PDF di sini</h6>
