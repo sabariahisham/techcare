@@ -1,4 +1,4 @@
-<?php
+<!-- <?php
 
 namespace App\Console\Commands;
 
@@ -13,7 +13,7 @@ class MigrateSPPData extends Command
    * table: sektor / bahagian / seksyen / unit / jawatan / khidmat / gred / skim
    * @var string
    */
-  protected $signature = 'migrate:spp {table?} ';
+  protected $signature = 'migrate:spp1 {table?} ';
 
   /**
    * The console command description.
@@ -302,4 +302,4 @@ class MigrateSPPData extends Command
 
     $this->info('Migrasi skim selesai.');
   }
-}
+} -->

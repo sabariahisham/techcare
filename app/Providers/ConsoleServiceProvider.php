@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Console\Commands\SyncUsersFromSpp;
+use App\Console\Commands\SyncRefsData;
 
 class ConsoleServiceProvider extends ServiceProvider
 {
@@ -24,6 +25,7 @@ class ConsoleServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 SyncUsersFromSpp::class,
+                SyncRefsData::class,
             ]);
         }
     }

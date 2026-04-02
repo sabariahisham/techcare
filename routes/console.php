@@ -91,3 +91,30 @@ if (config('app.enable_sync_users_spp')) {
     });
 }
  
+
+// ============================================================================
+// SYNC REFS FROM SPP DATABASE
+// ============================================================================
+// Daily at 3:00 AM - Sync reference data from spp_db to ehelp database
+// Features:
+// - Runs every day at 3:00 AM
+// - Syncs all reference data from SPP database to eHelp database
+// - Uses updateOrInsert to prevent duplicates
+// ============================================================================
+
+//if config default false, the scheduler will be disabled and won't run. To enable, set ENABLE_SYNC_REFS_SPP=true in .env file
+if (config('app.enable_sync_refs_spp')) {
+
+    Schedule::command('app:sync-refs-data --all')
+        ->cron('0 3 1 */4 *')
+        ->timezone('Asia/Kuala_Lumpur')
+        ->withoutOverlapping()
+        ->name('Sync Reference Data from SPP Database')
+        ->description('Sync reference data from spp_db to ehelp database at 3:00 AM daily (every 4 months)')
+        ->onSuccess(function () {
+            \Illuminate\Support\Facades\Log::info('✓ Reference data sync from SPP executed successfully at ' . now()->toDateTimeString());
+        })
+        ->onFailure(function () {
+            \Illuminate\Support\Facades\Log::error('✗ Reference data sync from SPP failed at ' . now()->toDateTimeString());
+        });
+}
