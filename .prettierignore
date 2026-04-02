@@ -1,3 +1,4 @@
 dist
 node_modules
 build
+resources/assets/js/knowledgebase/*.js

@@ -14,35 +14,30 @@
     var categoryId = $(this).val();
     var subcategorySelect = $('#add-kb-subcategory');
 
-    // Clear subcategory options
-    subcategorySelect.html('<option value="">Pilih Sub Kategori</option>');
-
-    // Clear subcategory value and reset validation state
-    subcategorySelect.val('');
-
     // Reset subcategory validation state
     if (fv) {
-      // Remove existing validation state
       fv.resetField('subcat_id');
-      // Remove Bootstrap validation classes
       subcategorySelect.removeClass('is-invalid is-valid');
-      // Remove any existing validation messages
-      subcategorySelect.closest('.mb-4').find('.invalid-feedback').remove();
+      subcategorySelect.closest('.mb-4').find('.invalid-feedback:not(.fv-plugins-message-container)').remove();
     }
 
+    // Reset subcategory and disable until category chosen
+    subcategorySelect.html('<option value="">Pilih Sub Kategori</option>').val('').prop('disabled', true);
+
     if (categoryId) {
-      // Fetch subcategories for the selected category
+      // Show loading state
+      subcategorySelect.html('<option value="">Memuatkan...</option>');
+
       $.ajax({
-        url: `/ref-subcategory-management/by-category/${categoryId}`,
+        url: `/categories/${categoryId}/subcategories`,
         type: 'GET',
-        headers: {
-          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
         success: function (response) {
+          subcategorySelect.html('<option value="">Pilih Sub Kategori</option>');
           if (response.success && response.data && response.data.length > 0) {
             response.data.forEach(function (subcategory) {
               subcategorySelect.append(`<option value="${subcategory.id}">${subcategory.subcat_name}</option>`);
             });
+            subcategorySelect.prop('disabled', false);
           } else {
             subcategorySelect.html('<option value="">Tiada sub kategori tersedia</option>');
           }
@@ -120,15 +115,23 @@
         autoFocus: new FormValidation.plugins.AutoFocus()
       }
     });
-  }
 
-  // Handle form submission with FormValidation
-  if (fv) {
+    // Handle form submission when all fields are valid
     fv.on('core.form.valid', function () {
       const form = fv.form;
+
+      // Temporarily enable disabled fields so FormData captures their values
+      const subcatSelect = $('#add-kb-subcategory');
+      const wasDisabled = subcatSelect.prop('disabled');
+      subcatSelect.prop('disabled', false);
+
       const formData = new FormData(form);
-      const submitButton = $(form).find('button[type="submit"]');
-      const originalText = submitButton.text();
+
+      // Re-disable if it was disabled
+      if (wasDisabled) subcatSelect.prop('disabled', true);
+
+      const submitButton = $('#btnAddKnowledgeBase');
+      const originalText = submitButton.html();
 
       // Remove any existing pdf_files from FormData (in case the input field has old data)
       formData.delete('pdf_files[]');
@@ -172,7 +175,6 @@
         window.selectedFiles.forEach(file => {
           formData.append('pdf_files[]', file);
         });
-        console.log(`Adding ${window.selectedFiles.length} files to FormData`);
       }
 
       // Disable submit button and show loading state
@@ -189,14 +191,25 @@
         },
         success: function (response) {
           if (response.success) {
-            // Close the modal/offcanvas
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('knowledgeBaseModal')).hide();
-            bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvasAddKnowledgeBase')).hide();
+            // Show success message first before closing modal
+            toastr.success('Artikel Knowledge Base berjaya ditambah.');
+
+            // Close the modal if it exists
+            var modalEl = document.getElementById('knowledgeBaseModal');
+            if (modalEl) {
+              bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+            }
+
+            // Close the offcanvas if it exists
+            var offcanvasEl = document.getElementById('offcanvasAddKnowledgeBase');
+            if (offcanvasEl) {
+              bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl).hide();
+            }
 
             // Reset the form and validation
             form.reset();
             fv.resetForm();
-            $('#add-kb-subcategory').html('<option value="">Pilih Sub Kategori</option>');
+            $('#add-kb-subcategory').html('<option value="">Pilih Sub Kategori</option>').prop('disabled', true);
 
             // Reload the DataTable if it exists
             if (typeof dt_knowledgebase !== 'undefined') {
@@ -204,15 +217,20 @@
             } else if (typeof $('.datatables-knowledgebase').DataTable !== 'undefined') {
               $('.datatables-knowledgebase').DataTable().ajax.reload();
             }
-
-            // Show success message
-            toastr.success('Artikel Knowledge Base berjaya ditambah.');
           }
         },
         error: function (xhr) {
-          var errors = xhr.responseJSON ? .errors;
+          var responseJson = xhr.responseJSON || {};
+          var errors = responseJson.errors;
+          var generalMessage = responseJson.message;
+
           if (errors) {
-            // Display server validation errors
+            // Show general message as toastr if available
+            if (generalMessage) {
+              toastr.error(generalMessage, 'TIDAK boleh disimpan');
+            }
+
+            // Display server validation errors under each field
             Object.keys(errors).forEach(function (key) {
               const fieldName = key;
               const errorMessage = errors[key][0];
@@ -224,23 +242,15 @@
                 // Add Bootstrap invalid class
                 fieldElement.addClass('is-invalid');
 
-                // Remove existing validation message
-                fieldElement.closest('.mb-4').find('.invalid-feedback').remove();
+                // Remove existing manual validation messages (not FormValidation ones)
+                fieldElement.closest('.mb-4').find('.invalid-feedback:not(.fv-plugins-message-container)').remove();
 
-                // Add new validation message
-                fieldElement.after(`<div class="invalid-feedback">${errorMessage}</div>`);
-
-                // Update FormValidation status if available
-                if (fv) {
-                  fv.updateFieldStatus(fieldName, 'Invalid', 'callback');
-                }
+                // Add new validation message after the field
+                fieldElement.after(`<div class="invalid-feedback d-block">${errorMessage}</div>`);
               }
-
-              // Show toastr for immediate feedback
-              toastr.error(errorMessage);
             });
           } else {
-            toastr.error(xhr.responseJSON ? .message || 'Ralat berlaku semasa menyimpan artikel.');
+            toastr.error(generalMessage || 'Ralat berlaku semasa menyimpan artikel.', 'TIDAK boleh disimpan');
           }
         },
         complete: function () {
@@ -249,7 +259,19 @@
         }
       });
     });
+
+    // Show toastr when form cannot be submitted due to validation errors
+    fv.on('core.form.invalid', function () {
+      toastr.error('Sila perbaiki ralat dalam borang sebelum menyimpan.', 'TIDAK boleh disimpan');
+    });
   }
+
+  // Trigger FormValidation when the footer submit button is clicked
+  $(document).on('click', '#btnAddKnowledgeBase', function () {
+    if (fv) {
+      fv.validate();
+    }
+  });
 
   // Handle modal/offcanvas close event to reset form
   $(document).on('hidden.bs.modal hidden.bs.offcanvas', '#knowledgeBaseModal, #offcanvasAddKnowledgeBase', function () {
@@ -257,7 +279,7 @@
 
     // Reset form data
     form.reset();
-    $('#add-kb-subcategory').html('<option value="">Pilih Sub Kategori</option>');
+    $('#add-kb-subcategory').html('<option value="">Pilih Sub Kategori</option>').prop('disabled', true);
 
     // Reset FormValidation if it exists
     if (fv) {
@@ -287,9 +309,8 @@
 
   // Handle subcategory change for validation
   $(document).on('change', '#add-kb-subcategory', function () {
-    // Clear any existing validation messages
-    $(this).removeClass('is-invalid is-valid');
-    $(this).closest('.mb-4').find('.invalid-feedback').remove();
+    // Clear only manually-added server-side error messages
+    $(this).closest('.mb-4').find('.invalid-feedback:not(.fv-plugins-message-container)').remove();
 
     if (fv) {
       fv.revalidateField('subcat_id');
@@ -301,17 +322,11 @@
     const $field = $(this);
     const fieldName = $field.attr('name');
 
-    // Clear previous validation state on change
-    if ($(this).is(':input')) {
-      $field.removeClass('is-invalid is-valid');
-      $field.closest('.mb-4').find('.invalid-feedback').text('');
-    }
+    // Remove only manually-added server-side error messages (not FormValidation ones)
+    $field.closest('.mb-4').find('.invalid-feedback:not(.fv-plugins-message-container)').remove();
 
     if (fv && fieldName) {
-      // Revalidate field after a short delay for better UX
-      setTimeout(function () {
-        fv.revalidateField(fieldName);
-      }, 100);
+      fv.revalidateField(fieldName);
     }
   });
 

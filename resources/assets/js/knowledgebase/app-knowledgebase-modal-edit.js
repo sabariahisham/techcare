@@ -474,8 +474,19 @@
       return;
     }
 
+    // Only show PDF documents
+    var pdfDocuments = documents.filter(function (doc) {
+      return (doc.doc_mime && doc.doc_mime.includes('pdf')) ||
+        (doc.doc_name && doc.doc_name.toLowerCase().endsWith('.pdf'));
+    });
+
+    if (pdfDocuments.length === 0) {
+      container.html('<p class="text-muted mb-0">Tiada dokumen</p>');
+      return;
+    }
+
     var html = '';
-    documents.forEach(function (doc) {
+    pdfDocuments.forEach(function (doc) {
       var iconClass = getFileIcon(doc.doc_mime);
       var downloadUrl = `/knowledgebase/document/${doc.id}/download`;
 
@@ -569,6 +580,11 @@
         });
       }
     };
+
+    // Click on drop zone to open file browser (file input is pointer-events:none)
+    dropZone.addEventListener('click', function () {
+      fileInput.click();
+    });
 
     // Event listeners for drag and drop
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
