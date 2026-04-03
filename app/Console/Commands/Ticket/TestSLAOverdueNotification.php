@@ -5,8 +5,8 @@
   *  - Test script for SLA overdue notification system.
   *  - Check database status and send test emails.
   * Usage:
-  *   - All overdue tickets: php app/Console/Commands/Ticket/test_sla-overdue_notification.php
-  *   - Specific ticket: php app/Console/Commands/Ticket/test_sla-overdue_notification.php <ticket_id>
+  *   - All overdue tickets: php app/Console/Commands/Ticket/TestSLAOverdueNotification.php
+  *   - Specific ticket: php app/Console/Commands/Ticket/TestSLAOverdueNotification.php <ticket_id>
   */
 
 namespace App\Console\Commands\Ticket;
