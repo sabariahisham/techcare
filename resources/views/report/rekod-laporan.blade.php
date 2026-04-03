@@ -112,7 +112,7 @@
     {{-- HEADER --}}
     <div class="card-header bg-white">
         <h5 class="fw-semibold text-uppercase mb-3 report-title">
-            Senarai Rekod Laporan Aduan Sistem TechCare 
+            Senarai Rekod Laporan Aduan Sistem BTM TechCare 
         </h5>
 
         <div class="row g-2 align-items-center">
