@@ -10,7 +10,7 @@
         </div>
         <div class="card-body" style="padding: 0.75rem 1rem;">
             <div style="height: 230px;">
-                <canvas id="categoryChart"></canvas>
+                <canvas id="categoryChart" style="cursor: pointer;"></canvas>
             </div>
         </div>
     </div>

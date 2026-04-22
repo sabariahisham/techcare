@@ -12,12 +12,17 @@
                         </div>
                     </div>
                     <div class="flex-grow-1 d-flex flex-column justify-content-center text-center">
-                        <p class="mb-1 text-muted" style="font-size: 0.8125rem;">Aduan Hari Ini</p>
-                        <h2 class="fw-bold mb-0" id="today-logs-count" style="font-size: 2rem; line-height: 1.1;">
-                            <span class="placeholder-glow">
-                                <span class="placeholder placeholder-lg col-3"></span>
-                            </span>
-                        </h2>
+                        <p class="mb-1 text-muted" style="font-size: 0.8125rem;">Aduan Hari Ini</p>  
+                        <a href="{{ route('tickets.admin') }}" title="Klik Lihat Tiket"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            style="text-decoration: none; color: inherit; cursor: pointer;">
+                            <h2 class="fw-bold mb-0" id="today-logs-count"
+                                style="font-size: 2rem; line-height: 1.1; transition: color 0.2s;">
+                                <span class="placeholder-glow">
+                                    <span class="placeholder placeholder-lg col-3"></span>
+                                </span>
+                            </h2>
+                        </a>
                     </div>
                     <div class="mt-auto text-center">
                         <small class="d-block text-muted" style="font-size: 0.7rem;">Data log harian</small>

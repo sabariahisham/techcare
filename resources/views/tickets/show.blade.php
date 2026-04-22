@@ -154,8 +154,8 @@
                     <h4 class="mb-1">Maklumat Penuh Tiket</h4>
                     <p class="mb-0 text-muted">{{ $ticket->ticket_nolog }}</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('tickets.user') }}" class="btn btn-outline-secondary">
+                <div class="d-flex gap-2">                    
+                    <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">
                         <i class="bx bx-arrow-back me-1"></i>Kembali ke Senarai
                     </a>
                     <button type="button" class="btn btn-primary" onclick="window.print()">

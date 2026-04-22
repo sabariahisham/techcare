@@ -59,24 +59,24 @@ $(function () {
       var firstInvalidField = $('#editTicketForm .is-invalid').first();
       if (firstInvalidField.length > 0) {
         var scrollTarget = firstInvalidField;
-        
+
         // If it's a Select2 field, scroll to the container instead
         if (firstInvalidField.hasClass('select2-hidden-accessible')) {
           scrollTarget = firstInvalidField.siblings('.select2-container').first();
         }
-        
+
         // Scroll to the field
         var offcanvasBody = $('#offcanvasEditTicket .offcanvas-body');
         if (offcanvasBody.length > 0 && scrollTarget.length > 0) {
           var fieldTop = scrollTarget.offset().top;
           var offcanvasTop = offcanvasBody.offset().top;
           var scrollPosition = offcanvasBody.scrollTop() + (fieldTop - offcanvasTop) - 100;
-          
+
           offcanvasBody.animate({
             scrollTop: scrollPosition
           }, 500);
         }
-        
+
         // Focus on the field if it's not Select2
         if (!firstInvalidField.hasClass('select2-hidden-accessible')) {
           firstInvalidField.focus();
@@ -164,6 +164,30 @@ $(function () {
       allowClear: true,
       width: '100%',
       dropdownParent: $('#offcanvasEditTicket'),
+      theme: 'bootstrap-5'
+    });
+
+    $('#edit_building_loc').select2({
+      placeholder: 'Pilih Bangunan',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#offcanvasAddTicket'),
+      theme: 'bootstrap-5'
+    });
+
+    $('#edit_block_loc').select2({
+      placeholder: 'Pilih Blok',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#offcanvasAddTicket'),
+      theme: 'bootstrap-5'
+    });
+
+    $('#edit_level_loc').select2({
+      placeholder: 'Pilih Aras',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#offcanvasAddTicket'),
       theme: 'bootstrap-5'
     });
   }

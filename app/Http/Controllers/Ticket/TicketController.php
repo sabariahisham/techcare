@@ -104,7 +104,7 @@ class TicketController extends Controller
   {
     $categories = RefCategory::all();
     $viewType = 'assigned'; // Show only assigned tickets
-    $pageTitle = 'Tiket Pegawai Tugasan, Penyelia Helpdesk, Helpdesk On Duty';
+    $pageTitle = 'Tiket Pegawai Tugasan';
     return view('tickets.index', compact('categories', 'viewType', 'pageTitle'));
   }
 
@@ -116,7 +116,14 @@ class TicketController extends Controller
   {
     $categories = RefCategory::all();
     $viewType = 'admin'; // Show all tickets for admin roles
-    $pageTitle = 'Tiket Pentadbir Sistem';
+
+    $user =  Auth::user();
+    $roles = $user->getRoleNames();
+    $roleText = $roles->implode(', ');
+
+    //$pageTitle = "Tiket {$roleText}";
+    //$pageTitle = 'Tiket ' . $roleText;
+    $pageTitle = 'Tiket (Keseluruhan Sistem)';
     return view('tickets.index', compact('categories', 'viewType', 'pageTitle'));
   }
 

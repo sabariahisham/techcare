@@ -22,18 +22,19 @@
           "name": "Tiket Pegawai Tugasan",
           "slug": "ticket-assigned",
           "role": [
-            "Administrator",
-            "Pegawai Tugasan",
-            "Helpdesk On Duty"
+            "Pegawai Tugasan"
+
           ]
         },
         {
           "url": "tickets/admin",
-          "name": "Tiket Pentadbir Sistem",
+          "name": "Pengurusan Tiket",
           "slug": "ticket-admin",
           "role": [
+            "Administrator",
             "Pentadbir Sistem",
-            "Administrator"
+            "Penyelia Helpdesk",
+            "Helpdesk On Duty"
           ]
         }
       ]

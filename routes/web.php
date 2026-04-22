@@ -494,13 +494,28 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/logs-sync-spp/kill-stuck-jobs', [SyncSPPLogController::class, 'killStuckJobs'])->name('log-sync-spp-kill-stuck-jobs');
   });
 });
+
 // Tickets Routes Group: Core ticket operations (TicketController only)
 // Using 'auth' middleware for authentication
 Route::middleware($authMiddleware)->prefix('tickets')->group(function () {
   // Role-based ticket listing routes (reusing same view with different parameters)
   Route::get('/user', [TicketController::class, 'userTickets'])->name('tickets.user');
-  Route::get('/assigned', [TicketController::class, 'assignedTickets'])->name('tickets.assigned');
   Route::get('/admin', [TicketController::class, 'adminTickets'])->name('tickets.admin');
+  Route::get('/assigned', [TicketController::class, 'assignedTickets'])->name('tickets.assigned');
+
+  // Jika ingin menggunakan 1 sub menu saja
+  // Route::get('/manage', function () {
+  //   $user = Auth::user();
+  //   if ($user->hasRole('Pentadbir Sistem') || $user->hasRole('Administrator')) {
+  //     //return redirect('/tickets/admin');
+  //     return redirect()->route('tickets.admin');
+  //   }
+  //   if ($user->hasRole('Pegawai Tugasan') || $user->hasRole('Helpdesk On Duty')) {
+  //     //return redirect('/tickets/assigned');
+  //     return redirect()->route('tickets.assigned');
+  //   }
+  // });
+
   Route::get('/index', [TicketController::class, 'index'])->name('tickets.index'); // Administrator - all tickets
 
   // Data endpoint for DataTables
