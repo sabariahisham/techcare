@@ -331,4 +331,9 @@
     .file-drop-zone.error+.files-preview+.invalid-feedback {
         display: block !important;
     }
+
+     /* dropdown using select */
+    .select2-container .select2-results__options {
+    max-height: 200px;
+    overflow-y: auto;
 </style>

@@ -255,7 +255,7 @@ if (typeof window.config === 'undefined') {
                   const index = activeElements[0].index;
                   const categoryId = categoryIds[index];
                   const categoryName = labels[index];
-                  
+
                   // Load and show subcategory data in modal
                   loadSubcategoryData(categoryId, categoryName);
                 }
@@ -276,7 +276,7 @@ if (typeof window.config === 'undefined') {
                     font: {
                       size: 10,
                       weight: '500'
-         },
+                    },
                     textAlign: 'left',
                     generateLabels: function (chart) {
                       const data = chart.data;
@@ -307,7 +307,7 @@ if (typeof window.config === 'undefined') {
                     const index = legendItem.index;
                     const categoryId = categoryIds[index];
                     const categoryName = labels[index];
-                    
+
                     // Load and show subcategory data in modal
                     loadSubcategoryData(categoryId, categoryName);
                   }
@@ -320,6 +320,10 @@ if (typeof window.config === 'undefined') {
                       const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
                       const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
                       return ` ${label}: ${value} tiket (${percentage}%)`;
+                    },
+                    //text
+                    afterLabel: function () {
+                      return '(Klik Lihat Butiran)';
                     }
                   },
                   backgroundColor: cardColor,
@@ -344,7 +348,7 @@ if (typeof window.config === 'undefined') {
           // Function to load subcategory data for drill-down modal
           function loadSubcategoryData(categoryId, categoryName) {
             console.log(`Loading subcategories for category ID: ${categoryId}, Name: ${categoryName}`);
-            
+
             fetch(`/dashboard/category/${categoryId}/subcategories`)
               .then(response => response.json())
               .then(data => {
@@ -366,7 +370,7 @@ if (typeof window.config === 'undefined') {
             const tableBody = document.getElementById('categoryDrilldownTableBody');
             const tableTitle = document.getElementById('categoryDrilldownTitle');
             const totalElement = document.getElementById('categoryDrilldownTotal');
-            
+
             if (!tableBody || !categoryDrilldownModal) {
               return;
             }
@@ -415,16 +419,16 @@ if (typeof window.config === 'undefined') {
 
             // Show the modal
             categoryDrilldownModal.show();
-            
+
             console.log(`Displaying ${subcategoriesWithTickets.length} subcategories (with tickets) for ${categoryName} in modal`);
             console.log(`Total tickets: ${totalTickets}`);
           }
 
           // Handle window resize for responsive legend positioning
           let resizeTimeout;
-          window.addEventListener('resize', function() {
+          window.addEventListener('resize', function () {
             clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(function() {
+            resizeTimeout = setTimeout(function () {
               if (categoryChartVar) {
                 const isSmallScreen = window.innerWidth < 992;
                 categoryChartVar.options.plugins.legend.position = isSmallScreen ? 'bottom' : 'right';

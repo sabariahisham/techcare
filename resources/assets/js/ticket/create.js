@@ -31,6 +31,30 @@ $(function () {
       dropdownParent: $('#offcanvasAddTicket'),
       theme: 'bootstrap-5'
     });
+
+    $('#building_id').select2({
+      placeholder: 'Pilih Bangunan',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#offcanvasAddTicket'),
+      theme: 'bootstrap-5'
+    });
+
+    $('#block_id').select2({
+      placeholder: 'Pilih Blok',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#offcanvasAddTicket'),
+      theme: 'bootstrap-5'
+    });
+
+    $('#level_id').select2({
+      placeholder: 'Pilih Aras',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#offcanvasAddTicket'),
+      theme: 'bootstrap-5'
+    });
   }
 
   // Initialize when Add Ticket offcanvas is shown

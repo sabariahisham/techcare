@@ -30,14 +30,11 @@
             <h4 class="mb-1">{{ $pageTitle ?? 'Senarai Tiket' }}</h4>
             <p class="mb-0 text-muted">
                 @if (($viewType ?? 'all') === 'user')
-                    Senarai semua tiket yang direkod oleh anda. Anda boleh menambah aduan baharu dan melihat status tiket
-                    anda.
+                    Senarai semua tiket yang direkod oleh anda.
                 @elseif(($viewType ?? 'all') === 'assigned')
-                    Senarai tiket yang ditugaskan kepada anda untuk tindakan lanjut sebagai Pegawai Tugasan.
-                @elseif(($viewType ?? 'all') === 'admin')
-                    Senarai tiket yang memerlukan pemantauan dan tindakan lanjut oleh Pentadbir Sistem.
-                 @else {{-- Administrator --}}
-                    Paparan keseluruhan semua tiket yang direkodkan dalam sistem untuk pemantauan Administrator.
+                    Senarai tiket yang ditugaskan kepada anda sebagai Pegawai Tugasan.
+                @else
+                    Paparan keseluruhan semua tiket yang direkodkan.
                 @endif
             </p>
         </div>
@@ -53,8 +50,8 @@
                 ->hasAnyRole([
                     'Administrator',  // admin
                     'Pentadbir Sistem', // admin
-                    'Penyelia Helpdesk', // assigned
-                    'Helpdesk On Duty', // assigned
+                    'Penyelia Helpdesk', // admin
+                    'Helpdesk On Duty', // admin
                     'Pegawai Tugasan', // assigned
                 ]);
     @endphp
@@ -72,7 +69,7 @@
                             </strong>]
                         </h5>
                         <p class="text-muted small mb-0">
-                            Senarai semua tiket yang direkod oleh anda
+                            Anda boleh menambah aduan baharu dan melihat status tiket semasa.
                         </p>
                     </div>
                     <div>
@@ -110,18 +107,17 @@
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     @if ($viewType === 'assigned')
-                        Tiket Tugasan Anda [<strong class="text-primary">Ditugaskan kepada:
-                            {{ auth()->user()->nama }}</strong>]
+                        Tiket Tugasan Anda [<strong class="text-warning">Ditugaskan kepada: {{ auth()->user()->nama }}</strong>]
                     @else
-                        Semua Tiket Untuk Tindakan [<strong
-                            class="text-warning">{{ auth()->user()->roles->first()->name }}</strong>]
+                    Status Tiket Untuk Tindakan     
+                    {{-- [<strong class="text-warning">{{ auth()->user()->roles->first()->name }}</strong>] --}}
                     @endif
                 </h5>
                 <p class="text-muted small mb-0">
                     @if ($viewType === 'assigned')
-                        Senarai tiket yang ditugaskan kepada anda untuk tindakan lanjut
+                        Kemaskini maklumat tiket dan tindakan yang diambil bagi tiket yang ditugaskan kepada pegawai.
                     @else
-                        Senarai tiket yang memerlukan pemantauan dan tindakan lanjut Paparan keseluruhan tiket yang direkodkan dalam sistem yang memerlukan pemantauan dan tindakan lanjut
+                        Senarai semua tiket yang memerlukan pemantauan dan tindakan selanjutnya.
                     @endif
                 </p>
             </div>
