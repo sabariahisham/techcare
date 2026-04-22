@@ -61,14 +61,13 @@ TASK:
     </script>
     @vite(['resources/assets/js/dashboard/dashboard.js', 'resources/assets/js/session-timeout.js'])
 
-    {{-- Load Pegawai Tugasan specific JavaScript with AUTO-REFRESH if user has Pegawai section --}}
-    @if ($sections['pegawai'] ?? false)
-        @vite(['resources/assets/js/dashboard/dashboard-pegawai-tugasan-auto-refresh.js'])
-    @endif
-
-    {{-- Load Admin/Helpdesk/Pengurusan specific JavaScript with AUTO-REFRESH --}}
+    {{-- Load role-specific auto-refresh JavaScript (priority: admin > helpdesk > pengurusan > pegawai) --}}
     @if (($sections['admin'] ?? false) || ($sections['helpdesk'] ?? false) || ($sections['pengurusan'] ?? false))
+        {{-- Admin/Helpdesk/Pengurusan auto-refresh --}}
         @vite(['resources/assets/js/dashboard/dashboard-admin-auto-refresh.js'])
+    @elseif ($sections['pegawai'] ?? false)
+        {{-- Pegawai Tugasan auto-refresh (only if user doesn't have admin/helpdesk/pengurusan sections) --}}
+        @vite(['resources/assets/js/dashboard/dashboard-pegawai-tugasan-auto-refresh.js'])
     @endif
 @endsection
 

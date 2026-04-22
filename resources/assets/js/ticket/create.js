@@ -124,6 +124,28 @@ $(function () {
     $(this).trigger('change');
   });
 
+  // Auto-capitalize description field
+  $(document).on('input', '#tick_desc', function (e) {
+    var value = this.value;
+    var cursorPos = this.selectionStart;
+
+    // Capitalize first letter
+    if (value.length > 0) {
+      value = value.charAt(0).toUpperCase() + value.slice(1);
+    }
+
+    // Capitalize letter after period followed by space
+    value = value.replace(/\.\s+([a-z])/g, function (match) {
+      return match.toUpperCase();
+    });
+
+    // Only update if value changed to avoid cursor jumping
+    if (this.value !== value) {
+      this.value = value;
+      this.setSelectionRange(cursorPos, cursorPos);
+    }
+  });
+
   // Handle ticket type change (ADD FORM)
   $('#ticketType').on('change', function () {
     if ($(this).val() == '2') {
