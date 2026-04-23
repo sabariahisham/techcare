@@ -56,7 +56,7 @@
    */
   async function refreshTodayLogs() {
     try {
-      const response = await fetch('/dashboard/today-logs');
+      const response = await fetch('/dashboard/today-logs-count');
       const data = await response.json();
 
       if (data.success) {
@@ -75,7 +75,7 @@
    */
   async function refreshOverdueSLA() {
     try {
-      const response = await fetch('/dashboard/overdue-sla');
+      const response = await fetch('/dashboard/overdue-sla-count');
       const data = await response.json();
 
       if (data.success) {
@@ -94,7 +94,7 @@
    */
   async function refreshPendingTickets() {
     try {
-      const response = await fetch('/dashboard/pending-tickets');
+      const response = await fetch('/dashboard/pending-stats');
       const data = await response.json();
 
       if (data.success) {
@@ -218,7 +218,7 @@
   async function refreshTrendChart() {
     try {
       const selectedYear = document.getElementById('selectedYear')?.textContent || new Date().getFullYear();
-      const response = await fetch(`/dashboard/trend-tickets?year=${selectedYear}`);
+      const response = await fetch(`/dashboard/monthly-trend?year=${selectedYear}`);
       const data = await response.json();
 
       if (data.success && chartInstances.trendChart) {
@@ -243,7 +243,7 @@
       const subcategoryId = document.querySelector('#subcategoryDropdown .dropdown-item.active')?.dataset.subcategoryId || '';
       const month = document.getElementById('selectedMonth')?.textContent || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-      const response = await fetch(`/dashboard/assigned-tickets?category=${categoryId}&subcategory=${subcategoryId}&month=${month}`);
+      const response = await fetch(`/dashboard/total-assigned?category=${categoryId}&subcategory=${subcategoryId}&month=${month}`);
       const data = await response.json();
 
       if (data.success && chartInstances.assignedChart) {

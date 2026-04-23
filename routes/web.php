@@ -157,7 +157,7 @@ Route::middleware($authMiddleware)->prefix('dashboard')->name('dashboard.')->gro
   Route::get('/total-assigned', [DashboardController::class, 'getTotalAssigned'])->name('total-assigned');
   Route::get('/list-overdue', [DashboardController::class, 'getListOverdue'])->name('list-overdue');
 
-  // New dashboard cards API endpoints
+  // Dashboard cards API endpoints
   Route::get('/today-logs-count', [DashboardController::class, 'getTodayLogsCount'])->name('today-logs-count');
   Route::get('/weekly-completed', [DashboardController::class, 'getWeeklyCompletedTickets'])->name('weekly-completed');
   Route::get('/pending-stats', [DashboardController::class, 'getPendingTicketsStats'])->name('pending-stats');
