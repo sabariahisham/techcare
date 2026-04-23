@@ -1,3 +1,5 @@
+import logger from '../logger.js';
+
 'use strict';
 
 // Form Validation
@@ -48,7 +50,7 @@
         submitButton: new FormValidation.plugins.SubmitButton(),
         autoFocus: new FormValidation.plugins.AutoFocus()
       }
-    }).on('core.form.valid', function() {
+    }).on('core.form.valid', function () {
       // Prevent multiple submissions
       var submitBtn = $(addNewOfficerForm).find('button[type="submit"]');
       if (submitBtn.prop('disabled')) {
@@ -70,7 +72,7 @@
 
       // Add multiple user IDs
       if (selectedUserIds && selectedUserIds.length > 0) {
-        selectedUserIds.forEach(function(userId) {
+        selectedUserIds.forEach(function (userId) {
           if (userId && userId.trim() !== '') {
             formData.append('user_id[]', userId);
           }
@@ -92,8 +94,8 @@
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
-          console.log('AJAX Success Response:', response);
+        success: function (response) {
+          logger.log('AJAX Success Response:', response);
 
           if (response.success) {
             // Show success message for multiple officers
@@ -120,28 +122,28 @@
             $('#offcanvasAddOfficer').offcanvas('hide');
 
             // Refresh the datatable with proper checks - do this before form reset
-            setTimeout(function() {
+            setTimeout(function () {
               try {
                 var table = $('.datatables-refcategory');
                 if (table.length && $.fn.DataTable.isDataTable(table)) {
-                  console.log('Reloading DataTable after officer creation...');
-                  table.DataTable().ajax.reload(function() {
-                    console.log('DataTable reload completed');
+                  logger.log('Reloading DataTable after officer creation...');
+                  table.DataTable().ajax.reload(function () {
+                    logger.log('DataTable reload completed');
 
                     // Reset form after table reload is complete
-                    setTimeout(function() {
-                      console.log('Resetting form...');
+                    setTimeout(function () {
+                      logger.log('Resetting form...');
                       fv.resetForm(true);
                       addNewOfficerForm.reset();
                       $('#add-officer-category').val('').trigger('change');
                       $('#add-officer-subcategory').val('').trigger('change');
                       $('#add-officer-level').val('').trigger('change');
                       $('#add-officer-user').val('').trigger('change');
-                      console.log('Form reset completed');
+                      logger.log('Form reset completed');
                     }, 100);
                   }, false); // false = don't reset pagination
                 } else {
-                  console.log('DataTable not found or not initialized');
+                  logger.log('DataTable not found or not initialized');
                   // Reset form immediately if no DataTable
                   fv.resetForm(true);
                   addNewOfficerForm.reset();
@@ -164,12 +166,12 @@
           }
 
           // Re-enable submit button
-          setTimeout(function() {
+          setTimeout(function () {
             submitBtn.prop('disabled', false).html('Simpan');
           }, 200);
         },
-        error: function(xhr) {
-          console.log('AJAX Error:', xhr);
+        error: function (xhr) {
+          logger.log('AJAX Error:', xhr);
 
           // Re-enable submit button
           submitBtn.prop('disabled', false).html('Simpan');
@@ -208,17 +210,17 @@
   }
 
   // Category change handler - load subcategories (using document delegation)
-  $(document).on('change', '#add-officer-category', function() {
+  $(document).on('change', '#add-officer-category', function () {
     const categoryId = $(this).val();
     const subcategorySelect = $('#add-officer-subcategory');
 
-    console.log('Category changed to:', categoryId); // Debug log
+    logger.log('Category changed to:', categoryId); // Debug log
 
     // Clear and reset subcategory dropdown
     subcategorySelect.html('<option value="">Pilih Sub Kategori</option>');
 
     if (categoryId) {
-      console.log('Loading subcategories for category:', categoryId); // Debug log
+      logger.log('Loading subcategories for category:', categoryId); // Debug log
 
       // Load subcategories based on selected category
       $.ajax({
@@ -227,27 +229,27 @@
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
-          console.log('Subcategories response:', response); // Debug log
+        success: function (response) {
+          logger.log('Subcategories response:', response); // Debug log
 
           if (response.success && response.data) {
             if (response.data.length === 0) {
               subcategorySelect.append('<option value="">Tiada Sub Kategori</option>');
-              console.log('No subcategories found for category:', categoryId);
+              logger.log('No subcategories found for category:', categoryId);
             } else {
-              response.data.forEach(function(subcategory) {
+              response.data.forEach(function (subcategory) {
                 subcategorySelect.append(
                   '<option value="' + subcategory.id + '">' + subcategory.subcat_name + '</option>'
                 );
               });
-              console.log('Added', response.data.length, 'subcategories');
+              logger.log('Added', response.data.length, 'subcategories');
             }
           } else {
             console.error('Invalid response format:', response);
             toastr.error('Format respons tidak sah', 'Ralat!');
           }
         },
-        error: function(xhr) {
+        error: function (xhr) {
           console.error('Error loading subcategories:', xhr);
           console.error('Status:', xhr.status, 'Response:', xhr.responseText);
 
@@ -265,20 +267,20 @@
   });
 
   // Subcategory change handler - clear user selection if needed
-  $(document).on('change', '#add-officer-subcategory', function() {
-    console.log('Subcategory changed to:', $(this).val());
+  $(document).on('change', '#add-officer-subcategory', function () {
+    logger.log('Subcategory changed to:', $(this).val());
     // You can add logic here if users need to be filtered by subcategory
   });
 
   // User selection change handler - for multiple selection
-  $(document).on('change', '#add-officer-user', function() {
+  $(document).on('change', '#add-officer-user', function () {
     var selectedValues = $(this).val();
-    console.log('Selected users:', selectedValues);
+    logger.log('Selected users:', selectedValues);
   });
 
   // Initialize select2 for add form
   function initializeAddFormSelect2() {
-    console.log('Initializing select2 for add form...');
+    logger.log('Initializing select2 for add form...');
 
     // Destroy existing select2 instances first
     if ($('#add-officer-category').hasClass('select2-hidden-accessible')) {
@@ -324,12 +326,12 @@
       multiple: true
     });
 
-    console.log('Select2 initialization completed for add form');
+    logger.log('Select2 initialization completed for add form');
   }
 
   // Reset form when offcanvas is opened (using document delegation)
-  $(document).on('show.bs.offcanvas', '#offcanvasAddOfficer', function() {
-    console.log('Offcanvas opening - initializing form...');
+  $(document).on('show.bs.offcanvas', '#offcanvasAddOfficer', function () {
+    logger.log('Offcanvas opening - initializing form...');
 
     if (addNewOfficerForm) {
       // Always initialize select2 to ensure it's working
@@ -343,23 +345,23 @@
       // Clear form
       addNewOfficerForm.reset();
 
-        // Reset select2 elements after a small delay to ensure they're initialized
-        setTimeout(function() {
-          $('#add-officer-category').val(null).trigger('change');
-          $('#add-officer-subcategory').html('<option value="">Pilih Sub Kategori</option>').val(null).trigger('change');
-          $('#add-officer-level').val(null).trigger('change');
-          $('#add-officer-user').val([]).trigger('change'); // Empty array for multiple select
+      // Reset select2 elements after a small delay to ensure they're initialized
+      setTimeout(function () {
+        $('#add-officer-category').val(null).trigger('change');
+        $('#add-officer-subcategory').html('<option value="">Pilih Sub Kategori</option>').val(null).trigger('change');
+        $('#add-officer-level').val(null).trigger('change');
+        $('#add-officer-user').val([]).trigger('change'); // Empty array for multiple select
 
-          console.log('Form and select2 elements reset');
-        }, 100);      // Reset submit button
+        logger.log('Form and select2 elements reset');
+      }, 100);      // Reset submit button
       var submitBtn = $(addNewOfficerForm).find('button[type="submit"]');
       submitBtn.prop('disabled', false).html('Simpan');
     }
   });
 
   // Reset form when offcanvas is closed (using document delegation)
-  $(document).on('hidden.bs.offcanvas', '#offcanvasAddOfficer', function() {
-    console.log('Offcanvas closing - cleaning up...');
+  $(document).on('hidden.bs.offcanvas', '#offcanvasAddOfficer', function () {
+    logger.log('Offcanvas closing - cleaning up...');
 
     if (addNewOfficerForm) {
       // Reset form validation state
@@ -370,31 +372,31 @@
       // Clear form completely
       addNewOfficerForm.reset();
 
-        // Reset select2 elements with proper cleanup
-        setTimeout(function() {
-          $('#add-officer-category').val(null).trigger('change');
-          $('#add-officer-subcategory').html('<option value="">Pilih Sub Kategori</option>').val(null).trigger('change');
-          $('#add-officer-level').val(null).trigger('change');
-          $('#add-officer-user').val([]).trigger('change'); // Empty array for multiple select
+      // Reset select2 elements with proper cleanup
+      setTimeout(function () {
+        $('#add-officer-category').val(null).trigger('change');
+        $('#add-officer-subcategory').html('<option value="">Pilih Sub Kategori</option>').val(null).trigger('change');
+        $('#add-officer-level').val(null).trigger('change');
+        $('#add-officer-user').val([]).trigger('change'); // Empty array for multiple select
 
-          // Clear any validation errors
-          $('#offcanvasAddOfficer .is-invalid').removeClass('is-invalid');
-          $('#offcanvasAddOfficer .invalid-feedback').remove();
+        // Clear any validation errors
+        $('#offcanvasAddOfficer .is-invalid').removeClass('is-invalid');
+        $('#offcanvasAddOfficer .invalid-feedback').remove();
 
-          console.log('Complete form reset on offcanvas close');
-        }, 100);      // Reset submit button
+        logger.log('Complete form reset on offcanvas close');
+      }, 100);      // Reset submit button
       var submitBtn = $(addNewOfficerForm).find('button[type="submit"]');
       submitBtn.prop('disabled', false).html('Simpan');
     }
   });
 
   // Handle close button click specifically
-  $(document).on('click', '#offcanvasAddOfficer .btn-close, #offcanvasAddOfficer .btn-label-danger', function() {
-    console.log('Close button clicked - refreshing form...');
+  $(document).on('click', '#offcanvasAddOfficer .btn-close, #offcanvasAddOfficer .btn-label-danger', function () {
+    logger.log('Close button clicked - refreshing form...');
 
     if (addNewOfficerForm) {
       // Force form reset
-      setTimeout(function() {
+      setTimeout(function () {
         if (typeof fv !== 'undefined') {
           fv.resetForm(true);
         }
@@ -406,21 +408,21 @@
         $('#add-officer-level').val('').trigger('change');
         $('#add-officer-user').val([]).trigger('change'); // Empty array for multiple select
 
-        console.log('Manual form refresh completed');
+        logger.log('Manual form refresh completed');
       }, 50);
     }
   });
 
   // Initialize select2 on document ready
-  $(document).ready(function() {
-    console.log('Document ready - checking form elements...');
+  $(document).ready(function () {
+    logger.log('Document ready - checking form elements...');
 
     // Initialize select2 for add form on page load if elements exist
     if ($('#add-officer-category').length) {
-      console.log('Form elements found, initializing select2...');
+      logger.log('Form elements found, initializing select2...');
       initializeAddFormSelect2();
     } else {
-      console.log('Form elements not found on page load');
+      logger.log('Form elements not found on page load');
     }
   });
 

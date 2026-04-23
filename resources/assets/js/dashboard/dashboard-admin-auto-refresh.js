@@ -14,6 +14,8 @@
  * - Smart chart updates (no recreation/flicker)
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 (function () {
@@ -66,7 +68,7 @@
         }
       }
     } catch (error) {
-      console.error('Error refreshing today logs:', error);
+      logger.error('Error refreshing today logs:', error);
     }
   }
 
@@ -85,7 +87,7 @@
         }
       }
     } catch (error) {
-      console.error('Error refreshing overdue SLA:', error);
+      logger.error('Error refreshing overdue SLA:', error);
     }
   }
 
@@ -111,7 +113,7 @@
         updatePendingTicketsChart(data);
       }
     } catch (error) {
-      console.error('Error refreshing pending tickets:', error);
+      logger.error('Error refreshing pending tickets:', error);
     }
   }
 
@@ -133,7 +135,7 @@
         updateWeeklyCompletedChart(data);
       }
     } catch (error) {
-      console.error('Error refreshing weekly completed:', error);
+      logger.error('Error refreshing weekly completed:', error);
     }
   }
 
@@ -159,7 +161,7 @@
         chartInstances.statusChart.update('none'); // No animation for smooth update
       }
     } catch (error) {
-      console.error('Error refreshing status chart:', error);
+      logger.error('Error refreshing status chart:', error);
     }
   }
 
@@ -181,7 +183,7 @@
         chartInstances.categoryChart.update('none');
       }
     } catch (error) {
-      console.error('Error refreshing category chart:', error);
+      logger.error('Error refreshing category chart:', error);
     }
   }
 
@@ -208,7 +210,7 @@
         }
       }
     } catch (error) {
-      console.error('Error refreshing total chart:', error);
+      logger.error('Error refreshing total chart:', error);
     }
   }
 
@@ -226,7 +228,7 @@
         chartInstances.trendChart.update('none');
       }
     } catch (error) {
-      console.error('Error refreshing trend chart:', error);
+      logger.error('Error refreshing trend chart:', error);
     }
   }
 
@@ -255,7 +257,7 @@
         chartInstances.assignedChart.update('none');
       }
     } catch (error) {
-      console.error('Error refreshing assigned chart:', error);
+      logger.error('Error refreshing assigned chart:', error);
     }
   }
 
@@ -339,18 +341,18 @@
    */
   async function refreshAllData() {
     if (isRefreshing) {
-      console.log('⏳ Refresh already in progress, skipping...');
+      logger.log('⏳ Refresh already in progress, skipping...');
       return;
     }
 
     // Check if page is hidden (tab inactive)
     if (document.hidden) {
-      console.log('👁️ Page hidden, skipping refresh');
+      logger.log('👁️ Page hidden, skipping refresh');
       return;
     }
 
     isRefreshing = true;
-    console.log('🔄 Refreshing all admin dashboard data...');
+    logger.log('🔄 Refreshing all admin dashboard data...');
 
     try {
       // Refresh all cards
@@ -376,9 +378,9 @@
       // Update last refresh time
       updateLastRefreshTime();
 
-      console.log('✅ Dashboard refresh completed');
+      logger.log('✅ Dashboard refresh completed');
     } catch (error) {
-      console.error('❌ Error during dashboard refresh:', error);
+      logger.error('❌ Error during dashboard refresh:', error);
     } finally {
       isRefreshing = false;
     }
@@ -415,7 +417,7 @@
 
     // Update every second
     clockIntervalId = setInterval(updateCurrentTime, 1000);
-    console.log('⏰ Real-time clock started');
+    logger.log('⏰ Real-time clock started');
   }
 
   /**
@@ -425,7 +427,7 @@
     if (clockIntervalId) {
       clearInterval(clockIntervalId);
       clockIntervalId = null;
-      console.log('⏰ Real-time clock stopped');
+      logger.log('⏰ Real-time clock stopped');
     }
   }
 
@@ -447,11 +449,11 @@
    */
   function startAutoRefresh() {
     if (refreshIntervalId) {
-      console.log('Auto-refresh already running');
+      logger.log('Auto-refresh already running');
       return;
     }
 
-    console.log(`🚀 Starting auto-refresh (every ${REFRESH_INTERVAL / 1000} seconds)`);
+    logger.log(`🚀 Starting auto-refresh (every ${REFRESH_INTERVAL / 1000} seconds)`);
 
     // Initial refresh
     refreshAllData();
@@ -474,7 +476,7 @@
     if (refreshIntervalId) {
       clearInterval(refreshIntervalId);
       refreshIntervalId = null;
-      console.log('⏹️ Auto-refresh stopped');
+      logger.log('⏹️ Auto-refresh stopped');
     }
     stopRealtimeClock();
   }
@@ -498,12 +500,12 @@
           const chartInstance = Chart.getChart(canvas);
           if (chartInstance) {
             chartInstances[chartId] = chartInstance;
-            console.log(`✅ Captured ${chartId} instance`);
+            logger.log(`✅ Captured ${chartId} instance`);
           }
         }
       });
 
-      console.log('Chart instances captured:', Object.keys(chartInstances).filter(key => chartInstances[key] !== null));
+      logger.log('Chart instances captured:', Object.keys(chartInstances).filter(key => chartInstances[key] !== null));
     }, 2000); // Wait 2 seconds for dashboard.js to initialize charts
   }
 
@@ -519,11 +521,11 @@
     const isAdminDashboard = document.getElementById('today-logs-count') !== null;
 
     if (!isAdminDashboard) {
-      console.log('Not on admin/helpdesk/pengurusan dashboard, skipping initialization');
+      logger.log('Not on admin/helpdesk/pengurusan dashboard, skipping initialization');
       return;
     }
 
-    console.log('🚀 Initializing Admin/Helpdesk/Pengurusan Dashboard Auto-Refresh...');
+    logger.log('🚀 Initializing Admin/Helpdesk/Pengurusan Dashboard Auto-Refresh...');
 
     // Initialize DataTable if exists
     initializeOverdueTable();
@@ -534,7 +536,7 @@
     // Start auto-refresh
     startAutoRefresh();
 
-    console.log('✅ Admin Dashboard Auto-Refresh initialized');
+    logger.log('✅ Admin Dashboard Auto-Refresh initialized');
   }
 
   // =============================================================================
@@ -544,9 +546,9 @@
   // Handle page visibility (refresh when tab becomes visible)
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
-      console.log('👁️ Page hidden, pausing refresh');
+      logger.log('👁️ Page hidden, pausing refresh');
     } else {
-      console.log('👁️ Page visible, refreshing data');
+      logger.log('👁️ Page visible, refreshing data');
       if (!isPaused) {
         refreshAllData();
       }

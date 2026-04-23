@@ -1,3 +1,5 @@
+import logger from '../logger.js';
+
 'use strict';
 
 /**
@@ -234,7 +236,7 @@ $(function () {
   /**
    * Event handler for delete buttons
    */
-  $(document).on('click', '.delete-module', function(e) {
+  $(document).on('click', '.delete-module', function (e) {
     e.preventDefault();
 
     const moduleId = $(this).data('id');
@@ -334,11 +336,11 @@ $(function () {
   /**
    * Event handler for bulk delete button (if you have one)
    */
-  $(document).on('click', '.bulk-delete-modules', function(e) {
+  $(document).on('click', '.bulk-delete-modules', function (e) {
     e.preventDefault();
 
     const selectedIds = [];
-    $('.module-checkbox:checked').each(function() {
+    $('.module-checkbox:checked').each(function () {
       const moduleId = parseInt($(this).val());
       if (moduleId) {
         selectedIds.push(moduleId);
@@ -356,17 +358,17 @@ $(function () {
   };
 
   // Global test function for testing module details endpoint
-  window.testModuleDetailsRoute = function(moduleId) {
+  window.testModuleDetailsRoute = function (moduleId) {
     if (!moduleId) {
-      console.log('Usage: testModuleDetailsRoute(moduleId)');
-      console.log('Available module delete buttons:');
-      $('.delete-module').each(function(index) {
-        console.log(`Button ${index + 1}: data-id=${$(this).data('id')}`);
+      logger.log('Usage: testModuleDetailsRoute(moduleId)');
+      logger.log('Available module delete buttons:');
+      $('.delete-module').each(function (index) {
+        logger.log(`Button ${index + 1}: data-id=${$(this).data('id')}`);
       });
       return;
     }
 
-    console.log('Testing GET /modules/' + moduleId + '/details');
+    logger.log('Testing GET /modules/' + moduleId + '/details');
 
     fetch(`/modules/${moduleId}/details`, {
       method: 'GET',
@@ -375,26 +377,26 @@ $(function () {
         'Content-Type': 'application/json'
       }
     })
-    .then(async response => {
-      console.log('Module details test response status:', response.status);
-      const text = await response.text();
-      console.log('Module details test response body:', text);
+      .then(async response => {
+        logger.log('Module details test response status:', response.status);
+        const text = await response.text();
+        logger.log('Module details test response body:', text);
 
-      if (response.ok) {
-        try {
-          const data = JSON.parse(text);
-          console.log('Module details test parsed response:', data);
-        } catch (e) {
-          console.log('Module details response is not JSON');
+        if (response.ok) {
+          try {
+            const data = JSON.parse(text);
+            logger.log('Module details test parsed response:', data);
+          } catch (e) {
+            logger.log('Module details response is not JSON');
+          }
         }
-      }
 
-      return response;
-    })
-    .catch(error => {
-      console.error('Module details test request error:', error);
-    });
+        return response;
+      })
+      .catch(error => {
+        console.error('Module details test request error:', error);
+      });
   };
 
-  console.log('Fungsi pemadaman modul telah diinisialisasi');
+  logger.log('Fungsi pemadaman modul telah diinisialisasi');
 });

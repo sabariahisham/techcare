@@ -2,6 +2,8 @@
  * Sweet Alerts
  */
 
+import logger from './logger.js';
+
 'use strict';
 
 (function () {
@@ -381,7 +383,7 @@
           // Read more about handling dismissals
           result.dismiss === Swal.DismissReason.timer
         ) {
-          console.log('I was closed by the timer');
+          logger.log('I was closed by the timer');
         }
       });
     };
@@ -422,7 +424,7 @@
         const values = [];
         let currentStep;
 
-        for (currentStep = 0; currentStep < steps.length; ) {
+        for (currentStep = 0; currentStep < steps.length;) {
           const result = await new swalQueueStep({
             title: 'Question ' + steps[currentStep],
             showCancelButton: currentStep > 0,

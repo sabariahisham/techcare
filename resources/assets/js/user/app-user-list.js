@@ -2,6 +2,8 @@
  * Page User List
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 // Datatable (jquery)
@@ -44,7 +46,7 @@ $(function () {
       pageLength: 100,
       ajax: {
         url: '/user-management/data',
-        error: function(xhr, error, code) {
+        error: function (xhr, error, code) {
           console.error('DataTables Ajax Error:', error);
           console.error('Status Code:', code);
           console.error('Response:', xhr.responseText);
@@ -66,7 +68,7 @@ $(function () {
           orderable: false,
           searchable: true
         },
-         {
+        {
           // Index column
           data: null,
           render: function (data, type, row, meta) {
@@ -86,13 +88,13 @@ $(function () {
         { data: 'unit_nama', name: 'unit_nama' },
         // { data: 'kod_skim', name: 'kod_skim' },
         // { data: 'kod_kump_khidmat', name: 'kod_kump_khidmat' },
-        {data: 'kod_jwtn',name: 'kod_jwtn'},
+        { data: 'kod_jwtn', name: 'kod_jwtn' },
         // { data: 'jawatan_name', name: 'jawatan_name' },
         // { data: 'nama_gred', name: 'nama_gred' },
         {
           data: 'kodaktif',
           name: 'kodaktif',
-           render: function (data, type, row) {
+          render: function (data, type, row) {
             if (type === 'display') {
               return data == 1 ? 'AKTIF' : 'TIDAK AKTIF';
             }
@@ -183,15 +185,15 @@ $(function () {
         searchPlaceholder: 'Carian'
       },
       // Add debugging
-      drawCallback: function(settings) {
-        console.log('DataTable draw completed');
-        console.log('Table data:', settings.json);
+      drawCallback: function (settings) {
+        logger.log('DataTable draw completed');
+        logger.log('Table data:', settings.json);
         // Initialize tooltips for action buttons
         $('[data-bs-toggle="tooltip"]').tooltip();
 
         // Check if action buttons exist
         const actionButtons = $('.datatables-users tbody .impersonate-user');
-        console.log('Found impersonate buttons:', actionButtons.length);
+        logger.log('Found impersonate buttons:', actionButtons.length);
       }
     });
   }
@@ -199,7 +201,7 @@ $(function () {
   // Delete Record functionality removed - only impersonate actions are enabled
 
   // Handle impersonate button clicks with confirmation
-  $(document).on('click', '.impersonate-user', function(e) {
+  $(document).on('click', '.impersonate-user', function (e) {
     e.preventDefault();
 
     const impersonateUrl = $(this).attr('href');

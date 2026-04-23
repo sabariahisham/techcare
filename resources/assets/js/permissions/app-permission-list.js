@@ -2,12 +2,14 @@
  * App user list (jquery)
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 $(function () {
-  console.log('Permission list script loaded');
-  console.log('jQuery available:', typeof $ !== 'undefined');
-  console.log('DataTables available:', typeof $.fn.DataTable !== 'undefined');
+  logger.log('Permission list script loaded');
+  logger.log('jQuery available:', typeof $ !== 'undefined');
+  logger.log('DataTables available:', typeof $.fn.DataTable !== 'undefined');
   var dataTablePermissions = $('.datatables-permissions'),
     dt_permission,
     userList = baseUrl + 'app/user/list';
@@ -54,100 +56,100 @@ $(function () {
         }
       },
       columns: [{
-          data: ''
-        },
-        {
-          data: 'DT_RowIndex',
-          orderable: false,
-          searchable: false
-        },
-        {
-          data: 'name'
-        },
-        {
-          data: 'module'
-        },
-        {
-          data: 'description'
-        },
-        {
-          data: 'assigned_to'
-        },
-        // { data: 'created_date' },
-        {
-          data: 'action'
-        }
+        data: ''
+      },
+      {
+        data: 'DT_RowIndex',
+        orderable: false,
+        searchable: false
+      },
+      {
+        data: 'name'
+      },
+      {
+        data: 'module'
+      },
+      {
+        data: 'description'
+      },
+      {
+        data: 'assigned_to'
+      },
+      // { data: 'created_date' },
+      {
+        data: 'action'
+      }
       ],
       columnDefs: [{
-          // For Responsive
-          className: 'control',
-          orderable: false,
-          searchable: false,
-          responsivePriority: 2,
-          targets: 0,
-          render: function (data, type, full, meta) {
-            return '';
-          }
-        },
-        {
-          // Bil. (Row Number)
-          targets: 1,
-          searchable: false,
-          orderable: false
-        },
-        {
-          // Permission Name
-          targets: 2,
-          render: function (data, type, full, meta) {
-            return '<span class="text-nowrap text-heading">' + data + '</span>';
-          }
-        },
-        {
-          // Module
-          targets: 3,
-          visible: false // Hide this column since we're using it for grouping
-        },
-        {
-          // Description
-          targets: 4,
-          render: function (data, type, full, meta) {
-            return '<span class="text-nowrap">' + (data || '-') + '</span>';
-          }
-        },
-        {
-          // Assigned To (Roles) - server already renders HTML
-          targets: 5,
-          orderable: false
-        },
-        // {
-        //   // Created Date
-        //   targets: 5,
-        //   orderable: true,
-        //   render: function (data, type, full, meta) {
-        //     var $date = new Date(full['created_at']);
-        //     return '<span class="text-nowrap">' +
-        //       $date.toLocaleDateString('en-MY', {
-        //         day: 'numeric',
-        //         month: 'short',
-        //         year: 'numeric',
-        //         timeZone: 'Asia/Kuala_Lumpur'
-        //       }) + ', ' +
-        //       $date.toLocaleTimeString('en-MY', {
-        //         hour: 'numeric',
-        //         minute: '2-digit',
-        //         hour12: true,
-        //         timeZone: 'Asia/Kuala_Lumpur'
-        //       }) + '</span>';
-        //   }
-        // },
-        {
-          // Actions - Use server-generated HTML (backend handles button rendering)
-          targets: -1,
-          searchable: false,
-          title: 'Tindakan',
-          orderable: false,
-          className: 'text-center'
+        // For Responsive
+        className: 'control',
+        orderable: false,
+        searchable: false,
+        responsivePriority: 2,
+        targets: 0,
+        render: function (data, type, full, meta) {
+          return '';
         }
+      },
+      {
+        // Bil. (Row Number)
+        targets: 1,
+        searchable: false,
+        orderable: false
+      },
+      {
+        // Permission Name
+        targets: 2,
+        render: function (data, type, full, meta) {
+          return '<span class="text-nowrap text-heading">' + data + '</span>';
+        }
+      },
+      {
+        // Module
+        targets: 3,
+        visible: false // Hide this column since we're using it for grouping
+      },
+      {
+        // Description
+        targets: 4,
+        render: function (data, type, full, meta) {
+          return '<span class="text-nowrap">' + (data || '-') + '</span>';
+        }
+      },
+      {
+        // Assigned To (Roles) - server already renders HTML
+        targets: 5,
+        orderable: false
+      },
+      // {
+      //   // Created Date
+      //   targets: 5,
+      //   orderable: true,
+      //   render: function (data, type, full, meta) {
+      //     var $date = new Date(full['created_at']);
+      //     return '<span class="text-nowrap">' +
+      //       $date.toLocaleDateString('en-MY', {
+      //         day: 'numeric',
+      //         month: 'short',
+      //         year: 'numeric',
+      //         timeZone: 'Asia/Kuala_Lumpur'
+      //       }) + ', ' +
+      //       $date.toLocaleTimeString('en-MY', {
+      //         hour: 'numeric',
+      //         minute: '2-digit',
+      //         hour12: true,
+      //         timeZone: 'Asia/Kuala_Lumpur'
+      //       }) + '</span>';
+      //   }
+      // },
+      {
+        // Actions - Use server-generated HTML (backend handles button rendering)
+        targets: -1,
+        searchable: false,
+        title: 'Tindakan',
+        orderable: false,
+        className: 'text-center'
+      }
       ],
       order: [
         [3, 'asc'],
@@ -172,27 +174,27 @@ $(function () {
       },
       // Buttons with Dropdown - Only show for Administrator
       buttons: window.isAdmin ? [{
-          text: '<i class="bx bx-cube bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Modul</span>',
-          className: 'add-module btn btn-success mb-6 mb-md-0 me-3',
-          attr: {
-            'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddModule'
-          },
-          init: function (api, node, config) {
-            $(node).removeClass('btn-secondary');
-          }
+        text: '<i class="bx bx-cube bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Modul</span>',
+        className: 'add-module btn btn-success mb-6 mb-md-0 me-3',
+        attr: {
+          'data-bs-toggle': 'offcanvas',
+          'data-bs-target': '#offcanvasAddModule'
         },
-        {
-          text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Capaian</span>',
-          className: 'add-new btn btn-primary mb-6 mb-md-0',
-          attr: {
-            'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddPermission'
-          },
-          init: function (api, node, config) {
-            $(node).removeClass('btn-secondary');
-          }
+        init: function (api, node, config) {
+          $(node).removeClass('btn-secondary');
         }
+      },
+      {
+        text: '<i class="bx bx-plus bx-xs me-0 me-sm-2"></i><span class="d-none d-sm-inline-block">Tambah Capaian</span>',
+        className: 'add-new btn btn-primary mb-6 mb-md-0',
+        attr: {
+          'data-bs-toggle': 'offcanvas',
+          'data-bs-target': '#offcanvasAddPermission'
+        },
+        init: function (api, node, config) {
+          $(node).removeClass('btn-secondary');
+        }
+      }
       ] : [],
       // For responsive popup
       responsive: {
@@ -229,20 +231,20 @@ $(function () {
         }
       },
       initComplete: function () {
-        console.log('DataTable initialized');
+        logger.log('DataTable initialized');
 
         // Check if buttons exist after initialization
         setTimeout(function () {
           const editButtons = $('.edit-permission');
           const deleteButtons = $('.delete-permission');
-          console.log('Edit buttons found:', editButtons.length);
-          console.log('Delete buttons found:', deleteButtons.length);
+          logger.log('Edit buttons found:', editButtons.length);
+          logger.log('Delete buttons found:', deleteButtons.length);
 
           if (editButtons.length > 0) {
-            console.log('First edit button data-id:', editButtons.first().data('id'));
+            logger.log('First edit button data-id:', editButtons.first().data('id'));
           }
           if (deleteButtons.length > 0) {
-            console.log('First delete button data-id:', deleteButtons.first().data('id'));
+            logger.log('First delete button data-id:', deleteButtons.first().data('id'));
           }
         }, 1000);
 
@@ -252,8 +254,8 @@ $(function () {
           .every(function () {
             var column = this;
             var select = $(
-                '<select id="UserRole" class="form-select text-capitalize"><option value=""> Select Role </option></select>'
-              )
+              '<select id="UserRole" class="form-select text-capitalize"><option value=""> Select Role </option></select>'
+            )
               .appendTo('.user_role')
               .on('change', function () {
                 var val = $.fn.dataTable.util.escapeRegex($(this).val());
@@ -289,12 +291,12 @@ $(function () {
   // Event delegation for module edit buttons
   $(document).on('click', '.edit-module', function (e) {
     e.preventDefault();
-    console.log('Edit module button clicked');
+    logger.log('Edit module button clicked');
 
     var moduleId = $(this).data('id');
     var moduleName = $(this).data('name');
 
-    console.log('Module ID:', moduleId, 'Module Name:', moduleName);
+    logger.log('Module ID:', moduleId, 'Module Name:', moduleName);
 
     if (!moduleId) {
       console.error('Module ID not found');
@@ -306,7 +308,7 @@ $(function () {
       url: '/modules/' + moduleId + '/edit',
       type: 'GET',
       success: function (response) {
-        console.log('Edit response:', response);
+        logger.log('Edit response:', response);
 
         if (response.success && response.data) {
           // Populate edit form
@@ -329,12 +331,12 @@ $(function () {
   // Event delegation for module delete buttons
   $(document).on('click', '.delete-module', function (e) {
     e.preventDefault();
-    console.log('Delete module button clicked');
+    logger.log('Delete module button clicked');
 
     var moduleId = $(this).data('id');
     var moduleName = $(this).data('name');
 
-    console.log('Module ID:', moduleId, 'Module Name:', moduleName);
+    logger.log('Module ID:', moduleId, 'Module Name:', moduleName);
 
     if (!moduleId) {
       console.error('Module ID not found');
@@ -360,7 +362,7 @@ $(function () {
 
   // Function to delete module
   function deleteModule(moduleId) {
-    console.log('Deleting module:', moduleId);
+    logger.log('Deleting module:', moduleId);
 
     $.ajax({
       url: '/modules/' + moduleId,
@@ -369,7 +371,7 @@ $(function () {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
       success: function (response) {
-        console.log('Delete response:', response);
+        logger.log('Delete response:', response);
 
         if (response.status === 'success' || response.success) {
           Swal.fire(

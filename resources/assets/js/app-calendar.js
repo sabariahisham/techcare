@@ -9,6 +9,8 @@
  *
  **/
 
+import logger from './logger.js';
+
 'use strict';
 
 let direction = 'ltr';
@@ -231,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return [result.events.filter(event => calendars.includes(event.extendedProps.calendar))];
           },
           error: function (error) {
-            console.log(error);
+            logger.log(error);
           }
         }
       ); */

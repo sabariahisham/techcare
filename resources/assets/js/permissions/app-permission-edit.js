@@ -1,13 +1,15 @@
 
 
+import logger from '../logger.js';
+
 'use strict';
 
 // Form Validation for Edit Permission (Offcanvas style)
 $(document).ready(function () {
-  console.log('Edit Permission JS loaded');
-  console.log('FormValidation available:', typeof FormValidation !== 'undefined');
-  console.log('jQuery available:', typeof $ !== 'undefined');
-  console.log('Toastr available:', typeof toastr !== 'undefined');
+  logger.log('Edit Permission JS loaded');
+  logger.log('FormValidation available:', typeof FormValidation !== 'undefined');
+  logger.log('jQuery available:', typeof $ !== 'undefined');
+  logger.log('Toastr available:', typeof toastr !== 'undefined');
 
   // Edit Permission form
   const editPermissionForm = document.getElementById('editPermissionForm');
@@ -17,7 +19,7 @@ $(document).ready(function () {
   // Initialize form validation for edit form
   function initializeEditFormValidation() {
     if (editPermissionForm && typeof FormValidation !== 'undefined') {
-      console.log('Initializing edit form validation');
+      logger.log('Initializing edit form validation');
 
       // Destroy existing validator if any
       if (editFormValidator) {
@@ -54,7 +56,7 @@ $(document).ready(function () {
           submitButton: new FormValidation.plugins.SubmitButton(),
           autoFocus: new FormValidation.plugins.AutoFocus()
         }
-      }).on('core.form.valid', function() {
+      }).on('core.form.valid', function () {
         // Submit form data for update
         updatePermission();
       });
@@ -63,7 +65,7 @@ $(document).ready(function () {
 
   // Function to load permission data for editing
   function loadPermissionData(permissionId) {
-    console.log('Loading permission data for ID:', permissionId);
+    logger.log('Loading permission data for ID:', permissionId);
     currentPermissionId = permissionId;
 
     $.ajax({
@@ -72,15 +74,15 @@ $(document).ready(function () {
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
-      success: function(response) {
-        console.log('Permission data loaded:', response);
+      success: function (response) {
+        logger.log('Permission data loaded:', response);
         if (response.success) {
           populateEditForm(response.permission, response.assigned_roles);
         } else {
           showError('Ralat memuat data permission');
         }
       },
-      error: function(xhr, status, error) {
+      error: function (xhr, status, error) {
         console.error('Error loading permission data:', error);
         const errorMessage = xhr.responseJSON?.message || 'Ralat memuat data capaian';
         showError(errorMessage);
@@ -90,7 +92,7 @@ $(document).ready(function () {
 
   // Function to populate the edit form with permission data
   function populateEditForm(permission, assignedRoles) {
-    console.log('Populating edit form with data:', permission);
+    logger.log('Populating edit form with data:', permission);
 
     // Reset form validation first
     if (editFormValidator) {
@@ -127,7 +129,7 @@ $(document).ready(function () {
 
     // Handle role assignments if role selection exists
     if (assignedRoles && assignedRoles.length > 0) {
-      $('#editPermissionForm [name="roles[]"]').each(function() {
+      $('#editPermissionForm [name="roles[]"]').each(function () {
         const roleValue = $(this).val();
         $(this).prop('checked', assignedRoles.includes(roleValue));
       });
@@ -147,7 +149,7 @@ $(document).ready(function () {
       return;
     }
 
-    console.log('Updating capaian ID:', currentPermissionId);
+    logger.log('Updating capaian ID:', currentPermissionId);
 
     // Prepare form data - exclude disabled module field to prevent validation errors
     var formElements = $(editPermissionForm).find('input, select, textarea').not(':disabled');
@@ -155,7 +157,7 @@ $(document).ready(function () {
     formData += '&_method=PUT';
 
     // Explicitly exclude module field since it should not be updated for existing permissions
-    console.log('Form data being sent (module excluded):', formData);
+    logger.log('Form data being sent (module excluded):', formData);
 
     $.ajax({
       url: `/admin/permissions/${currentPermissionId}`,
@@ -164,8 +166,8 @@ $(document).ready(function () {
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
-      success: function(response) {
-        console.log('Update success response:', response);
+      success: function (response) {
+        logger.log('Update success response:', response);
         if (response.success) {
           // Close offcanvas
           $('#offcanvasEditPermission').offcanvas('hide');
@@ -187,8 +189,8 @@ $(document).ready(function () {
           showError(response.message || 'Ralat berlaku semasa mengemaskini capaian');
         }
       },
-      error: function(xhr, status, error) {
-        console.log('Update error response:', xhr.responseJSON);
+      error: function (xhr, status, error) {
+        logger.log('Update error response:', xhr.responseJSON);
         handleUpdateErrors(xhr);
       }
     });
@@ -199,16 +201,16 @@ $(document).ready(function () {
     // Handle validation errors (422 status)
     if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
       const errors = xhr.responseJSON.errors;
-      console.log('Validation errors:', errors);
+      logger.log('Validation errors:', errors);
 
       // Handle name field specifically for uniqueness errors
       if (errors.name && errors.name.length > 0) {
         const nameError = errors.name[0];
-        console.log('Name validation error:', nameError);
+        logger.log('Name validation error:', nameError);
 
         // Check if it's a uniqueness error
         if (nameError.includes('already') || nameError.includes('unique') || nameError.includes('exists') ||
-            nameError.includes('sudah wujud') || nameError.includes('sudah ada')) {
+          nameError.includes('sudah wujud') || nameError.includes('sudah ada')) {
           showError('Nama capaian ini sudah wujud. Sila gunakan nama lain.', 'Nama Sudah Wujud!');
         } else {
           showError(nameError, 'Ralat Nama Capaian');
@@ -226,7 +228,7 @@ $(document).ready(function () {
         if (field !== 'name' && editFormValidator) {
           const fieldElement = editPermissionForm.querySelector(`[name="${field}"]`);
           if (fieldElement) {
-            console.log(`Setting error for field: ${field}`, errors[field][0]);
+            logger.log(`Setting error for field: ${field}`, errors[field][0]);
 
             editFormValidator.updateFieldStatus(field, 'Invalid', 'notEmpty');
             editFormValidator.updateMessage(field, 'notEmpty', errors[field][0]);
@@ -241,15 +243,15 @@ $(document).ready(function () {
   }
 
   // Event handlers for edit buttons
-  $(document).on('click', '.edit-permission', function(e) {
+  $(document).on('click', '.edit-permission', function (e) {
     e.preventDefault();
     const permissionId = $(this).data('id');
-    console.log('Edit button clicked for permission ID:', permissionId);
+    logger.log('Edit button clicked for permission ID:', permissionId);
 
     if (permissionId) {
       // Initialize form validation if not already done
       if (!editFormValidator) {
-        console.log('Initializing form validation...');
+        logger.log('Initializing form validation...');
         initializeEditFormValidation();
       }
 
@@ -264,9 +266,9 @@ $(document).ready(function () {
   });
 
   // Form submit handler (fallback for manual form submission)
-  $(document).on('submit', '#editPermissionForm', function(e) {
+  $(document).on('submit', '#editPermissionForm', function (e) {
     e.preventDefault();
-    console.log('Form submitted manually');
+    logger.log('Form submitted manually');
 
     // Check if we have a current permission ID
     if (currentPermissionId) {
@@ -278,7 +280,7 @@ $(document).ready(function () {
 
   // Reset form when offcanvas is closed
   $('#offcanvasEditPermission').on('hidden.bs.offcanvas', function () {
-    console.log('Edit form container closed, resetting form');
+    logger.log('Edit form container closed, resetting form');
 
     // Clear form
     if (editPermissionForm) {
@@ -352,27 +354,27 @@ $(document).ready(function () {
   }
 
   // Global test functions for debugging (can be called from browser console)
-  window.testEditButton = function(permissionId) {
+  window.testEditButton = function (permissionId) {
     if (permissionId) {
-      console.log('Testing edit for permission ID:', permissionId);
+      logger.log('Testing edit for permission ID:', permissionId);
       loadPermissionData(permissionId);
       $('#offcanvasEditPermission').offcanvas('show');
     } else {
-      console.log('Available edit buttons:');
-      $('.edit-permission').each(function(index) {
-        console.log(`Button ${index + 1}: data-id=${$(this).data('id')}`);
+      logger.log('Available edit buttons:');
+      $('.edit-permission').each(function (index) {
+        logger.log(`Button ${index + 1}: data-id=${$(this).data('id')}`);
       });
     }
   };
 
-  window.testEditButtonEvents = function() {
+  window.testEditButtonEvents = function () {
     const editButtons = $('.edit-permission');
-    console.log('Total edit buttons:', editButtons.length);
+    logger.log('Total edit buttons:', editButtons.length);
 
-    editButtons.each(function(index) {
+    editButtons.each(function (index) {
       const button = $(this);
       const events = $._data(this, 'events') || {};
-      console.log(`Button ${index + 1}:`, {
+      logger.log(`Button ${index + 1}:`, {
         'data-id': button.data('id'),
         'class': button.attr('class'),
         'events': Object.keys(events)
@@ -380,5 +382,5 @@ $(document).ready(function () {
     });
   };
 
-  console.log('Edit Permission JS initialization completed');
+  logger.log('Edit Permission JS initialization completed');
 });

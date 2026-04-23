@@ -2,6 +2,8 @@
  * Dashboard Status Chart
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 // Ensure config is available (colour using Sneat template colors)
@@ -47,25 +49,25 @@ if (typeof window.config === 'undefined') {
   // --------------------------------------------------------------------
   const statusChart = document.getElementById('statusChart');
   if (statusChart) {
-    console.log('Status chart canvas found, initializing...');
+    logger.log('Status chart canvas found, initializing...');
 
     // Fetch data from the backend
     fetch('/dashboard/status-tickets')
       .then(response => {
-        console.log('Response received:', response);
+        logger.log('Response received:', response);
         return response.json();
       })
       .then(data => {
-        console.log('Chart data received:', data);
+        logger.log('Chart data received:', data);
 
         if (data.success) {
           const labels = data.data.map(item => item.st_name);
           const counts = data.data.map(item => item.count);
           const colors = data.data.map(item => statusColors[item.st_name] || '#6c757d');
 
-          console.log('Chart labels:', labels);
-          console.log('Chart counts:', counts);
-          console.log('Chart colors:', colors);
+          logger.log('Chart labels:', labels);
+          logger.log('Chart counts:', counts);
+          logger.log('Chart colors:', colors);
 
           // Create the horizontal bar chart
           const statusChartVar = new Chart(statusChart, {
@@ -154,7 +156,7 @@ if (typeof window.config === 'undefined') {
             }
           });
 
-          console.log('Chart created successfully');
+          logger.log('Chart created successfully');
         } else {
           console.error('API returned success: false');
         }
@@ -163,14 +165,14 @@ if (typeof window.config === 'undefined') {
         console.error('Error fetching status data:', error);
       });
   } else {
-    console.log('Status chart canvas not found on this page');
+    logger.log('Status chart canvas not found on this page');
   }
 
   // Kategori Tiket Chart (Doughnut Chart with Legend)
   // --------------------------------------------------------------------
   const categoryChart = document.getElementById('categoryChart');
   if (categoryChart) {
-    console.log('Category chart canvas found, initializing...');
+    logger.log('Category chart canvas found, initializing...');
 
     // Category colors using lighter/softer Sneat template colors
     const categoryColors = [
@@ -186,11 +188,11 @@ if (typeof window.config === 'undefined') {
     // Fetch data from the backend
     fetch('/dashboard/category-tickets')
       .then(response => {
-        console.log('Category response received:', response);
+        logger.log('Category response received:', response);
         return response.json();
       })
       .then(data => {
-        console.log('Category chart data received:', data);
+        logger.log('Category chart data received:', data);
 
         if (data.success) {
           const labels = data.data.map(item => item.cat_name);
@@ -198,10 +200,10 @@ if (typeof window.config === 'undefined') {
           const categoryIds = data.data.map(item => item.id); // Store category IDs for drill-down
           const colors = data.data.map((item, index) => categoryColors[index % categoryColors.length]);
 
-          console.log('Category labels:', labels);
-          console.log('Category counts:', counts);
-          console.log('Category IDs:', categoryIds);
-          console.log('Category colors:', colors);
+          logger.log('Category labels:', labels);
+          logger.log('Category counts:', counts);
+          logger.log('Category IDs:', categoryIds);
+          logger.log('Category colors:', colors);
 
           // Determine legend position based on screen size
           const isSmallScreen = window.innerWidth < 992; // Bootstrap lg breakpoint
@@ -343,11 +345,11 @@ if (typeof window.config === 'undefined') {
             }
           });
 
-          console.log('Category chart created successfully');
+          logger.log('Category chart created successfully');
 
           // Function to load subcategory data for drill-down modal
           function loadSubcategoryData(categoryId, categoryName) {
-            console.log(`Loading subcategories for category ID: ${categoryId}, Name: ${categoryName}`);
+            logger.log(`Loading subcategories for category ID: ${categoryId}, Name: ${categoryName}`);
 
             fetch(`/dashboard/category/${categoryId}/subcategories`)
               .then(response => response.json())
@@ -420,8 +422,8 @@ if (typeof window.config === 'undefined') {
             // Show the modal
             categoryDrilldownModal.show();
 
-            console.log(`Displaying ${subcategoriesWithTickets.length} subcategories (with tickets) for ${categoryName} in modal`);
-            console.log(`Total tickets: ${totalTickets}`);
+            logger.log(`Displaying ${subcategoriesWithTickets.length} subcategories (with tickets) for ${categoryName} in modal`);
+            logger.log(`Total tickets: ${totalTickets}`);
           }
 
           // Handle window resize for responsive legend positioning
@@ -446,14 +448,14 @@ if (typeof window.config === 'undefined') {
         console.error('Error fetching category data:', error);
       });
   } else {
-    console.log('Category chart canvas not found on this page');
+    logger.log('Category chart canvas not found on this page');
   }
 
   // Trend Bulanan Tiket (Line Chart with Year Dropdown)
   // --------------------------------------------------------------------
   const trendChart = document.getElementById('trendChart');
   if (trendChart) {
-    console.log('Trend chart canvas found, initializing...');
+    logger.log('Trend chart canvas found, initializing...');
 
     let currentYear = new Date().getFullYear();
     let trendChartInstance = null;
@@ -462,20 +464,20 @@ if (typeof window.config === 'undefined') {
     function loadTrendData(year) {
       fetch(`/dashboard/monthly-trend?year=${year}`)
         .then(response => {
-          console.log('Monthly trend response received:', response);
+          logger.log('Monthly trend response received:', response);
           return response.json();
         })
         .then(data => {
-          console.log('Monthly trend chart data received:', data);
+          logger.log('Monthly trend chart data received:', data);
 
           if (data.success) {
             const labels = data.data.map(item => item.month_name);
             const counts = data.data.map(item => item.count);
             const totalTickets = data.total || 0;
 
-            console.log('Trend labels:', labels);
-            console.log('Trend counts:', counts);
-            console.log('Total tickets for year:', totalTickets);
+            logger.log('Trend labels:', labels);
+            logger.log('Trend counts:', counts);
+            logger.log('Total tickets for year:', totalTickets);
 
             // Update subtitle with total
             const subtitleElement = document.getElementById('trendSubtitle');
@@ -606,7 +608,7 @@ if (typeof window.config === 'undefined') {
               }
             });
 
-            console.log('Monthly trend chart created successfully');
+            logger.log('Monthly trend chart created successfully');
           } else {
             console.error('Monthly trend API returned success: false');
           }
@@ -650,14 +652,14 @@ if (typeof window.config === 'undefined') {
     loadTrendData(currentYear);
 
   } else {
-    console.log('Trend chart canvas not found on this page');
+    logger.log('Trend chart canvas not found on this page');
   }
 
   // Tiket Aduan: Total Tickets Chart (Doughnut with center text)
   // --------------------------------------------------------------------
   const totalChart = document.getElementById('totalChart');
   if (totalChart) {
-    console.log('Total chart canvas found, initializing...');
+    logger.log('Total chart canvas found, initializing...');
 
     // Total tickets colors using Sneat template colors
     const totalColors = [
@@ -668,11 +670,11 @@ if (typeof window.config === 'undefined') {
     // Fetch data from the backend
     fetch('/dashboard/total-tickets')
       .then(response => {
-        console.log('Total tickets response received:', response);
+        logger.log('Total tickets response received:', response);
         return response.json();
       })
       .then(data => {
-        console.log('Total tickets chart data received:', data);
+        logger.log('Total tickets chart data received:', data);
 
         if (data.success) {
           const labels = data.data.map(item => item.type_name);
@@ -680,10 +682,10 @@ if (typeof window.config === 'undefined') {
           const colors = data.data.map((item, index) => totalColors[index % totalColors.length]);
           const totalCount = data.total || counts.reduce((sum, count) => sum + count, 0);
 
-          console.log('Total labels:', labels);
-          console.log('Total counts:', counts);
-          console.log('Total colors:', colors);
-          console.log('Total count:', totalCount);
+          logger.log('Total labels:', labels);
+          logger.log('Total counts:', counts);
+          logger.log('Total colors:', colors);
+          logger.log('Total count:', totalCount);
 
           // Update the total count display
           const totalCountElement = document.getElementById('totalCount');
@@ -809,7 +811,7 @@ if (typeof window.config === 'undefined') {
             }
           });
 
-          console.log('Total tickets chart created successfully');
+          logger.log('Total tickets chart created successfully');
         } else {
           console.error('Total tickets API returned success: false');
         }
@@ -823,14 +825,14 @@ if (typeof window.config === 'undefined') {
         }
       });
   } else {
-    console.log('Total chart canvas not found on this page');
+    logger.log('Total chart canvas not found on this page');
   }
 
   // Jumlah Tiket Mengikut Pegawai Tugasan Chart (Bar Chart with Monthly Dropdown)
   // --------------------------------------------------------------------
   const assignedChart = document.getElementById('assignedChart');
   if (assignedChart) {
-    console.log('Assigned chart canvas found, initializing...');
+    logger.log('Assigned chart canvas found, initializing...');
 
     let currentMonth = new Date().getMonth() + 1; // 1-based month
     let currentYear = new Date().getFullYear();
@@ -849,16 +851,16 @@ if (typeof window.config === 'undefined') {
       }
       fetch(url)
         .then(response => {
-          console.log('Assigned tickets response received:', response);
+          logger.log('Assigned tickets response received:', response);
           return response.json();
         })
         .then(data => {
-          console.log('Assigned tickets chart data received:', data);
-          console.log('Debug mode enabled:', data.debug_mode);
+          logger.log('Assigned tickets chart data received:', data);
+          logger.log('Debug mode enabled:', data.debug_mode);
           if (data.data && data.data.length > 0) {
-            console.log('First officer data:', data.data[0]);
+            logger.log('First officer data:', data.data[0]);
             if (data.data[0].debug) {
-              console.log('First officer debug info:', data.data[0].debug);
+              logger.log('First officer debug info:', data.data[0].debug);
             }
           }
 
@@ -871,11 +873,11 @@ if (typeof window.config === 'undefined') {
             const totalCompleted = data.total_completed || 0;
             const totalPending = data.total_pending || 0;
 
-            console.log('Assigned labels:', labels);
-            console.log('Completed tickets:', completedTickets);
-            console.log('Pending tickets:', pendingTickets);
-            console.log('Assigned roles:', roles);
-            console.log('Total assigned tickets:', totalTickets);
+            logger.log('Assigned labels:', labels);
+            logger.log('Completed tickets:', completedTickets);
+            logger.log('Pending tickets:', pendingTickets);
+            logger.log('Assigned roles:', roles);
+            logger.log('Total assigned tickets:', totalTickets);
 
             // Update subtitle with detailed totals
             const subtitleElement = document.getElementById('assignedSubtitle');
@@ -1121,7 +1123,7 @@ if (typeof window.config === 'undefined') {
               }
             });
 
-            console.log('Assigned tickets chart created successfully');
+            logger.log('Assigned tickets chart created successfully');
           } else {
             console.error('Assigned tickets API returned success: false');
           }
@@ -1262,7 +1264,7 @@ if (typeof window.config === 'undefined') {
     loadAssignedData(currentMonth, currentYear, currentCategoryId, currentSubcategoryId);
 
   } else {
-    console.log('Assigned chart canvas not found on this page');
+    logger.log('Assigned chart canvas not found on this page');
   }
 
   // Dashboard Cards Functionality
@@ -1777,24 +1779,24 @@ if (typeof window.config === 'undefined') {
   // Status Tiket Chart for Pegawai Tugasan (horizontal bar chart)
   const pegawaiStatusChart = document.getElementById('pegawaiStatusChart');
   if (pegawaiStatusChart) {
-    console.log('Pegawai status chart canvas found, initializing...');
+    logger.log('Pegawai status chart canvas found, initializing...');
 
     // Fetch data from pegawai endpoint
     fetch('/dashboard/pegawai/status-tickets')
       .then(response => {
-        console.log('Pegawai status response received:', response);
+        logger.log('Pegawai status response received:', response);
         return response.json();
       })
       .then(data => {
-        console.log('Pegawai status chart data received:', data);
+        logger.log('Pegawai status chart data received:', data);
 
         if (data.success) {
           const labels = data.data.map(item => item.st_name);
           const counts = data.data.map(item => item.count);
           const colors = data.data.map(item => statusColors[item.st_name] || '#6c757d');
 
-          console.log('Pegawai status chart labels:', labels);
-          console.log('Pegawai status chart counts:', counts);
+          logger.log('Pegawai status chart labels:', labels);
+          logger.log('Pegawai status chart counts:', counts);
 
           // Create the horizontal bar chart for pegawai
           const pegawaiStatusChartVar = new Chart(pegawaiStatusChart, {
@@ -1891,7 +1893,7 @@ if (typeof window.config === 'undefined') {
             }
           });
 
-          console.log('Pegawai status chart created successfully');
+          logger.log('Pegawai status chart created successfully');
         }
       })
       .catch(error => {
@@ -1906,7 +1908,7 @@ if (typeof window.config === 'undefined') {
   /*
   const pegawaiCategoryChart = document.getElementById('pegawaiCategoryChart');
   if (pegawaiCategoryChart) {
-    console.log('Pegawai category chart canvas found, initializing...');
+    logger.log('Pegawai category chart canvas found, initializing...');
 
     // Category colors using lighter/softer Sneat template colors
     const categoryColors = [
@@ -1922,11 +1924,11 @@ if (typeof window.config === 'undefined') {
     // Fetch data from pegawai category endpoint
     fetch('/dashboard/pegawai/category-tickets')
       .then(response => {
-        console.log('Pegawai category response received:', response);
+        logger.log('Pegawai category response received:', response);
         return response.json();
       })
       .then(data => {
-        console.log('Pegawai category chart data received:', data);
+        logger.log('Pegawai category chart data received:', data);
 
         if (data.success) {
           // Display all categories assigned to this Pegawai Tugasan (including count = 0)
@@ -1934,8 +1936,8 @@ if (typeof window.config === 'undefined') {
           const counts = data.data.map(item => item.count);
           const colors = data.data.map((item, index) => categoryColors[index % categoryColors.length]);
 
-          console.log('Pegawai category labels:', labels);
-          console.log('Pegawai category counts:', counts);
+          logger.log('Pegawai category labels:', labels);
+          logger.log('Pegawai category counts:', counts);
 
           // Create the category doughnut chart for pegawai
           const pegawaiCategoryChartVar = new Chart(pegawaiCategoryChart, {
@@ -2026,7 +2028,7 @@ if (typeof window.config === 'undefined') {
             }
           });
 
-          console.log('Pegawai category chart created successfully');
+          logger.log('Pegawai category chart created successfully');
         }
       })
       .catch(error => {
@@ -2038,7 +2040,7 @@ if (typeof window.config === 'undefined') {
   // Sub Kategori Tiket Chart for Pegawai Tugasan (Doughnut Chart)
   const pegawaiSubcategoryChart = document.getElementById('pegawaiSubcategoryChart');
   if (pegawaiSubcategoryChart) {
-    console.log('Pegawai subcategory chart canvas found, initializing...');
+    logger.log('Pegawai subcategory chart canvas found, initializing...');
 
     // Subcategory colors using lighter/softer Sneat template colors
     const subcategoryColors = [
@@ -2059,11 +2061,11 @@ if (typeof window.config === 'undefined') {
     // Fetch data from pegawai subcategory endpoint
     fetch('/dashboard/pegawai/subcategory-tickets')
       .then(response => {
-        console.log('Pegawai subcategory response received:', response);
+        logger.log('Pegawai subcategory response received:', response);
         return response.json();
       })
       .then(data => {
-        console.log('Pegawai subcategory chart data received:', data);
+        logger.log('Pegawai subcategory chart data received:', data);
 
         if (data.success) {
           // Display all subcategories assigned to this Pegawai Tugasan (including count = 0)
@@ -2071,8 +2073,8 @@ if (typeof window.config === 'undefined') {
           const counts = data.data.map(item => item.count);
           const colors = data.data.map((item, index) => subcategoryColors[index % subcategoryColors.length]);
 
-          console.log('Pegawai subcategory labels:', labels);
-          console.log('Pegawai subcategory counts:', counts);
+          logger.log('Pegawai subcategory labels:', labels);
+          logger.log('Pegawai subcategory counts:', counts);
 
           // Create the subcategory doughnut chart for pegawai
           const pegawaiSubcategoryChartVar = new Chart(pegawaiSubcategoryChart, {
@@ -2173,7 +2175,7 @@ if (typeof window.config === 'undefined') {
             }
           });
 
-          console.log('Pegawai subcategory chart created successfully');
+          logger.log('Pegawai subcategory chart created successfully');
         }
       })
       .catch(error => {
@@ -2204,11 +2206,11 @@ if (typeof window.config === 'undefined') {
   function initializeOverdueTable() {
     const tableElement = document.getElementById('table-overdue');
     if (!tableElement) {
-      console.log('Overdue table element not found on this page');
+      logger.log('Overdue table element not found on this page');
       return;
     }
 
-    console.log('Initializing overdue tickets DataTable...');
+    logger.log('Initializing overdue tickets DataTable...');
 
     // Check if DataTables is available
     if (typeof $ === 'undefined' || !$.fn || !$.fn.DataTable) {
@@ -2237,7 +2239,7 @@ if (typeof window.config === 'undefined') {
           }
         },
         dataSrc: function (json) {
-          console.log('DataTable response:', json);
+          logger.log('DataTable response:', json);
           return json.data;
         }
       },
@@ -2344,7 +2346,7 @@ if (typeof window.config === 'undefined') {
       }
     }, 300000); // 5 minutes
 
-    console.log('Overdue tickets DataTable initialized successfully');
+    logger.log('Overdue tickets DataTable initialized successfully');
   }
 
   // Initialize Overdue Tickets DataTable for Pegawai Tugasan
@@ -2352,11 +2354,11 @@ if (typeof window.config === 'undefined') {
   function initializeOverdueTablePegawai() {
     const tableElement = document.getElementById('table-overdue-pegawai');
     if (!tableElement) {
-      console.log('Pegawai overdue table element not found on this page');
+      logger.log('Pegawai overdue table element not found on this page');
       return;
     }
 
-    console.log('Initializing pegawai overdue tickets DataTable...');
+    logger.log('Initializing pegawai overdue tickets DataTable...');
 
     // Check if DataTables is available
     if (typeof $ === 'undefined' || !$.fn || !$.fn.DataTable) {
@@ -2385,7 +2387,7 @@ if (typeof window.config === 'undefined') {
           }
         },
         dataSrc: function (json) {
-          console.log('Pegawai DataTable response:', json);
+          logger.log('Pegawai DataTable response:', json);
           return json.data;
         }
       },
@@ -2492,7 +2494,7 @@ if (typeof window.config === 'undefined') {
       }
     }, 300000); // 5 minutes
 
-    console.log('Pegawai overdue tickets DataTable initialized successfully');
+    logger.log('Pegawai overdue tickets DataTable initialized successfully');
   }
 
   // Load cards and initialize overdue table on page ready

@@ -2,6 +2,8 @@
  * Knowledge Base Modal Edit
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 // Knowledge Base Edit Modal Initialization
@@ -25,8 +27,8 @@
     }
 
     var id = $(this).data('id');
-    console.log('Edit button clicked, ID:', id); // Debug log
-    console.log('Element:', this); // Debug log
+    logger.log('Edit button clicked, ID:', id); // Debug log
+    logger.log('Element:', this); // Debug log
 
     // Use the centralized function
     loadKnowledgeBaseData(id);
@@ -69,11 +71,11 @@
   // Handle edit form submission
   $(document).on('submit', '#editKnowledgeBaseForm', function (e) {
     e.preventDefault();
-    console.log('Edit form submission started'); // Debug log
+    logger.log('Edit form submission started'); // Debug log
 
     // Validate form first
     if (!validateEditForm()) {
-      console.log('Form validation failed'); // Debug log
+      logger.log('Form validation failed'); // Debug log
       return false;
     }
 
@@ -82,8 +84,8 @@
     var originalText = submitButton.html();
     var id = $('#edit-kb-id').val();
 
-    console.log('Form ID:', id); // Debug log
-    console.log('Submit button found:', submitButton.length > 0); // Debug log
+    logger.log('Form ID:', id); // Debug log
+    logger.log('Submit button found:', submitButton.length > 0); // Debug log
 
     // Add new files if any are selected
     if (typeof window.editSelectedFiles !== 'undefined' && window.editSelectedFiles.length > 0) {
@@ -129,7 +131,7 @@
       window.editSelectedFiles.forEach(file => {
         formData.append('pdf_files[]', file);
       });
-      console.log(`Adding ${window.editSelectedFiles.length} new files to FormData`);
+      logger.log(`Adding ${window.editSelectedFiles.length} new files to FormData`);
     }
 
     // Add _method for Laravel PUT request
@@ -138,7 +140,7 @@
     // Disable submit button and show loading state
     submitButton.prop('disabled', true).html('<i class="bx bx-loader-alt bx-spin me-2"></i>Updating...');
 
-    console.log('Sending AJAX request to:', `/knowledgebase/${id}`); // Debug log
+    logger.log('Sending AJAX request to:', `/knowledgebase/${id}`); // Debug log
 
     $.ajax({
       url: `/knowledgebase/${id}`,
@@ -150,7 +152,7 @@
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
       success: function (response) {
-        console.log('Edit Success Response:', response); // Debug log
+        logger.log('Edit Success Response:', response); // Debug log
 
         if (response.success) {
           // Show success message first with proper styling
@@ -193,11 +195,11 @@
           setTimeout(function () {
             if (typeof window.dt_knowledgebase !== 'undefined') {
               window.dt_knowledgebase.ajax.reload(function () {
-                console.log('DataTable refreshed after update');
+                logger.log('DataTable refreshed after update');
               }, false);
             } else if ($.fn.DataTable.isDataTable('.datatables-knowledgebase')) {
               $('.datatables-knowledgebase').DataTable().ajax.reload(function () {
-                console.log('DataTable refreshed after update (fallback)');
+                logger.log('DataTable refreshed after update (fallback)');
               }, false);
             } else {
               console.warn('DataTable not found, attempting to reload page');
@@ -215,7 +217,7 @@
         }
       },
       error: function (xhr) {
-        console.log('Edit Error Response:', xhr); // Debug log
+        logger.log('Edit Error Response:', xhr); // Debug log
 
         var errors = xhr.responseJSON && xhr.responseJSON.errors;
         if (errors) {
@@ -238,7 +240,7 @@
         }
       },
       complete: function () {
-        console.log('Edit AJAX request completed'); // Debug log
+        logger.log('Edit AJAX request completed'); // Debug log
         // Re-enable submit button
         submitButton.prop('disabled', false).html(originalText);
       }
@@ -329,21 +331,21 @@
 
     // Validate required fields
     var requiredFields = [{
-        id: 'edit-kb-title',
-        message: 'Title is required'
-      },
-      {
-        id: 'edit-kb-category',
-        message: 'Category is required'
-      },
-      {
-        id: 'edit-kb-subcategory',
-        message: 'Sub category is required'
-      },
-      {
-        id: 'edit-kb-desc',
-        message: 'Description is required'
-      }
+      id: 'edit-kb-title',
+      message: 'Title is required'
+    },
+    {
+      id: 'edit-kb-category',
+      message: 'Category is required'
+    },
+    {
+      id: 'edit-kb-subcategory',
+      message: 'Sub category is required'
+    },
+    {
+      id: 'edit-kb-desc',
+      message: 'Description is required'
+    }
     ];
 
     requiredFields.forEach(function (field) {
@@ -381,22 +383,22 @@
   $(document).on('click', '[data-bs-target="#editKnowledgeBaseModal"], .btn-edit, .edit-btn, a[title="Edit"]', function (e) {
     e.preventDefault();
     var id = $(this).data('id');
-    console.log('Fallback edit handler triggered, ID:', id);
+    logger.log('Fallback edit handler triggered, ID:', id);
     if (id && !$(this).hasClass('edit-record')) {
-      console.log('Adding edit-record class and retriggering');
+      logger.log('Adding edit-record class and retriggering');
       $(this).addClass('edit-record').trigger('click');
     }
   });
 
   // Debug: Check for any elements with bx-edit icon
   $(document).on('click', '.bx-edit', function (e) {
-    console.log('Edit icon clicked:', this);
+    logger.log('Edit icon clicked:', this);
     var parent = $(this).closest('a, button');
     if (parent.length) {
-      console.log('Parent element:', parent[0]);
+      logger.log('Parent element:', parent[0]);
       var id = parent.data('id');
       if (id && !parent.hasClass('edit-record')) {
-        console.log('Triggering edit for ID:', id);
+        logger.log('Triggering edit for ID:', id);
         parent.addClass('edit-record').trigger('click');
       }
     }
@@ -404,7 +406,7 @@
 
   // Listen for custom edit event
   $(document).on('editKnowledgeBase', function (e, data) {
-    console.log('Custom edit event triggered with ID:', data.id);
+    logger.log('Custom edit event triggered with ID:', data.id);
     loadKnowledgeBaseData(data.id);
   });
 
@@ -425,7 +427,7 @@
       url: `/knowledgebase/${id}/edit`,
       type: 'GET',
       success: function (response) {
-        console.log('AJAX response:', response); // Debug log
+        logger.log('AJAX response:', response); // Debug log
         if (response.success) {
           var data = response.data;
 
@@ -533,7 +535,7 @@
     const filesPreview = document.getElementById('edit-files-preview');
 
     if (!dropZone || !fileInput || !filesPreview) {
-      console.log('Edit file upload elements not found');
+      logger.log('Edit file upload elements not found');
       return;
     }
 
@@ -774,6 +776,6 @@
   }
 
   // Debug: Log when the script loads
-  console.log('Knowledge Base Edit Modal script loaded');
+  logger.log('Knowledge Base Edit Modal script loaded');
 
 })();

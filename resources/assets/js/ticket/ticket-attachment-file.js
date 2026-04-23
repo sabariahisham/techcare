@@ -1,3 +1,5 @@
+import logger from '../logger.js';
+
 document.addEventListener('DOMContentLoaded', function () {
   const dropZone = document.getElementById('attachment-drop-zone');
   const fileInput = document.getElementById('ticket-attachments');
@@ -31,28 +33,28 @@ document.addEventListener('DOMContentLoaded', function () {
       if (typeof toastr !== 'undefined') {
         toastr.success(message);
       } else {
-        console.log('SUCCESS:', message);
+        logger.log('SUCCESS:', message);
       }
     },
     error: function (message) {
       if (typeof toastr !== 'undefined') {
         toastr.error(message);
       } else {
-        console.log('ERROR:', message);
+        logger.log('ERROR:', message);
       }
     },
     warning: function (message) {
       if (typeof toastr !== 'undefined') {
         toastr.warning(message);
       } else {
-        console.log('WARNING:', message);
+        logger.log('WARNING:', message);
       }
     },
     info: function (message) {
       if (typeof toastr !== 'undefined') {
         toastr.info(message);
       } else {
-        console.log('INFO:', message);
+        logger.log('INFO:', message);
       }
     }
   };

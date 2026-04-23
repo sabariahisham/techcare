@@ -1,3 +1,5 @@
+import logger from '../logger.js';
+
 'use strict';
 
 $(function () {
@@ -8,7 +10,7 @@ $(function () {
 
   // Initialize select2 for edit form
   function initializeEditFormSelect2() {
-    console.log('Initializing select2 for edit form...');
+    logger.log('Initializing select2 for edit form...');
 
     // Initialize select2 for edit form dropdowns
     $('#edit-officer-category').select2({
@@ -30,7 +32,7 @@ $(function () {
       multiple: true
     });
 
-    console.log('Select2 initialization completed for edit form');
+    logger.log('Select2 initialization completed for edit form');
   }
 
   // Form Validation
@@ -79,7 +81,7 @@ $(function () {
       submitButton: new FormValidation.plugins.SubmitButton(),
       autoFocus: new FormValidation.plugins.AutoFocus()
     }
-  }).on('core.form.valid', function() {
+  }).on('core.form.valid', function () {
     const formData = new FormData(editOfficerForm);
     const officerId = $('#edit-officer-id').val();
 
@@ -101,18 +103,18 @@ $(function () {
       url: `/officer/${officerId}`,
       type: 'PUT',
       data: requestData,
-      success: function(response) {
+      success: function (response) {
         if (response.success) {
           // Check if there are users selected to add to the officer
           const selectedUsers = $('#edit-officer-users').select2('data');
 
           if (selectedUsers && selectedUsers.length > 0) {
-            console.log('Adding selected users to officer:', selectedUsers);
+            logger.log('Adding selected users to officer:', selectedUsers);
             // Add each selected user to the officer
             let usersProcessed = 0;
             const totalUsers = selectedUsers.length;
 
-            selectedUsers.forEach(function(userData) {
+            selectedUsers.forEach(function (userData) {
               // Extract nama from the text format "nama (email)"
               const userName = userData.text.split(' (')[0];
               const userEmail = userData.email || userData.text.split(' (')[1]?.replace(')', '') || '';
@@ -125,13 +127,13 @@ $(function () {
                 headers: {
                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                success: function(userResponse) {
+                success: function (userResponse) {
                   usersProcessed++;
                   if (usersProcessed === totalUsers) {
                     completeOfficerUpdate();
                   }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                   usersProcessed++;
                   console.warn('Failed to add user to officer:', xhr);
                   if (usersProcessed === totalUsers) {
@@ -160,7 +162,7 @@ $(function () {
             });
 
             // Small delay to ensure toastr is displayed before offcanvas manipulation
-            setTimeout(function() {
+            setTimeout(function () {
               $('#offcanvasEditOfficer').offcanvas('hide');
               editOfficerForm.reset();
               $('#edit-officer-users').val(null).trigger('change');
@@ -169,7 +171,7 @@ $(function () {
           }
         }
       },
-      error: function(xhr) {
+      error: function (xhr) {
         const errorMessage = xhr.responseJSON?.message || 'Ralat mengemas kini pegawai tugasan';
         toastr.error(errorMessage, 'Ralat!', {
           closeButton: true,
@@ -182,11 +184,11 @@ $(function () {
   });
 
   // Load officer data when edit button is clicked
-  $(document).on('click', '.edit-record', function() {
+  $(document).on('click', '.edit-record', function () {
     const officerId = $(this).data('id');
 
     // Destroy all select2 instances to ensure clean initialization
-    $('#edit-officer-category, #edit-officer-subcategory, #edit-officer-user').each(function() {
+    $('#edit-officer-category, #edit-officer-subcategory, #edit-officer-user').each(function () {
       if ($(this).hasClass('select2-hidden-accessible')) {
         $(this).select2('destroy');
       }
@@ -198,13 +200,13 @@ $(function () {
     $.ajax({
       url: `/officer/${officerId}/edit`,
       type: 'GET',
-      success: function(response) {
+      success: function (response) {
         if (response.success) {
           populateEditForm(response.data);
           $('#offcanvasEditOfficer').offcanvas('show');
         }
       },
-      error: function(xhr) {
+      error: function (xhr) {
         toastr.error('Ralat memuatkan data pegawai', 'Ralat!', {
           closeButton: true,
           tapToDismiss: false,
@@ -230,7 +232,7 @@ $(function () {
     $('#edit-officer-level').val(officer.level_tugasan);
 
     // Set multiple user IDs for Select2 (existing functionality)
-    console.log('Setting user IDs:', officer.user_id);
+    logger.log('Setting user IDs:', officer.user_id);
     if (Array.isArray(officer.user_id)) {
       $('#edit-officer-user').val(officer.user_id).trigger('change');
     } else if (officer.user_id) {
@@ -248,7 +250,7 @@ $(function () {
   }
 
   // Handle category change to load subcategories
-  $('#edit-officer-category').on('change', function() {
+  $('#edit-officer-category').on('change', function () {
     const categoryId = $(this).val();
     loadSubcategories(categoryId, null, '#edit-officer-subcategory');
   });
@@ -263,17 +265,17 @@ $(function () {
     $.ajax({
       url: `/ref-subcategory-management/by-category/${categoryId}`,
       type: 'GET',
-      success: function(response) {
+      success: function (response) {
         let options = '<option value="">Pilih Sub Kategori</option>';
         if (response.success && response.data) {
-          response.data.forEach(function(subcategory) {
+          response.data.forEach(function (subcategory) {
             const selected = selectedSubcatId && selectedSubcatId == subcategory.id ? 'selected' : '';
             options += `<option value="${subcategory.id}" ${selected}>${subcategory.subcat_name}</option>`;
           });
         }
         $(targetSelector).html(options);
       },
-      error: function() {
+      error: function () {
         toastr.error('Ralat memuatkan sub kategori', 'Ralat!');
         $(targetSelector).empty().append('<option value="">Pilih Sub Kategori</option>');
       }
@@ -306,7 +308,7 @@ $(function () {
         cache: false // Don't cache for edit form as it changes based on officer
       },
       minimumInputLength: 0,
-      templateResult: function(user) {
+      templateResult: function (user) {
         if (user.loading) {
           return user.text;
         }
@@ -321,19 +323,19 @@ $(function () {
 
         var $container = $(
           '<div class="d-flex align-items-center">' +
-            '<div class="avatar avatar-sm me-3">' +
-              '<span class="avatar-initial rounded-circle bg-label-primary">' + initials + '</span>' +
-            '</div>' +
-            '<div>' +
-              '<div class="fw-medium">' + displayName + '</div>' +
-              '<small class="text-muted">' + (user.email || '') + '</small>' +
-            '</div>' +
+          '<div class="avatar avatar-sm me-3">' +
+          '<span class="avatar-initial rounded-circle bg-label-primary">' + initials + '</span>' +
+          '</div>' +
+          '<div>' +
+          '<div class="fw-medium">' + displayName + '</div>' +
+          '<small class="text-muted">' + (user.email || '') + '</small>' +
+          '</div>' +
           '</div>'
         );
 
         return $container;
       },
-      templateSelection: function(user) {
+      templateSelection: function (user) {
         if (user.id) {
           return user.text.split(' (')[0] || user.text;
         }
@@ -352,7 +354,7 @@ $(function () {
     }
 
     let usersList = '<div class="list-group list-group-flush">';
-    users.forEach(function(user) {
+    users.forEach(function (user) {
       // Handle both field names for backward compatibility
       const userName = user.nama || user.name || 'Unknown User';
       const userEmail = user.email || '';
@@ -387,7 +389,7 @@ $(function () {
   }
 
   // Handle remove user from officer assignment
-  $(document).on('click', '.remove-user-officer', function() {
+  $(document).on('click', '.remove-user-officer', function () {
     const userId = $(this).data('user-id');
     const officerId = $(this).data('officer-id');
     const button = $(this);
@@ -421,7 +423,7 @@ $(function () {
       },
       success: function (response) {
         if (response.success) {
-          button.closest('.list-group-item').fadeOut(300, function() {
+          button.closest('.list-group-item').fadeOut(300, function () {
             $(this).remove();
             // Check if no users left
             if ($('#editOfficerUsers .list-group-item').length === 0) {
@@ -474,7 +476,7 @@ $(function () {
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
-      success: function(response) {
+      success: function (response) {
         if (response.success) {
           // Add to current officer users display
           const initials = userName.substring(0, 2).toUpperCase();
@@ -524,7 +526,7 @@ $(function () {
           });
         }
       },
-      error: function(xhr) {
+      error: function (xhr) {
         let errorMessage = 'Ralat menambah pegawai ke tugasan';
         if (xhr.responseJSON && xhr.responseJSON.message) {
           errorMessage = xhr.responseJSON.message;
@@ -564,7 +566,7 @@ $(function () {
       $('#edit-officer-user').val([]).trigger('change');
 
       // Ensure DataTable is reloaded when offcanvas closes
-      setTimeout(function() {
+      setTimeout(function () {
         if ($('.datatables-refcategory').length) {
           $('.datatables-refcategory').DataTable().ajax.reload();
         }
@@ -573,7 +575,7 @@ $(function () {
   });
 
   // Initialize select2 on document ready
-  $(document).ready(function() {
+  $(document).ready(function () {
     // Initialize select2 for edit form on page load if elements exist
     if ($('#edit-officer-category').length && !$('#edit-officer-category').hasClass('select2-hidden-accessible')) {
       initializeEditFormSelect2();

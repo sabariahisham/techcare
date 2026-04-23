@@ -1,17 +1,19 @@
 
 
+import logger from '../logger.js';
+
 'use strict';
 
 // Form Validation for Add Permission (Offcanvas style)
 $(document).ready(function () {
-  console.log('Document ready, FormValidation available:', typeof FormValidation !== 'undefined');
+  logger.log('Document ready, FormValidation available:', typeof FormValidation !== 'undefined');
 
   // Add New Permission form
   const addNewPermissionForm = document.getElementById('addNewPermissionForm');
-  console.log('Looking for form:', addNewPermissionForm);
+  logger.log('Looking for form:', addNewPermissionForm);
 
   if (addNewPermissionForm && typeof FormValidation !== 'undefined') {
-    console.log('Form found, initializing validation');
+    logger.log('Form found, initializing validation');
     const fv = FormValidation.formValidation(addNewPermissionForm, {
       fields: {
         name: {
@@ -47,7 +49,7 @@ $(document).ready(function () {
         submitButton: new FormValidation.plugins.SubmitButton(),
         autoFocus: new FormValidation.plugins.AutoFocus()
       }
-    }).on('core.form.valid', function() {
+    }).on('core.form.valid', function () {
       // Submit form data
       $.ajax({
         url: '/admin/permissions',
@@ -56,8 +58,8 @@ $(document).ready(function () {
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
-          console.log('Success response:', response);
+        success: function (response) {
+          logger.log('Success response:', response);
           if (response.success) {
             // Close offcanvas
             $('#offcanvasAddPermission').offcanvas('hide');
@@ -89,22 +91,22 @@ $(document).ready(function () {
             }
           }
         },
-        error: function(xhr, status, error) {
-          console.log('Error response:', xhr.responseJSON);
+        error: function (xhr, status, error) {
+          logger.log('Error response:', xhr.responseJSON);
 
           // Handle validation errors (422 status)
           if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
             const errors = xhr.responseJSON.errors;
-            console.log('Validation errors:', errors);
+            logger.log('Validation errors:', errors);
 
             // Check specifically for name already exists error
             if (errors.name && errors.name.length > 0) {
               const nameError = errors.name[0];
-              console.log('Name validation error:', nameError);
+              logger.log('Name validation error:', nameError);
 
               // Check if it's a uniqueness error (both English and Malay)
               if (nameError.includes('already') || nameError.includes('unique') || nameError.includes('exists') ||
-                  nameError.includes('sudah wujud') || nameError.includes('sudah ada'))  {
+                nameError.includes('sudah wujud') || nameError.includes('sudah ada')) {
                 // Show specific toastr message for duplicate name
                 if (typeof toastr !== 'undefined') {
                   toastr.error('Nama capaian ini sudah wujud. Sila gunakan nama lain.', 'Nama Sudah Wujud!', {
@@ -137,7 +139,7 @@ $(document).ready(function () {
               if (field !== 'name') { // Skip name as we handled it above
                 const fieldElement = document.querySelector(`[name="${field}"]`);
                 if (fieldElement) {
-                  console.log(`Setting error for field: ${field}`, errors[field][0]);
+                  logger.log(`Setting error for field: ${field}`, errors[field][0]);
 
                   // Use FormValidation to update field status
                   fv.updateFieldStatus(field, 'Invalid', 'notEmpty');
@@ -163,7 +165,7 @@ $(document).ready(function () {
 
     // Reset form when offcanvas is closed
     $('#offcanvasAddPermission').on('hidden.bs.offcanvas', function () {
-      console.log('Offcanvas closed, resetting form');
+      logger.log('Offcanvas closed, resetting form');
       // Clear form
       addNewPermissionForm.reset();
       // Reset form validation
@@ -175,8 +177,8 @@ $(document).ready(function () {
     });
 
   } else {
-    console.log('Form not found or FormValidation not available');
-    console.log('Form element:', addNewPermissionForm);
-    console.log('FormValidation available:', typeof FormValidation !== 'undefined');
+    logger.log('Form not found or FormValidation not available');
+    logger.log('Form element:', addNewPermissionForm);
+    logger.log('FormValidation available:', typeof FormValidation !== 'undefined');
   }
 });

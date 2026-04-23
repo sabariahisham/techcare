@@ -4,6 +4,8 @@
  * Also manages ticket filtering, viewing, and deletion functionalities
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 // Datatable (jquery)
@@ -142,7 +144,7 @@ $(function () {
 
     // Expose to window for global access
     window.dt_my_tickets = dt_my_tickets;
-    console.log('My Tickets DataTable initialized and exposed globally');
+    logger.log('My Tickets DataTable initialized and exposed globally');
 
     // Create hidden select for filter tracking
     if ($('#ticketFilterSelect').length === 0) {
@@ -219,7 +221,7 @@ $(function () {
 
     // Expose to window for global access
     window.dt_manage_tickets = dt_manage_tickets;
-    console.log('Manage Tickets DataTable initialized and exposed globally');
+    logger.log('Manage Tickets DataTable initialized and exposed globally');
   }
 
   // Global reloadAllTables function is defined in config.js
@@ -235,24 +237,24 @@ $(function () {
     // Find the button - whether clicked on button or icon inside
     var $button = $(this).closest('.view-record');
 
-    console.log('=== VIEW BUTTON DEBUG ===');
-    console.log('Clicked element:', this);
-    console.log('Clicked element tag:', this.tagName);
-    console.log('Clicked element classes:', this.className);
-    console.log('Button found:', $button[0]);
-    console.log('Button HTML:', $button[0] ? $button[0].outerHTML : 'NOT FOUND');
-    console.log('data-uuid attribute:', $button.attr('data-uuid'));
-    console.log('data-uuid via data():', $button.data('uuid'));
-    console.log('All button attributes:', $button[0] ? Array.from($button[0].attributes).map(a => a.name + '=' + a.value) : 'N/A');
+    logger.log('=== VIEW BUTTON DEBUG ===');
+    logger.log('Clicked element:', this);
+    logger.log('Clicked element tag:', this.tagName);
+    logger.log('Clicked element classes:', this.className);
+    logger.log('Button found:', $button[0]);
+    logger.log('Button HTML:', $button[0] ? $button[0].outerHTML : 'NOT FOUND');
+    logger.log('data-uuid attribute:', $button.attr('data-uuid'));
+    logger.log('data-uuid via data():', $button.data('uuid'));
+    logger.log('All button attributes:', $button[0] ? Array.from($button[0].attributes).map(a => a.name + '=' + a.value) : 'N/A');
 
     var ticketUuid = $button.attr('data-uuid');
 
     if (ticketUuid && ticketUuid !== 'undefined') {
-      console.log('Navigating to:', '/tickets/' + ticketUuid);
+      logger.log('Navigating to:', '/tickets/' + ticketUuid);
       window.location.href = '/tickets/' + ticketUuid;
     } else {
       console.error('UUID is undefined or not found!');
-      console.log('Button element:', $button[0]);
+      logger.log('Button element:', $button[0]);
     }
   });
 
@@ -283,11 +285,11 @@ $(function () {
     var ticketUuid = $(this).attr('data-id') || $(this).attr('data-ticket-uuid') || $(this).data('id');
 
     // Debug log to verify UUID
-    console.log('Delete button clicked');
-    console.log('data-id:', $(this).attr('data-id'));
-    console.log('data-ticket-uuid:', $(this).attr('data-ticket-uuid'));
-    console.log('Final UUID:', ticketUuid);
-    console.log('Button HTML:', this.outerHTML);
+    logger.log('Delete button clicked');
+    logger.log('data-id:', $(this).attr('data-id'));
+    logger.log('data-ticket-uuid:', $(this).attr('data-ticket-uuid'));
+    logger.log('Final UUID:', ticketUuid);
+    logger.log('Button HTML:', this.outerHTML);
 
     if (!ticketUuid || ticketUuid === 'undefined') {
       console.error('No UUID found for delete operation');
@@ -324,7 +326,7 @@ $(function () {
         });
 
         // Debug log before AJAX call
-        console.log('Sending DELETE request to:', '/tickets/' + ticketUuid);
+        logger.log('Sending DELETE request to:', '/tickets/' + ticketUuid);
 
         $.ajax({
           url: '/tickets/' + ticketUuid,
@@ -333,7 +335,7 @@ $(function () {
             _token: $('meta[name="csrf-token"]').attr('content')
           },
           success: function (response) {
-            console.log('Ticket deleted successfully:', response);
+            logger.log('Ticket deleted successfully:', response);
 
             Swal.fire({
               title: 'Berjaya!',
