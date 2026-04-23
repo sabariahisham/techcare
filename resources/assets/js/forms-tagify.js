@@ -2,6 +2,8 @@
  * Tagify
  */
 
+import logger from './logger.js';
+
 'use strict';
 
 (function () {
@@ -194,12 +196,11 @@
       tabindex="0"
       role="option"
     >
-      ${
-        tagData.avatar
-          ? `<div class='tagify__dropdown__item__avatar-wrap'>
+      ${tagData.avatar
+        ? `<div class='tagify__dropdown__item__avatar-wrap'>
           <img onerror="this.style.visibility='hidden'" src="${tagData.avatar}">
         </div>`
-          : ''
+        : ''
       }
       <div class="fw-medium">${tagData.name}</div>
       <span>${tagData.email}</span>
@@ -284,6 +285,6 @@
   }
 
   function onInvalidTag(e) {
-    console.log('invalid', e.detail);
+    logger.log('invalid', e.detail);
   }
 })();

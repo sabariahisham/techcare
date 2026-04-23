@@ -2,7 +2,7 @@
  * Dashboard Pegawai Tugasan - AUTO REFRESH VERSION
  * This file contains all dashboard functionality with automatic data refresh
  * All data is filtered by assigned tasks (escalate_to = current user)
- * 
+ *
  * Features:
  * - Auto-refresh every 60 seconds (configurable)
  * - Manual refresh button
@@ -10,6 +10,8 @@
  * - Visual refresh indicator
  * - Smart chart updates (no recreation)
  */
+
+import logger from '../logger.js';
 
 'use strict';
 
@@ -37,7 +39,7 @@ if (typeof window.config === 'undefined') {
   // =============================================================================
   // CONFIGURATION & GLOBAL VARIABLES
   // =============================================================================
-  
+
   const REFRESH_INTERVAL = 60000; // 60 seconds (60000ms)
   let refreshIntervalId = null;
   let isRefreshing = false;
@@ -83,7 +85,7 @@ if (typeof window.config === 'undefined') {
   // =============================================================================
   // UTILITY FUNCTIONS
   // =============================================================================
-  
+
   /**
    * Show refresh indicator
    */
@@ -139,7 +141,7 @@ if (typeof window.config === 'undefined') {
 
     // Update every second
     clockIntervalId = setInterval(updateCurrentTime, 1000);
-    console.log('⏰ Real-time clock started');
+    logger.log('⏰ Real-time clock started');
   }
 
   /**
@@ -149,7 +151,7 @@ if (typeof window.config === 'undefined') {
     if (clockIntervalId) {
       clearInterval(clockIntervalId);
       clockIntervalId = null;
-      console.log('⏰ Real-time clock stopped');
+      logger.log('⏰ Real-time clock stopped');
     }
   }
 
@@ -173,7 +175,7 @@ if (typeof window.config === 'undefined') {
     try {
       const response = await fetch('/dashboard/pegawai/today-logs-count');
       const data = await response.json();
-      
+
       const element = document.getElementById('pegawai-today-logs-count');
       if (element && data.success) {
         // Animate the number change
@@ -191,7 +193,7 @@ if (typeof window.config === 'undefined') {
     try {
       const response = await fetch('/dashboard/pegawai/overdue-sla-count');
       const data = await response.json();
-      
+
       const element = document.getElementById('pegawai-overdue-sla-count');
       if (element && data.success) {
         animateNumberChange(element, data.count);
@@ -208,7 +210,7 @@ if (typeof window.config === 'undefined') {
     try {
       const response = await fetch('/dashboard/pegawai/weekly-completed');
       const data = await response.json();
-      
+
       if (!data.success) return;
 
       // Update count
@@ -304,7 +306,7 @@ if (typeof window.config === 'undefined') {
     try {
       const response = await fetch('/dashboard/pegawai/pending-stats');
       const data = await response.json();
-      
+
       if (!data.success) return;
 
       // Update counts
@@ -391,7 +393,7 @@ if (typeof window.config === 'undefined') {
    */
   function animateNumberChange(element, newValue) {
     const currentValue = parseInt(element.textContent) || 0;
-    
+
     if (currentValue === newValue) return;
 
     // Add animation class
@@ -419,7 +421,7 @@ if (typeof window.config === 'undefined') {
     try {
       const response = await fetch('/dashboard/pegawai/status-tickets');
       const data = await response.json();
-      
+
       if (!data.success) return;
 
       const chartCanvas = document.getElementById('pegawaiStatusChart');
@@ -503,7 +505,7 @@ if (typeof window.config === 'undefined') {
         });
       }
 
-      console.log('Pegawai status chart updated successfully');
+      logger.log('Pegawai status chart updated successfully');
     } catch (error) {
       console.error('Error fetching pegawai status data:', error);
     }
@@ -516,7 +518,7 @@ if (typeof window.config === 'undefined') {
     try {
       const response = await fetch('/dashboard/pegawai/subcategory-tickets');
       const data = await response.json();
-      
+
       if (!data.success) return;
 
       const chartCanvas = document.getElementById('pegawaiSubcategoryChart');
@@ -611,7 +613,7 @@ if (typeof window.config === 'undefined') {
         });
       }
 
-      console.log('Pegawai subcategory chart updated successfully');
+      logger.log('Pegawai subcategory chart updated successfully');
     } catch (error) {
       console.error('Error fetching pegawai subcategory data:', error);
     }
@@ -694,7 +696,7 @@ if (typeof window.config === 'undefined') {
       }
     });
 
-    console.log('Pegawai overdue tickets DataTable initialized successfully');
+    logger.log('Pegawai overdue tickets DataTable initialized successfully');
   }
 
   /**
@@ -718,7 +720,7 @@ if (typeof window.config === 'undefined') {
 
     isRefreshing = true;
     showRefreshIndicator();
-    console.log('🔄 Refreshing Pegawai Tugasan dashboard data...');
+    logger.log('🔄 Refreshing Pegawai Tugasan dashboard data...');
 
     try {
       // Refresh all components in parallel for better performance
@@ -737,7 +739,7 @@ if (typeof window.config === 'undefined') {
       }
 
       updateLastRefreshTime();
-      console.log('✅ Dashboard data refreshed successfully');
+      logger.log('✅ Dashboard data refreshed successfully');
     } catch (error) {
       console.error('❌ Error refreshing dashboard data:', error);
     } finally {
@@ -769,7 +771,7 @@ if (typeof window.config === 'undefined') {
       }
     }, REFRESH_INTERVAL);
 
-    console.log(`✅ Auto-refresh started (every ${REFRESH_INTERVAL / 1000} seconds)`);
+    logger.log(`✅ Auto-refresh started (every ${REFRESH_INTERVAL / 1000} seconds)`);
   }
 
   /**
@@ -781,7 +783,7 @@ if (typeof window.config === 'undefined') {
       refreshIntervalId = null;
     }
     stopRealtimeClock();
-    console.log('⏸️ Auto-refresh stopped');
+    logger.log('⏸️ Auto-refresh stopped');
   }
 
   // Button controls removed - auto-refresh runs automatically
@@ -796,13 +798,13 @@ if (typeof window.config === 'undefined') {
   function initializePegawaiDashboard() {
     // Check if we're on the pegawai dashboard page
     const isDashboardPage = document.getElementById('pegawai-today-logs-count') !== null;
-    
+
     if (!isDashboardPage) {
-      console.log('Not on Pegawai Tugasan dashboard page, skipping initialization');
+      logger.log('Not on Pegawai Tugasan dashboard page, skipping initialization');
       return;
     }
 
-    console.log('🚀 Initializing Pegawai Tugasan Dashboard with Auto-Refresh...');
+    logger.log('🚀 Initializing Pegawai Tugasan Dashboard with Auto-Refresh...');
 
     // Initialize DataTable if table exists
     if (document.getElementById('table-overdue-pegawai')) {
@@ -812,7 +814,7 @@ if (typeof window.config === 'undefined') {
     // Start auto-refresh
     startAutoRefresh();
 
-    console.log('✅ Pegawai Tugasan Dashboard initialized successfully');
+    logger.log('✅ Pegawai Tugasan Dashboard initialized successfully');
   }
 
   // Button controls removed - auto-refresh runs automatically
@@ -824,10 +826,10 @@ if (typeof window.config === 'undefined') {
   // Handle page visibility (pause when tab is hidden, resume when visible)
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
-      console.log('👁️ Page hidden, pausing refresh');
+      logger.log('👁️ Page hidden, pausing refresh');
       // Don't actually pause, just skip refresh if page is hidden
     } else {
-      console.log('👁️ Page visible, refreshing data');
+      logger.log('👁️ Page visible, refreshing data');
       if (!isPaused) {
         refreshAllData();
       }
@@ -844,7 +846,7 @@ if (typeof window.config === 'undefined') {
   // Cleanup on page unload
   window.addEventListener('beforeunload', function () {
     stopAutoRefresh();
-    
+
     // Destroy all chart instances
     Object.keys(chartInstances).forEach(key => {
       if (chartInstances[key]) {

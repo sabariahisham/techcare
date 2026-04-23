@@ -2,6 +2,8 @@
  * Page SLA and Severity Add/Create/Edit
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 // Initialize form elements and components
@@ -19,10 +21,10 @@ $(function () {
 });
 
 // Form submission handlers
-$(document).ready(function() {
+$(document).ready(function () {
   // Function to ensure all edit buttons are properly restored
   function restoreEditButtons() {
-    $('.edit-record').each(function() {
+    $('.edit-record').each(function () {
       var $btn = $(this);
       $btn.prop('disabled', false);
       // Only restore if the button doesn't have the correct icon
@@ -163,11 +165,11 @@ $(document).ready(function() {
   // Edit Record click handler - using document delegation for dynamically loaded content
   $(document).on('click', '.edit-record', function (e) {
     e.preventDefault();
-    console.log('Edit button clicked'); // Debug log
+    logger.log('Edit button clicked'); // Debug log
     var id = $(this).data('id');
     var $clickedButton = $(this);
     var originalHtml = $clickedButton.html();
-    console.log('SLA ID:', id); // Debug log
+    logger.log('SLA ID:', id); // Debug log
 
     if (!id) {
       toastr.error('ID SLA tidak dijumpai. Sila cuba lagi.');
@@ -222,7 +224,7 @@ $(document).ready(function() {
           toastr.error('Ralat berlaku semasa mengambil data SLA. Sila cuba lagi.');
         }
       },
-      complete: function() {
+      complete: function () {
         // Restore button state for the clicked button only
         $clickedButton.prop('disabled', false).html(originalHtml);
       }
@@ -269,7 +271,7 @@ $(document).ready(function() {
 
           // Reload DataTable if it exists on the page
           if (typeof window.dt_sla !== 'undefined' && window.dt_sla) {
-            window.dt_sla.ajax.reload(function() {
+            window.dt_sla.ajax.reload(function () {
               // Ensure buttons are restored after reload
               setTimeout(restoreEditButtons, 100);
             }, false); // false = keep current page
@@ -330,7 +332,7 @@ $(document).ready(function() {
           });
         }
       },
-      complete: function() {
+      complete: function () {
         // Re-enable submit button
         submitBtn.prop('disabled', false).text(originalText);
       }
@@ -351,9 +353,9 @@ $(document).ready(function() {
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
+        success: function (response) {
           if (response.success && response.data && Array.isArray(response.data)) {
-            $.each(response.data, function(index, subcategory) {
+            $.each(response.data, function (index, subcategory) {
               const selected = selectedSubcategoryId == subcategory.id ? 'selected' : '';
               subcategorySelect.append(`<option value="${subcategory.id}" ${selected}>${subcategory.subcat_name}</option>`);
             });
@@ -368,7 +370,7 @@ $(document).ready(function() {
             });
           }
         },
-        error: function(xhr) {
+        error: function (xhr) {
           console.error('Error loading subcategories:', xhr);
           if (xhr.status === 404) {
             toastr.error('Kategori tidak dijumpai. Sila muat semula halaman dan cuba lagi.', '', {
@@ -414,11 +416,11 @@ $(document).ready(function() {
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
-      success: function(response) {
-        console.log('Edit duplicate check response:', response);
+      success: function (response) {
+        logger.log('Edit duplicate check response:', response);
         callback(response.exists === true);
       },
-      error: function(xhr) {
+      error: function (xhr) {
         console.error('Edit duplicate check error:', xhr);
         if (xhr.status === 422) {
           console.error('Validation errors:', xhr.responseJSON);
@@ -439,7 +441,7 @@ $(document).ready(function() {
     }
 
     // Set a small delay to avoid checking on every keystroke
-    duplicateValidationTimerEdit = setTimeout(function() {
+    duplicateValidationTimerEdit = setTimeout(function () {
       const catId = $('#edit_cat_id').val();
       const subcatId = $('#edit_subcat_id').val();
       const slaLevel = $('#edit_sla_level').val();
@@ -459,7 +461,7 @@ $(document).ready(function() {
       // Only check for duplicates if ALL 3 fields have values
       if (catId && subcatId && slaLevel) {
         // All fields are valid, check for duplicates
-        checkDuplicateSlaForEdit(catId, subcatId, slaLevel, excludeId, function(isDuplicate) {
+        checkDuplicateSlaForEdit(catId, subcatId, slaLevel, excludeId, function (isDuplicate) {
           if (isDuplicate) {
             errorDiv.innerHTML = '<div class="alert alert-warning"><i class="bx bx-info-circle me-2"></i>SLA dengan kombinasi Kategori, Sub Kategori dan Tahap Pegawai Tugasan ini sudah wujud.</div>';
             errorDiv.style.display = 'block';
@@ -480,7 +482,7 @@ $(document).ready(function() {
   $('#edit_cat_id, #edit_subcat_id, #edit_sla_level').on('change', validateDuplicateOnChangeEdit);
 
   // Category change handler for edit form to populate subcategories
-  $('#edit_cat_id').on('change', function() {
+  $('#edit_cat_id').on('change', function () {
     const categoryId = $(this).val();
     loadSubcategoriesForEdit(categoryId);
   });

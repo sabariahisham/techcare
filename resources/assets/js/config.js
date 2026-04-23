@@ -5,6 +5,8 @@
  * ! To clear local storage: (https://www.leadshook.com/help/how-to-clear-local-storage-in-google-chrome-browser/).
  */
 
+import logger from './logger.js';
+
 'use strict';
 
 // JS global variables
@@ -117,7 +119,7 @@ window.baseUrl = document.documentElement.getAttribute('data-base-url') + '/';
         return originalFire.call(this, options);
       };
 
-      console.log('SweetAlert2 global configuration applied - Only 2 buttons (Ya/Tidak) will be shown');
+      logger.log('SweetAlert2 global configuration applied - Only 2 buttons (Ya/Tidak) will be shown');
     } else {
       // Retry after a short delay if Swal is not yet available
       setTimeout(configureSweetAlert, 100);

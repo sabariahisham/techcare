@@ -2,6 +2,8 @@
  * Role Statistics Management
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 (function () {
@@ -13,7 +15,7 @@
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
-      success: function(response) {
+      success: function (response) {
         if (response.success && response.statistics) {
           // Update total roles count
           if (response.statistics.total_roles !== undefined) {
@@ -55,28 +57,28 @@
             $('#active-modules').text(`(${response.statistics.active_modules} aktif)`);
           }
 
-          console.log('Role statistics refreshed successfully');
+          logger.log('Role statistics refreshed successfully');
         }
       },
-      error: function(xhr) {
+      error: function (xhr) {
         console.warn('Failed to refresh role statistics:', xhr.responseText);
       }
     });
   }
 
   // Listen for role events and refresh statistics
-  $(document).on('roleAdded roleUpdated roleDeleted', function(event) {
-    console.log('Role event detected:', event.type);
+  $(document).on('roleAdded roleUpdated roleDeleted', function (event) {
+    logger.log('Role event detected:', event.type);
 
     // Add a small delay to ensure backend processing is complete
-    setTimeout(function() {
+    setTimeout(function () {
       refreshRoleStatistics();
     }, 500);
   });
 
   // Initial load
-  $(document).ready(function() {
-    console.log('Role statistics script loaded');
+  $(document).ready(function () {
+    logger.log('Role statistics script loaded');
   });
 
   // Export function for manual refresh

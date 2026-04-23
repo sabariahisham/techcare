@@ -4,6 +4,8 @@
  * All data is filtered by assigned tasks (escalate_to = current user)
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 // Ensure config is available (using Sneat template colors)
@@ -306,24 +308,24 @@ if (typeof window.config === 'undefined') {
    */
   const pegawaiStatusChart = document.getElementById('pegawaiStatusChart');
   if (pegawaiStatusChart) {
-    console.log('Pegawai status chart canvas found, initializing...');
+    logger.log('Pegawai status chart canvas found, initializing...');
 
     // Fetch data from pegawai endpoint
     fetch('/dashboard/pegawai/status-tickets')
       .then(response => {
-        console.log('Pegawai status response received:', response);
+        logger.log('Pegawai status response received:', response);
         return response.json();
       })
       .then(data => {
-        console.log('Pegawai status chart data received:', data);
+        logger.log('Pegawai status chart data received:', data);
 
         if (data.success) {
           const labels = data.data.map(item => item.st_name);
           const counts = data.data.map(item => item.count);
           const colors = data.data.map(item => statusColors[item.st_name] || '#6c757d');
 
-          console.log('Pegawai status chart labels:', labels);
-          console.log('Pegawai status chart counts:', counts);
+          logger.log('Pegawai status chart labels:', labels);
+          logger.log('Pegawai status chart counts:', counts);
 
           // Create the horizontal bar chart for pegawai
           const pegawaiStatusChartVar = new Chart(pegawaiStatusChart, {
@@ -420,7 +422,7 @@ if (typeof window.config === 'undefined') {
             }
           });
 
-          console.log('Pegawai status chart created successfully');
+          logger.log('Pegawai status chart created successfully');
         }
       })
       .catch(error => {
@@ -435,7 +437,7 @@ if (typeof window.config === 'undefined') {
   /*
   const pegawaiCategoryChart = document.getElementById('pegawaiCategoryChart');
   if (pegawaiCategoryChart) {
-    console.log('Pegawai category chart canvas found, initializing...');
+    logger.log('Pegawai category chart canvas found, initializing...');
 
     // Category colors using lighter/softer Sneat template colors
     const categoryColors = [
@@ -451,11 +453,11 @@ if (typeof window.config === 'undefined') {
     // Fetch data from pegawai category endpoint
     fetch('/dashboard/pegawai/category-tickets')
       .then(response => {
-        console.log('Pegawai category response received:', response);
+        logger.log('Pegawai category response received:', response);
         return response.json();
       })
       .then(data => {
-        console.log('Pegawai category chart data received:', data);
+        logger.log('Pegawai category chart data received:', data);
 
         if (data.success) {
           // Display all categories assigned to this Pegawai Tugasan (including count = 0)
@@ -463,8 +465,8 @@ if (typeof window.config === 'undefined') {
           const counts = data.data.map(item => item.count);
           const colors = data.data.map((item, index) => categoryColors[index % categoryColors.length]);
 
-          console.log('Pegawai category labels:', labels);
-          console.log('Pegawai category counts:', counts);
+          logger.log('Pegawai category labels:', labels);
+          logger.log('Pegawai category counts:', counts);
 
           // Create the category doughnut chart for pegawai
           const pegawaiCategoryChartVar = new Chart(pegawaiCategoryChart, {
@@ -555,7 +557,7 @@ if (typeof window.config === 'undefined') {
             }
           });
 
-          console.log('Pegawai category chart created successfully');
+          logger.log('Pegawai category chart created successfully');
         }
       })
       .catch(error => {
@@ -569,7 +571,7 @@ if (typeof window.config === 'undefined') {
    */
   const pegawaiSubcategoryChart = document.getElementById('pegawaiSubcategoryChart');
   if (pegawaiSubcategoryChart) {
-    console.log('Pegawai subcategory chart canvas found, initializing...');
+    logger.log('Pegawai subcategory chart canvas found, initializing...');
 
     // Subcategory colors using lighter/softer Sneat template colors
     const subcategoryColors = [
@@ -590,11 +592,11 @@ if (typeof window.config === 'undefined') {
     // Fetch data from pegawai subcategory endpoint
     fetch('/dashboard/pegawai/subcategory-tickets')
       .then(response => {
-        console.log('Pegawai subcategory response received:', response);
+        logger.log('Pegawai subcategory response received:', response);
         return response.json();
       })
       .then(data => {
-        console.log('Pegawai subcategory chart data received:', data);
+        logger.log('Pegawai subcategory chart data received:', data);
 
         if (data.success) {
           // Display all subcategories assigned to this Pegawai Tugasan (including count = 0)
@@ -602,8 +604,8 @@ if (typeof window.config === 'undefined') {
           const counts = data.data.map(item => item.count);
           const colors = data.data.map((item, index) => subcategoryColors[index % subcategoryColors.length]);
 
-          console.log('Pegawai subcategory labels:', labels);
-          console.log('Pegawai subcategory counts:', counts);
+          logger.log('Pegawai subcategory labels:', labels);
+          logger.log('Pegawai subcategory counts:', counts);
 
           // Create the subcategory doughnut chart for pegawai
           const pegawaiSubcategoryChartVar = new Chart(pegawaiSubcategoryChart, {
@@ -704,7 +706,7 @@ if (typeof window.config === 'undefined') {
             }
           });
 
-          console.log('Pegawai subcategory chart created successfully');
+          logger.log('Pegawai subcategory chart created successfully');
         }
       })
       .catch(error => {
@@ -718,11 +720,11 @@ if (typeof window.config === 'undefined') {
   function initializeOverdueTablePegawai() {
     const tableElement = document.getElementById('table-overdue-pegawai');
     if (!tableElement) {
-      console.log('Pegawai overdue table element not found on this page');
+      logger.log('Pegawai overdue table element not found on this page');
       return;
     }
 
-    console.log('Initializing pegawai overdue tickets DataTable...');
+    logger.log('Initializing pegawai overdue tickets DataTable...');
 
     // Check if DataTables is available
     if (typeof $ === 'undefined' || !$.fn || !$.fn.DataTable) {
@@ -751,7 +753,7 @@ if (typeof window.config === 'undefined') {
           }
         },
         dataSrc: function (json) {
-          console.log('Pegawai DataTable response:', json);
+          logger.log('Pegawai DataTable response:', json);
           return json.data;
         }
       },
@@ -858,7 +860,7 @@ if (typeof window.config === 'undefined') {
       }
     }, 300000); // 5 minutes
 
-    console.log('Pegawai overdue tickets DataTable initialized successfully');
+    logger.log('Pegawai overdue tickets DataTable initialized successfully');
   }
 
   // =============================================================================

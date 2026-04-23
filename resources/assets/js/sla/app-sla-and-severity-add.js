@@ -2,6 +2,8 @@
  * Page SLA and Severity Add/Create
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 // Initialize form elements and components
@@ -162,7 +164,7 @@ $(function () {
 
           // Redirect to list page if we're on a dedicated add page
           if (window.location.pathname.includes('/add') || window.location.pathname.includes('/create')) {
-            setTimeout(function() {
+            setTimeout(function () {
               window.location.href = '/sla-severity';
             }, 1500);
           }
@@ -277,11 +279,11 @@ $(function () {
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
-      success: function(response) {
-        console.log('Duplicate check response:', response);
+      success: function (response) {
+        logger.log('Duplicate check response:', response);
         callback(response.exists === true);
       },
-      error: function(xhr) {
+      error: function (xhr) {
         console.error('Duplicate check error:', xhr);
         if (xhr.status === 422) {
           console.error('Validation errors:', xhr.responseJSON);
@@ -302,7 +304,7 @@ $(function () {
     }
 
     // Set a small delay to avoid checking on every keystroke
-    duplicateValidationTimer = setTimeout(function() {
+    duplicateValidationTimer = setTimeout(function () {
       const catId = $('#add-cat-id').val();
       const subcatId = $('#add-subcat-id').val();
       const slaLevel = $('#add-sla-level').val();
@@ -321,7 +323,7 @@ $(function () {
       // Only check for duplicates if ALL 3 fields have values
       if (catId && subcatId && slaLevel) {
         // All fields are valid, check for duplicates
-        checkDuplicateSla(catId, subcatId, slaLevel, function(isDuplicate) {
+        checkDuplicateSla(catId, subcatId, slaLevel, function (isDuplicate) {
           if (isDuplicate) {
             errorDiv.innerHTML = '<div class="alert alert-warning"><i class="bx bx-info-circle me-2"></i>SLA dengan kombinasi Kategori, Sub Kategori dan Tahap Pegawai Tugasan ini sudah wujud.</div>';
             errorDiv.style.display = 'block';
@@ -342,7 +344,7 @@ $(function () {
   $('#add-cat-id, #add-subcat-id, #add-sla-level').on('change', validateDuplicateOnChange);
 
   // Category change handler to populate subcategories
-  $('#add-cat-id').on('change', function() {
+  $('#add-cat-id').on('change', function () {
     const categoryId = $(this).val();
     const subcategorySelect = $('#add-subcat-id');
 
@@ -356,9 +358,9 @@ $(function () {
         headers: {
           'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         },
-        success: function(response) {
+        success: function (response) {
           if (response.success && response.data && Array.isArray(response.data)) {
-            $.each(response.data, function(index, subcategory) {
+            $.each(response.data, function (index, subcategory) {
               subcategorySelect.append(`<option value="${subcategory.id}">${subcategory.subcat_name}</option>`);
             });
           } else {
@@ -369,7 +371,7 @@ $(function () {
             });
           }
         },
-        error: function(xhr) {
+        error: function (xhr) {
           console.error('Error loading subcategories:', xhr);
           if (xhr.status === 404) {
             toastr.error('Kategori tidak dijumpai. Sila muat semula halaman dan cuba lagi.', '', {

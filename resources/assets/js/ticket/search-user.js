@@ -3,10 +3,12 @@
  * Handles user search, autocomplete, and user field population for ticket creation
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 $(function () {
-  console.log('User search functionality loaded');
+  logger.log('User search functionality loaded');
 
   // Function to reset user search (ADD FORM)
   function resetUserSearch() {
@@ -65,7 +67,7 @@ $(function () {
   function searchUserByName(nameOrEmail, isEdit = false, fromAutocomplete = false) {
     // Edit functionality disabled - only support add form
     if (isEdit) {
-      console.warn('Edit functionality disabled for complainants');
+      logger.log('Edit functionality disabled for complainants');
       return;
     }
 

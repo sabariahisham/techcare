@@ -1,3 +1,5 @@
+import logger from '../logger.js';
+
 'use strict';
 
 /**
@@ -318,5 +320,5 @@ $(function () {
     performArticleDeletion: performArticleDeletion
   };
 
-  console.log('Knowledge Base article delete functionality initialized with soft delete support and permanent file deletion');
+  logger.log('Knowledge Base article delete functionality initialized with soft delete support and permanent file deletion');
 });

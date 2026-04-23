@@ -1,13 +1,15 @@
+import logger from '../logger.js';
+
 'use strict';
 
 // Initialize Role delete functionality when document is ready
 $(function () {
-  console.log('Role delete script loaded');
+  logger.log('Role delete script loaded');
 
   // Add click handler to Role delete buttons
-  $(document).on('click', '.delete-role, .delete-record', function(e) {
+  $(document).on('click', '.delete-role, .delete-record', function (e) {
     e.preventDefault();
-    console.log('Delete button clicked');
+    logger.log('Delete button clicked');
     const roleId = $(this).data('id');
     const roleName = $(this).closest('tr').find('td:nth-child(3)').text().trim(); // Get role name from name column
 
@@ -22,7 +24,7 @@ $(function () {
     }
 
     // Debug logging
-    console.log('Delete clicked - Role ID:', roleId, 'Role Name:', roleName, 'Users:', userNames);
+    logger.log('Delete clicked - Role ID:', roleId, 'Role Name:', roleName, 'Users:', userNames);
 
     if (!roleId) {
       Swal.fire({
@@ -81,66 +83,66 @@ $(function () {
             'Content-Type': 'application/json'
           }
         })
-        .then(response => {
-          console.log('Delete response status:', response.status);
-          return response.json();
-        })
-        .then(data => {
-          console.log('Delete response data:', data);
-          if(data.success) {
-            let successMessage = data.message || 'Peranan dan data berkaitan berjaya dipadam';
-            if (userNames.length > 0) {
-              successMessage += `. ${userNames.length} pengguna telah kehilangan peranan ini.`;
-            }
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Dipadam!',
-              text: successMessage,
-              timer: 3000,
-              showConfirmButton: false,
-              customClass: {
-                confirmButton: 'btn btn-success'
-              },
-              buttonsStyling: false
-            }).then(() => {
-              // Refresh the DataTable after the timer
-              if (typeof window.dt_role !== 'undefined') {
-                window.dt_role.ajax.reload(null, false);
-              } else {
-                $('.datatables-roles').DataTable().ajax.reload(null, false);
+          .then(response => {
+            logger.log('Delete response status:', response.status);
+            return response.json();
+          })
+          .then(data => {
+            logger.log('Delete response data:', data);
+            if (data.success) {
+              let successMessage = data.message || 'Peranan dan data berkaitan berjaya dipadam';
+              if (userNames.length > 0) {
+                successMessage += `. ${userNames.length} pengguna telah kehilangan peranan ini.`;
               }
-            });
-          } else {
+
+              Swal.fire({
+                icon: 'success',
+                title: 'Dipadam!',
+                text: successMessage,
+                timer: 3000,
+                showConfirmButton: false,
+                customClass: {
+                  confirmButton: 'btn btn-success'
+                },
+                buttonsStyling: false
+              }).then(() => {
+                // Refresh the DataTable after the timer
+                if (typeof window.dt_role !== 'undefined') {
+                  window.dt_role.ajax.reload(null, false);
+                } else {
+                  $('.datatables-roles').DataTable().ajax.reload(null, false);
+                }
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Ralat semasa memadam peranan',
+                customClass: {
+                  confirmButton: 'btn btn-primary'
+                },
+                buttonsStyling: false
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Delete role error:', error);
             Swal.fire({
               icon: 'error',
               title: 'Error',
-              text: data.message || 'Ralat semasa memadam peranan',
+              text: 'Ralat semasa memadam peranan. Sila cuba lagi.',
               customClass: {
                 confirmButton: 'btn btn-primary'
               },
               buttonsStyling: false
             });
-          }
-        })
-        .catch(error => {
-          console.error('Delete role error:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Ralat semasa memadam peranan. Sila cuba lagi.',
-            customClass: {
-              confirmButton: 'btn btn-primary'
-            },
-            buttonsStyling: false
           });
-        });
       }
     });
   });
 
   // Add click handler for bulk delete (if needed)
-  $(document).on('click', '.delete-selected', function() {
+  $(document).on('click', '.delete-selected', function () {
     const selectedRoles = [];
     const selectedCheckboxes = $('.datatables-roles input[type="checkbox"]:checked, .datatables-role input[type="checkbox"]:checked');
 
@@ -162,7 +164,7 @@ $(function () {
     let totalAffectedUsers = 0;
     let allAffectedUsers = [];
 
-    selectedCheckboxes.each(function() {
+    selectedCheckboxes.each(function () {
       if ($(this).val() !== 'on') { // Skip "select all" checkbox
         const roleId = $(this).val();
         const roleName = $(this).closest('tr').find('td:nth-child(3)').text().trim();
@@ -243,56 +245,56 @@ $(function () {
           },
           body: JSON.stringify({ role_ids: roleIds })
         })
-        .then(response => response.json())
-        .then(data => {
-          if(data.success) {
-            let successMessage = data.message || `${selectedRoles.length} peranan dan data berkaitan berjaya dipadam`;
-            if (uniqueAffectedUsers.length > 0) {
-              successMessage += `. ${uniqueAffectedUsers.length} pengguna telah kehilangan peranan mereka.`;
-            }
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Dipadam!',
-              text: successMessage,
-              timer: 3000,
-              showConfirmButton: false,
-              customClass: {
-                confirmButton: 'btn btn-success'
-              },
-              buttonsStyling: false
-            }).then(() => {
-              // Refresh the DataTable after the timer
-              if (typeof window.dt_role !== 'undefined') {
-                window.dt_role.ajax.reload(null, false);
-              } else {
-                $('.datatables-roles').DataTable().ajax.reload(null, false);
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              let successMessage = data.message || `${selectedRoles.length} peranan dan data berkaitan berjaya dipadam`;
+              if (uniqueAffectedUsers.length > 0) {
+                successMessage += `. ${uniqueAffectedUsers.length} pengguna telah kehilangan peranan mereka.`;
               }
-            });
-          } else {
+
+              Swal.fire({
+                icon: 'success',
+                title: 'Dipadam!',
+                text: successMessage,
+                timer: 3000,
+                showConfirmButton: false,
+                customClass: {
+                  confirmButton: 'btn btn-success'
+                },
+                buttonsStyling: false
+              }).then(() => {
+                // Refresh the DataTable after the timer
+                if (typeof window.dt_role !== 'undefined') {
+                  window.dt_role.ajax.reload(null, false);
+                } else {
+                  $('.datatables-roles').DataTable().ajax.reload(null, false);
+                }
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Ralat semasa memadam peranan',
+                customClass: {
+                  confirmButton: 'btn btn-primary'
+                },
+                buttonsStyling: false
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Bulk delete roles error:', error);
             Swal.fire({
               icon: 'error',
               title: 'Error',
-              text: data.message || 'Ralat semasa memadam peranan',
+              text: 'Ralat semasa memadam peranan. Sila cuba lagi.',
               customClass: {
                 confirmButton: 'btn btn-primary'
               },
               buttonsStyling: false
             });
-          }
-        })
-        .catch(error => {
-          console.error('Bulk delete roles error:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Ralat semasa memadam peranan. Sila cuba lagi.',
-            customClass: {
-              confirmButton: 'btn btn-primary'
-            },
-            buttonsStyling: false
           });
-        });
       }
     });
   });

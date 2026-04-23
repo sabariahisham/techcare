@@ -2,13 +2,15 @@
  * Role Edit functionality
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 (function () {
   $(function () {
     // Utility function to reload DataTable
     function reloadRoleDataTable() {
-      console.log('Attempting to reload role DataTable...');
+      logger.log('Attempting to reload role DataTable...');
 
       // Try multiple approaches in sequence
       let reloadAttempted = false;
@@ -16,7 +18,7 @@
       try {
         // Method 1: Try global dt_role first
         if (typeof window.dt_role !== 'undefined' && window.dt_role && typeof window.dt_role.ajax !== 'undefined') {
-          console.log('Reloading via window.dt_role');
+          logger.log('Reloading via window.dt_role');
           window.dt_role.ajax.reload(null, false);
           reloadAttempted = true;
         }
@@ -25,7 +27,7 @@
         if (!reloadAttempted) {
           const $table = $('.datatables-roles');
           if ($table.length && $.fn.DataTable && $.fn.DataTable.isDataTable($table[0])) {
-            console.log('Reloading via .datatables-roles selector');
+            logger.log('Reloading via .datatables-roles selector');
             $table.DataTable().ajax.reload(null, false);
             reloadAttempted = true;
           }
@@ -37,7 +39,7 @@
           for (const selector of selectors) {
             const $roleTable = $(selector);
             if ($roleTable.length && $.fn.DataTable && $.fn.DataTable.isDataTable($roleTable[0])) {
-              console.log(`Reloading via ${selector} selector`);
+              logger.log(`Reloading via ${selector} selector`);
               $roleTable.DataTable().ajax.reload(null, false);
               reloadAttempted = true;
               break;
@@ -51,7 +53,7 @@
             if ($.fn.DataTable.isDataTable(this)) {
               const table = $(this).DataTable();
               if (table.ajax && table.ajax.url && table.ajax.url().includes('role')) {
-                console.log('Reloading via role-related DataTable detection');
+                logger.log('Reloading via role-related DataTable detection');
                 table.ajax.reload(null, false);
                 reloadAttempted = true;
                 return false; // Break the loop
@@ -75,13 +77,13 @@
             try {
               if (typeof window.dt_role !== 'undefined' && window.dt_role && window.dt_role.ajax) {
                 window.dt_role.ajax.reload(null, false);
-                console.log(`Delayed reload successful after ${delay}ms`);
+                logger.log(`Delayed reload successful after ${delay}ms`);
               } else {
                 // Try to find and reload any roles DataTable
                 const $rolesTable = $('.datatables-roles, #roleTable, .roles-datatable');
                 if ($rolesTable.length && $.fn.DataTable.isDataTable($rolesTable[0])) {
                   $rolesTable.DataTable().ajax.reload(null, false);
-                  console.log(`Delayed selector reload successful after ${delay}ms`);
+                  logger.log(`Delayed selector reload successful after ${delay}ms`);
                 }
               }
             } catch (delayedError) {
@@ -398,7 +400,7 @@
             const selectedUsers = $('#edit-role-users').select2('data');
 
             if (selectedUsers && selectedUsers.length > 0) {
-              console.log('Adding selected users to role:', selectedUsers);
+              logger.log('Adding selected users to role:', selectedUsers);
               // Add each selected user to the role
               let usersProcessed = 0;
               const totalUsers = selectedUsers.length;
@@ -422,7 +424,7 @@
                   success: function (userResponse) {
                     usersProcessed++;
                     if (userResponse.success) {
-                      console.log(`User ${userName} added to role successfully`);
+                      logger.log(`User ${userName} added to role successfully`);
                     } else {
                       console.warn(`Failed to add user ${userName}:`, userResponse.message);
                     }
@@ -751,19 +753,19 @@
 
     // Debug function to test form functionality
     window.debugRoleEditForm = function () {
-      console.log('=== DEBUG ROLE EDIT FORM ===');
-      console.log('Form element:', editRoleForm);
-      console.log('Name field value:', $('#edit-role-name').val());
-      console.log('Description field value:', $('#edit-role-description').val());
-      console.log('Role ID:', editRoleForm ? editRoleForm.getAttribute('data-role-id') : 'No form');
-      console.log('Permissions selected:', $('.edit-permission:checked').length);
-      console.log('Modal visible:', $('#modalEditRole').hasClass('show'));
+      logger.log('=== DEBUG ROLE EDIT FORM ===');
+      logger.log('Form element:', editRoleForm);
+      logger.log('Name field value:', $('#edit-role-name').val());
+      logger.log('Description field value:', $('#edit-role-description').val());
+      logger.log('Role ID:', editRoleForm ? editRoleForm.getAttribute('data-role-id') : 'No form');
+      logger.log('Permissions selected:', $('.edit-permission:checked').length);
+      logger.log('Modal visible:', $('#modalEditRole').hasClass('show'));
 
       // Test form submission
       if (editRoleForm) {
-        console.log('Testing form validation...');
+        logger.log('Testing form validation...');
         const isValid = validateEditForm();
-        console.log('Form validation result:', isValid);
+        logger.log('Form validation result:', isValid);
       }
     };
 

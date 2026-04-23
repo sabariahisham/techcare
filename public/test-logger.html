@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Logger - TechCare</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 5px solid;
+        }
+
+        .alert-info {
+            background-color: #e7f3ff;
+            border-color: #2196F3;
+            color: #0c5460;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .test-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        h3 {
+            color: #667eea;
+            margin-top: 0;
+            font-size: 18px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            margin: 8px 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .instructions {
+            background: #fff;
+            border: 2px dashed #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+
+        .instructions li {
+            margin: 10px 0;
+            line-height: 1.8;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+            font-size: 13px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .badge-prod {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-dev {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .console-hint {
+            background: #2d2d2d;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 15px 0;
+        }
+
+        .emoji {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        #result.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧪 Test Logger TechCare</h1>
+        <div class="subtitle">Verify Production vs Development Mode Logging</div>
+
+        <div class="alert alert-info">
+            <strong>ℹ️ Maklumat Penting:</strong><br>
+            Build semasa yang anda test adalah dari: <code>npm run build</code><span
+                class="badge badge-prod">PRODUCTION</span>
+            <br><br>
+            Untuk test dalam development mode, run: <code>npm run dev</code><span
+                class="badge badge-dev">DEVELOPMENT</span>
+        </div>
+
+        <div class="instructions">
+            <h3><span class="emoji">📋</span>Cara Test (PENTING!):</h3>
+            <ol>
+                <li><strong>Buka Browser Console SEKARANG!</strong>
+                    <br>→ Tekan <code>F12</code> atau <code>Ctrl+Shift+I</code>
+                    <br>→ Atau Right Click → <strong>Inspect</strong> → Tab <strong>Console</strong>
+                </li>
+                <li>Pastikan console tab dibuka dan visible</li>
+                <li>Klik butang-butang di bawah untuk test</li>
+                <li><strong>Perhatikan console</strong> - message ada keluar atau tidak?</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3><span class="emoji">1️⃣</span>Test Logger Functions</h3>
+            <p><strong>Klik untuk test sama ada logger berfungsi:</strong></p>
+            <div>
+                <button onclick="testLog()">Test logger.log()</button>
+                <button onclick="testInfo()">Test logger.info()</button>
+                <button onclick="testDebug()">Test logger.debug()</button>
+                <button class="btn-warning" onclick="testWarn()">Test logger.warn()</button>
+                <button class="btn-danger" onclick="testError()">Test console.error()</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3><span class="emoji">2️⃣</span>Run All Tests</h3>
+            <p><strong>Test semua sekaligus:</strong></p>
+            <div>
+                <button class="btn-success" onclick="runAllTests()">▶️ Run All Tests</button>
+                <button onclick="clearConsole()">🗑️ Clear Console</button>
+            </div>
+        </div>
+
+        <div id="result" class="alert"></div>
+
+        <div class="alert alert-success">
+            <h4 style="margin-top:0;">✅ Expected Results (Production Build):</h4>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li><code>logger.log()</code> → <strong>SILENT</strong> ❌ (tidak keluar dalam console)</li>
+                <li><code>logger.info()</code> → <strong>SILENT</strong> ❌ (tidak keluar dalam console)</li>
+                <li><code>logger.debug()</code> → <strong>SILENT</strong> ❌ (tidak keluar dalam console)</li>
+                <li><code>logger.warn()</code> → <strong>KELUAR</strong> ✅ (akan keluar dalam console)</li>
+                <li><code>console.error()</code> → <strong>KELUAR</strong> ✅ (warna merah dalam console)</li>
+            </ul>
+        </div>
+
+        <div class="alert alert-warning">
+            <h4 style="margin-top:0;">⚠️ Expected Results (Development Build):</h4>
+            <p>Jika anda run <code>npm run dev</code>, SEMUA message akan keluar dalam console.</p>
+        </div>
+
+        <div class="console-hint">
+            > CONSOLE OUTPUT AKAN MUNCUL DI SINI ↓↓↓
+            <br>> (Buka F12 Developer Tools → Console Tab)
+        </div>
+    </div>
+
+    <script>
+        // Simulate production logger behavior
+        const isProduction = true;
+
+        const logger = {
+            log: (...args) => !isProduction && console.log(...args),
+            info: (...args) => !isProduction && console.info(...args),
+            debug: (...args) => !isProduction && console.debug(...args),
+            warn: (...args) => console.warn(...args)
+        };
+
+        function showResult(message, type = 'info') {
+            const result = document.getElementById('result');
+            result.className = `alert alert-${type} show`;
+            result.innerHTML = `<strong>${message}</strong>`;
+            setTimeout(() => result.classList.remove('show'), 5000);
+        }
+
+        function testLog() {
+            console.log('═'.repeat(50));
+            console.log('🔵 TEST LOGGER.LOG()');
+            console.log('═'.repeat(50));
+            logger.log('🔵 LOGGER.LOG() - SEPATUTNYA SILENT DALAM PRODUCTION!');
+            console.log('❓ Nampak message "SEPATUTNYA SILENT" di atas?');
+            console.log('✅ YA = Development | ❌ TIDAK = Production (BETUL!)');
+            console.log('═'.repeat(50) + '\n');
+            showResult('logger.log() dipanggil! Check console - sepatutnya SILENT!', 'info');
+        }
+
+        function testInfo() {
+            console.log('═'.repeat(50));
+            console.log('🔵 TEST LOGGER.INFO()');
+            console.log('═'.repeat(50));
+            logger.info('ℹ️ LOGGER.INFO() - SEPATUTNYA SILENT DALAM PRODUCTION!');
+            console.log('❓ Nampak message INFO di atas?');
+            console.log('✅ YA = Development | ❌ TIDAK = Production (BETUL!)');
+            console.log('═'.repeat(50) + '\n');
+            showResult('logger.info() dipanggil! Check console - sepatutnya SILENT!', 'info');
+        }
+
+        function testDebug() {
+            console.log('═'.repeat(50));
+            console.log('🔵 TEST LOGGER.DEBUG()');
+            console.log('═'.repeat(50));
+            logger.debug('🐛 LOGGER.DEBUG() - SEPATUTNYA SILENT DALAM PRODUCTION!');
+            console.log('❓ Nampak message DEBUG di atas?');
+            console.log('✅ YA = Development | ❌ TIDAK = Production (BETUL!)');
+            console.log('═'.repeat(50) + '\n');
+            showResult('logger.debug() dipanggil! Check console - sepatutnya SILENT!', 'info');
+        }
+
+        function testWarn() {
+            console.log('═'.repeat(50));
+            console.log('🟡 TEST LOGGER.WARN()');
+            console.log('═'.repeat(50));
+            logger.warn('⚠️ LOGGER.WARN() - INI AKAN KELUAR DALAM PRODUCTION!');
+            console.log('❓ Nampak message WARNING (⚠️) di atas?');
+            console.log('✅ YA = BETUL! | ❌ TIDAK = Ada masalah!');
+            console.log('═'.repeat(50) + '\n');
+            showResult('logger.warn() dipanggil! Sepatutnya KELUAR (warna kuning)!', 'warning');
+        }
+
+        function testError() {
+            console.log('═'.repeat(50));
+            console.log('🔴 TEST CONSOLE.ERROR()');
+            console.log('═'.repeat(50));
+            console.error('🔴 CONSOLE.ERROR() - INI AKAN KELUAR DALAM PRODUCTION!');
+            console.log('❓ Nampak message ERROR (🔴) dalam WARNA MERAH?');
+            console.log('✅ YA = BETUL! | ❌ TIDAK = Ada masalah!');
+            console.log('═'.repeat(50) + '\n');
+            showResult('console.error() dipanggil! Sepatutnya KELUAR dalam MERAH!', 'danger');
+        }
+
+        function runAllTests() {
+            console.clear();
+            console.log('\n\n' + '█'.repeat(60));
+            console.log('█' + ' '.repeat(58) + '█');
+            console.log('█        🧪 RUNNING ALL LOGGER TESTS 🧪            █');
+            console.log('█' + ' '.repeat(58) + '█');
+            console.log('█'.repeat(60) + '\n');
+
+            let delay = 100;
+            [testLog, testInfo, testDebug, testWarn, testError].forEach((test, i) => {
+                setTimeout(test, delay * (i + 1));
+            });
+
+            setTimeout(() => {
+                console.log('\n' + '█'.repeat(60));
+                console.log('█              ✅ ALL TESTS COMPLETE ✅             █');
+                console.log('█'.repeat(60));
+                console.log('\n📊 SUMMARY:');
+                console.log('─'.repeat(60));
+                console.log('PRODUCTION mode - sepatutnya HANYA nampak:');
+                console.log('✅ console.log (instructions)');
+                console.log('✅ logger.warn() (kuning/orange)');
+                console.log('✅ console.error() (merah)');
+                console.log('\nTIDAK sepatutnya nampak:');
+                console.log('❌ logger.log() debug message');
+                console.log('❌ logger.info() message');
+                console.log('❌ logger.debug() message');
+                console.log('─'.repeat(60) + '\n');
+                showResult('✅ Semua test selesai! Scroll up untuk lihat hasil.', 'success');
+            }, delay * 6 + 500);
+        }
+
+        function clearConsole() {
+            console.clear();
+            showResult('Console cleared!', 'success');
+        }
+
+        // Auto run on load
+        window.addEventListener('load', () => {
+            console.log('\n╔' + '═'.repeat(60) + '╗');
+            console.log('║' + ' '.repeat(60) + '║');
+            console.log('║   🧪 TEST LOGGER PAGE LOADED SUCCESSFULLY! 🧪     ║');
+            console.log('║' + ' '.repeat(60) + '║');
+            console.log('╚' + '═'.repeat(60) + '╝\n');
+            console.log('📝 INSTRUCTIONS:');
+            console.log('1. Klik butang pada halaman');
+            console.log('2. Perhatikan output dalam console');
+            console.log('3. Verify logger berfungsi\n');
+            console.log('💡 Console MESTI dibuka!\n');
+        });
+    </script>
+</body>
+
+</html>

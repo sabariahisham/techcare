@@ -3,10 +3,12 @@
  * Handles ticket creation form, validation, and submission
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 $(function () {
-  console.log('Ticket add functionality loaded');
+  logger.log('Ticket add functionality loaded');
 
   // Initialize Select2 for Add Ticket form
   function initializeAddTicketSelect2() {
@@ -76,7 +78,7 @@ $(function () {
         $('#subcat_id').select2('destroy');
       }
     } catch (e) {
-      console.log('No existing Select2 to destroy');
+      logger.log('No existing Select2 to destroy');
     }
 
     // Disable HTML5 validation for custom handling
@@ -101,7 +103,7 @@ $(function () {
         $('#subcat_id').select2('destroy');
       }
     } catch (e) {
-      console.log('Select2 cleanup error:', e);
+      logger.log('Select2 cleanup error:', e);
     }
 
     // Hide Serial Number field when form is closed
@@ -169,7 +171,7 @@ $(function () {
   $('#cat_id').change(function () {
     var catID = $(this).val();
     var catText = $('#cat_id option:selected').text();
-    console.log('Add category changed:', catID, catText);
+    logger.log('Add category changed:', catID, catText);
 
     // Show/hide serial number field based on category selection
     if (catText === 'Sewaan') {
@@ -183,7 +185,7 @@ $(function () {
         url: '/get-subcategory/' + catID,
         type: 'GET',
         success: function (response) {
-          console.log('Add subcategories loaded:', response);
+          logger.log('Add subcategories loaded:', response);
 
           $('#subcat_id').empty();
           $('#subcat_id').append('<option value="">Pilih Sub Kategori</option>');
@@ -214,14 +216,14 @@ $(function () {
   // Function to show Serial Number field
   function showSerialNumberField() {
     $('#serialNumberField').show();
-    console.log('Serial number field shown');
+    logger.log('Serial number field shown');
   }
 
   // Function to hide Serial Number field and clear its value
   function hideSerialNumberField() {
     $('#serialNumberField').hide();
     $('[name="no_siri"]').val(''); // Clear the field value
-    console.log('Serial number field hidden and cleared');
+    logger.log('Serial number field hidden and cleared');
   }
 
   // Function to validate form based on ticket type (ADD FORM)
@@ -356,7 +358,7 @@ $(function () {
     var wrapper = fileInput.closest('.form-field-wrapper');
     var errorContainer = wrapper.find('.error-text');
     errorContainer.text('Test error message - file validation styling test').show();
-    console.log('Test file validation styling applied');
+    logger.log('Test file validation styling applied');
   };
 
   // Test function to clear file validation for testing
@@ -366,7 +368,7 @@ $(function () {
     var wrapper = fileInput.closest('.form-field-wrapper');
     var errorContainer = wrapper.find('.error-text');
     errorContainer.text('').hide();
-    console.log('Test file validation styling cleared');
+    logger.log('Test file validation styling cleared');
   };
 
   // Test function to simulate server-side attachment validation error
@@ -374,7 +376,7 @@ $(function () {
     var serverErrors = {
       "attachments.0": ["Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG."]
     };
-    console.log('Simulating server-side file validation error...');
+    logger.log('Simulating server-side file validation error...');
     displayValidationErrors(serverErrors);
     toastr.error('Sila betulkan ralat dalam borang.');
   };
@@ -403,13 +405,13 @@ $(function () {
 
     // Add files from selectedAttachments if available
     if (window.selectedAttachments && window.selectedAttachments.length > 0) {
-      console.log('Adding', window.selectedAttachments.length, 'attachments to form data');
+      logger.log('Adding', window.selectedAttachments.length, 'attachments to form data');
       window.selectedAttachments.forEach(function (file, index) {
         formData.append('attachments[]', file);
-        console.log('Added attachment:', file.name);
+        logger.log('Added attachment:', file.name);
       });
     } else {
-      console.log('No attachments to add');
+      logger.log('No attachments to add');
     }
 
     // Disable submit button and add visual feedback
@@ -432,7 +434,7 @@ $(function () {
       processData: false,
       contentType: false,
       success: function (response) {
-        console.log('Ticket submitted successfully:', response);
+        logger.log('Ticket submitted successfully:', response);
 
         // Clear any validation errors
         clearValidationErrors();
@@ -469,7 +471,7 @@ $(function () {
 
         // Set up one-time event listener for when offcanvas is fully closed
         $offcanvas.one('hidden.bs.offcanvas', function () {
-          console.log('Offcanvas fully closed, reloading DataTables...');
+          logger.log('Offcanvas fully closed, reloading DataTables...');
 
           // Call the global reload function which has comprehensive table detection
           if (typeof window.reloadAllTables === 'function') {
@@ -479,11 +481,11 @@ $(function () {
             setTimeout(function () {
               if (window.dt_my_tickets && window.dt_my_tickets.ajax) {
                 window.dt_my_tickets.ajax.reload(null, false);
-                console.log('Reloaded dt_my_tickets');
+                logger.log('Reloaded dt_my_tickets');
               }
               if (window.dt_manage_tickets && window.dt_manage_tickets.ajax) {
                 window.dt_manage_tickets.ajax.reload(null, false);
-                console.log('Reloaded dt_manage_tickets');
+                logger.log('Reloaded dt_manage_tickets');
               }
 
               // Show brief success notification about table update
@@ -505,7 +507,7 @@ $(function () {
 
         // Log success for debugging
         if (response.ticket) {
-          console.log('New ticket created with ID:', response.ticket.id, 'and number:', response.ticket.ticket_nolog);
+          logger.log('New ticket created with ID:', response.ticket.id, 'and number:', response.ticket.ticket_nolog);
         }
       },
       error: function (xhr) {
@@ -513,7 +515,7 @@ $(function () {
         var response = xhr.responseJSON;
 
         if (response && response.errors) {
-          console.log('Server validation errors for add form:', response.errors);
+          logger.log('Server validation errors for add form:', response.errors);
           // Display validation errors from server
           displayValidationErrors(response.errors);
 

@@ -3,10 +3,12 @@
  * Handles ticket editing form, validation, and submission
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 $(function () {
-  console.log('Ticket edit functionality loaded');
+  logger.log('Ticket edit functionality loaded');
 
   // Validation helper functions
   function clearValidationErrors() {
@@ -211,7 +213,7 @@ $(function () {
         $('#editSubcatId').select2('destroy');
       }
     } catch (e) {
-      console.log('No existing Select2 to destroy');
+      logger.log('No existing Select2 to destroy');
     }
 
     // Disable HTML5 validation for custom handling
@@ -236,7 +238,7 @@ $(function () {
         $('#editSubcatId').select2('destroy');
       }
     } catch (e) {
-      console.log('Select2 cleanup error:', e);
+      logger.log('Select2 cleanup error:', e);
     }
 
     // Hide Serial Number field when form is closed
@@ -249,7 +251,7 @@ $(function () {
   // Handle edit button click
   $(document).on('click', '.edit-record', function () {
     var ticketUuid = $(this).data('uuid');
-    console.log('Edit ticket UUID:', ticketUuid);
+    logger.log('Edit ticket UUID:', ticketUuid);
 
     // Show loading state
     showEditTicketLoading();
@@ -259,7 +261,7 @@ $(function () {
       url: '/tickets/' + ticketUuid + '/edit',
       type: 'GET',
       success: function (response) {
-        console.log('Ticket data loaded:', response);
+        logger.log('Ticket data loaded:', response);
 
         if (response.success) {
           populateEditForm(response.ticket, response.location, response.categories, response.subCategories);
@@ -286,12 +288,12 @@ $(function () {
   // Show loading state
   function showEditTicketLoading() {
     // You can implement a loading overlay here
-    console.log('Loading ticket data...');
+    logger.log('Loading ticket data...');
   }
 
   // Hide loading state
   function hideEditTicketLoading() {
-    console.log('Loading complete');
+    logger.log('Loading complete');
   }
 
   // Populate edit form with ticket data
@@ -430,7 +432,7 @@ $(function () {
   $('#editCatId').change(function () {
     var catID = $(this).val();
     var catText = $('#editCatId option:selected').text();
-    console.log('Edit category changed:', catID, catText);
+    logger.log('Edit category changed:', catID, catText);
 
     // Clear subcategory
     $('#editSubcatId').html('<option value=\"\">Pilih Sub Kategori</option>');
@@ -605,7 +607,7 @@ $(function () {
       processData: false,
       contentType: false,
       success: function (response) {
-        console.log('Ticket updated successfully:', response);
+        logger.log('Ticket updated successfully:', response);
 
         // Clear any validation errors
         clearValidationErrors();
@@ -630,7 +632,7 @@ $(function () {
         var response = xhr.responseJSON;
 
         if (response && response.errors) {
-          console.log('Server validation errors for edit form:', response.errors);
+          logger.log('Server validation errors for edit form:', response.errors);
           // Display validation errors from server
           displayValidationErrors(response.errors);
           toastr.error('Sila betulkan ralat dalam borang sebelum menghantar semula.');
@@ -649,5 +651,5 @@ $(function () {
     });
   });
 
-  console.log('Ticket edit functionality initialized');
+  logger.log('Ticket edit functionality initialized');
 });

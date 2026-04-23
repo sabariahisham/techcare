@@ -1,11 +1,13 @@
+import logger from '../logger.js';
+
 'use strict';
 
 // Initialize SLA delete functionality when document is ready
 $(function () {
   // Add click handler to SLA delete buttons
-  $(document).on('click', '.delete-record', function() {
+  $(document).on('click', '.delete-record', function () {
     const slaId = $(this).data('id');
-    console.log('Delete button clicked for SLA ID:', slaId);
+    logger.log('Delete button clicked for SLA ID:', slaId);
 
     if (!slaId) {
       console.error('No SLA ID found on delete button');
@@ -50,7 +52,7 @@ $(function () {
       buttonsStyling: false
     }).then(function (result) {
       if (result.value) {
-        console.log('User confirmed deletion for SLA ID:', slaId);
+        logger.log('User confirmed deletion for SLA ID:', slaId);
         fetch(`/sla-severity/${slaId}`, {
           method: 'DELETE',
           headers: {
@@ -59,56 +61,56 @@ $(function () {
             'Accept': 'application/json'
           }
         })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          if(data.success) {
-            Swal.fire({
-              icon: 'success',
-              title: 'Dipadam!',
-              text: 'SLA berjaya dipadam',
-              timer: 2000,
-              showConfirmButton: false,
-              customClass: {
-                confirmButton: 'btn btn-success'
-              },
-              buttonsStyling: false
-            }).then(() => {
-              // Refresh the DataTable after the timer
-              if (typeof window.dt_sla !== 'undefined') {
-                window.dt_sla.ajax.reload();
-              } else {
-                $('.datatables-sla').DataTable().ajax.reload();
-              }
-            });
-          } else {
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            if (data.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Dipadam!',
+                text: 'SLA berjaya dipadam',
+                timer: 2000,
+                showConfirmButton: false,
+                customClass: {
+                  confirmButton: 'btn btn-success'
+                },
+                buttonsStyling: false
+              }).then(() => {
+                // Refresh the DataTable after the timer
+                if (typeof window.dt_sla !== 'undefined') {
+                  window.dt_sla.ajax.reload();
+                } else {
+                  $('.datatables-sla').DataTable().ajax.reload();
+                }
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Ralat',
+                text: data.message || 'Ralat semasa memadam SLA',
+                customClass: {
+                  confirmButton: 'btn btn-primary'
+                },
+                buttonsStyling: false
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Delete error:', error);
             Swal.fire({
               icon: 'error',
               title: 'Ralat',
-              text: data.message || 'Ralat semasa memadam SLA',
+              text: `Ralat semasa memadam SLA: ${error.message}`,
               customClass: {
                 confirmButton: 'btn btn-primary'
               },
               buttonsStyling: false
             });
-          }
-        })
-        .catch(error => {
-          console.error('Delete error:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Ralat',
-            text: `Ralat semasa memadam SLA: ${error.message}`,
-            customClass: {
-              confirmButton: 'btn btn-primary'
-            },
-            buttonsStyling: false
           });
-        });
       }
     });
   });

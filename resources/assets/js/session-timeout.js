@@ -7,6 +7,8 @@
  * 4. Countdown modal before automatic logout
  */
 
+import logger from './logger.js';
+
 'use strict';
 
 (function () {
@@ -68,7 +70,7 @@
     // Update last activity in storage
     updateLastActivity();
 
-    console.log('Session timeout handler initialized. Session lifetime:', SESSION_LIFETIME, 'minutes');
+    logger.log('Session timeout handler initialized. Session lifetime:', SESSION_LIFETIME, 'minutes');
   }
 
   /**
@@ -280,14 +282,14 @@
     if (!csrfToken) return;
 
     fetch('/session/ping', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken.content,
-          'Accept': 'application/json'
-        },
-        credentials: 'same-origin'
-      })
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken.content,
+        'Accept': 'application/json'
+      },
+      credentials: 'same-origin'
+    })
       .then(function (response) {
         if (response.status === 401 || response.status === 419) {
           // Session expired on server

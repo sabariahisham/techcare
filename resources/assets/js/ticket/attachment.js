@@ -3,6 +3,8 @@
  * Handles file uploads, drag & drop, previews, validation, and deletion
  */
 
+import logger from '../logger.js';
+
 'use strict';
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -48,7 +50,7 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
       if (typeof toastr !== 'undefined') {
         toastr.success(message);
       } else {
-        console.log('SUCCESS:', message);
+        logger.log('SUCCESS:', message);
         // Fallback: show in page if no toastr
         showFallbackMessage(message, 'success');
       }
@@ -57,7 +59,7 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
       if (typeof toastr !== 'undefined') {
         toastr.error(message);
       } else {
-        console.log('ERROR:', message);
+        logger.log('ERROR:', message);
         // Fallback: show in page if no toastr
         showFallbackMessage(message, 'error');
       }
@@ -66,7 +68,7 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
       if (typeof toastr !== 'undefined') {
         toastr.warning(message);
       } else {
-        console.log('WARNING:', message);
+        logger.log('WARNING:', message);
         // Fallback: show in page if no toastr
         showFallbackMessage(message, 'warning');
       }
@@ -75,7 +77,7 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
       if (typeof toastr !== 'undefined') {
         toastr.info(message);
       } else {
-        console.log('INFO:', message);
+        logger.log('INFO:', message);
         // Fallback: show in page if no toastr
         showFallbackMessage(message, 'info');
       }
@@ -123,7 +125,7 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
   // Handle file input change
   fileInput.addEventListener('change', function (e) {
     e.preventDefault();
-    console.log('File input changed, files selected:', this.files.length);
+    logger.log('File input changed, files selected:', this.files.length);
     if (this.files && this.files.length > 0) {
       handleFiles(this.files);
     }
@@ -152,20 +154,20 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
   function handleDrop(e) {
     const dt = e.dataTransfer;
     const files = dt.files;
-    console.log('Files dropped:', files.length);
+    logger.log('Files dropped:', files.length);
     handleFiles(files);
   }
 
   function handleFiles(fileList) {
     if (!fileList || fileList.length === 0) {
-      console.log('No files to handle');
+      logger.log('No files to handle');
       return;
     }
 
     // Convert FileList to Array for easier manipulation
     const files = Array.from(fileList);
 
-    console.log(`Processing ${files.length} files for ${dropZoneId}`);
+    logger.log(`Processing ${files.length} files for ${dropZoneId}`);
 
     // Reset previous states
     dropZone.classList.remove('error');
@@ -186,7 +188,7 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
 
     // Validate each file
     files.forEach((file, index) => {
-      console.log(`Validating file ${index + 1}:`, {
+      logger.log(`Validating file ${index + 1}:`, {
         name: file.name,
         size: file.size,
         type: file.type,
@@ -215,7 +217,7 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
         extensions.includes(fileExtension)
       ) || Object.keys(allowedTypes).includes(file.type);
 
-      console.log(`File type validation for ${file.name}:`, {
+      logger.log(`File type validation for ${file.name}:`, {
         extension: fileExtension,
         mimeType: file.type,
         isValid: isValidType,
@@ -243,7 +245,7 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
         return;
       }
 
-      console.log(`File ${file.name} passed validation`);
+      logger.log(`File ${file.name} passed validation`);
       filesToAdd.push(file);
     });
 
@@ -251,7 +253,7 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
     if (hasErrors && errors.length > 0) {
       console.warn('Validation errors found:', errors);
     } else {
-      console.log('All files passed initial validation');
+      logger.log('All files passed initial validation');
     }
 
     // Add valid files
@@ -315,13 +317,13 @@ function initializeFileUpload(dropZoneId, fileInputId, previewId, offcanvasId) {
       updateFileInput();
       updateAttachmentsPreview();
 
-      console.log(`Successfully added ${filesToAdd.length} files`);
+      logger.log(`Successfully added ${filesToAdd.length} files`);
     } else if (!hasErrors) {
       // If no files were added and there were no validation errors, show info message
-      console.log('No valid files to add');
+      logger.log('No valid files to add');
       showToastr.info('Tiada fail yang valid untuk ditambah');
     } else {
-      console.warn('Files rejected due to validation errors');
+      logger.log('Files rejected due to validation errors');
     }
 
     // Clear the file input to allow selecting the same file again if needed
@@ -567,7 +569,7 @@ $(document).ready(function () {
     var deleteBtn = $(this);
 
     // Debug logging
-    console.log('Delete attachment clicked:', {
+    logger.log('Delete attachment clicked:', {
       attachmentId: attachmentId,
       csrfToken: $('meta[name="csrf-token"]').attr('content')
     });
@@ -601,10 +603,10 @@ $(document).ready(function () {
             },
             beforeSend: function () {
               deleteBtn.prop('disabled', true);
-              console.log('Sending delete request to:', '/ticket-attachments/' + attachmentId);
+              logger.log('Sending delete request to:', '/ticket-attachments/' + attachmentId);
             },
             success: function (response) {
-              console.log('Delete response:', response);
+              logger.log('Delete response:', response);
               if (response.success) {
                 resolve(response);
               } else {
@@ -650,7 +652,7 @@ $(document).ready(function () {
 
         toastr.success(result.value.message || 'Lampiran berjaya dipadam.');
 
-        console.log('Attachment successfully deleted and removed from DOM');
+        logger.log('Attachment successfully deleted and removed from DOM');
       }
     });
   });
@@ -682,7 +684,7 @@ function validateFileInput(fileInput) {
       if (!allowedExtensions.includes(fileExtension)) {
         errorContainer.text('Lampiran mestilah dalam format PDF, DOC, DOCX, JPG, JPEG, atau PNG.').show();
         $(fileInput).addClass('is-invalid');
-        console.log('File validation failed - invalid extension. Added is-invalid class.');
+        logger.log('File validation failed - invalid extension. Added is-invalid class.');
         return false;
       }
 
@@ -690,13 +692,13 @@ function validateFileInput(fileInput) {
       if (file.size > maxFileSize) {
         errorContainer.text('Saiz fail lampiran tidak boleh melebihi 2MB.').show();
         $(fileInput).addClass('is-invalid');
-        console.log('File validation failed - file too large. Added is-invalid class.');
+        logger.log('File validation failed - file too large. Added is-invalid class.');
         return false;
       }
     }
   }
 
-  console.log('File validation passed.');
+  logger.log('File validation passed.');
   return true;
 }
 
