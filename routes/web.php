@@ -174,6 +174,17 @@ Route::middleware($authMiddleware)->prefix('dashboard')->name('dashboard.')->gro
   Route::get('/pegawai/list-overdue', [DashboardController::class, 'getListOverduePegawai'])->name('pegawai.list-overdue');
 });
 
+// Manual Pengguna Route - Download PDF
+Route::middleware($authMiddleware)->get('/manual-pengguna', function () {
+  $filePath = public_path('manuals/Manual Pengguna Sistem BTM TechCare.pdf');
+  
+  if (!file_exists($filePath)) {
+    abort(404, 'Manual Pengguna tidak dijumpai. Sila hubungi pentadbir sistem.');
+  }
+  
+  return response()->download($filePath, 'Manual-Pengguna-Sistem-BTM-TechCare.pdf');
+})->name('manual-pengguna.download');
+
 // API Routes for AJAX calls
 Route::prefix('api')->middleware($authMiddleware)->group(function () {
   Route::get('/subcategories/{categoryId}', [DashboardController::class, 'getSubcategories'])->name('api.subcategories');

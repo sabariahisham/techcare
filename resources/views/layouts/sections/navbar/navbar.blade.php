@@ -152,8 +152,7 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li>
-                    <a class="dropdown-item"
-                        href="{{ Route::has('profile.show') ? route('profile.show') : url('pages/profile-user') }}">
+                    <div class="dropdown-item-text">
                         <div class="d-flex">
                             <div class="flex-shrink-0 me-3">
                                 <div class="avatar avatar-online">
@@ -179,7 +178,7 @@
                                 </h6>
                             </div>
                         </div>
-                    </a>
+                    </div>
                 </li>
                 {{-- <li>
                     <div class="dropdown-divider my-1"></div>
@@ -198,6 +197,12 @@
                     </li>
                 @endif --}}
                 @if (Auth::check())
+                    
+                    <li>
+                        <a class="dropdown-item" href="{{ route('manual-pengguna.download') }}">
+                            <i class='bx bx-help-circle bx-md me-3'></i><span>Manual Pengguna Sistem BTM TechCare</span>
+                        </a>
+                    </li>
                     <li>
                         {{-- For dev, staging and prod --}}
                         <form method="POST" id="logout-form" action="{{ route('cas.logout') }}">
