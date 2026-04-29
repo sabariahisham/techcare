@@ -71,9 +71,6 @@ class KnowledgeBase extends Model implements Auditable
 
     public function documents()
     {
-        return $this->hasMany(Document::class, 'doc_id', 'id');
+        return $this->hasMany(Document::class, 'doc_id', 'id')->where('doc_jenis', 'KB');
     }
 }
-
-
-
