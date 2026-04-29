@@ -74,6 +74,3 @@ class KnowledgeBase extends Model implements Auditable
         return $this->hasMany(Document::class, 'doc_id', 'id')->where('doc_jenis', 'KB');
     }
 }
-
-
-
