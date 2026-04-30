@@ -154,7 +154,7 @@
                     <h4 class="mb-1">Maklumat Penuh Tiket</h4>
                     <p class="mb-0 text-muted">{{ $ticket->ticket_nolog }}</p>
                 </div>
-                <div class="d-flex gap-2">                    
+                <div class="d-flex gap-2">
                     <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">
                         <i class="bx bx-arrow-back me-1"></i>Kembali ke Senarai
                     </a>
@@ -463,7 +463,8 @@
                 }
 
                 // Check if current ticket status is one of the final statuses (read-only)
-                // Status 4 (Aduan Dirujuk), Status 5 (Aduan Dibatal), Status 6 (Aduan Selesai)
+                // Status 4 (Aduan Dirujuk) - EDITABLE for assigned officer
+                // Status 5 (Aduan Dibatal), Status 6 (Aduan Selesai) - READ ONLY
                 $isReadOnlyView = false;
                 $lastChronologyUpdate = null;
 
@@ -483,8 +484,9 @@
                         ->first();
                 }
 
-                // Set read-only view ONLY for specific statuses: Dirujuk(4), Dibatal(5), Selesai(6)
-                if (in_array($ticket->tick_status, [4, 5, 6])) {
+                // Set read-only view ONLY for Dibatal(5) and Selesai(6)
+                // For Dirujuk(4), assigned officers should be able to edit
+                if (in_array($ticket->tick_status, [5, 6])) {
                     $isReadOnlyView = true;
                 }
             @endphp
@@ -503,8 +505,7 @@
 
                                 @if ($isReadOnlyView)
                                     <small class="text-secondary d-block">
-                                        Paparan ini adalah untuk rujukan bagi status Aduan Dirujuk, Aduan Dibatal atau Aduan
-                                        Selesai.
+                                        Paparan ini adalah untuk rujukan bagi status Aduan Dibatal atau Aduan Selesai.
                                     </small>
                                 @endif
                             </div>
