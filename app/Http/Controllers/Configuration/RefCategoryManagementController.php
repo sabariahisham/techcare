@@ -157,7 +157,7 @@ class RefCategoryManagementController extends Controller
     {
         try {
             $category = RefCategory::findOrFail($id);
-            $subcategories = $category->subCategories()->select('id', 'subcat_name')->get();
+            $subcategories = $category->subCategories()->select('id', 'subcat_name')->orderBy('subcat_name', 'asc')->get();
 
             return response()->json([
                 'success' => true,

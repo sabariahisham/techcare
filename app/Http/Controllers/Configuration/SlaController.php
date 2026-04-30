@@ -15,8 +15,8 @@ class SlaController extends Controller
 {
     public function index()
     {
-        $categories = RefCategory::all();
-        $subCategories = RefSubCategory::all();
+        $categories = RefCategory::orderBy('cat_name', 'asc')->get();
+        $subCategories = RefSubCategory::orderBy('subcat_name', 'asc')->get();
         $totalCategories = RefCategory::count();
         $totalSubCategories = RefSubCategory::count();
         $totalSlas = Sla::count();
