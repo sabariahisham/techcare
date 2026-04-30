@@ -1091,11 +1091,10 @@ class DashboardController extends Controller
   public function getTodayLogsCountPegawai()
   {
     try {
-      $today = Carbon::today();
       $userId = Auth::id();
 
-      // Count tickets created today from tickets table
-      // ALWAYS filter by escalate_to (assigned to this user)
+      // Count all tickets currently assigned to this user (based on latest chronology)
+      // This shows the total number of active assignments
       $todayCount = DB::table('tickets as t')
         ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
@@ -1109,7 +1108,6 @@ class DashboardController extends Controller
         })
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->whereDate('t.created_at', $today)
         ->count();
 
       return response()->json([
