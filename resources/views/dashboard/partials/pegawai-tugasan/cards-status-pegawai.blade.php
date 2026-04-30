@@ -12,7 +12,7 @@
                         </div>
                     </div>
                     <div class="flex-grow-1 d-flex flex-column justify-content-center text-center">
-                        <p class="mb-1 text-muted" style="font-size: 0.8125rem;">Aduan Hari Ini</p>
+                        <p class="mb-1 text-muted" style="font-size: 0.8125rem;">Tugasan Anda</p>
                         <a href="{{ route('tickets.assigned') }}" title="Klik Lihat Tiket"
                             data-bs-toggle="tooltip" data-bs-placement="top"
                             style="text-decoration: none; color: inherit; cursor: pointer;">
@@ -25,8 +25,7 @@
                         </a>
                     </div>
                     <div class="mt-auto text-center">
-                        <small class="d-block text-muted" style="font-size: 0.7rem;">Data log harian (Tugasan
-                            Anda)</small>
+                        <small class="d-block text-muted" style="font-size: 0.7rem;">Jumlah tugasan semasa anda</small>
                     </div>
                 </div>
             </div>
