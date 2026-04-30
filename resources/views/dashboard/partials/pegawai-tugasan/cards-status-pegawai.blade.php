@@ -13,9 +13,8 @@
                     </div>
                     <div class="flex-grow-1 d-flex flex-column justify-content-center text-center">
                         <p class="mb-1 text-muted" style="font-size: 0.8125rem;">Tugasan Anda</p>
-                        <a href="{{ route('tickets.assigned') }}" title="Klik Lihat Tiket"
-                            data-bs-toggle="tooltip" data-bs-placement="top"
-                            style="text-decoration: none; color: inherit; cursor: pointer;">
+                        <a href="{{ route('tickets.assigned') }}" title="Klik Lihat Tiket" data-bs-toggle="tooltip"
+                            data-bs-placement="top" style="text-decoration: none; color: inherit; cursor: pointer;">
                             <h2 class="fw-bold mb-0" id="pegawai-today-logs-count"
                                 style="font-size: 2rem; line-height: 1.1; transition: color 0.2s;">
                                 <span class="placeholder-glow">
