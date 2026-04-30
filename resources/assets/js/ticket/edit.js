@@ -173,7 +173,7 @@ $(function () {
       placeholder: 'Pilih Bangunan',
       allowClear: true,
       width: '100%',
-      dropdownParent: $('#offcanvasAddTicket'),
+      dropdownParent: $('#offcanvasEditTicket'),
       theme: 'bootstrap-5'
     });
 
@@ -181,7 +181,7 @@ $(function () {
       placeholder: 'Pilih Blok',
       allowClear: true,
       width: '100%',
-      dropdownParent: $('#offcanvasAddTicket'),
+      dropdownParent: $('#offcanvasEditTicket'),
       theme: 'bootstrap-5'
     });
 
@@ -189,7 +189,7 @@ $(function () {
       placeholder: 'Pilih Aras',
       allowClear: true,
       width: '100%',
-      dropdownParent: $('#offcanvasAddTicket'),
+      dropdownParent: $('#offcanvasEditTicket'),
       theme: 'bootstrap-5'
     });
   }
@@ -315,13 +315,13 @@ $(function () {
 
     // Populate location fields
     if (location) {
-      $('#edit_building_loc').val(location.building_loc || '');
-      $('#edit_block_loc').val(location.block_loc || '');
-      $('#edit_level_loc').val(location.level_loc || '');
+      $('#edit_building_loc').val(location.building_loc || '').trigger('change');
+      $('#edit_block_loc').val(location.block_loc || '').trigger('change');
+      $('#edit_level_loc').val(location.level_loc || '').trigger('change');
     } else {
-      $('#edit_building_loc').val('');
-      $('#edit_block_loc').val('');
-      $('#edit_level_loc').val('');
+      $('#edit_building_loc').val('').trigger('change');
+      $('#edit_block_loc').val('').trigger('change');
+      $('#edit_level_loc').val('').trigger('change');
     }
 
     // Populate categories dropdown
@@ -452,19 +452,31 @@ $(function () {
         url: '/get-subcategory/' + catID,
         type: 'GET',
         success: function (response) {
+          logger.log('Edit subcategories loaded:', response);
+
           $('#editSubcatId').empty();
-          $('#editSubcatId').append('<option value=\"\">Pilih Sub Kategori</option>');
-          $.each(response, function (index, subCategory) {
-            $('#editSubcatId').append('<option value=\"' + subCategory.id + '\">' + subCategory.subcat_name + '</option>');
-          });
+          $('#editSubcatId').append('<option value="">Pilih Sub Kategori</option>');
+
+          if (response.success && response.data && response.data.length > 0) {
+            $.each(response.data, function (index, subCategory) {
+              $('#editSubcatId').append('<option value="' + subCategory.id + '">' + subCategory.subcat_name + '</option>');
+            });
+          } else {
+            $('#editSubcatId').append('<option value="">Tiada sub kategori tersedia</option>');
+          }
         },
-        error: function () {
-          toastr.error('Ralat memuat sub kategori.');
+        error: function (xhr) {
+          console.error('Error loading subcategories:', xhr);
+          if (typeof toastr !== 'undefined') {
+            toastr.error('Ralat memuat sub kategori.');
+          }
+          $('#editSubcatId').empty();
+          $('#editSubcatId').append('<option value="">Gagal memuatkan sub kategori</option>');
         }
       });
     } else {
       $('#editSubcatId').empty();
-      $('#editSubcatId').append('<option value=\"\">Pilih Sub Kategori</option>');
+      $('#editSubcatId').append('<option value="">Pilih Sub Kategori</option>');
     }
   });
 

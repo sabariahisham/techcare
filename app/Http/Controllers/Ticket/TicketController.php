@@ -78,7 +78,7 @@ class TicketController extends Controller
    */
   public function index()
   {
-    $categories = RefCategory::all();
+    $categories = RefCategory::orderBy('cat_name', 'asc')->get();
     $viewType = 'all'; // Show all tables
     $pageTitle = 'Senarai Tiket Keseluruhan';
     return view('tickets.index', compact('categories', 'viewType', 'pageTitle'));
@@ -90,7 +90,7 @@ class TicketController extends Controller
    */
   public function userTickets()
   {
-    $categories = RefCategory::all();
+    $categories = RefCategory::orderBy('cat_name', 'asc')->get();
     $viewType = 'user'; // Show only user's tickets
     $pageTitle = 'Tiket Saya';
     return view('tickets.index', compact('categories', 'viewType', 'pageTitle'));
@@ -102,7 +102,7 @@ class TicketController extends Controller
    */
   public function assignedTickets()
   {
-    $categories = RefCategory::all();
+    $categories = RefCategory::orderBy('cat_name', 'asc')->get();
     $viewType = 'assigned'; // Show only assigned tickets
     $pageTitle = 'Tiket Pegawai Tugasan';
     return view('tickets.index', compact('categories', 'viewType', 'pageTitle'));
@@ -114,7 +114,7 @@ class TicketController extends Controller
    */
   public function adminTickets()
   {
-    $categories = RefCategory::all();
+    $categories = RefCategory::orderBy('cat_name', 'asc')->get();
     $viewType = 'admin'; // Show all tickets for admin roles
 
     $user =  Auth::user();
@@ -748,8 +748,8 @@ class TicketController extends Controller
     // }
 
     // Get categories and subcategories
-    $categories = RefCategory::all();
-    $subCategories = RefSubCategory::where('cat_id', $ticket->cat_id)->get();
+    $categories = RefCategory::orderBy('cat_name', 'asc')->get();
+    $subCategories = RefSubCategory::where('cat_id', $ticket->cat_id)->orderBy('subcat_name', 'asc')->get();
 
     // Get available officers for this ticket's category/subcategory (for authorized users)
     $availableOfficers = [];
@@ -1124,8 +1124,8 @@ class TicketController extends Controller
 
     // Get other relevant data
     $allStatuses = RefTicketStatus::all();
-    $allCategories = RefCategory::all();
-    $allSubCategories = RefSubCategory::all();
+    $allCategories = RefCategory::orderBy('cat_name', 'asc')->get();
+    $allSubCategories = RefSubCategory::orderBy('subcat_name', 'asc')->get();
 
     // Get SLA data for the current ticket
     $currentSLA = null;

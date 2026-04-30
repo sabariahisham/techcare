@@ -14,7 +14,7 @@ class RefSubCategoryManagementController extends Controller
 
     public function index()
     {
-        $categories = RefCategory::all();
+        $categories = RefCategory::orderBy('cat_name', 'asc')->get();
 
         $totalCategories = RefCategory::count();
         $totalSubCategories = RefSubCategory::count();
