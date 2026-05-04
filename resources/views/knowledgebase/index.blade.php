@@ -38,6 +38,7 @@
   'resources/assets/js/knowledgebase/app-knowledgebase-modal-edit.js',
   'resources/assets/js/knowledgebase/app-knowledgebase-modal-show.js',
   'resources/assets/js/knowledgebase/app-knowledgebase-delete.js',
+  'resources/assets/js/knowledgebase/app-knowledgebase-aduan-selesai.js',
 ])
 @endsection
 
@@ -123,6 +124,31 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Senarai Aduan Selesai Table -->
+<div class="card mb-6" hidden>
+  <div class="card-header border-bottom">
+    <h5 class="card-title mb-0">SENARAI ADUAN SELESAI</h5>
+  </div>
+  <div class="card-datatable table-responsive">
+    <table class="datatables-aduan-selesai table">
+      <thead class="border-top">
+        <tr>
+          <th></th>
+          <th>Bil.</th>
+          <th>No. Log Tiket</th>
+          <th>Tarikh Aduan</th>
+          <th>Nama Pengadu</th>
+          <th>Kategori</th>
+          <th>Sub Kategori</th>
+          <th>Status</th>
+          <th>Pegawai Tugasan</th>
+          <th>Tindakan</th>
+        </tr>
+      </thead>
+    </table>
   </div>
 </div>
 

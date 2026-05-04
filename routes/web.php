@@ -177,11 +177,11 @@ Route::middleware($authMiddleware)->prefix('dashboard')->name('dashboard.')->gro
 // Manual Pengguna Route - Download PDF
 Route::middleware($authMiddleware)->get('/manual-pengguna', function () {
   $filePath = public_path('manuals/Manual Pengguna Sistem BTM TechCare.pdf');
-  
+
   if (!file_exists($filePath)) {
     abort(404, 'Manual Pengguna tidak dijumpai. Sila hubungi pentadbir sistem.');
   }
-  
+
   return response()->download($filePath, 'Manual-Pengguna-Sistem-BTM-TechCare.pdf');
 })->name('manual-pengguna.download');
 
@@ -321,6 +321,7 @@ Route::get('/app/user/list', [UserList::class, 'index'])->name('app-user-list');
 Route::middleware(['auth'])->prefix('knowledgebase')->group(function () {
   Route::get('/', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'index'])->name('knowledgebase.index');
   Route::get('/data', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'getData'])->name('knowledgebase.data');
+  Route::get('/aduan-selesai/data', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'getAduanSelesaiData'])->name('knowledgebase.aduan-selesai.data');
   Route::post('/', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'store'])->name('knowledgebase.store');
   Route::get('/{article}/details', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'getDetails'])->name('knowledgebase.details');
   Route::post('/{article}/soft-delete', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'softDelete'])->name('knowledgebase.soft-delete');
