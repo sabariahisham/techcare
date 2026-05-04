@@ -15,6 +15,12 @@
 <!-- Pricing Modal JS-->
 @stack('pricing-script')
 <!-- END: Pricing Modal JS-->
+<!-- BEGIN: Session Timeout Handler -->
+@include('_partials._session-config')
+@auth
+@vite(['resources/assets/js/session-timeout.js'])
+@endauth
+<!-- END: Session Timeout Handler -->
 <!-- BEGIN: Page JS-->
 @yield('page-script')
 <!-- END: Page JS-->

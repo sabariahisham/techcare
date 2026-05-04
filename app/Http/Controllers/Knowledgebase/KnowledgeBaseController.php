@@ -5,6 +5,7 @@ namespace App\Http\Controllers\knowledgebase;
 use App\Http\Controllers\Controller;
 use App\Models\KnowledgeBase;
 use App\Models\Document;
+use App\Models\Ticket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -351,6 +352,90 @@ class KnowledgeBaseController extends Controller
         // Note: Knowledge base record is kept in database
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get Aduan Selesai (resolved tickets) for DataTable
+     */
+    public function getAduanSelesaiData(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = Ticket::with([
+                'user',
+                'category',
+                'subCategory',
+                'chronologies.escalatedTo',
+            ])->where('tick_status', 6)
+              ->orderBy('created_at', 'desc');
+
+            return DataTables::eloquent($query)
+                ->addIndexColumn()
+                ->addColumn('no_log_tiket', function ($ticket) {
+                    return $ticket->ticket_nolog ?? 'N/A';
+                })
+                ->addColumn('tarikh_aduan', function ($ticket) {
+                    return $ticket->created_at ? $ticket->created_at->format('d/m/Y H:i') : '-';
+                })
+                ->addColumn('nama_pengadu', function ($ticket) {
+                    return $ticket->user->nama ?? 'N/A';
+                })
+                ->addColumn('kategori', function ($ticket) {
+                    return $ticket->category->cat_name ?? 'N/A';
+                })
+                ->addColumn('sub_kategori', function ($ticket) {
+                    return $ticket->subCategory->subcat_name ?? 'N/A';
+                })
+                ->addColumn('status', function ($ticket) {
+                    return '<span class="badge bg-success">Aduan Selesai</span>';
+                })
+                ->addColumn('pegawai_tugasan', function ($ticket) {
+                    $latestChronology = $ticket->chronologies()
+                        ->whereNotNull('escalate_to')
+                        ->where('tick_status', 6)
+                        ->with('escalatedTo')
+                        ->latest()
+                        ->first();
+
+                    if (!$latestChronology) {
+                        $latestChronology = $ticket->chronologies()
+                            ->whereNotNull('escalate_to')
+                            ->with('escalatedTo')
+                            ->latest()
+                            ->first();
+                    }
+
+                    if ($latestChronology && $latestChronology->escalatedTo) {
+                        return $latestChronology->escalatedTo->nama;
+                    }
+                    return 'Belum Ditugaskan';
+                })
+                ->filterColumn('no_log_tiket', function ($query, $keyword) {
+                    $query->where('ticket_nolog', 'like', "%{$keyword}%");
+                })
+                ->filterColumn('tarikh_aduan', function ($query, $keyword) {
+                    $query->whereRaw("DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') like ?", ["%{$keyword}%"]);
+                })
+                ->filterColumn('nama_pengadu', function ($query, $keyword) {
+                    $query->whereHas('user', function ($q) use ($keyword) {
+                        $q->where('nama', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('kategori', function ($query, $keyword) {
+                    $query->whereHas('category', function ($q) use ($keyword) {
+                        $q->where('cat_name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('sub_kategori', function ($query, $keyword) {
+                    $query->whereHas('subCategory', function ($q) use ($keyword) {
+                        $q->where('subcat_name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->addColumn('uuid', function ($ticket) {
+                    return $ticket->uuid;
+                })
+                ->rawColumns(['status'])
+                ->make(true);
+        }
     }
 
     /**
