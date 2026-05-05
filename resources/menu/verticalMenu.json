@@ -1,10 +1,10 @@
 {
   "menu": [
     {
-      "url": "dashboard",
-      "icon": "menu-icon tf-icons bx bx-home-smile",
+      "url": "/dashboard",
       "name": "Dashboard",
-      "slug": "dashboard"
+      "icon": "menu-icon tf-icons bx bx-home-smile",
+      "slug": "dashboard.index"
     },
     {
       "url": "tickets",
@@ -15,21 +15,20 @@
         {
           "url": "tickets/user",
           "name": "Tiket Saya",
-          "slug": "ticket-user"
+          "slug": "tickets.user"
         },
         {
           "url": "tickets/assigned",
           "name": "Tiket Pegawai Tugasan",
-          "slug": "ticket-assigned",
+          "slug": "tickets.assigned",
           "role": [
             "Pegawai Tugasan"
-
           ]
         },
         {
           "url": "tickets/admin",
           "name": "Pengurusan Tiket",
-          "slug": "ticket-admin",
+          "slug": "tickets.admin",
           "role": [
             "Administrator",
             "Pentadbir Sistem",
@@ -43,7 +42,7 @@
       "url": "knowledgebase",
       "icon": "menu-icon icon-base bx bx-book-open",
       "name": "Knowledge Base",
-      "slug": "knowledgebase-index"
+      "slug": "knowledgebase.index"
     },
     {
       "url": "report/index",
@@ -83,18 +82,18 @@
               ]
             },
             {
-              "url": "acl/permissions/index",
+              "url": "admin/permissions",
               "name": "Modul & Capaian",
-              "slug": "acl-permissions-index",
+              "slug": "admin.permissions.index",
               "permission": "capaian.view",
               "role": [
                 "Administrator"
               ]
             },
             {
-              "url": "acl/roles/index",
+              "url": "admin/roles",
               "name": "Peranan",
-              "slug": "acl-roles-index",
+              "slug": "admin.roles.index",
               "permission": "peranan.view",
               "role": [
                 "Pentadbir Sistem",
@@ -142,21 +141,21 @@
     },
     {
       "name": "Audit Trail",
-      "slug": "audit-trail",
+      "slug": "audit",
       "icon": "menu-icon icon-base bx bx-list-check",
-      " permission": "audit.view",
+      "permission": "audit.view",
       "role": "Administrator",
       "submenu": [
         {
           "url": "audit-trail",
           "name": "Senarai Audit Trail",
-          "slug": "audit-trail-index",
+          "slug": "audit.index",
           "permission": "audit.view"
         },
         {
           "url": "audit/logs",
           "name": "Log Keseluruhan",
-          "slug": "log-index",
+          "slug": "audit.logs.index",
           "permission": "audit.view"
         },
         {

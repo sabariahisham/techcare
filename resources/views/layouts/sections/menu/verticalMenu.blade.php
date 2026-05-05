@@ -33,6 +33,37 @@
 
     <div class="menu-inner-shadow"></div>
 
+    @php
+        $currentRouteName = Route::currentRouteName();
+        $getMenuActiveClass = function ($item) use (&$getMenuActiveClass, $currentRouteName, $configData) {
+            if ($currentRouteName === $item->slug) {
+                return 'active';
+            }
+
+            if (isset($item->submenu)) {
+                foreach ($item->submenu as $child) {
+                    if ($getMenuActiveClass($child)) {
+                        return $configData['layout'] === 'vertical' ? 'active open' : 'active';
+                    }
+                }
+
+                if (is_array($item->slug)) {
+                    foreach ($item->slug as $slug) {
+                        if (str_contains($currentRouteName, $slug) && strpos($currentRouteName, $slug) === 0) {
+                            return $configData['layout'] === 'vertical' ? 'active open' : 'active';
+                        }
+                    }
+                } elseif ($item->slug) {
+                    if (str_contains($currentRouteName, $item->slug) && strpos($currentRouteName, $item->slug) === 0) {
+                        return $configData['layout'] === 'vertical' ? 'active open' : 'active';
+                    }
+                }
+            }
+
+            return null;
+        };
+    @endphp
+
     <ul class="menu-inner py-1">
         @foreach ($menuData[0]->menu as $menu)
             {{-- adding active and open class if child is active --}}
@@ -50,27 +81,7 @@
             @else
                 {{-- active menu method --}}
                 @php
-                    $activeClass = null;
-                    $currentRouteName = Route::currentRouteName();
-
-                    if ($currentRouteName === $menu->slug) {
-                        $activeClass = 'active';
-                    } elseif (isset($menu->submenu)) {
-                        if (gettype($menu->slug) === 'array') {
-                            foreach ($menu->slug as $slug) {
-                                if (str_contains($currentRouteName, $slug) and strpos($currentRouteName, $slug) === 0) {
-                                    $activeClass = 'active open';
-                                }
-                            }
-                        } else {
-                            if (
-                                str_contains($currentRouteName, $menu->slug) and
-                                strpos($currentRouteName, $menu->slug) === 0
-                            ) {
-                                $activeClass = 'active open';
-                            }
-                        }
-                    }
+                    $activeClass = $getMenuActiveClass($menu);
                 @endphp
 
                 {{-- main menu --}}
@@ -78,10 +89,15 @@
                     (!isset($menu->permission) && !isset($menu->role)) ||
                         (isset($menu->permission) && auth()->user()->can($menu->permission)) ||
                         (isset($menu->role) && auth()->user()->hasAnyRole((array) $menu->role)))
+                    @php
+                        $menuLinkClass = isset($menu->submenu) ? 'menu-link menu-toggle' : 'menu-link';
+                        if ($activeClass) {
+                            $menuLinkClass .= ' active';
+                        }
+                    @endphp
                     <li class="menu-item {{ $activeClass }}">
                         <a href="{{ isset($menu->url) ? url($menu->url) : 'javascript:void(0);' }}"
-                            class="{{ isset($menu->submenu) ? 'menu-link menu-toggle' : 'menu-link' }}"
-                            @if (isset($menu->target) and !empty($menu->target)) target="_blank" @endif>
+                            class="{{ $menuLinkClass }}" @if (isset($menu->target) and !empty($menu->target)) target="_blank" @endif>
                             @isset($menu->icon)
                                 <i class="{{ $menu->icon }}"></i>
                             @endisset
@@ -93,7 +109,10 @@
 
                         {{-- submenu --}}
                         @isset($menu->submenu)
-                            @include('layouts.sections.menu.submenu', ['menu' => $menu->submenu])
+                            @include('layouts.sections.menu.submenu', [
+                                'menu' => $menu->submenu,
+                                'getMenuActiveClass' => $getMenuActiveClass,
+                            ])
                         @endisset
                     </li>
                 @endif

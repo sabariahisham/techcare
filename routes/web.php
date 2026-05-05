@@ -80,7 +80,8 @@ Route::get('/test-email', function () {
 
 Route::get('/', function () {
   return redirect('/dashboard');
-})->middleware($authMiddleware);
+})->middleware($authMiddleware)
+->name('dashboard');
 
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
   ->middleware(['auth'])
