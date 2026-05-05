@@ -183,14 +183,14 @@
             <small class="text-muted">
               <span class="badge bg-label-success me-1">Level 1</span>
               <span class="badge bg-label-warning me-1">Level 2</span>
-              <span class="badge bg-label-danger">Level 3</span>
+              {{-- <span class="badge bg-label-danger">Level 3</span> --}}
             </small>
           </label>
           <select class="form-select" id="add-officer-level" name="level_tugasan" required>
             <option value="">Pilih Level Tugasan</option>
             <option value="1">Level 1 </option>
             <option value="2">Level 2 </option>
-            <option value="3">Level 3 </option>
+            {{-- <option value="3">Level 3 </option> --}}
           </select>
         </div>
         <div class="mb-6">
@@ -239,14 +239,12 @@
           <small class="text-muted">
             <span class="badge bg-label-success me-1">Level 1</span>
             <span class="badge bg-label-warning me-1">Level 2</span>
-            <span class="badge bg-label-danger">Level 3</span>
           </small>
         </label>
         <select class="form-select" id="edit-officer-level" name="level_tugasan" required>
           <option value="">Pilih Level Tugasan</option>
           <option value="1">Level 1 </option>
           <option value="2">Level 2 </option>
-          <option value="3">Level 3 </option>
         </select>
       </div>
       <div class="mb-6">
