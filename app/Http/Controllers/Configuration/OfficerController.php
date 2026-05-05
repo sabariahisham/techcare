@@ -86,10 +86,6 @@ class OfficerController extends Controller
                         $badgeClass = 'bg-label-warning';
                         $levelText = 'Level 2';
                         break;
-                    case 3:
-                        $badgeClass = 'bg-label-danger';
-                        $levelText = 'Level 3';
-                        break;
                     default:
                         $badgeClass = 'bg-label-secondary';
                         $levelText = 'Level ' . $level;
@@ -102,19 +98,8 @@ class OfficerController extends Controller
                 $users = $data['users'];
                 $userBadges = [];
 
-                if (count($users) > 3) {
-                    $displayUsers = array_slice($users, 0, 3);
-                    $remaining = count($users) - 3;
-
-                    foreach ($displayUsers as $user) {
-                        $userBadges[] = '<span class="badge bg-label-primary me-1 mb-1">' . $user . '</span>';
-                    }
-
-                    $userBadges[] = '<span class="badge bg-label-info me-1 mb-1">+' . $remaining . ' lagi</span>';
-                } else {
-                    foreach ($users as $user) {
-                        $userBadges[] = '<span class="badge bg-label-primary me-1 mb-1">' . $user . '</span>';
-                    }
+                foreach ($users as $user) {
+                    $userBadges[] = '<span class="badge bg-label-primary me-1 mb-1">' . $user . '</span>';
                 }
 
                 return implode(' ', $userBadges);

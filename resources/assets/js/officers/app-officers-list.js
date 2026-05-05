@@ -67,10 +67,6 @@ $(function () {
                 badgeClass = 'bg-label-warning';
                 levelText = 'Level 2';
                 break;
-              case 3:
-                badgeClass = 'bg-label-danger';
-                levelText = 'Level 3';
-                break;
               default:
                 return data;
             }
