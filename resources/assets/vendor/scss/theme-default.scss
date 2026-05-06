@@ -20,12 +20,14 @@ $primary-color: #696cff;
 .layout-horizontal .layout-navbar {
   box-shadow: 0 1px 0 $border-color;
 }
-.layout-navbar-fixed .layout-page:before {
-  backdrop-filter: saturate(200%) blur(10px);
-  background: linear-gradient(180deg, rgba($body-bg, 70%) 44%, rgba($body-bg, 43%) 73%, rgba($body-bg, 0%));
-  -webkit-mask: linear-gradient($body-bg, $body-bg 18%, transparent 100%);
-  mask: linear-gradient($body-bg, $body-bg 18%, transparent 100%);
-}
+
+// HIDDEN: Backdrop blur effect for navbar
+// .layout-navbar-fixed .layout-page:before {
+//   backdrop-filter: saturate(200%) blur(10px);
+//   background: linear-gradient(180deg, rgba($body-bg, 70%) 44%, rgba($body-bg, 43%) 73%, rgba($body-bg, 0%));
+//   -webkit-mask: linear-gradient($body-bg, $body-bg 18%, transparent 100%);
+//   mask: linear-gradient($body-bg, $body-bg 18%, transparent 100%);
+// }
 
 // Menu
 // ---------------------------------------------------------------------------
@@ -44,12 +46,14 @@ $primary-color: #696cff;
     html:not(.layout-menu-collapsed) &,
     .layout-menu-hover.layout-menu-collapsed & {
       background-color: $gray-60;
+      border-radius: 30px 0 0 30px !important;
     }
   }
   // menu item open(horizontal)
   .menu-inner .menu-sub > .menu-item.active {
     > .menu-link.menu-toggle {
       background-color: $gray-80 !important;
+      border-radius: 30px 0 0 30px !important;
     }
     &:not(:has(.menu-sub)) {
       .menu-icon {
@@ -87,6 +91,7 @@ $primary-color: #696cff;
   }
   .menu-inner > .menu-header::before {
     background-color: rgba-to-hex($gray-400, $rgba-to-hex-bg);
+    border-radius: 30px 0 0 30px !important;
   }
 }
 
