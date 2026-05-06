@@ -119,7 +119,13 @@
           <th style="display:none;">Kategori</th>
           <th>Sub Kategori</th>
           <th>Level Pegawai Tugasan</th>
-          <th>Severity</th>
+          <th>
+            Severity(A) / Priority (O)
+            <i class="bx bx-info-circle ms-1 text-primary"
+               data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="(A) Aplikasi: Severity menentukan keutamaan penyelesaian aduan. (O) Operasi: Priority menentukan keutamaan kerja perintah."></i>
+          </th>
           <th>Hari</th>
           <th>Tindakan</th>
         </tr>
@@ -161,7 +167,13 @@
           </select>
         </div>
         <div class="mb-6">
-          <label class="form-label">Severity & Hari</label>
+          <label class="form-label">
+            Severity(A) / Priority(O) & Hari
+            <i class="bx bx-info-circle ms-1 text-primary"
+               data-bs-toggle="tooltip"
+               data-bs-placement="top"
+               title="(A) Aplikasi: Severity menentukan keutamaan penyelesaian aduan. (O) Operasi: Priority menentukan keutamaan kerja perintah."></i>
+          </label>
           <div class="border rounded p-3">
             <div class="mb-3">
               <label class="form-label" for="add-sla-days-high">
@@ -224,7 +236,13 @@
         </select>
       </div>
       <div class="mb-6">
-        <label class="form-label">Severity & Hari</label>
+        <label class="form-label">
+          Severity(A) / Priority(O) & Hari
+          <i class="bx bx-info-circle ms-1 text-primary"
+             data-bs-toggle="tooltip"
+             data-bs-placement="top"
+               title="(A) Aplikasi: Severity menentukan keutamaan penyelesaian aduan. (O) Operasi: Priority menentukan keutamaan kerja perintah."></i>
+        </label>
         <div class="border rounded p-3">
           <div class="mb-3">
             <label class="form-label" for="edit_sla_days_high">
