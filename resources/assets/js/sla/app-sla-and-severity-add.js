@@ -229,6 +229,13 @@ $(function () {
     });
   }
 
+  // Initialize tooltips when offcanvas is shown
+  $('#offcanvasAddSla').on('shown.bs.offcanvas', function () {
+    $(this).find('[data-bs-toggle="tooltip"]').each(function () {
+      bootstrap.Tooltip.getOrCreateInstance(this);
+    });
+  });
+
   // Reset form when offcanvas is hidden
   $('#offcanvasAddSla').on('hidden.bs.offcanvas', function () {
     if (addNewSlaForm) {

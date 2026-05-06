@@ -181,9 +181,20 @@ $(function () {
       language: {
         search: '',
         searchPlaceholder: 'Carian'
+      },
+      drawCallback: function () {
+        // Re-initialize tooltips after each draw
+        $('[data-bs-toggle="tooltip"]').each(function () {
+          var tooltipEl = bootstrap.Tooltip.getOrCreateInstance(this);
+        });
       }
     });
   }
+
+  // Initialize tooltips on header icons
+  $('[data-bs-toggle="tooltip"]').each(function () {
+    bootstrap.Tooltip.getOrCreateInstance(this);
+  });
 
   // Filter form control to default size
   // ? setTimeout used for multilingual table initialization
