@@ -167,29 +167,15 @@
 
 .logo-collapsed {
   display: none !important;
-  /* visibility: hidden !important;
-  opacity: 0 !important;
-  width: 0 !important;
-  height: 0 !important; */
 }
 
 /* When menu is collapsed - hide full logo, show icon only */
 .layout-menu-collapsed .logo-expanded {
   display: none !important;
-  /* visibility: hidden !important;
-  opacity: 0 !important;
-  width: 0 !important;
-  height: 0 !important; */
 }
 
 .layout-menu-collapsed .logo-collapsed {
   display: block !important;
-  /* visibility: visible !important;
-  opacity: 1 !important;
-  height: 80px !important;
-  width: 80px !important;
-  object-fit: contain;
-  margin: 0 auto; */
 }
 
 /* Center the logo when menu is collapsed */
@@ -244,4 +230,33 @@
     height: 55px !important;
     width: 55px !important;
   }
+}
+
+/* =========================
+   CURVED OUTSIDE SIDEBAR MENU
+   ========================= */
+
+/* Main sidebar curved styling */
+.layout-menu {
+  left: 15px !important;
+  border-radius: 20px 20px 20px 20px !important;
+  margin: 15px 0px 15px 0px !important;
+  height: calc(100vh - 30px) !important; /*margin atas bawah 15px*/
+  overflow: visible !important;
+  box-shadow: 0 4px 24px 0 rgba(34, 41, 47, 0.12) !important;
+  background-color: #fff !important;
+}
+
+/* Curved edges for active menu items */
+.bg-menu-theme .menu-inner>.menu-item.active {
+  position: relative;
+}
+
+/* ===== CURVE ACTIVE MENU (Sneat Override) ===== */
+.bg-menu-theme .menu-inner > .menu-item.active > .menu-link {
+    background: #fff !important;
+    border-radius: 30px 0 0 30px !important;
+    margin-left: 12px;
+    position: relative;
+    z-index: 2;
 }

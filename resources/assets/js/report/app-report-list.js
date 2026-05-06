@@ -60,7 +60,7 @@ $(function () {
         },
         {
           id: 5,
-          name: 'Statistik Log Aduan' ,
+          name: 'Statistik Log Aduan',
           description: 'Statistik Log Aduan TechCare Mengikut Kategori ',
           updated_at: currentDateTime
         },
@@ -164,7 +164,7 @@ $(function () {
             else if ($id === 6) {
               // Route for Laporan Bulanan Aduan Mengikut Status Aduan
               viewUrl = '/report/laporan-status-aduan-tahunan';
-            } 
+            }
 
             return (
               '<div class="d-flex align-items-center">' +
@@ -218,18 +218,18 @@ $(function () {
             var data = $.map(columns, function (col, i) {
               return col.title !== '' // ? Do not show row in modal popup if title is blank (for check box)
                 ? '<tr data-dt-row="' +
-                    col.rowIndex +
-                    '" data-dt-column="' +
-                    col.columnIndex +
-                    '">' +
-                    '<td>' +
-                    col.title +
-                    ':' +
-                    '</td> ' +
-                    '<td>' +
-                    col.data +
-                    '</td>' +
-                    '</tr>'
+                col.rowIndex +
+                '" data-dt-column="' +
+                col.columnIndex +
+                '">' +
+                '<td>' +
+                col.title +
+                ':' +
+                '</td> ' +
+                '<td>' +
+                col.data +
+                '</td>' +
+                '</tr>'
                 : '';
             }).join('');
 
