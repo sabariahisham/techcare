@@ -81,14 +81,14 @@
         padding: 0.375rem 0.5rem;
     }
 
-    .badge-info {
+    /* .badge-info {
         background-color: #17a2b8;
         color: white;
     }
 
     .badge-warning {
         background-color: #ffc107;
-        color: #212529;
+        color: white;
     }
 
     .badge-primary {
@@ -100,4 +100,14 @@
         background-color: #6c757d;
         color: white;
     }
+
+    .badge-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .badge-danger {
+        background-color: #dc3545;
+        color: white;
+    } */
 </style>
