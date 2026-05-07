@@ -29,41 +29,98 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+
         let commentQuill = null;
 
         // Initialize Quill when modal is shown
         const commentModal = document.getElementById('commentModal');
+
         if (commentModal) {
+
             commentModal.addEventListener('shown.bs.modal', function() {
+
                 if (!commentQuill && typeof window.initCommentEditor === 'function') {
+
                     commentQuill = window.initCommentEditor('#comment-editor');
+
+                    // Auto capitalize
+                    commentQuill.on('text-change', function(delta, oldDelta, source) {
+
+                        // Only for user typing
+                        if (source !== 'user') {
+                            return;
+                        }
+
+                        const text = commentQuill.getText();
+                        const range = commentQuill.getSelection();
+
+                        if (!range) {
+                            return;
+                        }
+
+                        // Capitalize first letter
+                        if (range.index === 1) {
+
+                            const firstChar = text.charAt(0);
+
+                            if (firstChar >= 'a' && firstChar <= 'z') {
+
+                                commentQuill.deleteText(0, 1);
+                                commentQuill.insertText(0, firstChar.toUpperCase());
+
+                                commentQuill.setSelection(range.index, 0);
+                            }
+                        }
+
+                        // Capitalize after . ! ?
+                        const prevText = text.substring(0, range.index);
+
+                        const match = prevText.match(/([.!?]\s+)([a-z])$/);
+
+                        if (match) {
+
+                            const letterIndex = range.index - 1;
+                            const letter = text.charAt(letterIndex);
+
+                            commentQuill.deleteText(letterIndex, 1);
+                            commentQuill.insertText(letterIndex, letter.toUpperCase());
+
+                            commentQuill.setSelection(range.index, 0);
+                        }
+                    });
                 }
             });
 
-            // Reset editor when modal is hidden
+            // Reset editor when modal closed
             commentModal.addEventListener('hidden.bs.modal', function() {
+
                 if (commentQuill) {
                     commentQuill.setText('');
                 }
             });
         }
 
-        // Handle form submission
+        // Handle form submit
         const commentForm = document.getElementById('commentForm');
+
         if (commentForm) {
+
             commentForm.addEventListener('submit', function(e) {
+
                 if (commentQuill) {
+
                     const content = commentQuill.root.innerHTML;
                     const textContent = commentQuill.getText().trim();
 
-                    // Check if there's actual content
                     if (textContent.length === 0) {
+
                         e.preventDefault();
+
                         alert('Sila masukkan komen anda.');
+
                         return false;
                     }
 
-                    // Set the hidden input value
                     document.getElementById('comment').value = content;
                 }
             });

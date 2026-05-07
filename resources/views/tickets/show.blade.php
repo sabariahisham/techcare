@@ -2397,8 +2397,8 @@ $timelineItems = $timelineItems
                 notesTextarea.addEventListener('input', function() {
                     let value = this.value;
                     if (value.length > 0) {
-                        // Convert to sentence case: capitalize first letter and after sentence endings
-                        value = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+                        // Convert to sentence case: capitalize first letter
+                        value = value.charAt(0).toUpperCase() + value.slice(1);
 
                         // Capitalize first letter after sentence endings (., !, ?) followed by space
                         value = value.replace(/([.!?]\s+)([a-z])/g, function(match, p1, p2) {
