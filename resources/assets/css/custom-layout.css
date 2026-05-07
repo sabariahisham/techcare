@@ -7,6 +7,37 @@
    LAYOUT - Premium Blue (Sneat)
    ========================= */
 
+/* Badge Color Overrides to match Sneat theme */
+.badge-primary {
+  background-color: #696cff !important;
+  color: #fff !important;
+}
+
+.badge-secondary {
+  background-color: #8592a3 !important;
+  color: #fff !important;
+}
+
+.badge-success {
+  background-color: #71dd37 !important;
+  color: #fff !important;
+}
+
+.badge-info {
+  background-color: #03c3ec !important;
+  color: #fff !important;
+}
+
+.badge-warning {
+  background-color: #ffab00 !important;
+  color: #fff !important;
+}
+
+.badge-danger {
+  background-color: #ff3e1d !important;
+  color: #fff !important;
+}
+
 .content-wrapper,
 .layout-page {
   background: linear-gradient(135deg, #6d84e9 0%, #a55eec 100%) !important;
@@ -241,7 +272,8 @@
   left: 15px !important;
   border-radius: 20px 20px 20px 20px !important;
   margin: 15px 0px 15px 0px !important;
-  height: calc(100vh - 30px) !important; /*margin atas bawah 15px*/
+  height: calc(100vh - 30px) !important;
+  /*margin atas bawah 15px*/
   overflow: visible !important;
   box-shadow: 0 4px 24px 0 rgba(34, 41, 47, 0.12) !important;
   background-color: #fff !important;
@@ -253,10 +285,10 @@
 }
 
 /* ===== CURVE ACTIVE MENU (Sneat Override) ===== */
-.bg-menu-theme .menu-inner > .menu-item.active > .menu-link {
-    background: #fff !important;
-    border-radius: 30px 0 0 30px !important;
-    margin-left: 12px;
-    position: relative;
-    z-index: 2;
+.bg-menu-theme .menu-inner>.menu-item.active>.menu-link {
+  background: #fff !important;
+  border-radius: 30px 0 0 30px !important;
+  margin-left: 12px;
+  position: relative;
+  z-index: 2;
 }

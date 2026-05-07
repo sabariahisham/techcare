@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * PegawaiTugasanController
- * 
+ *
  * This controller handles all dashboard-related functionality specifically for Pegawai Tugasan role.
  * All data queries are filtered by assigned tasks (escalate_to = current user).
- * 
+ *
  * Created: March 4, 2026
  * Separated from DashboardController to improve code organization and maintainability.
  */
@@ -24,7 +24,7 @@ class PegawaiTugasanController extends Controller
 {
   /**
    * Get today's logs count for Pegawai Tugasan (assigned tasks only)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getTodayLogsCount()
@@ -70,7 +70,7 @@ class PegawaiTugasanController extends Controller
 
   /**
    * Get weekly completed tickets for Pegawai Tugasan (assigned tasks only)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getWeeklyCompleted()
@@ -156,7 +156,7 @@ class PegawaiTugasanController extends Controller
 
   /**
    * Get pending tickets stats for Pegawai Tugasan (assigned tasks only)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getPendingStats()
@@ -225,7 +225,7 @@ class PegawaiTugasanController extends Controller
 
   /**
    * Get overdue SLA count for Pegawai Tugasan (assigned tasks only)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getOverdueSLACount()
@@ -274,7 +274,7 @@ class PegawaiTugasanController extends Controller
 
   /**
    * Get status tickets for Pegawai Tugasan (assigned tasks only)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getStatusTickets()
@@ -314,7 +314,7 @@ class PegawaiTugasanController extends Controller
         $count = $statusCounts->where('id', $status->id)->first();
         $statusData[] = [
           'id' => $status->id,
-          'st_name' => $status->st_name,
+          'st_name' => $status->st_name === 'Aduan Baru' ? 'Aduan Baharu' : $status->st_name,
           'count' => $count ? $count->count : 0
         ];
       }
@@ -331,7 +331,7 @@ class PegawaiTugasanController extends Controller
 
       // Fallback with empty data
       $sampleData = [
-        ['id' => 1, 'st_name' => 'Aduan Baru', 'count' => 0],
+        ['id' => 1, 'st_name' => 'Aduan Baharu', 'count' => 0],
         ['id' => 2, 'st_name' => 'Aduan Diproses', 'count' => 0],
         ['id' => 3, 'st_name' => 'Serahan Kepada', 'count' => 0],
         ['id' => 4, 'st_name' => 'Aduan Dirujuk', 'count' => 0],
@@ -348,10 +348,10 @@ class PegawaiTugasanController extends Controller
 
   /**
    * Get category tickets for Pegawai Tugasan (assigned tasks only)
-   * 
+   *
    * CLOSED AFTER UAT (04032026) - KEEPING METHOD FOR FUTURE USE
    * Currently not being called from frontend, but kept for potential future requirements
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getCategoryTickets()
@@ -425,7 +425,7 @@ class PegawaiTugasanController extends Controller
 
   /**
    * Get subcategory tickets for Pegawai Tugasan (assigned tasks only)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getSubcategoryTickets()
@@ -496,7 +496,7 @@ class PegawaiTugasanController extends Controller
 
   /**
    * Get list of overdue tickets for Pegawai Tugasan (assigned tasks only)
-   * 
+   *
    * @param \Illuminate\Http\Request $request
    * @return \Illuminate\Http\JsonResponse
    */
@@ -570,11 +570,30 @@ class PegawaiTugasanController extends Controller
             return '<button type="button" class="btn btn-sm view-record" data-uuid="' . $row['ticket_uuid'] . '" title="Lihat Tiket"><i class="bx bx-show"></i></button>';
           })
           ->editColumn('status', function ($row) {
-            $badgeClass = 'badge-warning'; // Default for overdue
-            if ($row['status_id'] == 1) $badgeClass = 'badge-info';
-            else if ($row['status_id'] == 2) $badgeClass = 'badge-warning';
-            else if ($row['status_id'] == 3) $badgeClass = 'badge-primary';
-            else if ($row['status_id'] == 4) $badgeClass = 'badge-secondary';
+            $badgeClass = 'badge-warning'; // Default
+            switch ($row['status_id']) {
+              case 1:
+                $badgeClass = 'badge-primary';
+                break; // Aduan Baru
+              case 2:
+                $badgeClass = 'badge-warning';
+                break; // Aduan Diproses
+              case 3:
+                $badgeClass = 'badge-info';
+                break; // Serahan Kepada
+              case 4:
+                $badgeClass = 'badge-danger';
+                break; // Aduan Dirujuk
+              case 5:
+                $badgeClass = 'badge-secondary';
+                break; // Aduan DiBatal
+              case 6:
+                $badgeClass = 'badge-success';
+                break; // Aduan Selesai
+              default:
+                $badgeClass = 'badge-secondary';
+                break;
+            }
 
             return '<span class="badge ' . $badgeClass . '">' . $row['status'] . '</span>';
           })

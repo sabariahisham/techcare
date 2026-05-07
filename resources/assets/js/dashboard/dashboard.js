@@ -37,7 +37,7 @@ if (typeof window.config === 'undefined') {
 
   // Status colors mapping using lighter/softer Sneat template colors
   const statusColors = {
-    'Aduan Baharu': '#a5abff',      // Lighter Primary - Soft Purple
+    'Aduan Baharu': '#a5abff',    // Lighter Primary - Soft Purple
     'Aduan Diproses': '#ffc947',  // Lighter Warning - Soft Orange
     'Serahan Kepada': '#26d0f0',  // Lighter Info - Soft Cyan
     'Aduan Dirujuk': '#ff6b47',   // Lighter Danger - Soft Red

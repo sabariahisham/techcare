@@ -352,7 +352,7 @@ class DashboardController extends Controller
         $count = $statusCounts->where('id', $status->id)->first();
         $statusData[] = [
           'id' => $status->id,
-          'st_name' => $status->st_name,
+          'st_name' => $status->st_name === 'Aduan Baru' ? 'Aduan Baharu' : $status->st_name,
           'count' => $count ? $count->count : 0
         ];
       }
@@ -364,7 +364,7 @@ class DashboardController extends Controller
     } catch (\Exception $e) {
       // Fallback with sample data if database queries fail
       $sampleData = [
-        ['id' => 1, 'st_name' => 'Aduan Baru', 'count' => 15],
+        ['id' => 1, 'st_name' => 'Aduan Baharu', 'count' => 15],
         ['id' => 2, 'st_name' => 'Aduan Diproses', 'count' => 8],
         ['id' => 3, 'st_name' => 'Serahan Kepada', 'count' => 5],
         ['id' => 4, 'st_name' => 'Aduan Dirujuk', 'count' => 3],
@@ -911,7 +911,7 @@ class DashboardController extends Controller
           'ticket_nolog' => $ticket->ticket_nolog,
           'kategori' => $ticket->cat_name,
           'tajuk' => $ticket->ticket_title,
-          'status' => $ticket->status_name,
+          'status' => $ticket->status_name === 'Aduan Baru' ? 'Aduan Baharu' : $ticket->status_name,
           'status_id' => $ticket->status_id,
           'assigned_to' => $ticket->assigned_to ?? 'Belum Ditugaskan',
           'sla_duedate' => $ticket->sla_duedate ? Carbon::parse($ticket->sla_duedate)->format('d/m/Y H:i') : '-',
@@ -927,11 +927,30 @@ class DashboardController extends Controller
             return '<button type="button" class="btn btn-sm view-record" data-uuid="' . $row['ticket_uuid'] . '" title="Lihat Tiket"><i class="bx bx-show"></i></button>';
           })
           ->editColumn('status', function ($row) {
-            $badgeClass = 'badge-warning'; // Default for overdue
-            if ($row['status_id'] == 1) $badgeClass = 'badge-info';
-            else if ($row['status_id'] == 2) $badgeClass = 'badge-warning';
-            else if ($row['status_id'] == 3) $badgeClass = 'badge-primary';
-            else if ($row['status_id'] == 4) $badgeClass = 'badge-secondary';
+            $badgeClass = 'badge-warning'; // Default
+            switch ($row['status_id']) {
+              case 1:
+                $badgeClass = 'badge-primary';
+                break; // Aduan Baru
+              case 2:
+                $badgeClass = 'badge-warning';
+                break; // Aduan Diproses
+              case 3:
+                $badgeClass = 'badge-info';
+                break; // Serahan Kepada
+              case 4:
+                $badgeClass = 'badge-danger';
+                break; // Aduan Dirujuk
+              case 5:
+                $badgeClass = 'badge-secondary';
+                break; // Aduan DiBatal
+              case 6:
+                $badgeClass = 'badge-success';
+                break; // Aduan Selesai
+              default:
+                $badgeClass = 'badge-secondary';
+                break;
+            }
 
             return '<span class="badge ' . $badgeClass . '">' . $row['status'] . '</span>';
           })
@@ -1345,7 +1364,7 @@ class DashboardController extends Controller
         $count = $statusCounts->where('id', $status->id)->first();
         $statusData[] = [
           'id' => $status->id,
-          'st_name' => $status->st_name,
+          'st_name' => $status->st_name === 'Aduan Baru' ? 'Aduan Baharu' : $status->st_name,
           'count' => $count ? $count->count : 0
         ];
       }
@@ -1357,7 +1376,7 @@ class DashboardController extends Controller
     } catch (\Exception $e) {
       // Fallback with empty data
       $sampleData = [
-        ['id' => 1, 'st_name' => 'Aduan Baru', 'count' => 0],
+        ['id' => 1, 'st_name' => 'Aduan Baharu', 'count' => 0],
         ['id' => 2, 'st_name' => 'Aduan Diproses', 'count' => 0],
         ['id' => 3, 'st_name' => 'Serahan Kepada', 'count' => 0],
         ['id' => 4, 'st_name' => 'Aduan Dirujuk', 'count' => 0],
@@ -1562,7 +1581,7 @@ class DashboardController extends Controller
           'ticket_nolog' => $ticket->ticket_nolog,
           'kategori' => $ticket->cat_name,
           'tajuk' => $ticket->ticket_title,
-          'status' => $ticket->status_name,
+          'status' => $ticket->status_name === 'Aduan Baru' ? 'Aduan Baharu' : $ticket->status_name,
           'status_id' => $ticket->status_id,
           'assigned_to' => $ticket->assigned_to ?? 'Belum Ditugaskan',
           'sla_duedate' => $ticket->sla_duedate ? Carbon::parse($ticket->sla_duedate)->format('d/m/Y H:i') : '-',
@@ -1578,11 +1597,30 @@ class DashboardController extends Controller
             return '<button type="button" class="btn btn-sm view-record" data-uuid="' . $row['ticket_uuid'] . '" title="Lihat Tiket"><i class="bx bx-show"></i></button>';
           })
           ->editColumn('status', function ($row) {
-            $badgeClass = 'badge-warning'; // Default for overdue
-            if ($row['status_id'] == 1) $badgeClass = 'badge-info';
-            else if ($row['status_id'] == 2) $badgeClass = 'badge-warning';
-            else if ($row['status_id'] == 3) $badgeClass = 'badge-primary';
-            else if ($row['status_id'] == 4) $badgeClass = 'badge-secondary';
+            $badgeClass = 'badge-warning'; // Default
+            switch ($row['status_id']) {
+              case 1:
+                $badgeClass = 'badge-primary';
+                break; // Aduan Baru
+              case 2:
+                $badgeClass = 'badge-warning';
+                break; // Aduan Diproses
+              case 3:
+                $badgeClass = 'badge-info';
+                break; // Serahan Kepada
+              case 4:
+                $badgeClass = 'badge-danger';
+                break; // Aduan Dirujuk
+              case 5:
+                $badgeClass = 'badge-secondary';
+                break; // Aduan DiBatal
+              case 6:
+                $badgeClass = 'badge-success';
+                break; // Aduan Selesai
+              default:
+                $badgeClass = 'badge-secondary';
+                break;
+            }
 
             return '<span class="badge ' . $badgeClass . '">' . $row['status'] . '</span>';
           })
