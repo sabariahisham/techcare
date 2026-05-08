@@ -499,68 +499,71 @@ class TicketNotificationService
         return $notificationSent;
       }
 
-      // For other statuses, notify latest assigned officer
-      $latestChronology = TicketChronology::where('ticket_id', $ticket->id)
+      // For other statuses, notify ALL assigned officers for this status
+      $chronologies = TicketChronology::where('ticket_id', $ticket->id)
         ->whereNotNull('escalate_to')
-        ->latest()
-        ->first();
+        ->where('tick_status', $newStatus)
+        ->get();
 
-      if (!$latestChronology || !$latestChronology->escalate_to) {
-        Log::info('No officer assigned for status change notification', [
+      if ($chronologies->isEmpty()) {
+        Log::info('No officers assigned for status change notification', [
           'ticket_id' => $ticket->id,
           'new_status' => $newStatus
         ]);
         return false;
       }
 
-      $assignedOfficer = User::find($latestChronology->escalate_to);
+      $notificationSent = false;
+      foreach ($chronologies as $chronology) {
+        $assignedOfficer = User::find($chronology->escalate_to);
+        if (!$assignedOfficer || !$assignedOfficer->email) {
+          Log::warning('Assigned officer has no email for status change', [
+            'ticket_id' => $ticket->id,
+            'officer_id' => $chronology->escalate_to
+          ]);
+          continue;
+        }
 
-      if (!$assignedOfficer || !$assignedOfficer->email) {
-        Log::warning('Assigned officer has no email for status change', [
-          'ticket_id' => $ticket->id,
-          'officer_id' => $latestChronology->escalate_to
+        // Log to mail channel - SENDING
+        Log::channel('mail')->info("[MAIL][{$notificationType}][SENDING] Preparing email to assigned officer", [
+          'ticket' => $ticket->ticket_nolog,
+          'recipient_email' => $this->maskEmail($assignedOfficer->email),
+          'recipient_name' => $assignedOfficer->nama,
+          'old_status' => $oldStatus,
+          'new_status' => $newStatus,
+          'level' => $chronology->level_pegtugas_id ?? 1
         ]);
-        return false;
+
+        $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
+          $ticket,
+          $oldStatus,
+          $newStatus,
+          $changedBy,
+          $notes,
+          $chronology->level_pegtugas_id ?? 1
+        ));
+
+        // Log to mail channel - SUCCESS
+        Log::channel('mail')->info("[MAIL][{$notificationType}][SUCCESS] Email sent to assigned officer", [
+          'ticket' => $ticket->ticket_nolog,
+          'recipient_email' => $this->maskEmail($assignedOfficer->email),
+          'recipient_name' => $assignedOfficer->nama,
+          'old_status' => $oldStatus,
+          'new_status' => $newStatus,
+          'level' => $chronology->level_pegtugas_id ?? 1
+        ]);
+
+        Log::info('Status change notification sent to officer', [
+          'ticket_id' => $ticket->id,
+          'new_status' => $newStatus,
+          'officer_id' => $assignedOfficer->id,
+          'officer_email' => $assignedOfficer->email,
+          'level' => $chronology->level_pegtugas_id
+        ]);
+
+        $notificationSent = true;
       }
-
-      // Log to mail channel - SENDING
-      Log::channel('mail')->info("[MAIL][{$notificationType}][SENDING] Preparing email to assigned officer", [
-        'ticket' => $ticket->ticket_nolog,
-        'recipient_email' => $this->maskEmail($assignedOfficer->email),
-        'recipient_name' => $assignedOfficer->nama,
-        'old_status' => $oldStatus,
-        'new_status' => $newStatus,
-        'level' => $latestChronology->level_pegtugas_id ?? 1
-      ]);
-
-      $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
-        $ticket,
-        $oldStatus,
-        $newStatus,
-        $changedBy,
-        $notes,
-        $latestChronology->level_pegtugas_id ?? 1
-      ));
-
-      // Log to mail channel - SUCCESS
-      Log::channel('mail')->info("[MAIL][{$notificationType}][SUCCESS] Email sent to assigned officer", [
-        'ticket' => $ticket->ticket_nolog,
-        'recipient_email' => $this->maskEmail($assignedOfficer->email),
-        'recipient_name' => $assignedOfficer->nama,
-        'old_status' => $oldStatus,
-        'new_status' => $newStatus,
-        'level' => $latestChronology->level_pegtugas_id ?? 1
-      ]);
-
-      Log::info('Status change notification sent to officer', [
-        'ticket_id' => $ticket->id,
-        'new_status' => $newStatus,
-        'officer_id' => $assignedOfficer->id,
-        'officer_email' => $assignedOfficer->email,
-        'level' => $latestChronology->level_pegtugas_id
-      ]);
-
-      return true;
+      return $notificationSent;
     } catch (\Exception $e) {      // Log to mail channel - FAILED
       Log::channel('mail')->error('[MAIL][STATUS_CHANGE][FAILED] Status change email failed for ticket owner', [
         'ticket' => $ticket->ticket_nolog,
