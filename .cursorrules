@@ -1,0 +1,387 @@
+# Cursor Rules for TechCare System (Laravel 12)
+
+## Purpose
+
+Generate clean, secure, readable, maintainable, and high-performance Laravel 12 code using Bootstrap 5 + Sneat + jQuery.
+
+Code must prioritize:
+
+- simplicity
+- readability
+- maintainability
+- security
+- predictable structure
+
+Avoid over-engineering and unnecessary abstraction.
+
+---
+
+# 1. General Rules
+
+- Follow Laravel 12 default MVC structure.
+- Prefer simple and direct solutions.
+- Use Eloquent ORM directly.
+- Avoid unnecessary repositories, traits, helpers, or advanced patterns.
+- Preserve existing coding style and project structure.
+- Do not rewrite unrelated code.
+- Do not introduce new architecture unless requested.
+- Keep code human-friendly and easy for junior developers to understand.
+- Add comments only when necessary.
+
+---
+
+# 2. Project Structure
+
+## Controllers
+
+Location:
+app/Http/Controllers/
+
+Structure:
+
+- Admin/
+- Staff/
+- User/
+- Auth/
+
+Rules:
+
+- Controllers must stay thin.
+- Use RESTful methods only:
+  - index
+  - create
+  - store
+  - show
+  - edit
+  - update
+  - destroy
+- Keep controller logic short and readable.
+- Move reusable or complex logic to Services only when necessary.
+
+---
+
+## Models
+
+Location:
+app/Models/
+
+Rules:
+
+- Use fillable protection.
+- Define Eloquent relationships clearly.
+- Use singular PascalCase model names.
+
+Examples:
+
+- Ticket
+- TicketReply
+- Department
+- User
+
+---
+
+## Requests
+
+Location:
+app/Http/Requests/
+
+Rules:
+
+- Use FormRequest when validation becomes large or reusable.
+
+Examples:
+
+- StoreTicketRequest
+- UpdateProfileRequest
+
+---
+
+## Services
+
+Location:
+app/Services/
+
+Rules:
+
+- Use only for reusable or complex business logic.
+- Avoid unnecessary abstraction.
+- Do not create services for simple CRUD.
+
+Examples:
+
+- TicketService
+- AttachmentService
+- EmailService
+
+---
+
+## Views
+
+Location:
+resources/views/
+
+Structure:
+
+- layouts/
+- components/
+- admin/
+- staff/
+- user/
+- auth/
+
+Rules:
+
+- Separate views by role/module.
+- Use Blade partials/components only when it improves clarity.
+- Keep frontend simple and clean.
+
+---
+
+## Routes
+
+Location:
+routes/
+
+Structure:
+
+- web.php
+- admin.php
+- staff.php
+- user.php
+
+Rules:
+
+- Separate routes by role/module.
+- Use route naming convention.
+
+Examples:
+
+- admin.tickets.index
+- staff.tickets.show
+- user.profile.edit
+
+---
+
+# 3. Naming Convention
+
+- Models: Singular PascalCase
+- Controllers: PascalCaseController
+- Tables: plural snake_case
+- Columns: snake_case
+- Variables: camelCase
+- Constants: UPPER_CASE
+- Routes: dot notation
+
+Examples:
+
+- tickets
+- ticket_replies
+- assigned_to
+
+---
+
+# 4. Controller Rules
+
+- Validate input using Laravel Validator or FormRequest.
+- Sanitize user input before saving:
+  - strip_tags()
+  - htmlspecialchars()
+- Return JSON for AJAX requests.
+- Return Blade views for normal requests.
+- Avoid heavy business logic inside controllers.
+
+---
+
+# 5. Blade Rules
+
+- Use Bootstrap 5 + Sneat layout.
+- Use Blade escaping:
+  {{ }}
+- Avoid inline CSS.
+- Avoid inline JavaScript.
+- Keep markup clean and readable.
+- Use reusable partials when appropriate.
+
+---
+
+# 6. AJAX Rules
+
+Use:
+
+- jQuery only
+- simple $.ajax()
+
+Standard structure:
+
+- method
+- url
+- data
+- success
+- error
+
+Standard JSON response:
+
+```json
+{
+  "status": true,
+  "message": "Success",
+  "data": []
+}
+```
+
+Avoid:
+
+- fetch()
+- axios()
+- promises
+- React/Vue unless requested
+
+---
+
+# 7. Database Rules
+
+- Use Eloquent relationships.
+- Avoid raw SQL unless necessary.
+- Use migrations only.
+- Keep migration fields simple and clearly named.
+- Use foreign keys where appropriate.
+
+---
+
+# 8. Security Rules
+
+Always:
+
+- validate input
+- sanitize user input
+- use fillable
+- escape Blade output
+- use CSRF protection
+- validate uploads
+
+Never:
+
+- trust frontend validation only
+- expose original upload filenames publicly
+- echo unescaped HTML unless requested
+- expose sensitive server paths
+
+---
+
+# 9. File Upload Rules
+
+Uploads must:
+
+- rename files securely
+- validate mime type
+- validate file size
+- store in storage/app/public
+
+Do not:
+
+- use original filenames directly
+- allow executable uploads
+
+---
+
+# 10. Ticket Module Standards
+
+## Ticket Number Format
+
+HELP-YYYY-MM-DD-XXXX
+
+Example:
+HELP-2026-05-08-0001
+
+---
+
+## Ticket Status
+
+Allowed statuses:
+
+- Aduan Baharu
+- Dalam Tindakan
+- Selesai
+- Ditutup
+
+---
+
+## Ticket Priority
+
+Allowed priorities:
+
+- Rendah
+- Sederhana
+- Tinggi
+- Kritikal
+
+---
+
+# 11. Frontend Standards
+
+Frontend stack:
+
+- Bootstrap 5
+- Sneat
+- jQuery
+- SweetAlert2
+- DataTables
+
+Rules:
+
+- Use clean responsive layouts.
+- Prefer reusable UI components.
+- Use modals for create/edit when appropriate.
+- Avoid unnecessary animations or complexity.
+
+---
+
+# 12. Logging Rules
+
+Log important actions:
+
+- ticket creation
+- ticket updates
+- failed uploads
+- failed email sending
+- login/logout activity
+
+Use Laravel Log facade.
+
+---
+
+# 13. Forbidden Stack / Patterns
+
+Avoid introducing:
+
+- React
+- Vue
+- TypeScript
+- Repository Pattern
+- Complex Service Pattern
+- CQRS
+- DDD
+- Microservice architecture
+- Overly advanced abstractions
+
+Unless explicitly requested.
+
+---
+
+# 14. Quality Expectations
+
+Code must:
+
+- be readable
+- be maintainable
+- be consistent across modules
+- avoid dead code
+- avoid duplicate logic
+- avoid unused variables
+- follow Laravel best practices
+- remain easy to debug
+
+Always prioritize:
+clarity > cleverness
+simple > complex
+maintainable > over-engineered
