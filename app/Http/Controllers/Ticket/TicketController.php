@@ -639,26 +639,34 @@ class TicketController extends Controller
         $slaDays = 3; // Default 3 working days
         $slaDueDate = Helpers::addWorkingDays(Carbon::now(), $slaDays);
 
-        // Create initial chronology entry
-        $chronologyData = [
-          'ticket_id' => $ticket->id,
-          'frm_user_id' => $user_id,
-          'level_pegtugas_id' => 1,
-          'tick_status' => $defaultStatus ? $defaultStatus->id : 1,
-          'escalate_to' => $this->getAssignedOfficer($validated['cat_id'], $validated['subcat_id'], 1),
-          'sla_duedate' => $slaDueDate,
-          'sla_days' => $slaDays,
-          'sla_severity' => null, // NULL for initial ticket creation
-          'created_by' => Auth::id(),
-          'updated_by' => Auth::id(),
-        ];
+        // Create initial chronology entries for ALL Level 1 officers
+        $assignedOfficerIds = $this->getAssignedOfficers($validated['cat_id'], $validated['subcat_id'], 1);
 
-        TicketChronology::create($chronologyData);
+        if ($assignedOfficerIds->isEmpty()) {
+          throw new \Exception('Tiada Pegawai Tugasan Level 1 ditemui untuk kategori dan sub kategori yang dipilih.');
+        }
+
+        foreach ($assignedOfficerIds as $officerId) {
+          $chronologyData = [
+            'ticket_id' => $ticket->id,
+            'frm_user_id' => $user_id,
+            'level_pegtugas_id' => 1,
+            'tick_status' => $defaultStatus ? $defaultStatus->id : 1,
+            'escalate_to' => $officerId,
+            'sla_duedate' => $slaDueDate,
+            'sla_days' => $slaDays,
+            'sla_severity' => null, // NULL for initial ticket creation
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
+          ];
+
+          TicketChronology::create($chronologyData);
+        }
 
         Log::info('Ticket and chronology created successfully', [
           'ticket_id' => $ticket->id,
           'ticket_nolog' => $ticketNumber,
-          'assigned_officer' => $chronologyData['escalate_to'],
+          'assigned_officers' => $assignedOfficerIds->values()->toArray(),
           'sla_days' => $slaDays,
           'sla_severity' => null
         ]);
@@ -1529,6 +1537,59 @@ class TicketController extends Controller
       ]);
 
       return null;
+    }
+  }
+
+  /**
+   * Get all assigned officers based on category, subcategory, and level
+   * Returns all valid officer user_ids for multi-assignment use cases.
+   */
+  private function getAssignedOfficers($catId, $subcatId, $levelTugasan = 1)
+  {
+    try {
+      if (!$catId || !$subcatId) {
+        Log::warning('Invalid category or subcategory for officer multi-assignment', [
+          'cat_id' => $catId,
+          'subcat_id' => $subcatId,
+          'level_tugasan' => $levelTugasan
+        ]);
+        return collect();
+      }
+
+      $officers = Officer::where('cat_id', $catId)
+        ->where('subcat_id', $subcatId)
+        ->where('level_tugasan', $levelTugasan)
+        ->whereNotNull('user_id')
+        ->with(['user' => function ($query) {
+          $query->whereNotNull('id');
+        }])
+        ->get();
+
+      $assignedOfficerIds = $officers
+        ->filter(function ($officer) {
+          return $officer->user && $officer->user->id;
+        })
+        ->pluck('user_id')
+        ->unique()
+        ->values();
+
+      Log::info('Officers resolved for multi-assignment', [
+        'cat_id' => $catId,
+        'subcat_id' => $subcatId,
+        'level_tugasan' => $levelTugasan,
+        'officers_count' => $assignedOfficerIds->count(),
+        'officer_ids' => $assignedOfficerIds->toArray()
+      ]);
+
+      return $assignedOfficerIds;
+    } catch (\Exception $e) {
+      Log::error('Failed to get assigned officers for multi-assignment', [
+        'cat_id' => $catId,
+        'subcat_id' => $subcatId,
+        'level_tugasan' => $levelTugasan,
+        'error' => $e->getMessage()
+      ]);
+      return collect();
     }
   }
 

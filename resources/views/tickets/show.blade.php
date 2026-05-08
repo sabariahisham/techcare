@@ -722,6 +722,8 @@ if ($showLevelTugasan !== null) {
 
 $filteredOfficers = $officersQuery
     ->select('users.id', 'users.nama', 'users.email')
+    ->distinct()
+    ->orderBy('users.nama')
     ->get();
 
 // IMPORTANT: Always include the logged-in user in the dropdown (with green tag)
@@ -893,7 +895,7 @@ $filteredOfficers = $officersQuery
                                         case 'Serahan Kepada':
                                             return 'Tiket diserahkan untuk tindakan lanjut.';
                                         case 'Aduan Dirujuk':
-                                            return 'Tiket telah dirujuk kepada pihak berkaitan untuk tindakan lanjut.';
+                                            return 'Tiket telah dirujuk kepada pihak berkaitan.';
                                         case 'Aduan DiBatal':
                                             return 'Tiket telah dibatalkan dan tidak akan diproses.';
                                         case 'Aduan Selesai':
@@ -948,13 +950,18 @@ $filteredOfficers = $officersQuery
 
                                 // Always add "Aduan Baru" as first item if it doesn't exist
 if (!$hasAduanBaru) {
-    // Get the first assigned officer from chronologies for Aduan Baru
-    $firstAssignedOfficer = $ticket
+    // Get all assigned officers from chronologies for Aduan Baru
+    $initialAssignedOfficers = $ticket
         ->chronologies()
         ->with('escalatedTo')
         ->whereNotNull('escalate_to')
+        ->where('tick_status', 1)
         ->orderBy('created_at', 'asc')
-        ->first();
+        ->get()
+        ->pluck('escalatedTo.nama')
+        ->filter()
+        ->unique()
+        ->values();
 
     $timelineItems->push(
         (object) [
@@ -962,9 +969,10 @@ if (!$hasAduanBaru) {
             'description' => $getStatusDescription('Aduan Baru'),
             'created_by' => $ticket->user ? $ticket->user->nama : 'Pengguna',
             'created_at' => $ticket->created_at,
+            'escalated_to_list' => $initialAssignedOfficers->toArray(),
             'escalated_to' =>
-                $firstAssignedOfficer && $firstAssignedOfficer->escalatedTo
-                    ? $firstAssignedOfficer->escalatedTo->nama
+                $initialAssignedOfficers->isNotEmpty()
+                    ? $initialAssignedOfficers->implode(', ')
                     : null,
             'is_current' => false,
             'is_initial' => true,
@@ -972,54 +980,71 @@ if (!$hasAduanBaru) {
     );
 }
 
-// Add all chronological entries
-foreach ($allChronologies as $chron) {
-    if ($chron->status) {
-        // Get new category and subcategory info if this is "Aduan Dirujuk"
-        $newCategoryName = null;
-        $newSubcategoryName = null;
+// Add chronological entries (group records with same status and timestamp)
+$groupedChronologies = $allChronologies
+    ->filter(function ($chron) {
+        return $chron->status !== null;
+    })
+    ->groupBy(function ($chron) {
+        // Group by status + exact timestamp + actor, so multi-assignment appears in one status card
+        return $chron->tick_status .
+            '|' .
+            $chron->created_at->format('Y-m-d H:i:s') .
+            '|' .
+            ($chron->created_by ?? 'system');
+    });
 
-        if ($chron->status->st_name === 'Aduan Dirujuk') {
-            // For "Aduan Dirujuk", get the current category and subcategory from the ticket at that chronology point
-            // These represent the NEW category/subcategory after referral
-            if ($ticket->cat_id) {
-                $newCat = \Illuminate\Support\Facades\DB::table('ref_categories')
-                    ->where('id', $ticket->cat_id)
-                    ->first(['cat_name']);
-                $newCategoryName = $newCat ? $newCat->cat_name : null;
-            }
-            if ($ticket->subcat_id) {
-                $newSubcat = \Illuminate\Support\Facades\DB::table('ref_sub_categories')
-                    ->where('id', $ticket->subcat_id)
-                    ->first(['subcat_name']);
-                $newSubcategoryName = $newSubcat ? $newSubcat->subcat_name : null;
-            }
+foreach ($groupedChronologies as $chronologyGroup) {
+    $firstChron = $chronologyGroup->first();
+
+    // Get new category and subcategory info if this is "Aduan Dirujuk"
+    $newCategoryName = null;
+    $newSubcategoryName = null;
+
+    if ($firstChron->status->st_name === 'Aduan Dirujuk') {
+        // For "Aduan Dirujuk", get the current category and subcategory from the ticket at that chronology point
+        // These represent the NEW category/subcategory after referral
+        if ($ticket->cat_id) {
+            $newCat = \Illuminate\Support\Facades\DB::table('ref_categories')
+                ->where('id', $ticket->cat_id)
+                ->first(['cat_name']);
+            $newCategoryName = $newCat ? $newCat->cat_name : null;
         }
-
-        $timelineItems->push(
-            (object) [
-                'status_name' => $chron->status->st_name,
-                'description' => $getStatusDescription($chron->status->st_name),
-                'created_by' => $chron->createdBy ? $chron->createdBy->nama : 'Sistem',
-                'created_at' => $chron->created_at,
-                'escalated_to' => $chron->escalatedTo
-                    ? $chron->escalatedTo->nama
-                    : null,
-                'new_category_name' => $newCategoryName,
-                'new_subcategory_name' => $newSubcategoryName,
-                'is_current' => $chron->tick_status == $ticket->tick_status,
-                'is_initial' => false,
-            ],
-        );
+        if ($ticket->subcat_id) {
+            $newSubcat = \Illuminate\Support\Facades\DB::table('ref_sub_categories')
+                ->where('id', $ticket->subcat_id)
+                ->first(['subcat_name']);
+            $newSubcategoryName = $newSubcat ? $newSubcat->subcat_name : null;
+        }
     }
+
+    $assignedOfficerNames = $chronologyGroup
+        ->pluck('escalatedTo.nama')
+        ->filter()
+        ->unique()
+        ->values();
+
+    $timelineItems->push(
+        (object) [
+            'status_name' => $firstChron->status->st_name,
+            'description' => $getStatusDescription($firstChron->status->st_name),
+            'created_by' => $firstChron->createdBy ? $firstChron->createdBy->nama : 'Sistem',
+            'created_at' => $firstChron->created_at,
+            'escalated_to_list' => $assignedOfficerNames->toArray(),
+            'escalated_to' => $assignedOfficerNames->isNotEmpty()
+                ? $assignedOfficerNames->implode(', ')
+                : null,
+            'new_category_name' => $newCategoryName,
+            'new_subcategory_name' => $newSubcategoryName,
+            'is_current' => $firstChron->tick_status == $ticket->tick_status,
+            'is_initial' => false,
+        ],
+    );
 }
 
-// Remove duplicates and ensure proper ordering (from newest to oldest - latest on top)
-$timelineItems = $timelineItems
-    ->unique(function ($item) {
-        return $item->status_name . '-' . $item->created_at->format('Y-m-d H:i:s');
-    })
-    ->sortByDesc('created_at'); // Show latest updates first
+// Show all chronology records from database without deduplication
+// Keep latest updates on top.
+$timelineItems = $timelineItems->sortByDesc('created_at')->values();
                             @endphp
 
                             {{-- Display complete timeline from oldest to newest (Aduan Baru to current status) --}}
@@ -1054,21 +1079,23 @@ $timelineItems = $timelineItems
                                         <p class="timeline-text">{{ $item->description }}</p>
 
                                         {{-- Show escalation/assignment info --}}
-                                        @if ($item->escalated_to)
+                                        @if (!empty($item->escalated_to_list) || $item->escalated_to)
                                             <div class="timeline-details mb-2">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="avatar avatar-sm me-2">
-                                                        <span class="avatar-initial rounded-circle bg-label-success">
-                                                            {{ strtoupper(substr($item->escalated_to, 0, 2)) }}
-                                                        </span>
-                                                    </div>
-                                                    <small class="timeline-time">
-                                                        <i class="bx bx-user-plus text-success"></i>
-                                                        <strong>{{ $item->status_name === 'Aduan Dirujuk' ? 'Dirujuk kepada:' : 'Diserahkan kepada:' }}</strong>
-                                                        <span
-                                                            class="text-success fw-bold">{{ $item->escalated_to }}</span>
-                                                    </small>
-                                                </div>
+                                                <small class="timeline-time d-block mb-1">
+                                                    <i class="bx bx-user-plus text-success"></i>
+                                                    <strong>{{ $item->status_name === 'Aduan Dirujuk' ? 'Dirujuk kepada:' : 'Diserahkan kepada:' }}</strong>
+                                                </small>
+                                                @if (!empty($item->escalated_to_list))
+                                                    <ul class="mb-0 ps-6">
+                                                        @foreach ($item->escalated_to_list as $officerName)
+                                                            <li class="text-success fw-bold">{{ $officerName }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                @else
+                                                    <ul class="mb-0 ps-6">
+                                                        <li class="text-success fw-bold">{{ $item->escalated_to }}</li>
+                                                    </ul>
+                                                @endif
                                             </div>
                                         @endif
 
@@ -1485,6 +1512,60 @@ $timelineItems = $timelineItems
 
         .timeline-time i {
             font-size: 0.875rem;
+        }
+
+        /* Compact chronology layout */
+        .timeline-item {
+            margin-bottom: 0.85rem;
+            padding-left: 0.75rem;
+        }
+
+        .timeline-marker {
+            top: 0.15rem;
+        }
+
+        .timeline-marker-icon {
+            width: 2.15rem;
+            height: 2.15rem;
+            font-size: 0.85rem;
+            border-width: 2px;
+        }
+
+        .timeline-content {
+            padding: 0.75rem 0.85rem;
+            border-radius: 0.6rem;
+        }
+
+        .timeline-text {
+            margin-bottom: 0.5rem;
+            font-size: 0.82rem;
+            line-height: 1.35;
+        }
+
+        .timeline-details {
+            padding: 0.45rem 0.6rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-details ul {
+            margin-bottom: 0;
+            padding-left: 1.15rem !important;
+        }
+
+        /* kronologi diserahkan kepada list item */
+        .timeline-details li { 
+            margin-bottom: 0.15rem;
+            line-height: 1.25;
+            font-size: 12px;
+        }
+
+        .timeline-meta {
+            padding-top: 0.35rem;
+        }
+
+        .timeline-time {
+            font-size: 0.77rem;
+            gap: 0.35rem;
         }
 
         /* Pulse animation for active/recent items */
@@ -2223,7 +2304,19 @@ $timelineItems = $timelineItems
                         $('#assigned_officers').empty();
                     }
 
+                    // Deduplicate by user id, then fallback by normalized name
+                    const uniqueOfficersMap = new Map();
                     officers.forEach(officer => {
+                        const officerId = String(officer.id ?? '').trim();
+                        const normalizedName = String(officer.nama ?? '').trim().toLowerCase();
+                        const dedupeKey = officerId || `name:${normalizedName}`;
+
+                        if (!uniqueOfficersMap.has(dedupeKey)) {
+                            uniqueOfficersMap.set(dedupeKey, officer);
+                        }
+                    });
+
+                    Array.from(uniqueOfficersMap.values()).forEach(officer => {
                         const isCurrentUser = officer.id === {{ auth()->user()->id }};
                         const option = new Option(officer.nama, officer.id, false, isCurrentUser);
                         $(option).attr('data-current-user', isCurrentUser ? 'true' : 'false');
@@ -2247,7 +2340,7 @@ $timelineItems = $timelineItems
                         $officerUserIdsForJS = \Illuminate\Support\Facades\DB::table('officers')->whereNull('deleted_at')->pluck('user_id')->toArray();
 
                         // Filter officers to show only those in officers table
-                        $filteredOfficersForJS = $officers->whereIn('id', $officerUserIdsForJS);
+                        $filteredOfficersForJS = $officers->whereIn('id', $officerUserIdsForJS)->unique('id')->values();
                     @endphp
                     @foreach ($filteredOfficersForJS as $officer)
                         @php

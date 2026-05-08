@@ -173,13 +173,15 @@ class TicketNotificationService
   private function sendToAssignedOfficer(Ticket $ticket, User $changedBy): bool
   {
     try {
-      // Get chronology with assigned officer at Level 1
-      $chronology = TicketChronology::where('ticket_id', $ticket->id)
+      $assignedOfficerIds = TicketChronology::where('ticket_id', $ticket->id)
         ->where('level_pegtugas_id', 1)
+        ->where('tick_status', 1)
         ->whereNotNull('escalate_to')
-        ->first();
+        ->pluck('escalate_to')
+        ->unique()
+        ->values();
 
-      if (!$chronology || !$chronology->escalate_to) {
+      if ($assignedOfficerIds->isEmpty()) {
         Log::info('No Level 1 officer assigned to ticket yet', [
           'ticket_id' => $ticket->id,
           'ticket_nolog' => $ticket->ticket_nolog
@@ -187,57 +189,62 @@ class TicketNotificationService
         return false;
       }
 
-      $assignedOfficer = User::find($chronology->escalate_to);
+      $notificationSent = false;
+      foreach ($assignedOfficerIds as $officerId) {
+        $assignedOfficer = User::find($officerId);
 
-      if (!$assignedOfficer || !$assignedOfficer->email) {
-        Log::warning('Assigned Level 1 officer has no email address', [
+        if (!$assignedOfficer || !$assignedOfficer->email) {
+          Log::warning('Assigned Level 1 officer has no email address', [
+            'ticket_id' => $ticket->id,
+            'ticket_nolog' => $ticket->ticket_nolog,
+            'officer_id' => $officerId,
+            'level_pegtugas_id' => 1
+          ]);
+          continue;
+        }
+
+        // Log to mail channel - SENDING
+        Log::channel('mail')->info('[MAIL][TICKET_ASSIGNED][SENDING] Preparing email to assigned officer', [
+          'ticket' => $ticket->ticket_nolog,
+          'recipient_email' => $this->maskEmail($assignedOfficer->email),
+          'recipient_name' => $assignedOfficer->nama,
+          'level' => 1,
+          'new_status' => 1, // Aduan Baru
+          'tick_status' => 1
+        ]);
+
+        $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
+          $ticket,
+          null,
+          1,
+          $changedBy,
+          'Tiket baru telah ditugaskan kepada anda. Sila ambil tindakan yang sewajarnya.',
+          1 // Level 1
+        ));
+
+        // Log to mail channel - SUCCESS
+        Log::channel('mail')->info('[MAIL][TICKET_ASSIGNED][SUCCESS] Email sent successfully to assigned officer', [
+          'ticket' => $ticket->ticket_nolog,
+          'recipient_email' => $this->maskEmail($assignedOfficer->email),
+          'recipient_name' => $assignedOfficer->nama,
+          'level' => 1,
+          'new_status' => 1, // Aduan Baru
+          'tick_status' => 1
+        ]);
+
+        Log::info('New ticket notification sent to assigned Level 1 officer', [
           'ticket_id' => $ticket->id,
           'ticket_nolog' => $ticket->ticket_nolog,
-          'officer_id' => $chronology->escalate_to,
-          'level_pegtugas_id' => $chronology->level_pegtugas_id
+          'officer_id' => $assignedOfficer->id,
+          'officer_email' => $assignedOfficer->email,
+          'officer_name' => $assignedOfficer->nama,
+          'level_pegtugas_id' => 1
         ]);
-        return false;
+
+        $notificationSent = true;
       }
 
-      // Log to mail channel - SENDING
-      Log::channel('mail')->info('[MAIL][TICKET_ASSIGNED][SENDING] Preparing email to assigned officer', [
-        'ticket' => $ticket->ticket_nolog,
-        'recipient_email' => $this->maskEmail($assignedOfficer->email),
-        'recipient_name' => $assignedOfficer->nama,
-        'level' => 1,
-        'new_status' => 1, // Aduan Baru
-        'tick_status' => 1
-      ]);
-
-      $assignedOfficer->notify(new PegawaiTugasanStatusChangedNotification(
-        $ticket,
-        null,
-        1,
-        $changedBy,
-        'Tiket baru telah ditugaskan kepada anda. Sila ambil tindakan yang sewajarnya.',
-        1 // Level 1
-      ));
-
-      // Log to mail channel - SUCCESS
-      Log::channel('mail')->info('[MAIL][TICKET_ASSIGNED][SUCCESS] Email sent successfully to assigned officer', [
-        'ticket' => $ticket->ticket_nolog,
-        'recipient_email' => $this->maskEmail($assignedOfficer->email),
-        'recipient_name' => $assignedOfficer->nama,
-        'level' => 1,
-        'new_status' => 1, // Aduan Baru
-        'tick_status' => 1
-      ]);
-
-      Log::info('New ticket notification sent to assigned Level 1 officer', [
-        'ticket_id' => $ticket->id,
-        'ticket_nolog' => $ticket->ticket_nolog,
-        'officer_id' => $assignedOfficer->id,
-        'officer_email' => $assignedOfficer->email,
-        'officer_name' => $assignedOfficer->nama,
-        'level_pegtugas_id' => $chronology->level_pegtugas_id
-      ]);
-
-      return true;
+      return $notificationSent;
     } catch (\Exception $e) {
       // Log to mail channel - FAILED
       Log::channel('mail')->error('[MAIL][TICKET_ASSIGNED][FAILED] Email sending failed to assigned officer', [
