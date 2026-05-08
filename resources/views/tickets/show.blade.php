@@ -179,6 +179,10 @@
                             Maklumat Pengadu (Bagi Pihak)
                         @endif
                     </h5>
+                    <small class="text-muted fst-italic d-block">                        
+                        Data dalam ruangan ini diselaraskan daripada <strong>Sistem Pergerakan Pegawai (SPP)</strong>.
+                        Sebarang kemas kini hendaklah dibuat melalui sistem tersebut.
+                    </small>
                 </div>
                 <div class="card-body">
                     @if ($ticket->user)
@@ -228,7 +232,7 @@
                                         </div>
                                     @endif
                                 </div>
-                                <div class="row">
+                                <div class="row mb-3">
                                     @if ($ticket->user->seksyen || $ticket->user->kod_sec)
                                         <div class="col-12 col-sm-6 mb-2 mb-sm-0">
                                             <h6 class="text-primary mb-1">
@@ -249,6 +253,25 @@
                                             </p>
                                         </div>
                                     @endif
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                                        <h6 class="text-primary mb-1">
+                                            <i class="bx bx-phone me-1"></i>Telefon Pejabat
+                                        </h6>
+                                        <p class="mb-0 small">
+                                            {{ $ticket->user->tel_no_p ?: 'Tiada Rekod' }}
+                                        </p>
+                                    </div>
+                                    <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                                        <h6 class="text-primary mb-1">
+                                            <i class="bx bx-mobile me-1"></i>Telefon Bimbit
+                                        </h6>
+                                        <p class="mb-0 small">
+                                            {{ $ticket->user->tel_no_hp ?: 'Tiada Rekod' }}
+                                        </p>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
