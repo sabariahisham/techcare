@@ -109,6 +109,161 @@ class TicketController extends Controller
   }
 
   /**
+   * Normalize assignee names from single or array-like values.
+   */
+  private function normalizeAssigneeNames($value): array
+  {
+    if (blank($value)) {
+      return [];
+    }
+
+    if (is_string($value)) {
+      $decoded = json_decode($value, true);
+      if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+        $value = $decoded;
+      } else {
+        $value = preg_split('/\s*,\s*/', $value, -1, PREG_SPLIT_NO_EMPTY);
+      }
+    }
+
+    if (!is_array($value)) {
+      $value = [$value];
+    }
+
+    return collect($value)
+      ->flatMap(function ($item) {
+        if (blank($item)) {
+          return [];
+        }
+
+        if (is_object($item)) {
+          if (isset($item->nama)) {
+            return [$item->nama];
+          }
+          return [trim((string) $item)];
+        }
+
+        if (is_array($item)) {
+          if (isset($item['nama'])) {
+            return [$item['nama']];
+          }
+
+          return collect($item)
+            ->filter(fn($nested) => !blank($nested))
+            ->map(fn($nested) => is_scalar($nested) ? trim((string) $nested) : null)
+            ->filter()
+            ->values()
+            ->all();
+        }
+
+        return [trim((string) $item)];
+      })
+      ->filter()
+      ->unique()
+      ->values()
+      ->all();
+  }
+
+  /**
+   * Keep officer name only (drop bin/binti/a-l/a-p segments).
+   */
+  // private function cleanOfficerDisplayName(string $name): string
+  // {
+  //   $name = trim($name);
+  //   if ($name === '') {
+  //     return '';
+  //   }
+
+  //   $parts = preg_split('/\s+(?:bin|binti|b|bt|a\s*\/\s*l|a\s*\/\s*p)\b/i', $name, 2);
+  //   return trim($parts[0] ?? $name);
+  // }
+
+  /**
+   * Render officer names as warning badges.
+   */
+  //
+
+  private function renderAssigneeBadges(array $names): string
+  {
+    if (empty($names)) {
+      return '<span class="badge bg-label-secondary badge-sm">
+                    Belum Ditugaskan
+                </span>';
+    }
+
+    $names = collect($names)
+      ->map(fn($name) => trim((string) $name))
+      ->filter()
+      ->unique()
+      ->values();
+
+    $visible = $names->take(1);
+
+    $hidden = $names->slice(1);
+
+    $html = $visible->map(fn($name) => '
+        <span class="badge me-1 mb-1"
+        style="
+            background-color:#e7e7ff;
+            color:#696cff;
+            font-size:12px;
+            font-weight:500;
+            padding:0.5rem 0.5rem;
+        ">
+            ' . e($name) . '
+        </span>
+    ')->implode('');
+
+    if ($hidden->isNotEmpty()) {
+
+      $hiddenBadges = $hidden->map(fn($name) => '
+            <span class="badge me-1 mb-1"
+            style="
+                background-color:#e7e7ff;
+                color:#696cff;
+                font-size:12px;
+                font-weight:500;
+                padding:0.5rem 0.5rem;
+            ">
+                ' . e($name) . '
+            </span>
+        ')->implode('');
+
+      $id = 'assignee_' . uniqid();
+
+      $html .= '
+            <span id="' . $id . '" style="display:none;">
+                ' . $hiddenBadges . '
+            </span>
+
+            <a href="javascript:void(0)"onclick="document.getElementById(\'' . $id . '\').style.display=\'inline\'; this.style.display=\'none\';
+               "style="font-size:12px; text-decoration:none; margin-left:2px;">(+' . $hidden->count() . ')
+            </a>
+        ';
+    }
+
+    return $html;
+  }
+
+  /**
+   * Get all assigned officer names for the ticket's current status.
+   */
+  private function getAssignedOfficerNames(Ticket $ticket): array
+  {
+    $assignedNames = $ticket->chronologies()
+      ->whereNotNull('escalate_to')
+      ->where('tick_status', $ticket->tick_status)
+      ->with('escalatedTo:id,nama')
+      ->get()
+      ->pluck('escalatedTo.nama')
+      ->filter()
+      ->values()
+      ->all();
+
+    return $this->normalizeAssigneeNames($assignedNames);
+  }
+
+  /**
    * Display admin tickets (Tiket Pentadbir Sistem)
    * Shows all tickets for Pentadbir Sistem
    */
@@ -246,19 +401,8 @@ class TicketController extends Controller
           return "<span class=\"badge {$statusClass}\">{$statusName}</span>";
         })
         ->addColumn('pegawai_tugasan', function ($ticket) {
-          // Get assigned officer from latest chronology for CURRENT ticket status
-          $latestChronology = $ticket->chronologies()
-            ->whereNotNull('escalate_to')
-            ->where('tick_status', $ticket->tick_status)
-            ->with('escalatedTo')
-            ->latest()
-            ->first();
-
-          if ($latestChronology && $latestChronology->escalatedTo) {
-            return $latestChronology->escalatedTo->nama;
-          }
-
-          return 'Belum Ditugaskan';
+          $assignedNames = $this->getAssignedOfficerNames($ticket);
+          return $this->renderAssigneeBadges($assignedNames);
         })
         ->addColumn('action', function ($ticket) {
           $user = Auth::user();
@@ -297,7 +441,7 @@ class TicketController extends Controller
           $actions .= '</div>';
           return $actions;
         })
-        ->rawColumns(['status', 'action'])
+        ->rawColumns(['status', 'pegawai_tugasan', 'action'])
         ->make(true);
     } else {
       // Manage Tickets - for Pegawai Tugasan, Penyelia Helpdesk, Helpdesk On Duty, Pentadbir Sistem, Administrator
@@ -474,19 +618,8 @@ class TicketController extends Controller
           return "<span class=\"badge {$statusClass}\">{$statusName}</span>";
         })
         ->addColumn('pegawai_tugasan', function ($ticket) {
-          // Get assigned officer from latest chronology for CURRENT ticket status
-          $latestChronology = $ticket->chronologies()
-            ->whereNotNull('escalate_to')
-            ->where('tick_status', $ticket->tick_status)
-            ->with('escalatedTo')
-            ->latest()
-            ->first();
-
-          if ($latestChronology && $latestChronology->escalatedTo) {
-            return $latestChronology->escalatedTo->nama;
-          }
-
-          return 'Belum Ditugaskan';
+          $assignedNames = $this->getAssignedOfficerNames($ticket);
+          return $this->renderAssigneeBadges($assignedNames);
         })
         ->addColumn('action', function ($ticket) {
 
@@ -547,7 +680,7 @@ class TicketController extends Controller
           $actions .= '</div>';
           return $actions;
         })
-        ->rawColumns(['no_log_tiket', 'nama_pengadu', 'status', 'action']) // Include HTML columns for rendering
+        ->rawColumns(['no_log_tiket', 'nama_pengadu', 'status', 'pegawai_tugasan', 'action']) // Include HTML columns for rendering
         ->make(true);
     }
   }
