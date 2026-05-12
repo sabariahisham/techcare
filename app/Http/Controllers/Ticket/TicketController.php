@@ -229,15 +229,23 @@ class TicketController extends Controller
             </span>
         ')->implode('');
 
-      $id = 'assignee_' . uniqid();
+      $hiddenId = 'assignee_hidden_' . uniqid();
+      $expandId = 'assignee_expand_' . uniqid();
 
       $html .= '
-            <span id="' . $id . '" style="display:none;">
+            <span id="' . $hiddenId . '" style="display:none;">
                 ' . $hiddenBadges . '
+                <a href="javascript:void(0)"
+                   style="font-size:12px; text-decoration:none; margin-left:2px; white-space:nowrap;"
+                   onclick="document.getElementById(\'' . $hiddenId . '\').style.display=\'none\'; document.getElementById(\'' . $expandId . '\').style.display=\'inline\';">
+                    <i class="bx bxs-chevron-up-square"></i>
+                </a>
             </span>
 
-            <a href="javascript:void(0)"onclick="document.getElementById(\'' . $id . '\').style.display=\'inline\'; this.style.display=\'none\';
-               "style="font-size:12px; text-decoration:none; margin-left:2px;">(+' . $hidden->count() . ')
+            <a id="' . $expandId . '"
+               href="javascript:void(0)"
+               onclick="document.getElementById(\'' . $hiddenId . '\').style.display=\'inline\'; document.getElementById(\'' . $expandId . '\').style.display=\'none\';"
+               style="font-size:12px; text-decoration:none; margin-left:2px;">(+' . $hidden->count() . ')
             </a>
         ';
     }
