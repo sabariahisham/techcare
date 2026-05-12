@@ -945,23 +945,142 @@ $filteredOfficers = $officersQuery
                                     }
                                 };
 
+                                $normalizeAssigneeNames = function ($value) use (&$normalizeAssigneeNames) {
+                                    if (blank($value)) {
+                                        return [];
+                                    }
+
+                                    if ($value instanceof \Illuminate\Support\Collection) {
+                                        $value = $value->all();
+                                    }
+
+                                    if (is_string($value)) {
+                                        $decoded = json_decode($value, true);
+                                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                            $value = $decoded;
+                                        } else {
+                                            $value = preg_split('/\s*,\s*/', $value, -1, PREG_SPLIT_NO_EMPTY);
+                                        }
+                                    }
+
+                                    if (is_object($value) && method_exists($value, 'toArray')) {
+                                        $value = $value->toArray();
+                                    }
+
+                                    if (!is_array($value)) {
+                                        $value = [$value];
+                                    }
+
+                                    $normalizedValues = collect($value)
+                                        ->flatMap(function ($item) use (&$normalizeAssigneeNames) {
+                                            if (blank($item)) {
+                                                return [];
+                                            }
+
+                                            if (is_object($item)) {
+                                                if (isset($item->nama)) {
+                                                    return [$item->nama];
+                                                }
+
+                                                return method_exists($item, 'toArray')
+                                                    ? $normalizeAssigneeNames($item->toArray())
+                                                    : [trim((string) $item)];
+                                            }
+
+                                            if (is_array($item)) {
+                                                if (isset($item['nama'])) {
+                                                    return [$item['nama']];
+                                                }
+
+                                                return $normalizeAssigneeNames($item);
+                                            }
+
+                                            return [trim((string) $item)];
+                                        })
+                                        ->filter()
+                                        ->values();
+
+                                    $numericIds = $normalizedValues
+                                        ->filter(fn($item) => is_numeric($item))
+                                        ->map(fn($item) => (int) $item)
+                                        ->unique()
+                                        ->values();
+
+                                    $resolvedNames = $numericIds->isNotEmpty()
+                                        ? \App\Models\User::whereIn('id', $numericIds)->pluck('nama', 'id')
+                                        : collect();
+
+                                    return $normalizedValues
+                                        ->map(function ($item) use ($resolvedNames) {
+                                            if (is_numeric($item) && $resolvedNames->has((int) $item)) {
+                                                return $resolvedNames[(int) $item];
+                                            }
+
+                                            return trim((string) $item);
+                                        })
+                                        ->filter()
+                                        ->unique()
+                                        ->values()
+                                        ->all();
+                                };
+
+                                $resolveAssigneeNamesFromChronologies = function ($chronologies) use (
+                                    &$normalizeAssigneeNames,
+                                ) {
+                                    return $normalizeAssigneeNames(
+                                        collect($chronologies)
+                                            ->flatMap(function ($chronology) {
+                                                $values = [];
+
+                                                if ($chronology->escalatedTo) {
+                                                    $values[] = $chronology->escalatedTo->nama;
+                                                }
+
+                                                if (!blank($chronology->escalate_to)) {
+                                                    $values[] = $chronology->escalate_to;
+                                                }
+
+                                                return $values;
+                                            })
+                                            ->all(),
+                                    );
+                                };
+
+                                $formatAssigneeDisplayList = function ($names) {
+                                    if (empty($names)) {
+                                        return [];
+                                    }
+
+                                    $names = collect($names)
+                                        ->map(fn($name) => trim((string) $name))
+                                        ->filter()
+                                        ->unique()
+                                        ->values();
+
+                                    if ($names->isEmpty()) {
+                                        return [];
+                                    }
+
+                                    return $names->all();
+                                };
+
                                 // Build complete timeline array starting with "Aduan Baru"
                                 $timelineItems = collect();
 
                                 // Always add "Aduan Baru" as first item if it doesn't exist
 if (!$hasAduanBaru) {
     // Get all assigned officers from chronologies for Aduan Baru
-    $initialAssignedOfficers = $ticket
+    $initialAssignedOfficerNames = $resolveAssigneeNamesFromChronologies(
+        $ticket
         ->chronologies()
         ->with('escalatedTo')
         ->whereNotNull('escalate_to')
         ->where('tick_status', 1)
         ->orderBy('created_at', 'asc')
         ->get()
-        ->pluck('escalatedTo.nama')
-        ->filter()
-        ->unique()
-        ->values();
+    );
+
+    $initialAssignedOfficers = $formatAssigneeDisplayList($initialAssignedOfficerNames);
 
     $timelineItems->push(
         (object) [
@@ -969,10 +1088,10 @@ if (!$hasAduanBaru) {
             'description' => $getStatusDescription('Aduan Baru'),
             'created_by' => $ticket->user ? $ticket->user->nama : 'Pengguna',
             'created_at' => $ticket->created_at,
-            'escalated_to_list' => $initialAssignedOfficers->toArray(),
+            'escalated_to_list' => $initialAssignedOfficers,
             'escalated_to' =>
-                $initialAssignedOfficers->isNotEmpty()
-                    ? $initialAssignedOfficers->implode(', ')
+                !empty($initialAssignedOfficers)
+                    ? implode(', ', $initialAssignedOfficers)
                     : null,
             'is_current' => false,
             'is_initial' => true,
@@ -1018,11 +1137,8 @@ foreach ($groupedChronologies as $chronologyGroup) {
         }
     }
 
-    $assignedOfficerNames = $chronologyGroup
-        ->pluck('escalatedTo.nama')
-        ->filter()
-        ->unique()
-        ->values();
+    $assignedOfficerNames = $resolveAssigneeNamesFromChronologies($chronologyGroup);
+    $assignedOfficerDisplayList = $formatAssigneeDisplayList($assignedOfficerNames);
 
     $timelineItems->push(
         (object) [
@@ -1030,9 +1146,9 @@ foreach ($groupedChronologies as $chronologyGroup) {
             'description' => $getStatusDescription($firstChron->status->st_name),
             'created_by' => $firstChron->createdBy ? $firstChron->createdBy->nama : 'Sistem',
             'created_at' => $firstChron->created_at,
-            'escalated_to_list' => $assignedOfficerNames->toArray(),
-            'escalated_to' => $assignedOfficerNames->isNotEmpty()
-                ? $assignedOfficerNames->implode(', ')
+            'escalated_to_list' => $assignedOfficerDisplayList,
+            'escalated_to' => !empty($assignedOfficerDisplayList)
+                ? implode(', ', $assignedOfficerDisplayList)
                 : null,
             'new_category_name' => $newCategoryName,
             'new_subcategory_name' => $newSubcategoryName,
@@ -1079,18 +1195,58 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                                         <p class="timeline-text">{{ $item->description }}</p>
 
                                         {{-- Show escalation/assignment info --}}
-                                        @if (!empty($item->escalated_to_list) || $item->escalated_to)
+                                        @if (
+                                            $item->status_name !== 'Aduan Selesai' &&
+                                                (!empty($item->escalated_to_list) || $item->escalated_to)
+                                        )
                                             <div class="timeline-details mb-2">
                                                 <small class="timeline-time d-block mb-1">
                                                     <i class="bx bx-user-plus text-success"></i>
                                                     <strong>{{ $item->status_name === 'Aduan Dirujuk' ? 'Dirujuk kepada:' : 'Diserahkan kepada:' }}</strong>
                                                 </small>
                                                 @if (!empty($item->escalated_to_list))
+                                                    @php
+                                                        $assigneeNames = collect($item->escalated_to_list)->values();
+                                                        $primaryAssignee = $assigneeNames->first();
+                                                        $remainingAssignees = $assigneeNames->slice(1)->values();
+                                                        $expandAssigneesId =
+                                                            'timeline-assignees-expand-' . $index . '-' . uniqid();
+                                                        $remainingAssigneesId =
+                                                            'timeline-assignees-' . $index . '-' . uniqid();
+                                                    @endphp
                                                     <ul class="mb-0 ps-6">
-                                                        @foreach ($item->escalated_to_list as $officerName)
-                                                            <li class="text-success fw-bold">{{ $officerName }}</li>
-                                                        @endforeach
+                                                        <li class="text-success fw-bold">
+                                                            {{ $primaryAssignee }}
+                                                            @if ($remainingAssignees->isNotEmpty())
+                                                                <a href="javascript:void(0)"
+                                                                    id="{{ $expandAssigneesId }}"
+                                                                    class="fw-normal ms-1"
+                                                                    onclick="document.getElementById('{{ $remainingAssigneesId }}').style.display='block'; document.getElementById('{{ $expandAssigneesId }}').style.display='none';">
+                                                                    (+{{ $remainingAssignees->count() }})
+                                                                </a>
+                                                            @endif
+                                                        </li>
                                                     </ul>
+                                                    @if ($remainingAssignees->isNotEmpty())
+                                                        <div id="{{ $remainingAssigneesId }}" style="display:none;">
+                                                            <ul class="mb-0 ps-6 mt-1">
+                                                                @foreach ($remainingAssignees as $officerLabel)
+                                                                    <li class="text-success fw-bold">
+                                                                        <div class="d-flex justify-content-between align-items-center">
+                                                                        {{ $officerLabel }}
+                                                                        @if ($loop->last)
+                                                                            <a href="javascript:void(0)"
+                                                                                class="fw-normal ms-1"
+                                                                                onclick="document.getElementById('{{ $remainingAssigneesId }}').style.display='none'; document.getElementById('{{ $expandAssigneesId }}').style.display='inline';">
+                                                                                <i class="bx bx-chevron-up-square"></i>
+                                                                            </a>
+                                                                        @endif
+                                                                        </div>
+                                                                    </li>
+                                                                @endforeach
+                                                            </ul>
+                                                        </div>
+                                                    @endif
                                                 @else
                                                     <ul class="mb-0 ps-6">
                                                         <li class="text-success fw-bold">{{ $item->escalated_to }}</li>
