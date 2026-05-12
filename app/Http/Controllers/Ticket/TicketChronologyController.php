@@ -14,6 +14,7 @@ namespace App\Http\Controllers\Ticket;
 use App\Models\Ticket;
 use App\Models\TicketChronology;
 use App\Models\TicketComment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -62,6 +63,138 @@ class TicketChronologyController extends Controller
   }
 
   /**
+   * Normalize assignee names from single, comma-separated, JSON, or array values.
+   */
+  private static function normalizeAssigneeNames($value): array
+  {
+    if (blank($value)) {
+      return [];
+    }
+
+    if ($value instanceof \Illuminate\Support\Collection) {
+      $value = $value->all();
+    }
+
+    if (is_string($value)) {
+      $decoded = json_decode($value, true);
+      if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+        $value = $decoded;
+      } else {
+        $value = preg_split('/\s*,\s*/', $value, -1, PREG_SPLIT_NO_EMPTY);
+      }
+    }
+
+    if (is_object($value) && method_exists($value, 'toArray')) {
+      $value = $value->toArray();
+    }
+
+    if (!is_array($value)) {
+      $value = [$value];
+    }
+
+    $normalizedValues = collect($value)
+      ->flatMap(function ($item) {
+        if (blank($item)) {
+          return [];
+        }
+
+        if ($item instanceof User) {
+          return [$item->nama];
+        }
+
+        if (is_object($item)) {
+          if (isset($item->nama)) {
+            return [$item->nama];
+          }
+
+          return method_exists($item, 'toArray')
+            ? self::normalizeAssigneeNames($item->toArray())
+            : [trim((string) $item)];
+        }
+
+        if (is_array($item)) {
+          if (isset($item['nama'])) {
+            return [$item['nama']];
+          }
+
+          return self::normalizeAssigneeNames($item);
+        }
+
+        return [trim((string) $item)];
+      })
+      ->filter()
+      ->values();
+
+    $numericIds = $normalizedValues
+      ->filter(fn($item) => is_numeric($item))
+      ->map(fn($item) => (int) $item)
+      ->unique()
+      ->values();
+
+    $resolvedNames = $numericIds->isNotEmpty()
+      ? User::query()->whereIn('id', $numericIds->all(), 'and', false)->pluck('nama', 'id')
+      : collect();
+
+    return $normalizedValues
+      ->map(function ($item) use ($resolvedNames) {
+        if (is_numeric($item) && $resolvedNames->has((int) $item)) {
+          return $resolvedNames[(int) $item];
+        }
+
+        return trim((string) $item);
+      })
+      ->filter()
+      ->unique()
+      ->values()
+      ->all();
+  }
+
+  /**
+   * Resolve assignee names for chronology entries even when stored as arrays.
+   */
+  private static function getChronologyAssigneeNames(TicketChronology $chronology): array
+  {
+    $values = [];
+
+    if ($chronology->escalatedTo) {
+      $values[] = $chronology->escalatedTo->nama;
+    }
+
+    if (!blank($chronology->escalate_to)) {
+      $values[] = $chronology->escalate_to;
+    }
+
+    return self::normalizeAssigneeNames($values);
+  }
+
+  /**
+   * Format assignee names for timeline display.
+   */
+  private static function formatAssigneeNamesForDisplay(array $names): string
+  {
+    if (empty($names)) {
+      return '';
+    }
+
+    $names = collect($names)
+      ->map(fn($name) => trim((string) $name))
+      ->filter()
+      ->unique()
+      ->values();
+
+    if ($names->isEmpty()) {
+      return '';
+    }
+
+    $primaryName = $names->first();
+    $remainingCount = $names->count() - 1;
+
+    return $remainingCount > 0
+      ? $primaryName . ' (+' . $remainingCount . ')'
+      : $primaryName;
+  }
+
+  /**
    * Add chronology entry when ticket status changes
    * Also updates the ticket's current status to reflect the latest status
    */
@@ -89,7 +222,7 @@ class TicketChronologyController extends Controller
     }
 
     // Update ticket's current status to reflect the latest status change
-    $ticket = Ticket::find($ticketId);
+    $ticket = Ticket::query()->find($ticketId);
     if ($ticket) {
       $ticket->update([
         'tick_status' => $newStatusId,
@@ -111,13 +244,14 @@ class TicketChronologyController extends Controller
     if ($ticket->chronologies && $ticket->chronologies->count() > 0) {
       foreach ($ticket->chronologies as $chronology) {
         $statusName = $chronology->status ? $chronology->status->st_name : 'Status Tidak Diketahui';
+        $assigneeNames = self::getChronologyAssigneeNames($chronology);
 
         // Build details array with available chronology information
         $details = [];
 
         // Add escalation information
-        if ($chronology->escalate_to && $chronology->escalatedTo) {
-          $details['Diserahkan kepada'] = $chronology->escalatedTo->nama;
+        if (!empty($assigneeNames)) {
+          $details['Diserahkan kepada'] = self::formatAssigneeNamesForDisplay($assigneeNames);
         }
 
         // Add SLA information
