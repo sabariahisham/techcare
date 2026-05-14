@@ -50,10 +50,11 @@ class TicketAssignmentController extends Controller
     // Find ticket by UUID
     $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
 
-    // First, get the status name to check if it's "Aduan Dirujuk"
+    // First, get the status name to check special handling by status
     $selectedStatus = RefTicketStatus::find($request->tick_status);
     $isAduanDirujuk = $selectedStatus && $selectedStatus->st_name === 'Aduan Dirujuk';
     $isAduanBaru = $selectedStatus && $selectedStatus->st_name === 'Aduan Baru';
+    $isFinalStatus = $selectedStatus && in_array($selectedStatus->st_name, ['Aduan DiBatal', 'Aduan Selesai']);
 
     // Dynamic validation rules based on status
     $validationRules = [
@@ -88,10 +89,11 @@ class TicketAssignmentController extends Controller
       'has_any_officers_assigned' => $hasAnyOfficersAssigned,
       'has_officers_in_current_status' => $hasOfficersInCurrentStatus,
       'is_aduan_baru' => $isAduanBaru,
+      'is_final_status' => $isFinalStatus,
       'assigned_officers_provided' => $request->has('assigned_officers') ? count($request->assigned_officers) : 0
     ]);
 
-    if ($isAduanBaru) {
+    if ($isAduanBaru || $isFinalStatus) {
       $validationRules['assigned_officers'] = 'nullable|array';
       $validationRules['assigned_officers.*'] = 'exists:users,id';
     } else {
@@ -132,6 +134,19 @@ class TicketAssignmentController extends Controller
       'notes.max' => 'Catatan tidak boleh melebihi 1000 aksara.'
     ]);
 
+    // Pastikan assigned_officers sentiasa array (elak nilai tunggal daripada borang/Select2)
+    if ($request->has('assigned_officers')) {
+      $rawOfficers = $request->input('assigned_officers');
+      if (!is_array($rawOfficers)) {
+        $rawOfficers = ($rawOfficers === null || $rawOfficers === '') ? [] : [$rawOfficers];
+      }
+      $rawOfficers = array_values(array_unique(array_filter(
+        $rawOfficers,
+        static fn ($id) => $id !== null && $id !== ''
+      )));
+      $request->merge(['assigned_officers' => $rawOfficers]);
+    }
+
     try {
       // Store old status before updating
       $oldStatus = $ticket->tick_status;
@@ -165,8 +180,19 @@ class TicketAssignmentController extends Controller
 
       // Only assign officers if status is NOT "Aduan Baru"
       if (!$isAduanBaru) {
+        // Final statuses should only record the current actioning officer.
+        if ($isFinalStatus) {
+          $assignedOfficerIds = [Auth::id()];
+          $firstOfficerId = Auth::id();
+
+          \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Final status uses current actioning officer only', [
+            'ticket_id' => $ticket->id,
+            'new_status' => $request->tick_status,
+            'actioning_officer_id' => $firstOfficerId
+          ]);
+        }
         // If new officers are provided, use them
-        if ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
+        elseif ($request->has('assigned_officers') && !empty($request->assigned_officers)) {
           $assignedOfficerIds = $request->assigned_officers;
           $firstOfficerId = $assignedOfficerIds[0];
         } else {
@@ -312,110 +338,181 @@ class TicketAssignmentController extends Controller
 
       // Note: firstOfficerId is already set in SLA calculation section above
 
-      // Check if there's an existing chronology entry with the same status
-      // Look for ANY chronology with this status (including those with escalate_to)
-      $existingChronology = TicketChronology::where('ticket_id', $ticket->id)
-        ->where('tick_status', $request->tick_status)
-        ->orderBy('created_at', 'desc')
-        ->first();
+      $chronology = null;
+      $chronologyCreatedAt = $request->action_date ? Carbon::parse($request->action_date) : now();
 
-      // Log values before saving to chronology
-      \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Before Saving to Chronology', [
-        'ticket_id' => $ticket->id,
-        'tick_status' => $request->tick_status,
-        'sla_severity' => $slaSeverity,
-        'sla_days' => $slaDays,
-        'sla_duedate' => $slaDueDate ? $slaDueDate->format('Y-m-d H:i:s') : 'NULL',
-        'level_pegtugas' => $levelPetugas,
-        'escalate_to' => $firstOfficerId,
-        'existing_chronology' => $existingChronology ? 'YES (ID: ' . $existingChronology->id . ')' : 'NO'
-      ]);
-
-      if ($existingChronology) {
-        // Update existing chronology entry
-        $chronology = $existingChronology;
-        $chronology->update([
-          'frm_user_id' => Auth::id(),
-          'sla_severity' => $slaSeverity,
-          'sla_days' => $slaDays,
-          'sla_duedate' => $slaDueDate,
-          'level_pegtugas_id' => $levelPetugas,
-          'escalate_to' => $isAduanBaru ? null : $firstOfficerId, // NULL for Aduan Baru
-          'updated_by' => Auth::id(),
-          'updated_at' => $request->action_date ? Carbon::parse($request->action_date) : now(),
-        ]);
-
-        // Delete any other chronology entries for this ticket + status combination to avoid duplicates
-        TicketChronology::where('ticket_id', $ticket->id)
-          ->where('tick_status', $request->tick_status)
-          ->where('id', '!=', $chronology->id)
-          ->delete();
-
-        \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Existing Chronology Updated', [
-          'chronology_id' => $chronology->id,
-          'ticket_id' => $ticket->id,
-          'tick_status' => $request->tick_status,
-          'escalate_to' => $isAduanBaru ? 'NULL (Aduan Baru)' : $firstOfficerId,
-          'sla_severity' => $slaSeverity,
-          'sla_days' => $slaDays,
-          'sla_duedate' => $slaDueDate ? $slaDueDate->format('Y-m-d H:i:s') : null
-        ]);
-      } else {
-        // Create new chronology entry for status change
-        $chronologyData = [
-          'ticket_id' => $ticket->id,
-          'frm_user_id' => Auth::id(),
-          'tick_status' => $request->tick_status,
-          'sla_severity' => $slaSeverity,
-          'sla_days' => $slaDays,
-          'sla_duedate' => $slaDueDate,
-          'level_pegtugas_id' => $levelPetugas,
-          'escalate_to' => $isAduanBaru ? null : $firstOfficerId, // NULL for Aduan Baru
-          'created_by' => Auth::id(),
-          'updated_by' => Auth::id(),
-          'created_at' => $request->action_date ? Carbon::parse($request->action_date) : now(),
-          'updated_at' => now()
-        ];
-
-        // Create the chronology entry
-        $chronology = TicketChronology::create($chronologyData);
-
-        \Illuminate\Support\Facades\Log::info('updateTicketAssignment - New Chronology Created', [
-          'chronology_id' => $chronology->id,
-          'chronology_data' => $chronologyData
-        ]);
+      /** Senarai ID sah untuk cipta satu baris tickets_chronologies setiap pegawai (bukan Aduan Baru). */
+      $officerIdListForCreate = null;
+      if (!$isAduanBaru && !empty($assignedOfficerIds)) {
+        $officerIdListForCreate = array_values(array_unique(array_filter(
+          array_map(static fn ($id) => (int) $id, $assignedOfficerIds),
+          static fn ($id) => $id > 0
+        )));
+        if ($officerIdListForCreate === []) {
+          $officerIdListForCreate = null;
+        }
       }
 
-      // Handle additional officer assignments (2nd officer onwards) if provided
-      // Only create additional assignments if status is NOT "Aduan Baru"
-      if (!$isAduanBaru && !empty($assignedOfficerIds) && count($assignedOfficerIds) > 1) {
-        // Skip the first officer as it's already stored in the main chronology entry
-        $additionalOfficers = array_slice($assignedOfficerIds, 1);
-
-        // First, delete existing additional officer chronology entries for this status
-        TicketChronology::where('ticket_id', $ticket->id)
+      if ($isAduanBaru) {
+        $existingChronology = TicketChronology::where('ticket_id', $ticket->id)
           ->where('tick_status', $request->tick_status)
-          ->where('id', '!=', $chronology->id)
-          ->delete();
+          ->orderBy('created_at', 'desc')
+          ->first();
 
-        // Then create new entries for additional officers
-        foreach ($additionalOfficers as $officerId) {
-          // Create separate chronology entries for additional officers only
-          TicketChronology::create([
-            'ticket_id' => $ticket->id,
+        \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Before Saving to Chronology (Aduan Baru)', [
+          'ticket_id' => $ticket->id,
+          'tick_status' => $request->tick_status,
+          'existing_chronology' => $existingChronology ? 'YES (ID: ' . $existingChronology->id . ')' : 'NO',
+        ]);
+
+        if ($existingChronology) {
+          $chronology = $existingChronology;
+          $chronology->update([
             'frm_user_id' => Auth::id(),
-            'tick_status' => $request->tick_status,
-            'escalate_to' => $officerId,
             'sla_severity' => $slaSeverity,
             'sla_days' => $slaDays,
             'sla_duedate' => $slaDueDate,
             'level_pegtugas_id' => $levelPetugas,
+            'escalate_to' => null,
+            'updated_by' => Auth::id(),
+            'updated_at' => $chronologyCreatedAt,
+          ]);
+
+          TicketChronology::where('ticket_id', $ticket->id)
+            ->where('tick_status', $request->tick_status)
+            ->where('id', '!=', $chronology->id)
+            ->delete();
+        } else {
+          $chronology = TicketChronology::create([
+            'ticket_id' => $ticket->id,
+            'frm_user_id' => Auth::id(),
+            'tick_status' => $request->tick_status,
+            'sla_severity' => $slaSeverity,
+            'sla_days' => $slaDays,
+            'sla_duedate' => $slaDueDate,
+            'level_pegtugas_id' => $levelPetugas,
+            'escalate_to' => null,
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
-            'created_at' => $request->action_date ? Carbon::parse($request->action_date) : now(),
-            'updated_at' => now()
+            'created_at' => $chronologyCreatedAt,
+            'updated_at' => now(),
           ]);
         }
+      } elseif ($officerIdListForCreate !== null) {
+        \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Replacing chronology rows for status (multi-pegawai)', [
+          'ticket_id' => $ticket->id,
+          'tick_status' => $request->tick_status,
+          'officer_ids' => $officerIdListForCreate,
+          'level_default' => $levelPetugas,
+        ]);
+
+        TicketChronology::where('ticket_id', $ticket->id)
+          ->where('tick_status', $request->tick_status)
+          ->delete();
+
+        foreach ($officerIdListForCreate as $officerUserId) {
+          $rowLevel = $levelPetugas;
+          $officerRow = \Illuminate\Support\Facades\DB::table('officers')
+            ->where('user_id', $officerUserId)
+            ->where('cat_id', $catId)
+            ->where('subcat_id', $subcatId)
+            ->whereNull('deleted_at')
+            ->first();
+          if ($officerRow && $officerRow->level_tugasan !== null && $officerRow->level_tugasan !== '') {
+            $rowLevel = (int) $officerRow->level_tugasan;
+          }
+
+          $created = TicketChronology::create([
+            'ticket_id' => $ticket->id,
+            'frm_user_id' => Auth::id(),
+            'tick_status' => $request->tick_status,
+            'sla_severity' => $slaSeverity,
+            'sla_days' => $slaDays,
+            'sla_duedate' => $slaDueDate,
+            'level_pegtugas_id' => $rowLevel,
+            'escalate_to' => $officerUserId,
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
+            'created_at' => $chronologyCreatedAt,
+            'updated_at' => now(),
+          ]);
+
+          if ($chronology === null) {
+            $chronology = $created;
+          }
+        }
+      } else {
+        $existingChronology = TicketChronology::where('ticket_id', $ticket->id)
+          ->where('tick_status', $request->tick_status)
+          ->orderBy('created_at', 'desc')
+          ->first();
+
+        \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Before Saving to Chronology (legacy / tiada ID)', [
+          'ticket_id' => $ticket->id,
+          'tick_status' => $request->tick_status,
+          'sla_severity' => $slaSeverity,
+          'sla_days' => $slaDays,
+          'sla_duedate' => $slaDueDate ? $slaDueDate->format('Y-m-d H:i:s') : 'NULL',
+          'level_pegtugas' => $levelPetugas,
+          'escalate_to' => $firstOfficerId,
+          'is_final_status' => $isFinalStatus,
+          'existing_chronology' => $existingChronology ? 'YES (ID: ' . $existingChronology->id . ')' : 'NO',
+        ]);
+
+        if ($existingChronology) {
+          $chronology = $existingChronology;
+          $chronology->update([
+            'frm_user_id' => Auth::id(),
+            'sla_severity' => $slaSeverity,
+            'sla_days' => $slaDays,
+            'sla_duedate' => $slaDueDate,
+            'level_pegtugas_id' => $levelPetugas,
+            'escalate_to' => $isAduanBaru ? null : $firstOfficerId,
+            'updated_by' => Auth::id(),
+            'updated_at' => $chronologyCreatedAt,
+          ]);
+
+          TicketChronology::where('ticket_id', $ticket->id)
+            ->where('tick_status', $request->tick_status)
+            ->where('id', '!=', $chronology->id)
+            ->delete();
+
+          \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Existing Chronology Updated', [
+            'chronology_id' => $chronology->id,
+            'ticket_id' => $ticket->id,
+            'tick_status' => $request->tick_status,
+            'escalate_to' => $isAduanBaru ? 'NULL (Aduan Baru)' : $firstOfficerId,
+            'sla_severity' => $slaSeverity,
+            'sla_days' => $slaDays,
+            'sla_duedate' => $slaDueDate ? $slaDueDate->format('Y-m-d H:i:s') : null,
+          ]);
+        } else {
+          $chronologyData = [
+            'ticket_id' => $ticket->id,
+            'frm_user_id' => Auth::id(),
+            'tick_status' => $request->tick_status,
+            'sla_severity' => $slaSeverity,
+            'sla_days' => $slaDays,
+            'sla_duedate' => $slaDueDate,
+            'level_pegtugas_id' => $levelPetugas,
+            'escalate_to' => $isAduanBaru ? null : $firstOfficerId,
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
+            'created_at' => $chronologyCreatedAt,
+            'updated_at' => now(),
+          ];
+
+          $chronology = TicketChronology::create($chronologyData);
+
+          \Illuminate\Support\Facades\Log::info('updateTicketAssignment - New Chronology Created', [
+            'chronology_id' => $chronology->id,
+            'chronology_data' => $chronologyData,
+          ]);
+        }
+      }
+
+      if ($chronology === null) {
+        throw new \RuntimeException('Kronologi tiket gagal direkodkan.');
       }
 
       // Add notes to chronology if provided

@@ -227,6 +227,22 @@ $(function () {
   // Global reloadAllTables function is defined in config.js
   // It will automatically detect and reload the exposed DataTable instances
 
+  // Pegawai Tugasan "(+N)" — must use closest(), not duplicate IDs: Responsive clones cell HTML.
+  $(document).on('click', '.ticket-assignee-more', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var $wrap = $(this).closest('.ticket-assignee-badges');
+    $wrap.find('.ticket-assignee-extra').removeClass('d-none');
+    $(this).addClass('d-none');
+  });
+  $(document).on('click', '.ticket-assignee-collapse', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var $wrap = $(this).closest('.ticket-assignee-badges');
+    $wrap.find('.ticket-assignee-extra').addClass('d-none');
+    $wrap.find('.ticket-assignee-more').removeClass('d-none');
+  });
+
   // Edit and delete functionality removed - complainants should only log and submit tickets
 
   // View Record - Handle view button click for both tables

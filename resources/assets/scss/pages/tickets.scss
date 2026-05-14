@@ -332,3 +332,22 @@ input[readonly].form-control {
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
+
+// ===================================
+// DATA TABLES RESPONSIVE — Pegawai Tugasan
+// Papar semua nama terus (tanpa klik "+N") dalam child row / modal responsive
+// ===================================
+table.dataTable ul.dtr-details .ticket-assignee-badges,
+table.dataTable > tbody > tr.child .ticket-assignee-badges,
+.modal.dtr-bs-modal .ticket-assignee-badges {
+  .ticket-assignee-extra {
+    display: inline-flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .ticket-assignee-more,
+  .ticket-assignee-collapse {
+    display: none !important;
+  }
+}

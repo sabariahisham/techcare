@@ -6,6 +6,7 @@ use Ramsey\Uuid\Uuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -189,6 +190,69 @@ class Ticket extends Model implements Auditable
   public function chronologies()
   {
     return $this->hasMany(TicketChronology::class, 'ticket_id')->orderBy('created_at', 'asc');
+  }
+
+  /**
+   * Pegawai tugasan pada rentetan kronologi terakhir sebelum tutup/batal (status 5/6).
+   *
+   * Urutan mengikut id kronologi (bukan created_at) supaya rentetan betul walaupun
+   * "Tarikh Tindakan" pada borang menyebabkan created_at tidak seiring dengan urutan sebenar.
+   */
+  public function getActiveAssigneeUsersBeforeLatestTerminalChronology(): Collection
+  {
+    $terminal = [5, 6];
+    $rows = $this->chronologies()
+      ->orderBy('id', 'asc')
+      ->get(['id', 'tick_status', 'escalate_to']);
+
+    if ($rows->isEmpty()) {
+      return collect();
+    }
+
+    $maxTerminalId = $rows
+      ->filter(fn ($r) => in_array((int) $r->tick_status, $terminal, true))
+      ->max('id');
+
+    if ($maxTerminalId === null) {
+      return collect();
+    }
+
+    $before = $rows->filter(function ($r) use ($maxTerminalId, $terminal) {
+      return (int) $r->id < (int) $maxTerminalId
+        && !in_array((int) $r->tick_status, $terminal, true);
+    })->values();
+
+    if ($before->isEmpty()) {
+      return collect();
+    }
+
+    $i = $before->count() - 1;
+    $lastPreCloseStatus = (int) $before[$i]->tick_status;
+    $j = $i;
+    while ($j >= 0 && (int) $before[$j]->tick_status === $lastPreCloseStatus) {
+      $j--;
+    }
+
+    $orderedIds = $before
+      ->slice($j + 1, $i - $j)
+      ->pluck('escalate_to')
+      ->filter()
+      ->map(fn ($id) => (int) $id)
+      ->unique()
+      ->values();
+
+    if ($orderedIds->isEmpty()) {
+      return collect();
+    }
+
+    $users = User::query()
+      ->whereIn('id', $orderedIds->all())
+      ->get(['id', 'nama', 'email']);
+
+    return $orderedIds
+      ->map(fn (int $id) => $users->firstWhere('id', $id))
+      ->filter(fn ($user) => $user && !blank($user->nama ?? null))
+      ->values();
   }
 
   /**

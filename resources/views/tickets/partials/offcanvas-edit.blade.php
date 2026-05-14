@@ -97,7 +97,7 @@
                     <!-- Tajuk -->
                     <div class="mb-3">
                         <label class="form-label">Tajuk <span class="text-danger">*</span></label>
-                        <input type="text" name="tick_title" id="editTicketTitle" class="form-control" required>
+                        <input type="text" name="tick_title" id="editTicketTitle" class="form-control" style="text-transform: uppercase;" required>
                         <div class="invalid-feedback"></div>
                     </div>
 

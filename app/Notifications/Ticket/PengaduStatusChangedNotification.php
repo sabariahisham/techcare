@@ -12,6 +12,7 @@ namespace App\Notifications\Ticket;
 
 use App\Models\Ticket;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
@@ -72,22 +73,93 @@ class PengaduStatusChangedNotification extends Notification
   public function toMail(object $notifiable): MailMessage
   {
     $statusName = $this->getStatusName($this->newStatus);
-
-    // Get assigned user from latest chronology
-    $latestChronology = $this->ticket->chronologies()->latest()->first();
-    $assignedUser = $latestChronology && $latestChronology->escalate_to
-      ? $latestChronology->escalatedTo
-      : null;
+    $assignedUsers = $this->getAssignedUsers();
 
     return (new MailMessage)
       ->subject("[{$statusName}] {$this->ticket->ticket_nolog}: {$this->ticket->ticket_title}")
       ->markdown('emails.ticket.pengadu-status', [
         'ticket' => $this->ticket,
-        'assignedUser' => $assignedUser,
+        'assignedUser' => $assignedUsers->count() === 1 ? $assignedUsers->first() : $assignedUsers,
+        'assignedUsers' => $assignedUsers,
+        'newStatus' => $this->newStatus,
         'statusName' => $statusName,
         'changedBy' => $this->changedBy,
         'notes' => $this->notes,
       ]);
+  }
+
+  /**
+   * Get all assigned officers for the notification status.
+   */
+  private function getAssignedUsers(): Collection
+  {
+    if (in_array((int) $this->newStatus, [5, 6], true)) {
+      $beforeClose = $this->ticket->getActiveAssigneeUsersBeforeLatestTerminalChronology();
+      if ($beforeClose->isNotEmpty()) {
+        return self::sortUsersByGrade($beforeClose);
+      }
+    }
+
+    $assignedUsers = $this->ticket->chronologies()
+      ->whereNotNull('escalate_to')
+      ->where('tick_status', $this->newStatus)
+      ->with('escalatedTo:id,nama,nama_gred')
+      ->get()
+      ->pluck('escalatedTo')
+      ->filter(fn($user) => $user && !blank($user->nama))
+      ->unique('id')
+      ->values();
+
+    if ($assignedUsers->isNotEmpty()) {
+      return self::sortUsersByGrade($assignedUsers);
+    }
+
+    return self::sortUsersByGrade(
+      $this->ticket->chronologies()
+        ->whereNotNull('escalate_to')
+        ->with('escalatedTo:id,nama,nama_gred')
+        ->latest()
+        ->get()
+        ->pluck('escalatedTo')
+        ->filter(fn($user) => $user && !blank($user->nama))
+        ->unique('id')
+        ->values()
+    );
+  }
+
+  /**
+   * Sort user collection by nama_gred DESC then id ASC.
+   */
+  private static function sortUsersByGrade(Collection $users): Collection
+  {
+    if ($users->isEmpty()) {
+      return $users;
+    }
+
+    $needsGrade = $users->contains(fn($u) => !isset($u->nama_gred));
+    if ($needsGrade) {
+      $ids = $users->pluck('id')->filter()->unique()->values();
+      if ($ids->isNotEmpty()) {
+        $gradeMap = User::query()->whereIn('id', $ids->all(), 'and', false)->pluck('nama_gred', 'id');
+        $users = $users->map(function ($u) use ($gradeMap) {
+          if (!isset($u->nama_gred) && isset($gradeMap[$u->id])) {
+            $u->nama_gred = $gradeMap[$u->id];
+          }
+          return $u;
+        });
+      }
+    }
+
+    return $users
+      ->sort(function ($a, $b) {
+        $gradeA = (int) ($a->nama_gred ?? 0);
+        $gradeB = (int) ($b->nama_gred ?? 0);
+        if ($gradeA !== $gradeB) {
+          return $gradeB - $gradeA;
+        }
+        return $a->id - $b->id;
+      })
+      ->values();
   }
 
   /**

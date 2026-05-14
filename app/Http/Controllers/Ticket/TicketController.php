@@ -201,54 +201,40 @@ class TicketController extends Controller
 
     $hidden = $names->slice(1);
 
-    $html = $visible->map(fn($name) => '
-        <span class="badge me-1 mb-1"
-        style="
-            background-color:#e7e7ff;
-            color:#696cff;
-            font-size:12px;
-            font-weight:500;
-            padding:0.5rem 0.5rem;
-        ">
+    $badgeStyle = 'background-color:#e7e7ff;color:#696cff;font-size:12px;font-weight:500;padding:0.5rem 0.5rem;';
+
+    // Wrapper + class-based toggles (no element IDs): DataTables Responsive clones
+    // cell HTML into child rows, which duplicates IDs and breaks getElementById onclick.
+    $html = '<span class="ticket-assignee-badges d-inline-flex flex-wrap align-items-center">';
+
+    $html .= $visible->map(fn($name) => '
+        <span class="badge me-1 mb-1" style="' . $badgeStyle . '">
             ' . e($name) . '
         </span>
     ')->implode('');
 
     if ($hidden->isNotEmpty()) {
-
       $hiddenBadges = $hidden->map(fn($name) => '
-            <span class="badge me-1 mb-1"
-            style="
-                background-color:#e7e7ff;
-                color:#696cff;
-                font-size:12px;
-                font-weight:500;
-                padding:0.5rem 0.5rem;
-            ">
+            <span class="badge me-1 mb-1" style="' . $badgeStyle . '">
                 ' . e($name) . '
             </span>
         ')->implode('');
 
-      $hiddenId = 'assignee_hidden_' . uniqid();
-      $expandId = 'assignee_expand_' . uniqid();
-
-      $html .= '
-            <span id="' . $hiddenId . '" style="display:none;">
-                ' . $hiddenBadges . '
-                <a href="javascript:void(0)"
-                   style="font-size:12px; text-decoration:none; margin-left:2px; white-space:nowrap;"
-                   onclick="document.getElementById(\'' . $hiddenId . '\').style.display=\'none\'; document.getElementById(\'' . $expandId . '\').style.display=\'inline\';">
-                    <i class="bx bxs-chevron-up-square"></i>
-                </a>
-            </span>
-
-            <a id="' . $expandId . '"
-               href="javascript:void(0)"
-               onclick="document.getElementById(\'' . $hiddenId . '\').style.display=\'inline\'; document.getElementById(\'' . $expandId . '\').style.display=\'none\';"
-               style="font-size:12px; text-decoration:none; margin-left:2px;">(+' . $hidden->count() . ')
+      $html .= '<span class="ticket-assignee-extra d-none">' . $hiddenBadges . '
+            <a href="#"
+               class="ticket-assignee-collapse link-primary"
+               style="font-size:12px;text-decoration:none;margin-left:2px;white-space:nowrap;"
+               title="Tutup">
+                <i class="bx bxs-chevron-up-square"></i>
             </a>
-        ';
+        </span>';
+
+      $html .= '<a href="#"
+               class="ticket-assignee-more link-primary"
+               style="font-size:12px;text-decoration:none;margin-left:2px;white-space:nowrap;">(+' . $hidden->count() . ')</a>';
     }
+
+    $html .= '</span>';
 
     return $html;
   }
@@ -1958,18 +1944,24 @@ class TicketController extends Controller
       'level_tugasan' => 'nullable|integer|min:1|max:5'
     ]);
 
-    $levelTugasan = $request->level_tugasan ?? 1;
+    // Jika level_tugasan tidak dihantar, kembalikan semua peringkat tugasan untuk
+    // kategori/sub (sesuai penyerahan berbilang pegawai, cth. Aduan Dirujuk).
+    $levelTugasan = $request->filled('level_tugasan') ? (int) $request->level_tugasan : null;
 
     try {
       // Get officers assigned to this EXACT category and subcategory
       // This ensures the returned user_ids can be safely used as escalate_to values
-      $officers = Officer::where('cat_id', $request->cat_id)
+      $officersQuery = Officer::where('cat_id', $request->cat_id)
         ->where('subcat_id', $request->subcat_id)
-        ->where('level_tugasan', $levelTugasan)
-        ->whereNotNull('user_id') // Ensure officer has valid user_id
-        ->with(['user' => function ($q) {
-          $q->select('id', 'nama', 'email')->whereNotNull('id');
-        }])
+        ->whereNotNull('user_id'); // Ensure officer has valid user_id
+
+      if ($levelTugasan !== null) {
+        $officersQuery->where('level_tugasan', $levelTugasan);
+      }
+
+      $officers = $officersQuery->with(['user' => function ($q) {
+        $q->select('id', 'nama', 'email')->whereNotNull('id');
+      }])
         ->get();
 
       $officersData = [];
@@ -1983,6 +1975,7 @@ class TicketController extends Controller
             ->count();
 
           $officersData[] = [
+            'id' => $officer->user_id,
             'user_id' => $officer->user_id,
             'nama' => $officer->user->nama,
             'email' => $officer->user->email,
@@ -2002,7 +1995,7 @@ class TicketController extends Controller
       Log::info('Available officers retrieved for category/subcategory', [
         'cat_id' => $request->cat_id,
         'subcat_id' => $request->subcat_id,
-        'level_tugasan' => $levelTugasan,
+        'level_tugasan' => $levelTugasan ?? 'all',
         'officers_found' => count($officersData)
       ]);
 
@@ -2014,7 +2007,7 @@ class TicketController extends Controller
         'validation_info' => [
           'cat_id' => $request->cat_id,
           'subcat_id' => $request->subcat_id,
-          'level_tugasan' => $levelTugasan,
+          'level_tugasan' => $levelTugasan ?? 'all',
           'message' => 'All returned user_ids are valid for escalate_to field'
         ]
       ]);
