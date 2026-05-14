@@ -150,7 +150,8 @@ class TicketChronologyController extends Controller
   }
 
   /**
-   * Resolve assignee names for chronology entries even when stored as arrays.
+   * Resolve assignee names for chronology entries, sorted by grade (highest first)
+   * then by user ID (lowest first for same grade = more senior).
    */
   private static function getChronologyAssigneeNames(TicketChronology $chronology): array
   {
@@ -164,7 +165,39 @@ class TicketChronologyController extends Controller
       $values[] = $chronology->escalate_to;
     }
 
-    return self::normalizeAssigneeNames($values);
+    $names = self::normalizeAssigneeNames($values);
+
+    return self::sortNamesByGrade($names);
+  }
+
+  /**
+   * Sort resolved names by user grade (nama_gred DESC) then by user ID (ASC).
+   */
+  private static function sortNamesByGrade(array $names): array
+  {
+    if (empty($names)) {
+      return [];
+    }
+
+    $users = User::query()->whereIn('nama', $names, 'and', false)->get(['id', 'nama', 'nama_gred']);
+
+    if ($users->isEmpty()) {
+      return $names;
+    }
+
+    return $users
+      ->sort(function ($a, $b) {
+        $gradeA = (int) $a->nama_gred;
+        $gradeB = (int) $b->nama_gred;
+        if ($gradeA !== $gradeB) {
+          return $gradeB - $gradeA;
+        }
+        return $a->id - $b->id;
+      })
+      ->pluck('nama')
+      ->unique()
+      ->values()
+      ->all();
   }
 
   /**

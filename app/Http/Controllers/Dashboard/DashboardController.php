@@ -1112,28 +1112,30 @@ class DashboardController extends Controller
     try {
       $userId = Auth::id();
 
-      // Count all tickets currently assigned to this user (based on latest chronology)
-      // This shows the total number of active assignments
+      // Count active tickets currently assigned to this user.
+      // Uses whereColumn to match chronology rows for the ticket's current status,
+      // so multi-officer assignments are counted correctly for every officer.
       $todayCount = DB::table('tickets as t')
         ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
             ->where('tc.escalate_to', $userId)
-            ->whereRaw('tc.id = (
-              SELECT MAX(tc2.id)
-              FROM tickets_chronologies tc2
-              WHERE tc2.ticket_id = t.id
-              AND tc2.deleted_at IS NULL
-            )');
+            ->whereColumn('tc.tick_status', 't.tick_status');
         })
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->count();
+        ->whereNotIn('t.tick_status', [5, 6])
+        ->count(DB::raw('DISTINCT t.id'));
 
       return response()->json([
         'success' => true,
         'count' => $todayCount
       ]);
     } catch (\Exception $e) {
+      Log::error('Error in getTodayLogsCountPegawai', [
+        'error' => $e->getMessage(),
+        'user_id' => Auth::id()
+      ]);
+
       return response()->json([
         'success' => true,
         'count' => 0
@@ -1151,18 +1153,12 @@ class DashboardController extends Controller
       $endOfWeek = Carbon::now()->endOfWeek()->subDays(2); // Friday
       $userId = Auth::id();
 
-      // Get completed tickets (status = 6) for this week, grouped by day
-      // ALWAYS filter by escalate_to (assigned to this user)
+      // Completed tickets: find chronology rows with status 6 + escalate_to = user
       $weeklyData = DB::table('tickets as t')
         ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
             ->where('tc.escalate_to', $userId)
-            ->whereRaw('tc.id = (
-              SELECT MAX(tc2.id)
-              FROM tickets_chronologies tc2
-              WHERE tc2.ticket_id = t.id
-              AND tc2.deleted_at IS NULL
-            )');
+            ->where('tc.tick_status', 6);
         })
         ->select(
           DB::raw('DAYOFWEEK(t.updated_at) as day_of_week'),
@@ -1171,7 +1167,7 @@ class DashboardController extends Controller
         )
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->where('tc.tick_status', 6) // Completed status
+        ->where('t.tick_status', 6)
         ->whereBetween('t.updated_at', [$startOfWeek, $endOfWeek])
         ->groupBy(DB::raw('DATE(t.updated_at)'), DB::raw('DAYOFWEEK(t.updated_at)'))
         ->orderBy(DB::raw('DATE(t.updated_at)'))
@@ -1228,40 +1224,30 @@ class DashboardController extends Controller
     try {
       $userId = Auth::id();
 
-      // Base query for total tickets assigned to this user
+      // Total tickets assigned to this user (current status chronology)
       $totalTickets = DB::table('tickets as t')
-        ->join('tickets_chronologies as tc', function ($join) {
+        ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
-            ->whereRaw('tc.id = (
-              SELECT MAX(tc2.id)
-              FROM tickets_chronologies tc2
-              WHERE tc2.ticket_id = t.id
-              AND tc2.deleted_at IS NULL
-            )');
+            ->where('tc.escalate_to', $userId)
+            ->whereColumn('tc.tick_status', 't.tick_status');
         })
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->where('tc.escalate_to', $userId)
         ->whereYear('t.created_at', Carbon::now()->year)
-        ->count();
+        ->count(DB::raw('DISTINCT t.id'));
 
-      // Base query for pending tickets assigned to this user
+      // Pending tickets (not cancelled or completed)
       $pendingTickets = DB::table('tickets as t')
-        ->join('tickets_chronologies as tc', function ($join) {
+        ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
-            ->whereRaw('tc.id = (
-              SELECT MAX(tc2.id)
-              FROM tickets_chronologies tc2
-              WHERE tc2.ticket_id = t.id
-              AND tc2.deleted_at IS NULL
-            )');
+            ->where('tc.escalate_to', $userId)
+            ->whereColumn('tc.tick_status', 't.tick_status');
         })
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->whereNotIn('tc.tick_status', [5, 6]) // Not cancelled or completed
-        ->where('tc.escalate_to', $userId)
+        ->whereNotIn('t.tick_status', [5, 6])
         ->whereYear('t.created_at', Carbon::now()->year)
-        ->count();
+        ->count(DB::raw('DISTINCT t.id'));
 
       // Calculate percentage
       $percentage = $totalTickets > 0 ? round(($pendingTickets / $totalTickets) * 100, 1) : 0;
@@ -1273,6 +1259,11 @@ class DashboardController extends Controller
         'percentage' => $percentage
       ]);
     } catch (\Exception $e) {
+      Log::error('Error in getPendingTicketsStatsPegawai', [
+        'error' => $e->getMessage(),
+        'user_id' => Auth::id()
+      ]);
+
       return response()->json([
         'success' => true,
         'pending_count' => 0,
@@ -1291,32 +1282,29 @@ class DashboardController extends Controller
       $now = Carbon::now();
       $userId = Auth::id();
 
-      // Count tickets that are overdue (past SLA due date and not completed)
-      // ALWAYS filter by escalate_to (assigned to this user)
       $overdueCount = DB::table('tickets as t')
-        ->join('tickets_chronologies as tc', function ($join) {
+        ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
-            ->whereRaw('tc.id = (
-              SELECT MAX(tc2.id)
-              FROM tickets_chronologies tc2
-              WHERE tc2.ticket_id = t.id
-              AND tc2.deleted_at IS NULL
-            )');
+            ->where('tc.escalate_to', $userId)
+            ->whereColumn('tc.tick_status', 't.tick_status');
         })
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->where('tc.tick_status', '!=', 6) // Not completed
-        ->where('tc.tick_status', '!=', 5) // Not cancelled
+        ->whereNotIn('t.tick_status', [5, 6])
         ->whereNotNull('tc.sla_duedate')
         ->where('tc.sla_duedate', '<', $now)
-        ->where('tc.escalate_to', $userId)
-        ->count();
+        ->count(DB::raw('DISTINCT t.id'));
 
       return response()->json([
         'success' => true,
         'count' => $overdueCount
       ]);
     } catch (\Exception $e) {
+      Log::error('Error in getOverdueSLACountPegawai', [
+        'error' => $e->getMessage(),
+        'user_id' => Auth::id()
+      ]);
+
       return response()->json([
         'success' => true,
         'count' => 0
@@ -1332,20 +1320,13 @@ class DashboardController extends Controller
     $userId = Auth::id();
 
     try {
-      // Get status counts from tickets table with latest status
-      // ALWAYS filter by escalate_to (assigned to this user)
       $statusQuery = DB::table('tickets as t')
         ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
             ->where('tc.escalate_to', $userId)
-            ->whereRaw('tc.id = (
-              SELECT MAX(tc2.id)
-              FROM tickets_chronologies tc2
-              WHERE tc2.ticket_id = t.id
-              AND tc2.deleted_at IS NULL
-            )');
+            ->whereColumn('tc.tick_status', 't.tick_status');
         })
-        ->join('ref_ticket_statuses as rts', 'tc.tick_status', '=', 'rts.id')
+        ->join('ref_ticket_statuses as rts', 't.tick_status', '=', 'rts.id')
         ->select('rts.id', 'rts.st_name', DB::raw('COUNT(DISTINCT t.id) as count'))
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
@@ -1404,19 +1385,12 @@ class DashboardController extends Controller
       // Get all categories first
       $allCategories = RefCategory::select('id', 'cat_name')->orderBy('id')->get();
 
-      // Get ticket counts per category
-      // ALWAYS filter by escalate_to (assigned to this user)
       $categoryQuery = DB::table('tickets as t')
         ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
         ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
             ->where('tc.escalate_to', $userId)
-            ->whereRaw('tc.id = (
-              SELECT MAX(tc2.id)
-              FROM tickets_chronologies tc2
-              WHERE tc2.ticket_id = t.id
-              AND tc2.deleted_at IS NULL
-            )');
+            ->whereColumn('tc.tick_status', 't.tick_status');
         })
         ->select('rc.id', DB::raw('COUNT(DISTINCT t.id) as count'))
         ->whereNull('t.deleted_at')
@@ -1479,18 +1453,13 @@ class DashboardController extends Controller
         ->orderBy('rsc.id')
         ->get();
 
-      // Get current ticket counts per subcategory (latest chronology only)
+      // Get current ticket counts per subcategory
       $subcategoryQuery = DB::table('tickets as t')
         ->join('ref_sub_categories as rsc', 't.subcat_id', '=', 'rsc.id')
         ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
             ->where('tc.escalate_to', $userId)
-            ->whereRaw('tc.id = (
-              SELECT MAX(tc2.id)
-              FROM tickets_chronologies tc2
-              WHERE tc2.ticket_id = t.id
-              AND tc2.deleted_at IS NULL
-            )');
+            ->whereColumn('tc.tick_status', 't.tick_status');
         })
         ->select('rsc.id', DB::raw('COUNT(DISTINCT t.id) as count'))
         ->whereNull('t.deleted_at')
@@ -1533,20 +1502,14 @@ class DashboardController extends Controller
       $now = Carbon::now();
       $userId = Auth::id();
 
-      // Get overdue tickets from the latest chronology for each ticket
-      // ALWAYS filter by escalate_to (assigned to this user)
       $overdueQuery = DB::table('tickets as t')
-        ->join('tickets_chronologies as tc', function ($join) {
+        ->join('tickets_chronologies as tc', function ($join) use ($userId) {
           $join->on('t.id', '=', 'tc.ticket_id')
-            ->whereRaw('tc.id = (
-              SELECT MAX(tc2.id)
-              FROM tickets_chronologies tc2
-              WHERE tc2.ticket_id = t.id
-              AND tc2.deleted_at IS NULL
-            )');
+            ->where('tc.escalate_to', $userId)
+            ->whereColumn('tc.tick_status', 't.tick_status');
         })
         ->join('ref_categories as rc', 't.cat_id', '=', 'rc.id')
-        ->join('ref_ticket_statuses as rts', 'tc.tick_status', '=', 'rts.id')
+        ->join('ref_ticket_statuses as rts', 't.tick_status', '=', 'rts.id')
         ->leftJoin('users as u', 'tc.escalate_to', '=', 'u.id')
         ->select(
           't.id',
@@ -1564,11 +1527,9 @@ class DashboardController extends Controller
         )
         ->whereNull('t.deleted_at')
         ->whereNull('tc.deleted_at')
-        ->where('tc.tick_status', '!=', 6) // Not completed
-        ->where('tc.tick_status', '!=', 5) // Not cancelled
+        ->whereNotIn('t.tick_status', [5, 6])
         ->whereNotNull('tc.sla_duedate')
-        ->where('tc.sla_duedate', '<', $now)
-        ->where('tc.escalate_to', $userId); // ALWAYS filter by assigned user
+        ->where('tc.sla_duedate', '<', $now);
 
       $overdueTickets = $overdueQuery->orderBy('days_overdue', 'desc')
         ->get();

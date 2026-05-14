@@ -456,15 +456,42 @@
             </div>
 
             @php
-                // Get currently assigned officers from latest chronologies for permission check
-                $assignedOfficerIdsForPermission = $ticket
+                $isFinalTicketStatus = in_array($ticket->tick_status, [5, 6]);
+
+                // Get the latest chronology entry for current status
+                $latestStatusChronology = $ticket
                     ->chronologies()
-                    ->whereNotNull('escalate_to')
                     ->where('tick_status', $ticket->tick_status)
-                    ->latest()
-                    ->pluck('escalate_to')
-                    ->unique()
-                    ->toArray();
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                $lastChronologyUpdate = $latestStatusChronology;
+
+                // If no chronology for current status or no severity, get the latest one with severity
+                if (!$lastChronologyUpdate || !$lastChronologyUpdate->sla_severity) {
+                    $lastChronologyUpdate = $ticket
+                        ->chronologies()
+                        ->whereNotNull('sla_severity')
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                }
+
+                $finalActionOfficerName =
+                    $isFinalTicketStatus && $latestStatusChronology && $latestStatusChronology->fromUser
+                        ? $latestStatusChronology->fromUser->nama
+                        : null;
+
+                // For final statuses, only the actioning officer should be treated as the current officer.
+                $assignedOfficerIdsForPermission = $isFinalTicketStatus
+                    ? collect([$latestStatusChronology?->frm_user_id])->filter()->unique()->toArray()
+                    : $ticket
+                        ->chronologies()
+                        ->whereNotNull('escalate_to')
+                        ->where('tick_status', $ticket->tick_status)
+                        ->latest()
+                        ->pluck('escalate_to')
+                        ->unique()
+                        ->toArray();
 
                 // Check if user can see this section
                 $canSeeTindakanPegawai = false;
@@ -485,33 +512,9 @@
                     $canSeeTindakanPegawai = true;
                 }
 
-                // Check if current ticket status is one of the final statuses (read-only)
-                // Status 4 (Aduan Dirujuk) - EDITABLE for assigned officer
-                // Status 5 (Aduan Dibatal), Status 6 (Aduan Selesai) - READ ONLY
-                $isReadOnlyView = false;
-                $lastChronologyUpdate = null;
-
-                // Get the latest chronology entry for current status
-                $lastChronologyUpdate = $ticket
-                    ->chronologies()
-                    ->where('tick_status', $ticket->tick_status)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-
-                // If no chronology for current status or no severity, get the latest one with severity
-                if (!$lastChronologyUpdate || !$lastChronologyUpdate->sla_severity) {
-                    $lastChronologyUpdate = $ticket
-                        ->chronologies()
-                        ->whereNotNull('sla_severity')
-                        ->orderBy('created_at', 'desc')
-                        ->first();
-                }
-
                 // Set read-only view ONLY for Dibatal(5) and Selesai(6)
                 // For Dirujuk(4), assigned officers should be able to edit
-                if (in_array($ticket->tick_status, [5, 6])) {
-                    $isReadOnlyView = true;
-                }
+                $isReadOnlyView = $isFinalTicketStatus;
             @endphp
 
             @if ($canSeeTindakanPegawai)
@@ -642,16 +645,18 @@
                                     @if ($isReadOnlyView)
                                         {{-- Read-only view: Display assigned officers --}}
                                         @php
-                                            $displayOfficers = $ticket
-                                                ->chronologies()
-                                                ->whereNotNull('escalate_to')
-                                                ->where('tick_status', $ticket->tick_status)
-                                                ->with('escalatedTo')
-                                                ->get()
-                                                ->pluck('escalatedTo.nama')
-                                                ->filter()
-                                                ->unique()
-                                                ->values();
+                                            $displayOfficers = filled($finalActionOfficerName)
+                                                ? collect([$finalActionOfficerName])
+                                                : $ticket
+                                                    ->chronologies()
+                                                    ->whereNotNull('escalate_to')
+                                                    ->where('tick_status', $ticket->tick_status)
+                                                    ->with('escalatedTo')
+                                                    ->get()
+                                                    ->pluck('escalatedTo.nama')
+                                                    ->filter()
+                                                    ->unique()
+                                                    ->values();
                                         @endphp
                                         <div class="alert alert-secondary mb-0">
                                             <i class="bx bx-user-check me-1"></i>
@@ -779,7 +784,9 @@ $filteredOfficers = $officersQuery
                                         // Display who actually performed the action (from chronology frm_user_id)
                                         $actionByText = '-';
 
-                                        if (
+                                        if ($isReadOnlyView && filled($finalActionOfficerName)) {
+                                            $actionByText = $finalActionOfficerName;
+                                        } elseif (
                                             $isReadOnlyView &&
                                             $lastChronologyUpdate &&
                                             $lastChronologyUpdate->fromUser
@@ -836,8 +843,13 @@ $filteredOfficers = $officersQuery
                                             onclick="$('#commentModal').modal('show')">
                                             <i class="bx bx-message me-3"></i>Komen
                                         </button> --}}
-                                        <button type="submit" class="btn btn-primary btn-sm float-end">
+                                        <button type="submit" id="updateTicketBtn"
+                                            class="btn btn-primary btn-sm float-end {{ in_array($ticket->tick_status, [5, 6]) ? 'd-none' : '' }}">
                                             <i class="bx bx-save me-1"></i>Kemaskini
+                                        </button>
+                                        <button type="submit" id="closeTicketBtn"
+                                            class="btn btn-success btn-sm float-end {{ in_array($ticket->tick_status, [5, 6]) ? '' : 'd-none' }}">
+                                            <i class="bx bx-save me-1"></i>Tutup Tiket
                                         </button>
                                         <button type="button" class="btn btn-secondary btn-sm float-end me-2"
                                             onclick="cancelUpdate()">
@@ -1027,23 +1039,59 @@ $filteredOfficers = $officersQuery
                                 $resolveAssigneeNamesFromChronologies = function ($chronologies) use (
                                     &$normalizeAssigneeNames,
                                 ) {
-                                    return $normalizeAssigneeNames(
+                                    $users = collect($chronologies)
+                                        ->map(fn($c) => $c->escalatedTo)
+                                        ->filter()
+                                        ->unique('id');
+
+                                    if ($users->isNotEmpty()) {
+                                        return $users
+                                            ->sort(function ($a, $b) {
+                                                $gradeA = (int) $a->nama_gred;
+                                                $gradeB = (int) $b->nama_gred;
+                                                if ($gradeA !== $gradeB) {
+                                                    return $gradeB - $gradeA;
+                                                }
+                                                return $a->id - $b->id;
+                                            })
+                                            ->pluck('nama')
+                                            ->values()
+                                            ->all();
+                                    }
+
+                                    $names = $normalizeAssigneeNames(
                                         collect($chronologies)
                                             ->flatMap(function ($chronology) {
                                                 $values = [];
-
-                                                if ($chronology->escalatedTo) {
-                                                    $values[] = $chronology->escalatedTo->nama;
-                                                }
-
                                                 if (!blank($chronology->escalate_to)) {
                                                     $values[] = $chronology->escalate_to;
                                                 }
-
                                                 return $values;
                                             })
                                             ->all(),
                                     );
+
+                                    if (!empty($names)) {
+                                        $lookedUp = \App\Models\User::whereIn('nama', $names)
+                                            ->get(['id', 'nama', 'nama_gred']);
+                                        if ($lookedUp->isNotEmpty()) {
+                                            return $lookedUp
+                                                ->sort(function ($a, $b) {
+                                                    $gradeA = (int) $a->nama_gred;
+                                                    $gradeB = (int) $b->nama_gred;
+                                                    if ($gradeA !== $gradeB) {
+                                                        return $gradeB - $gradeA;
+                                                    }
+                                                    return $a->id - $b->id;
+                                                })
+                                                ->pluck('nama')
+                                                ->unique()
+                                                ->values()
+                                                ->all();
+                                        }
+                                    }
+
+                                    return $names;
                                 };
 
                                 $formatAssigneeDisplayList = function ($names) {
@@ -1110,7 +1158,7 @@ $groupedChronologies = $allChronologies
             '|' .
             $chron->created_at->format('Y-m-d H:i:s') .
             '|' .
-            ($chron->created_by ?? 'system');
+            ($chron->frm_user_id ?? $chron->created_by ?? 'system');
     });
 
 foreach ($groupedChronologies as $chronologyGroup) {
@@ -1138,13 +1186,17 @@ foreach ($groupedChronologies as $chronologyGroup) {
     }
 
     $assignedOfficerNames = $resolveAssigneeNamesFromChronologies($chronologyGroup);
-    $assignedOfficerDisplayList = $formatAssigneeDisplayList($assignedOfficerNames);
+    $assignedOfficerDisplayList = in_array($firstChron->status->st_name, ['Aduan DiBatal', 'Aduan Selesai'])
+        ? []
+        : $formatAssigneeDisplayList($assignedOfficerNames);
 
     $timelineItems->push(
         (object) [
             'status_name' => $firstChron->status->st_name,
             'description' => $getStatusDescription($firstChron->status->st_name),
-            'created_by' => $firstChron->createdBy ? $firstChron->createdBy->nama : 'Sistem',
+            'created_by' => $firstChron->fromUser
+                ? $firstChron->fromUser->nama
+                : ($firstChron->createdBy ? $firstChron->createdBy->nama : 'Sistem'),
             'created_at' => $firstChron->created_at,
             'escalated_to_list' => $assignedOfficerDisplayList,
             'escalated_to' => !empty($assignedOfficerDisplayList)
@@ -1196,7 +1248,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
 
                                         {{-- Show escalation/assignment info --}}
                                         @if (
-                                            $item->status_name !== 'Aduan Selesai' &&
+                                            !in_array($item->status_name, ['Aduan DiBatal', 'Aduan Selesai']) &&
                                                 (!empty($item->escalated_to_list) || $item->escalated_to)
                                         )
                                             <div class="timeline-details mb-2">
@@ -2243,16 +2295,22 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                     }
 
                     // Show loading state
-                    const submitBtn = updateForm.querySelector('button[type="submit"]');
-                    const originalText = submitBtn.innerHTML;
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="bx bx-loader-alt bx-spin me-1"></i>Mengemaskini...';
+                    const submitBtn = e.submitter || updateForm.querySelector(
+                        'button[type="submit"]:not(.d-none)');
 
-                    // Re-enable button after 10 seconds (fallback)
-                    setTimeout(() => {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                    }, 10000);
+                    if (submitBtn) {
+                        const originalText = submitBtn.innerHTML;
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = submitBtn.id === 'closeTicketBtn' ?
+                            '<i class="bx bx-loader-alt bx-spin me-1"></i>Menutup Tiket...' :
+                            '<i class="bx bx-loader-alt bx-spin me-1"></i>Mengemaskini...';
+
+                        // Re-enable button after 10 seconds (fallback)
+                        setTimeout(() => {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                        }, 10000);
+                    }
 
                     return true;
                 });
@@ -2264,6 +2322,23 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
             const subcategorySelect = document.querySelector('#subcat_id');
             const severitySelect = document.querySelector('#sla_severity');
             const assignedOfficersSelect = document.querySelector('#assigned_officers');
+            const updateTicketBtn = document.querySelector('#updateTicketBtn');
+            const closeTicketBtn = document.querySelector('#closeTicketBtn');
+            /** Untuk Select2: kekalkan pemilihan berbilang selepas senarai pegawai dibina semula */
+            const currentAuthUserIdStr = String({{ auth()->user()->id }});
+
+            function applyAssignedOfficersSelection($sel, availableIds, prevSelected) {
+                const avail = (availableIds || []).map(String);
+                const prev = (prevSelected || []).map(String);
+                let toSelect = prev.filter(id => avail.includes(id));
+                if (toSelect.length === 0 && avail.includes(currentAuthUserIdStr)) {
+                    toSelect = [currentAuthUserIdStr];
+                }
+                $sel.val(toSelect);
+                if ($sel.data('select2')) {
+                    $sel.trigger('change');
+                }
+            }
 
             // Function to handle status-based dropdown enabling/disabling
             function handleStatusChange() {
@@ -2290,8 +2365,17 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                 // Tahap Severity: Always enabled (never disabled)
                 if (severitySelect) severitySelect.disabled = false;
 
-                // Assigned Officers: Disable only for final statuses (Dibatal, Selesai)
-                if (assignedOfficersSelect) assignedOfficersSelect.disabled = isFinalStatus;
+                // Assigned Officers: Always enabled for all statuses
+                if (assignedOfficersSelect) assignedOfficersSelect.disabled = false;
+
+                // Toggle action buttons based on selected status
+                if (updateTicketBtn) {
+                    updateTicketBtn.classList.toggle('d-none', isFinalStatus);
+                }
+
+                if (closeTicketBtn) {
+                    closeTicketBtn.classList.toggle('d-none', !isFinalStatus);
+                }
 
                 // Remove required attributes when disabled
                 if (!isAduanDirujuk) {
@@ -2318,15 +2402,10 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                     severitySelect.style.color = '';
                 }
 
-                // Assigned Officers: Add disabled styling only for final statuses
+                // Assigned Officers: Always keep normal styling (never disabled)
                 if (assignedOfficersSelect) {
-                    if (isFinalStatus) {
-                        assignedOfficersSelect.style.backgroundColor = '#f8f9fa';
-                        assignedOfficersSelect.style.color = '#6c757d';
-                    } else {
-                        assignedOfficersSelect.style.backgroundColor = '';
-                        assignedOfficersSelect.style.color = '';
-                    }
+                    assignedOfficersSelect.style.backgroundColor = '';
+                    assignedOfficersSelect.style.color = '';
                 }
             }
 
@@ -2405,7 +2484,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                     if (categoryId && subcategoryId) {
                         // Call API to get officers filtered by category and subcategory
                         fetch(
-                                `/api/available-officers?cat_id=${categoryId}&subcat_id=${subcategoryId}&level_tugasan=2`
+                                `/api/available-officers?cat_id=${categoryId}&subcat_id=${subcategoryId}`
                             )
                             .then(response => response.json())
                             .then(data => {
@@ -2456,14 +2535,18 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
 
                 // Function to update officers list
                 function updateOfficersList(officers) {
-                    if ($('#assigned_officers').data('select2')) {
-                        $('#assigned_officers').empty();
+                    const $sel = $('#assigned_officers');
+                    const prevSelected = ($sel.val() || []).map(String);
+
+                    if ($sel.data('select2')) {
+                        $sel.empty();
                     }
 
                     // Deduplicate by user id, then fallback by normalized name
                     const uniqueOfficersMap = new Map();
                     officers.forEach(officer => {
-                        const officerId = String(officer.id ?? '').trim();
+                        const resolvedId = officer.user_id ?? officer.id;
+                        const officerId = String(resolvedId ?? '').trim();
                         const normalizedName = String(officer.nama ?? '').trim().toLowerCase();
                         const dedupeKey = officerId || `name:${normalizedName}`;
 
@@ -2472,22 +2555,26 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                         }
                     });
 
+                    const availableIds = [];
                     Array.from(uniqueOfficersMap.values()).forEach(officer => {
-                        const isCurrentUser = officer.id === {{ auth()->user()->id }};
-                        const option = new Option(officer.nama, officer.id, false, isCurrentUser);
+                        const resolvedId = officer.user_id ?? officer.id;
+                        const isCurrentUser = String(resolvedId) === currentAuthUserIdStr;
+                        const option = new Option(officer.nama, resolvedId, false, false);
                         $(option).attr('data-current-user', isCurrentUser ? 'true' : 'false');
-                        $('#assigned_officers').append(option);
+                        $sel.append(option);
+                        availableIds.push(resolvedId);
                     });
 
-                    if ($('#assigned_officers').data('select2')) {
-                        $('#assigned_officers').trigger('change');
-                    }
+                    applyAssignedOfficersSelection($sel, availableIds, prevSelected);
                 }
 
                 // Function to reset officers list to original state
                 function resetOfficersList() {
-                    if ($('#assigned_officers').data('select2')) {
-                        $('#assigned_officers').empty();
+                    const $sel = $('#assigned_officers');
+                    const prevSelected = ($sel.val() || []).map(String);
+
+                    if ($sel.data('select2')) {
+                        $sel.empty();
                     }
 
                     // Restore filtered officers list (only from officers table)
@@ -2504,15 +2591,16 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                         @endphp
                         const option{{ $officer->id }} = new Option('{{ $officer->nama }}',
                             {{ $officer->id }},
-                            false, {{ $isCurrentUser ? 'true' : 'false' }});
+                            false, false);
                         $(option{{ $officer->id }}).attr('data-current-user',
                             '{{ $isCurrentUser ? 'true' : 'false' }}');
-                        $('#assigned_officers').append(option{{ $officer->id }});
+                        $sel.append(option{{ $officer->id }});
                     @endforeach
 
-                    if ($('#assigned_officers').data('select2')) {
-                        $('#assigned_officers').trigger('change');
-                    }
+                    const availableIds = $sel.find('option').map(function() {
+                        return this.value;
+                    }).get();
+                    applyAssignedOfficersSelection($sel, availableIds, prevSelected);
                 }
 
                 // Category change event

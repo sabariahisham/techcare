@@ -228,7 +228,7 @@
                     <!-- Tajuk -->
                     <div class="col-12 mb-3">
                         <label class="form-label">Tajuk</label>
-                        <input type="text" name="tick_title" class="form-control" required>
+                        <input type="text" name="tick_title" class="form-control" style="text-transform: uppercase;" required>
                     </div>
 
                     <!-- Kategori -->
