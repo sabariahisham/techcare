@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class SyncJobDetail extends Model
 {
-    protected $table = 'sync_job_details';
+    protected $table = 'sync_jobs_details';
 
     protected $fillable = [
         'sync_job_id',
@@ -21,5 +21,13 @@ class SyncJobDetail extends Model
         'message',
     ];
 
-    public $timestamps = true;  
+    public $timestamps = true;
+
+    /**
+     * Get the parent sync job
+     */
+    public function syncJob()
+    {
+        return $this->belongsTo(SyncJob::class, 'sync_job_id');
+    }
 }

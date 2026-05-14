@@ -13,6 +13,7 @@ use App\Http\Controllers\Audit\SLALogController;
 use App\Http\Controllers\extended_ui\SweetAlert;
 use App\Http\Controllers\Audit\MailLogController;
 use App\Http\Controllers\Audit\SyncSPPLogController;
+use App\Http\Controllers\Audit\SyncRefSPPLogController;
 use App\Http\Controllers\Ticket\TicketController;
 use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Audit\AuditTrailController;
@@ -505,6 +506,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/logs-sync-spp/data', [SyncSPPLogController::class, 'getSyncSppLogData'])->name('log-sync-spp-data');
     Route::post('/logs-sync-spp/run-task', [SyncSPPLogController::class, 'runTask'])->name('log-sync-spp-run-task');
     Route::post('/logs-sync-spp/kill-stuck-jobs', [SyncSPPLogController::class, 'killStuckJobs'])->name('log-sync-spp-kill-stuck-jobs');
+
+    // Route audit log-Sync RefSPP (Sync RefSPP job monitoring)
+    Route::get('/logs-sync-ref-spp', [SyncRefSPPLogController::class, 'index'])->name('log-sync-ref-spp-index');
+    Route::get('/logs-sync-ref-spp/data', [SyncRefSPPLogController::class, 'getSyncRefSppLogData'])->name('log-sync-ref-spp-data');
+    Route::post('/logs-sync-ref-spp/run-task', [SyncRefSPPLogController::class, 'runTask'])->name('log-sync-ref-spp-run-task');
+    Route::post('/logs-sync-ref-spp/kill-stuck-jobs', [SyncRefSPPLogController::class, 'killStuckJobs'])->name('log-sync-ref-spp-kill-stuck-jobs');
   });
 });
 

@@ -12,14 +12,14 @@ class SyncSPPReferences extends Command
     protected $description = 'Sync reference tables from SPP to ehelp database';
 
     protected array $tables = [
-        'bahagian' => ['source' => 'bahagian', 'target' => 'ref_bahagian', 'key' => 'kod_bah'],
-        'sektor'   => ['source' => 'sektor', 'target' => 'ref_sektor', 'key' => 'kod_sektor'],
-        'seksyen'  => ['source' => 'seksyen', 'target' => 'ref_seksyen', 'key' => 'kod_sec'],
-        'unit'     => ['source' => 'unit', 'target' => 'ref_unit', 'key' => 'kod_unit'],
-        'jawatan'  => ['source' => 'jawatan', 'target' => 'ref_jawatan', 'key' => 'kod_jawatan'],
-        'khidmat'  => ['source' => 'khidmat', 'target' => 'ref_khidmat', 'key' => 'kod_kump_khidmat'],
-        'gred'     => ['source' => 'gred', 'target' => 'ref_gred', 'key' => 'nama_gred'],
-        'skim'     => ['source' => 'skim', 'target' => 'ref_skim', 'key' => 'kod_skim'],
+        'ref_bahagian' => ['source' => 'bahagian', 'target' => 'ref_bahagian', 'key' => 'kod_bah'],
+        'ref_sektor'   => ['source' => 'sektor', 'target' => 'ref_sektor', 'key' => 'kod_sektor'],
+        'ref_seksyen'  => ['source' => 'seksyen', 'target' => 'ref_seksyen', 'key' => 'kod_sec'],
+        'ref_unit'     => ['source' => 'unit', 'target' => 'ref_unit', 'key' => 'kod_unit'],
+        'ref_jawatan'  => ['source' => 'jawatan', 'target' => 'ref_jawatan', 'key' => 'kod_jawatan'],
+        'ref_khidmat'  => ['source' => 'khidmat', 'target' => 'ref_khidmat', 'key' => 'kod_kump_khidmat'],
+        'ref_gred'     => ['source' => 'gred', 'target' => 'ref_gred', 'key' => 'nama_gred'],
+        'ref_skim'     => ['source' => 'skim', 'target' => 'ref_skim', 'key' => 'kod_skim'],
     ];
 
     public function handle()

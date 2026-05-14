@@ -175,6 +175,12 @@
           "name": "Log Sync SPPUser ",
           "slug": "log-sync-spp-index",
           "permission": "audit.view"
+        },
+        {
+          "url": "audit/logs-sync-ref-spp",
+          "name": "Log Sync RefSPP",
+          "slug": "log-sync-ref-spp-index",
+          "permission": "audit.view"
         }
       ]
     },
