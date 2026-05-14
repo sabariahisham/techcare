@@ -148,7 +148,7 @@ class SyncRefsData extends Command
             $exists ? $updated++ : $inserted++;
         }
 
-        $this->logDetail('bahagian', $inserted, $updated, $start);
+        $this->logDetail('ref_bahagian', $inserted, $updated, $start);
         $this->info("✔ bahagian: insert {$inserted}, update {$updated}");
     }
 
@@ -178,7 +178,7 @@ class SyncRefsData extends Command
             $exists ? $updated++ : $inserted++;
         }
 
-        $this->logDetail('sektor', $inserted, $updated, $start);
+        $this->logDetail('ref_sektor', $inserted, $updated, $start);
         $this->info("✔ sektor: insert {$inserted}, update {$updated}");
     }
 
@@ -230,7 +230,7 @@ class SyncRefsData extends Command
             $exists ? $updated++ : $inserted++;
         }
 
-        $this->logDetail('seksyen', $inserted, $updated, $start);
+        $this->logDetail('ref_seksyen', $inserted, $updated, $start);
         $this->info("✔ seksyen: insert {$inserted}, update {$updated}");       
     }
 
@@ -282,7 +282,7 @@ class SyncRefsData extends Command
             $exists ? $updated++ : $inserted++;
         }
 
-        $this->logDetail('unit', $inserted, $updated, $start);
+        $this->logDetail('ref_unit', $inserted, $updated, $start);
         $this->info("✔ unit: insert {$inserted}, update {$updated}");      
     }
     
@@ -312,7 +312,7 @@ class SyncRefsData extends Command
             $exists ? $updated++ : $inserted++;
         }
 
-        $this->logDetail('jawatan', $inserted, $updated, $start);
+        $this->logDetail('ref_jawatan', $inserted, $updated, $start);
         $this->info("✔ jawatan: insert {$inserted}, update {$updated}");   
     }
 
@@ -326,14 +326,14 @@ class SyncRefsData extends Command
 
         foreach ($data as $row) {
 
-            if (empty($row->nama_khidmat)) continue;
+            if (empty($row->nama_kumpulan_khidmat)) continue;
 
-            $exists = DB::table('ref_khidmat')->where('kod_khidmat', $row->kod_khidmat)->exists();
+            $exists = DB::table('ref_khidmat')->where('kod_kump_khidmat', $row->kod_kump_khidmat)->exists();
 
             DB::table('ref_khidmat')->updateOrInsert(
-                ['kod_khidmat' => $row->kod_khidmat],
+                ['kod_kump_khidmat' => $row->kod_kump_khidmat],
                 [
-                    'nama_khidmat' => $row->nama_khidmat,
+                    'nama_kumpulan_khidmat' => $row->nama_kumpulan_khidmat,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]
@@ -342,7 +342,7 @@ class SyncRefsData extends Command
             $exists ? $updated++ : $inserted++;
         }
 
-        $this->logDetail('khidmat', $inserted, $updated, $start);
+        $this->logDetail('ref_khidmat', $inserted, $updated, $start);
         $this->info("✔ khidmat: insert {$inserted}, update {$updated}");
     }
 
@@ -358,12 +358,28 @@ class SyncRefsData extends Command
 
             if (empty($row->nama_gred)) continue;
 
-            $exists = DB::table('ref_gred')->where('kod_gred', $row->kod_gred)->exists();
+            // Check if kod_kump_khidmat exists in ref_khidmat
+            if (!empty($row->kod_kump_khidmat)) {
+                $khidmatExists = DB::table('ref_khidmat')->where('kod_kump_khidmat', $row->kod_kump_khidmat)->exists();
+                if (!$khidmatExists) {
+                    $this->warn("Skipping gred {$row->nama_gred} - kod_kump_khidmat {$row->kod_kump_khidmat} not found in ref_khidmat");
+                    continue;
+                }
+            }
+
+            $exists = DB::table('ref_gred')
+                ->where('nama_gred', $row->nama_gred)
+                ->where('kod_kump_khidmat', $row->kod_kump_khidmat ?? '')
+                ->exists();
 
             DB::table('ref_gred')->updateOrInsert(
-                ['kod_gred' => $row->kod_gred],
                 [
                     'nama_gred' => $row->nama_gred,
+                    'kod_kump_khidmat' => $row->kod_kump_khidmat ?? ''
+                ],
+                [
+                    'nama_gred' => $row->nama_gred,
+                    'kod_kump_khidmat' => $row->kod_kump_khidmat ?? '',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]
@@ -372,7 +388,7 @@ class SyncRefsData extends Command
             $exists ? $updated++ : $inserted++;
         }
 
-        $this->logDetail('gred', $inserted, $updated, $start);
+        $this->logDetail('ref_gred', $inserted, $updated, $start);
         $this->info("✔ gred: insert {$inserted}, update {$updated}");
     }
 
@@ -402,7 +418,7 @@ class SyncRefsData extends Command
             $exists ? $updated++ : $inserted++;
         }
 
-        $this->logDetail('skim', $inserted, $updated, $start);
+        $this->logDetail('ref_skim', $inserted, $updated, $start);
         $this->info("✔ skim: insert {$inserted}, update {$updated}");
     }   
 
