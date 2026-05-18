@@ -183,9 +183,20 @@
         margin-bottom: 0 !important;
     }
 
-    .comment-card .comment-text p {
+    /* Block HTML from Quill: use a div wrapper (not <p>) so nested <p>/<ul>/<pre> stay valid */
+    .comment-card .comment-html,
+    .comment-card .comment-html p {
         line-height: 1.4;
         margin-bottom: 0 !important;
+    }
+
+    .comment-card .comment-html u,
+    .comment-card .comment-html ins {
+        text-decoration: underline !important;
+    }
+
+    .comment-card .comment-html a {
+        text-decoration: underline;
     }
 
     .comment-card small {
@@ -422,7 +433,7 @@
                                 </div>
 
                                 <div class="comment-text mb-2">
-                                    <p class="mb-0 text-dark">${comment.comment || '<em class="text-muted">Tiada catatan tersedia</em>'}</p>
+                                    <div class="comment-html text-dark mb-0">${comment.comment || '<em class="text-muted">Tiada catatan tersedia</em>'}</div>
                                 </div>
 
                                 ${comment.created_by && comment.created_by !== comment.user_name ?

@@ -3,7 +3,7 @@
 @section('title', 'Lihat Tiket - ' . $ticket->ticket_nolog)
 
 @section('vendor-style')
-    @vite(['resources/assets/vendor/libs/select2/select2.scss', 'resources/assets/js/quill-editor.js'])
+    @vite(['resources/assets/vendor/libs/select2/select2.scss'])
     <style>
         /* Custom styling for disabled dropdowns */
         select.form-select.disabled,
@@ -114,7 +114,7 @@
 @endsection
 
 @section('vendor-script')
-    @vite(['resources/assets/vendor/libs/select2/select2.js'])
+    @vite(['resources/assets/vendor/libs/select2/select2.js', 'resources/assets/js/quill-editor.js'])
 @endsection
 
 @section('content')
@@ -179,7 +179,7 @@
                             Maklumat Pengadu (Bagi Pihak)
                         @endif
                     </h5>
-                    <small class="text-muted fst-italic d-block">                        
+                    <small class="text-muted fst-italic d-block">
                         Data dalam ruangan ini diselaraskan daripada <strong>Sistem Pergerakan Pegawai (SPP)</strong>.
                         Sebarang kemas kini hendaklah dibuat melalui sistem tersebut.
                     </small>
@@ -431,12 +431,12 @@
                         <div class="col-sm">
                             @if ($ticket->user_id == auth()->user()->id)
                                 <button type="button" class="btn btn-warning btn-sm"
-                                    onclick="$('#commentModal').modal('show')">
+                                    onclick="openCommentModal('pengadu')">
                                     <i class="bx bx-message me-1"></i>Komen
                                 </button>
                             @else
                                 <button type="button" class="btn btn-secondary btn-sm"
-                                    onclick="$('#commentModal').modal('show')" disabled>
+                                    onclick="openCommentModal('pengadu')" disabled>
                                     <i class="bx bx-message me-1"></i>Komen
                                 </button>
                             @endif
@@ -483,7 +483,10 @@
 
                 // For final statuses, only the actioning officer should be treated as the current officer.
                 $assignedOfficerIdsForPermission = $isFinalTicketStatus
-                    ? collect([$latestStatusChronology?->frm_user_id])->filter()->unique()->toArray()
+                    ? collect([$latestStatusChronology?->frm_user_id])
+                        ->filter()
+                        ->unique()
+                        ->toArray()
                     : $ticket
                         ->chronologies()
                         ->whereNotNull('escalate_to')
@@ -824,25 +827,14 @@ $filteredOfficers = $officersQuery
                                     @endif
                                 </div>
                             </div>
-                            @if (!$isReadOnlyView)
-                                <div class="row mb-3">
-                                    <div class="col-sm-3">
-                                        <h6 class="mb-0">Catatan Tindakan Yang Diambil</h6>
-                                    </div>
-                                    <div class="col-sm-9 text-secondary">
-                                        <textarea class="form-control" name="notes" id="notes" rows="3"
-                                            placeholder="Masukkan catatan tindakan tambahan (pilihan)"></textarea>
-                                    </div>
-                                </div>
-                            @endif
                             <hr>
                             @if (!$isReadOnlyView)
                                 <div class="row mt-6 mb-1">
                                     <div class="col-sm">
-                                        {{-- <button type="button" class="btn btn-warning btn-sm "
-                                            onclick="$('#commentModal').modal('show')">
-                                            <i class="bx bx-message me-3"></i>Komen
-                                        </button> --}}
+                                        <button type="button" class="btn btn-warning btn-sm "
+                                            onclick="openCommentModal('pegawai')">
+                                            <i class="bx bx-message me-3"></i>Catatan Tindakan Yang Diambil
+                                        </button>
                                         <button type="submit" id="updateTicketBtn"
                                             class="btn btn-primary btn-sm float-end {{ in_array($ticket->tick_status, [5, 6]) ? 'd-none' : '' }}">
                                             <i class="bx bx-save me-1"></i>Kemaskini
@@ -1072,8 +1064,11 @@ $filteredOfficers = $officersQuery
                                     );
 
                                     if (!empty($names)) {
-                                        $lookedUp = \App\Models\User::whereIn('nama', $names)
-                                            ->get(['id', 'nama', 'nama_gred']);
+                                        $lookedUp = \App\Models\User::whereIn('nama', $names)->get([
+                                            'id',
+                                            'nama',
+                                            'nama_gred',
+                                        ]);
                                         if ($lookedUp->isNotEmpty()) {
                                             return $lookedUp
                                                 ->sort(function ($a, $b) {
@@ -1120,12 +1115,12 @@ if (!$hasAduanBaru) {
     // Get all assigned officers from chronologies for Aduan Baru
     $initialAssignedOfficerNames = $resolveAssigneeNamesFromChronologies(
         $ticket
-        ->chronologies()
-        ->with('escalatedTo')
-        ->whereNotNull('escalate_to')
-        ->where('tick_status', 1)
-        ->orderBy('created_at', 'asc')
-        ->get()
+            ->chronologies()
+            ->with('escalatedTo')
+            ->whereNotNull('escalate_to')
+            ->where('tick_status', 1)
+            ->orderBy('created_at', 'asc')
+            ->get(),
     );
 
     $initialAssignedOfficers = $formatAssigneeDisplayList($initialAssignedOfficerNames);
@@ -1137,10 +1132,9 @@ if (!$hasAduanBaru) {
             'created_by' => $ticket->user ? $ticket->user->nama : 'Pengguna',
             'created_at' => $ticket->created_at,
             'escalated_to_list' => $initialAssignedOfficers,
-            'escalated_to' =>
-                !empty($initialAssignedOfficers)
-                    ? implode(', ', $initialAssignedOfficers)
-                    : null,
+            'escalated_to' => !empty($initialAssignedOfficers)
+                ? implode(', ', $initialAssignedOfficers)
+                : null,
             'is_current' => false,
             'is_initial' => true,
         ],
@@ -1158,7 +1152,7 @@ $groupedChronologies = $allChronologies
             '|' .
             $chron->created_at->format('Y-m-d H:i:s') .
             '|' .
-            ($chron->frm_user_id ?? $chron->created_by ?? 'system');
+            ($chron->frm_user_id ?? ($chron->created_by ?? 'system'));
     });
 
 foreach ($groupedChronologies as $chronologyGroup) {
@@ -1186,7 +1180,10 @@ foreach ($groupedChronologies as $chronologyGroup) {
     }
 
     $assignedOfficerNames = $resolveAssigneeNamesFromChronologies($chronologyGroup);
-    $assignedOfficerDisplayList = in_array($firstChron->status->st_name, ['Aduan DiBatal', 'Aduan Selesai'])
+    $assignedOfficerDisplayList = in_array($firstChron->status->st_name, [
+        'Aduan DiBatal',
+        'Aduan Selesai',
+    ])
         ? []
         : $formatAssigneeDisplayList($assignedOfficerNames);
 
@@ -1196,7 +1193,9 @@ foreach ($groupedChronologies as $chronologyGroup) {
             'description' => $getStatusDescription($firstChron->status->st_name),
             'created_by' => $firstChron->fromUser
                 ? $firstChron->fromUser->nama
-                : ($firstChron->createdBy ? $firstChron->createdBy->nama : 'Sistem'),
+                : ($firstChron->createdBy
+                    ? $firstChron->createdBy->nama
+                    : 'Sistem'),
             'created_at' => $firstChron->created_at,
             'escalated_to_list' => $assignedOfficerDisplayList,
             'escalated_to' => !empty($assignedOfficerDisplayList)
@@ -1249,8 +1248,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                                         {{-- Show escalation/assignment info --}}
                                         @if (
                                             !in_array($item->status_name, ['Aduan DiBatal', 'Aduan Selesai']) &&
-                                                (!empty($item->escalated_to_list) || $item->escalated_to)
-                                        )
+                                                (!empty($item->escalated_to_list) || $item->escalated_to))
                                             <div class="timeline-details mb-2">
                                                 <small class="timeline-time d-block mb-1">
                                                     <i class="bx bx-user-plus text-success"></i>
@@ -1271,8 +1269,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                                                             {{ $primaryAssignee }}
                                                             @if ($remainingAssignees->isNotEmpty())
                                                                 <a href="javascript:void(0)"
-                                                                    id="{{ $expandAssigneesId }}"
-                                                                    class="fw-normal ms-1"
+                                                                    id="{{ $expandAssigneesId }}" class="fw-normal ms-1"
                                                                     onclick="document.getElementById('{{ $remainingAssigneesId }}').style.display='block'; document.getElementById('{{ $expandAssigneesId }}').style.display='none';">
                                                                     (+{{ $remainingAssignees->count() }})
                                                                 </a>
@@ -1284,15 +1281,16 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                                                             <ul class="mb-0 ps-6 mt-1">
                                                                 @foreach ($remainingAssignees as $officerLabel)
                                                                     <li class="text-success fw-bold">
-                                                                        <div class="d-flex justify-content-between align-items-center">
-                                                                        {{ $officerLabel }}
-                                                                        @if ($loop->last)
-                                                                            <a href="javascript:void(0)"
-                                                                                class="fw-normal ms-1"
-                                                                                onclick="document.getElementById('{{ $remainingAssigneesId }}').style.display='none'; document.getElementById('{{ $expandAssigneesId }}').style.display='inline';">
-                                                                                <i class="bx bx-chevron-up-square"></i>
-                                                                            </a>
-                                                                        @endif
+                                                                        <div
+                                                                            class="d-flex justify-content-between align-items-center">
+                                                                            {{ $officerLabel }}
+                                                                            @if ($loop->last)
+                                                                                <a href="javascript:void(0)"
+                                                                                    class="fw-normal ms-1"
+                                                                                    onclick="document.getElementById('{{ $remainingAssigneesId }}').style.display='none'; document.getElementById('{{ $expandAssigneesId }}').style.display='inline';">
+                                                                                    <i class="bx bx-chevron-up-square"></i>
+                                                                                </a>
+                                                                            @endif
                                                                         </div>
                                                                     </li>
                                                                 @endforeach
@@ -1761,7 +1759,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
         }
 
         /* kronologi diserahkan kepada list item */
-        .timeline-details li { 
+        .timeline-details li {
             margin-bottom: 0.15rem;
             line-height: 1.25;
             font-size: 12px;
@@ -2751,29 +2749,6 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                 });
             }
 
-            // Auto-capitalize for sentence case in notes textarea
-            const notesTextarea = document.querySelector('#notes');
-            if (notesTextarea) {
-                notesTextarea.addEventListener('input', function() {
-                    let value = this.value;
-                    if (value.length > 0) {
-                        // Convert to sentence case: capitalize first letter
-                        value = value.charAt(0).toUpperCase() + value.slice(1);
-
-                        // Capitalize first letter after sentence endings (., !, ?) followed by space
-                        value = value.replace(/([.!?]\s+)([a-z])/g, function(match, p1, p2) {
-                            return p1 + p2.toUpperCase();
-                        });
-
-                        // Update the value only if it changed to avoid cursor jumping
-                        if (this.value !== value) {
-                            const cursorPosition = this.selectionStart;
-                            this.value = value;
-                            this.setSelectionRange(cursorPosition, cursorPosition);
-                        }
-                    }
-                });
-            }
         });
 
         // Cancel update function

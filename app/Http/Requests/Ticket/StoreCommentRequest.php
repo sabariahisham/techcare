@@ -31,10 +31,17 @@ class StoreCommentRequest extends FormRequest
     if ($this->has('comment')) {
       $comment = $this->input('comment');
 
-      // Configure Purifier to allow safe HTML tags from Quill editor
+      // Configure Purifier to allow safe HTML from Quill (inline color/background often land on strong/em/span, not only span)
       $config = [
-        'HTML.Allowed' => 'p,br,strong,em,u,s,ol,ul,li,h1,h2,h3,h4,h5,h6,blockquote,pre,code,a[href|target],span[style],div',
-        'CSS.AllowedProperties' => 'font-weight,font-style,text-decoration,color,background-color',
+        'HTML.Allowed' =>
+          'p[class|style],br,' .
+          'strong[class|style],em[class|style],u[class|style],ins[class|style],s[class|style],b[class|style],i[class|style],' .
+          'ol,ul,li[class|style],' .
+          'h1[class|style],h2[class|style],h3[class|style],h4[class|style],h5[class|style],h6[class|style],' .
+          'blockquote[class|style],pre[class|style],code[class|style],' .
+          'a[href|target|rel|class|style],span[class|style],div[class|style]',
+        'CSS.AllowedProperties' =>
+          'font-weight,font-style,text-decoration,text-decoration-line,text-decoration-style,text-decoration-color,text-align,color,background-color,white-space',
         'AutoFormat.AutoParagraph' => false,
         'AutoFormat.RemoveEmpty' => false,
       ];
