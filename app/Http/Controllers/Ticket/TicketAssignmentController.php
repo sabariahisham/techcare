@@ -131,7 +131,7 @@ class TicketAssignmentController extends Controller
       'assigned_officers.min' => 'Sila pilih sekurang-kurangnya satu pegawai tugasan.',
       'assigned_officers.*.exists' => 'Pegawai tugasan yang dipilih tidak sah.',
       'action_date.date' => 'Format tarikh tindakan tidak sah.',
-      'notes.max' => 'Catatan tidak boleh melebihi 1000 aksara.'
+      'notes.max' => 'Catatan tidak boleh melebihi 10000 aksara.'
     ]);
 
     // Pastikan assigned_officers sentiasa array (elak nilai tunggal daripada borang/Select2)

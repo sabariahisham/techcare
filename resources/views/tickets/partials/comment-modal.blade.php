@@ -1,3 +1,23 @@
+<style>
+    /* Floating Quill toolbar tooltip (appended to body — not clipped by modal overflow) */
+    .quill-toolbar-floating-tip {
+        position: fixed;
+        z-index: 2000;
+        display: none;
+        max-width: 240px;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.75rem;
+        line-height: 1.25;
+        white-space: nowrap;
+        color: #fff;
+        background: rgba(47, 43, 61, 0.95);
+        border-radius: 0.25rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        pointer-events: none;
+        transform: translate(-50%, calc(-100% - 8px));
+    }
+</style>
+
 {{-- modal dialog box for comment input and submit button --}}
 <div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true"
     style="display: none;">
@@ -6,7 +26,7 @@
             <div class="modal-header">
                 <div>
                     <h5 class="modal-title" id="commentModalLabel">Komen</h5>
-                    <small class="text-muted">Masukkan komen anda di bawah</small>
+                    <small class="text-muted" id="commentModalSubtitle">Masukkan komen anda di bawah</small>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -19,7 +39,7 @@
                     </div>
                     <div class="modal-footer py-0">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                        <button type="submit" class="btn btn-primary">Hantar Komen</button>
+                        <button type="submit" class="btn btn-primary" id="commentSubmitBtn">Hantar Komen</button>
                     </div>
                 </form>
             </div>
@@ -28,11 +48,41 @@
 </div>
 
 <script>
+    // Modal label configurations
+    const commentModalConfig = {
+        pengadu: {
+            title: 'Komen',
+            subtitle: 'Masukkan komen anda di bawah',
+            placeholder: 'Masukkan komen anda di sini...',
+            submitBtn: 'Hantar Komen',
+            emptyAlert: 'Sila masukkan komen anda.'
+        },
+        pegawai: {
+            title: 'Catatan Tindakan Yang Diambil',
+            subtitle: 'Masukkan catatan tindakan anda di bawah',
+            placeholder: 'Masukkan catatan tindakan anda di sini...',
+            submitBtn: 'Hantar Catatan',
+            emptyAlert: 'Sila masukkan catatan tindakan anda.'
+        }
+    };
+
+    let currentModalContext = 'pengadu';
+
+    function openCommentModal(context) {
+        currentModalContext = context || 'pengadu';
+        const config = commentModalConfig[currentModalContext];
+
+        document.getElementById('commentModalLabel').textContent = config.title;
+        document.getElementById('commentModalSubtitle').textContent = config.subtitle;
+        document.getElementById('commentSubmitBtn').textContent = config.submitBtn;
+
+        $('#commentModal').modal('show');
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
 
         let commentQuill = null;
 
-        // Initialize Quill when modal is shown
         const commentModal = document.getElementById('commentModal');
 
         if (commentModal) {
@@ -40,58 +90,21 @@
             commentModal.addEventListener('shown.bs.modal', function() {
 
                 if (!commentQuill && typeof window.initCommentEditor === 'function') {
-
                     commentQuill = window.initCommentEditor('#comment-editor');
+                }
 
-                    // Auto capitalize
-                    commentQuill.on('text-change', function(delta, oldDelta, source) {
+                if (commentQuill && typeof window.applyQuillToolbarTooltips === 'function') {
+                    window.applyQuillToolbarTooltips(commentQuill);
+                }
 
-                        // Only for user typing
-                        if (source !== 'user') {
-                            return;
-                        }
-
-                        const text = commentQuill.getText();
-                        const range = commentQuill.getSelection();
-
-                        if (!range) {
-                            return;
-                        }
-
-                        // Capitalize first letter
-                        if (range.index === 1) {
-
-                            const firstChar = text.charAt(0);
-
-                            if (firstChar >= 'a' && firstChar <= 'z') {
-
-                                commentQuill.deleteText(0, 1);
-                                commentQuill.insertText(0, firstChar.toUpperCase());
-
-                                commentQuill.setSelection(range.index, 0);
-                            }
-                        }
-
-                        // Capitalize after . ! ?
-                        const prevText = text.substring(0, range.index);
-
-                        const match = prevText.match(/([.!?]\s+)([a-z])$/);
-
-                        if (match) {
-
-                            const letterIndex = range.index - 1;
-                            const letter = text.charAt(letterIndex);
-
-                            commentQuill.deleteText(letterIndex, 1);
-                            commentQuill.insertText(letterIndex, letter.toUpperCase());
-
-                            commentQuill.setSelection(range.index, 0);
-                        }
-                    });
+                // Update placeholder based on context
+                const config = commentModalConfig[currentModalContext];
+                if (commentQuill) {
+                    commentQuill.root.dataset.placeholder = config.placeholder;
+                    commentQuill.root.setAttribute('data-placeholder', config.placeholder);
                 }
             });
 
-            // Reset editor when modal closed
             commentModal.addEventListener('hidden.bs.modal', function() {
 
                 if (commentQuill) {
@@ -100,7 +113,6 @@
             });
         }
 
-        // Handle form submit
         const commentForm = document.getElementById('commentForm');
 
         if (commentForm) {
@@ -116,7 +128,8 @@
 
                         e.preventDefault();
 
-                        alert('Sila masukkan komen anda.');
+                        const config = commentModalConfig[currentModalContext];
+                        alert(config.emptyAlert);
 
                         return false;
                     }
