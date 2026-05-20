@@ -35,6 +35,32 @@ if (typeof window.config === 'undefined') {
   const cardColor = window.config?.colors?.cardColor || '#fff';
   const labelColor = window.config?.colors?.textMuted || '#a7acb2';
 
+  /**
+   * Build a non-repeating pastel color list for chart slices.
+   * Uses Sneat-like soft palette first, then generates distinct pastel HSL colors.
+   */
+  function generateUniqueChartColors(count, basePalette = []) {
+    const colors = [];
+    const safeCount = Math.max(0, count || 0);
+    const used = new Set();
+
+    for (let index = 0; index < safeCount; index++) {
+      let color = basePalette[index];
+
+      if (!color || used.has(color)) {
+        const hue = Math.round((index * 137.508) % 360); // Golden angle spread
+        const saturation = 62; // Soft pastel saturation
+        const lightness = 76;  // Pastel brightness like Sneat style
+        color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+      }
+
+      used.add(color);
+      colors.push(color);
+    }
+
+    return colors;
+  }
+
   // Status colors mapping using lighter/softer Sneat template colors
   const statusColors = {
     'Aduan Baharu': '#a5abff',    // Lighter Primary - Soft Purple
@@ -198,7 +224,7 @@ if (typeof window.config === 'undefined') {
           const labels = data.data.map(item => item.cat_name);
           const counts = data.data.map(item => item.count);
           const categoryIds = data.data.map(item => item.id); // Store category IDs for drill-down
-          const colors = data.data.map((item, index) => categoryColors[index % categoryColors.length]);
+          const colors = generateUniqueChartColors(data.data.length, categoryColors);
 
           logger.log('Category labels:', labels);
           logger.log('Category counts:', counts);
@@ -246,6 +272,7 @@ if (typeof window.config === 'undefined') {
                 animateScale: false
               },
               cutout: '60%', // Different cutout from status chart (75%)
+              radius: isSmallScreen ? '68%' : '78%', // Slightly smaller donut for clearer legend values
               layout: {
                 padding: {
                   right: isSmallScreen ? 0 : 10
@@ -271,12 +298,12 @@ if (typeof window.config === 'undefined') {
                   labels: {
                     usePointStyle: true,
                     pointStyle: 'circle',
-                    padding: 8,
+                    padding: 6,
                     boxWidth: 8,
                     boxHeight: 8,
                     color: headingColor,
                     font: {
-                      size: 10,
+                      size: 9,
                       weight: '500'
                     },
                     textAlign: 'left',
@@ -286,10 +313,16 @@ if (typeof window.config === 'undefined') {
                         return data.labels.map((label, index) => {
                           const dataset = data.datasets[0];
                           const value = dataset.data[index];
-                          // Truncate long labels on small screens
+                          // Keep labels compact so value remains visible in legend
                           let displayLabel = label;
-                          if (window.innerWidth < 576 && label.length > 25) {
-                            displayLabel = label.substring(0, 22) + '...';
+                          const maxLegendChars = window.innerWidth < 576
+                            ? 12
+                            : window.innerWidth < 992
+                              ? 16
+                              : 20;
+
+                          if (label.length > maxLegendChars) {
+                            displayLabel = label.substring(0, maxLegendChars) + '...';
                           }
                           return {
                             text: `${displayLabel}: ${value}`,
@@ -436,6 +469,7 @@ if (typeof window.config === 'undefined') {
                 categoryChartVar.options.plugins.legend.position = isSmallScreen ? 'bottom' : 'right';
                 categoryChartVar.options.plugins.legend.maxWidth = isSmallScreen ? null : 180;
                 categoryChartVar.options.layout.padding.right = isSmallScreen ? 0 : 10;
+                categoryChartVar.options.radius = isSmallScreen ? '68%' : '78%';
                 categoryChartVar.update();
               }
             }, 250);
@@ -2071,10 +2105,12 @@ if (typeof window.config === 'undefined') {
           // Display all subcategories assigned to this Pegawai Tugasan (including count = 0)
           const labels = data.data.map(item => item.subcat_name);
           const counts = data.data.map(item => item.count);
-          const colors = data.data.map((item, index) => subcategoryColors[index % subcategoryColors.length]);
+          const colors = generateUniqueChartColors(data.data.length, subcategoryColors);
 
           logger.log('Pegawai subcategory labels:', labels);
           logger.log('Pegawai subcategory counts:', counts);
+
+          const isSmallScreen = window.innerWidth < 992;
 
           // Create the subcategory doughnut chart for pegawai
           const pegawaiSubcategoryChartVar = new Chart(pegawaiSubcategoryChart, {
@@ -2110,6 +2146,7 @@ if (typeof window.config === 'undefined') {
                 animateScale: false
               },
               cutout: '60%',
+              radius: isSmallScreen ? '68%' : '78%', // Keep smaller donut like admin chart
               plugins: {
                 legend: {
                   display: true,

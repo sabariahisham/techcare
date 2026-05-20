@@ -17,7 +17,7 @@
                         <i class="bx bx-time-five text-muted" style="font-size: 0.875rem;"></i>
                         <span class="text-muted" style="font-size: 0.875rem;">
                             Masa Semasa:
-                            <strong id="admin-last-refresh-time" class="text-primary">
+                            <strong id="admin-last-refresh-time" class="text-primary dashboard-live-clock">
                                 {{ now()->format('h:i:s A') }}
                             </strong>
                         </span>

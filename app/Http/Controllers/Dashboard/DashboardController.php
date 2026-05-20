@@ -239,6 +239,7 @@ class DashboardController extends Controller
 
       // Calculate percentage
       $percentage = $totalTickets > 0 ? round(($pendingTickets / $totalTickets) * 100, 1) : 0;
+      //dd($pendingTickets, $totalTickets, $percentage);
 
       return response()->json([
         'success' => true,

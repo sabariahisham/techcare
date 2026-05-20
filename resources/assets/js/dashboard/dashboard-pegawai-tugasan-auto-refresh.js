@@ -47,6 +47,14 @@ if (typeof window.config === 'undefined') {
   let lastRefreshTime = null;
   let clockIntervalId = null; // For real-time clock update
 
+  // Canvas IDs (charts are created by dashboard.js; we capture via Chart.getChart)
+  const PEGAWAI_CHARTS = {
+    weeklyCompleted: 'pegawaiWeeklyCompletedChart',
+    pendingTickets: 'pegawaiPendingTicketsChart',
+    statusChart: 'pegawaiStatusChart',
+    subcategoryChart: 'pegawaiSubcategoryChart'
+  };
+
   // Store chart instances for updating
   const chartInstances = {
     weeklyCompleted: null,
@@ -81,6 +89,69 @@ if (typeof window.config === 'undefined') {
     '#a5abff', '#ffc947', '#26d0f0', '#98e85d', '#ff6b47', '#a8b1ba',
     '#d4a5ff', '#ffb1c1', '#b8e994', '#74b9ff', '#fdcb6e', '#fd79a8'
   ];
+
+  // =============================================================================
+  // CHART HELPERS
+  // =============================================================================
+
+  /**
+   * Capture existing Chart.js instance from canvas (created by dashboard.js).
+   */
+  function ensureChartInstance(instanceKey) {
+    if (chartInstances[instanceKey]) {
+      return chartInstances[instanceKey];
+    }
+
+    const canvasId = PEGAWAI_CHARTS[instanceKey];
+    const canvas = canvasId ? document.getElementById(canvasId) : null;
+    if (!canvas || typeof Chart === 'undefined') {
+      return null;
+    }
+
+    const instance = Chart.getChart(canvas);
+    if (instance) {
+      chartInstances[instanceKey] = instance;
+    }
+
+    return chartInstances[instanceKey];
+  }
+
+  /**
+   * Poll until dashboard.js async chart creation has finished.
+   */
+  function captureChartInstances(maxAttempts = 30, intervalMs = 500) {
+    return new Promise(resolve => {
+      let attempts = 0;
+
+      const tryCapture = () => {
+        Object.keys(PEGAWAI_CHARTS).forEach(key => ensureChartInstance(key));
+
+        const pendingOnPage = Object.values(PEGAWAI_CHARTS).filter(id => document.getElementById(id));
+        const capturedOnPage = pendingOnPage.filter(id => {
+          const key = Object.keys(PEGAWAI_CHARTS).find(k => PEGAWAI_CHARTS[k] === id);
+          return key && chartInstances[key] !== null;
+        });
+
+        const allCaptured =
+          pendingOnPage.length === 0 || capturedOnPage.length === pendingOnPage.length;
+
+        attempts += 1;
+
+        if (allCaptured || attempts >= maxAttempts) {
+          logger.log(
+            'Pegawai chart instances captured:',
+            Object.keys(chartInstances).filter(key => chartInstances[key] !== null)
+          );
+          resolve();
+          return;
+        }
+
+        setTimeout(tryCapture, intervalMs);
+      };
+
+      tryCapture();
+    });
+  }
 
   // =============================================================================
   // UTILITY FUNCTIONS
@@ -122,10 +193,9 @@ if (typeof window.config === 'undefined') {
       hour12: true
     });
 
-    const timeElement = document.getElementById('pegawai-last-refresh-time');
-    if (timeElement) {
-      timeElement.textContent = timeString;
-    }
+    document.querySelectorAll('.dashboard-live-clock').forEach(element => {
+      element.textContent = timeString;
+    });
   }
 
   /**
@@ -211,12 +281,12 @@ if (typeof window.config === 'undefined') {
       const response = await fetch('/dashboard/pegawai/weekly-completed');
       const data = await response.json();
 
-      if (!data.success) return;
+      if (!data.success || !Array.isArray(data.daily_data)) return;
 
       // Update count
       const countElement = document.getElementById('pegawai-weekly-completed-count');
       if (countElement) {
-        animateNumberChange(countElement, data.total);
+        animateNumberChange(countElement, data.total ?? 0);
       }
 
       // Update or create chart
@@ -227,16 +297,17 @@ if (typeof window.config === 'undefined') {
         };
 
         const labels = data.daily_data.map(item => dayAbbreviations[item.day] || item.day);
-        const counts = data.daily_data.map(item => item.count);
+        const counts = data.daily_data.map(item => item.count ?? 0);
         const colors = counts.map(count => count > 0 ? '#98e85d' : '#e4e6e8');
+        const borderColors = colors.map(c => (c === '#98e85d' ? '#71dd37' : '#e4e6e8'));
+        const chart = ensureChartInstance('weeklyCompleted');
 
-        if (chartInstances.weeklyCompleted) {
-          // Update existing chart
-          chartInstances.weeklyCompleted.data.labels = labels;
-          chartInstances.weeklyCompleted.data.datasets[0].data = counts;
-          chartInstances.weeklyCompleted.data.datasets[0].backgroundColor = colors;
-          chartInstances.weeklyCompleted.data.datasets[0].borderColor = colors.map(c => c === '#98e85d' ? '#71dd37' : '#e4e6e8');
-          chartInstances.weeklyCompleted.update('none'); // Update without animation during refresh
+        if (chart) {
+          chart.data.labels = labels;
+          chart.data.datasets[0].data = counts;
+          chart.data.datasets[0].backgroundColor = colors;
+          chart.data.datasets[0].borderColor = borderColors;
+          chart.update('none');
         } else {
           // Create new chart (first time only)
           const ctx = chartCanvas.getContext('2d');
@@ -322,7 +393,8 @@ if (typeof window.config === 'undefined') {
         animateNumberChange(totalElement, data.total_count);
       }
 
-      const completedPercentage = (100 - data.percentage).toFixed(1);
+      const pendingPercentage = parseFloat(data.percentage) || 0;
+      const completedPercentage = (100 - pendingPercentage).toFixed(1);
       if (percentageElement) {
         percentageElement.innerHTML = `${completedPercentage}%<br><small style="font-size: 9px; font-weight: normal;">Telah Disiapkan</small>`;
       }
@@ -331,18 +403,17 @@ if (typeof window.config === 'undefined') {
       const chartCanvas = document.getElementById('pegawaiPendingTicketsChart');
       if (chartCanvas) {
         const completedCount = data.total_count - data.pending_count;
+        const chart = ensureChartInstance('pendingTickets');
 
-        if (chartInstances.pendingTickets) {
-          // Update existing chart
-          chartInstances.pendingTickets.data.datasets[0].data = [parseFloat(completedPercentage), data.percentage];
-          chartInstances.pendingTickets.options.plugins.tooltip.callbacks.label = function (context) {
+        if (chart) {
+          chart.data.datasets[0].data = [parseFloat(completedPercentage), pendingPercentage];
+          chart.options.plugins.tooltip.callbacks.label = function (context) {
             if (context.dataIndex === 0) {
               return `Telah Disiapkan: ${completedCount} tiket (${completedPercentage}%)`;
-            } else {
-              return `Belum Selesai: ${data.pending_count} tiket (${data.percentage}%)`;
             }
+            return `Belum Selesai: ${data.pending_count} tiket (${pendingPercentage}%)`;
           };
-          chartInstances.pendingTickets.update('none');
+          chart.update('none');
         } else {
           // Create new chart
           const ctx = chartCanvas.getContext('2d');
@@ -353,7 +424,7 @@ if (typeof window.config === 'undefined') {
             type: 'doughnut',
             data: {
               datasets: [{
-                data: [parseFloat(completedPercentage), data.percentage],
+                data: [parseFloat(completedPercentage), pendingPercentage],
                 backgroundColor: ['#28c76f', '#f0f2f4'],
                 borderWidth: 0,
                 cutout: '75%'
@@ -373,7 +444,7 @@ if (typeof window.config === 'undefined') {
                       if (context.dataIndex === 0) {
                         return `Telah Disiapkan: ${completedCount} tiket (${completedPercentage}%)`;
                       } else {
-                        return `Belum Selesai: ${data.pending_count} tiket (${data.percentage}%)`;
+                        return `Belum Selesai: ${data.pending_count} tiket (${pendingPercentage}%)`;
                       }
                     }
                   }
@@ -431,15 +502,15 @@ if (typeof window.config === 'undefined') {
       const counts = data.data.map(item => item.count);
       const colors = data.data.map(item => statusColors[item.st_name] || '#6c757d');
 
-      if (chartInstances.statusChart) {
-        // Update existing chart
-        chartInstances.statusChart.data.labels = labels;
-        chartInstances.statusChart.data.datasets[0].data = counts;
-        chartInstances.statusChart.data.datasets[0].backgroundColor = colors;
-        chartInstances.statusChart.data.datasets[0].borderColor = colors;
-        chartInstances.statusChart.update('none');
+      const chart = ensureChartInstance('statusChart');
+
+      if (chart) {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = counts;
+        chart.data.datasets[0].backgroundColor = colors;
+        chart.data.datasets[0].borderColor = colors;
+        chart.update('none');
       } else {
-        // Create new chart
         chartInstances.statusChart = new Chart(chartCanvas, {
           type: 'bar',
           data: {
@@ -528,14 +599,14 @@ if (typeof window.config === 'undefined') {
       const counts = data.data.map(item => item.count);
       const colors = data.data.map((item, index) => subcategoryColors[index % subcategoryColors.length]);
 
-      if (chartInstances.subcategoryChart) {
-        // Update existing chart
-        chartInstances.subcategoryChart.data.labels = labels;
-        chartInstances.subcategoryChart.data.datasets[0].data = counts;
-        chartInstances.subcategoryChart.data.datasets[0].backgroundColor = colors;
-        chartInstances.subcategoryChart.update('none');
+      const chart = ensureChartInstance('subcategoryChart');
+
+      if (chart) {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = counts;
+        chart.data.datasets[0].backgroundColor = colors;
+        chart.update('none');
       } else {
-        // Create new chart
         chartInstances.subcategoryChart = new Chart(chartCanvas, {
           type: 'doughnut',
           data: {
@@ -635,9 +706,11 @@ if (typeof window.config === 'undefined') {
       return;
     }
 
-    // Destroy existing DataTable if it exists
+    // Reuse DataTable created by dashboard.js (avoid destroy/recreate race)
     if ($.fn.DataTable.isDataTable('#table-overdue-pegawai')) {
-      $('#table-overdue-pegawai').DataTable().destroy();
+      overdueTableInstance = $('#table-overdue-pegawai').DataTable();
+      logger.log('Pegawai overdue DataTable reused from dashboard.js');
+      return;
     }
 
     overdueTableInstance = $('#table-overdue-pegawai').DataTable({
@@ -703,6 +776,15 @@ if (typeof window.config === 'undefined') {
    * Refresh overdue table data
    */
   function refreshOverdueTable() {
+    if (
+      !overdueTableInstance &&
+      typeof $ !== 'undefined' &&
+      $.fn.DataTable &&
+      $.fn.DataTable.isDataTable('#table-overdue-pegawai')
+    ) {
+      overdueTableInstance = $('#table-overdue-pegawai').DataTable();
+    }
+
     if (overdueTableInstance && $.fn.DataTable.isDataTable('#table-overdue-pegawai')) {
       overdueTableInstance.ajax.reload(null, false); // Reload without resetting pagination
     }
@@ -718,9 +800,16 @@ if (typeof window.config === 'undefined') {
   async function refreshAllData() {
     if (isRefreshing || isPaused) return;
 
+    if (document.hidden) {
+      logger.log('👁️ Page hidden, skipping pegawai refresh');
+      return;
+    }
+
     isRefreshing = true;
     showRefreshIndicator();
     logger.log('🔄 Refreshing Pegawai Tugasan dashboard data...');
+
+    Object.keys(PEGAWAI_CHARTS).forEach(key => ensureChartInstance(key));
 
     try {
       // Refresh all components in parallel for better performance
@@ -795,7 +884,7 @@ if (typeof window.config === 'undefined') {
   /**
    * Initialize all Pegawai Tugasan dashboard components
    */
-  function initializePegawaiDashboard() {
+  async function initializePegawaiDashboard() {
     // Check if we're on the pegawai dashboard page
     const isDashboardPage = document.getElementById('pegawai-today-logs-count') !== null;
 
@@ -806,10 +895,16 @@ if (typeof window.config === 'undefined') {
 
     logger.log('🚀 Initializing Pegawai Tugasan Dashboard with Auto-Refresh...');
 
-    // Initialize DataTable if table exists
+    // Start live clock immediately (do not wait for chart capture)
+    startRealtimeClock();
+
+    // Initialize or reuse DataTable if table exists
     if (document.getElementById('table-overdue-pegawai')) {
       initializeOverdueTablePegawai();
     }
+
+    // Wait for dashboard.js async chart creation before first refresh
+    await captureChartInstances();
 
     // Start auto-refresh
     startAutoRefresh();
@@ -826,10 +921,9 @@ if (typeof window.config === 'undefined') {
   // Handle page visibility (pause when tab is hidden, resume when visible)
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
-      logger.log('👁️ Page hidden, pausing refresh');
-      // Don't actually pause, just skip refresh if page is hidden
+      logger.log('👁️ Page hidden, skipping pegawai refresh');
     } else {
-      logger.log('👁️ Page visible, refreshing data');
+      logger.log('👁️ Page visible, refreshing pegawai data');
       if (!isPaused) {
         refreshAllData();
       }
