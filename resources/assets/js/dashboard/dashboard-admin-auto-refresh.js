@@ -49,6 +49,145 @@ import logger from '../logger.js';
   // Store DataTable instance
   let overdueTable = null;
 
+  const CHART_IDS = [
+    'statusChart',
+    'categoryChart',
+    'totalChart',
+    'trendChart',
+    'assignedChart',
+    'pendingTicketsChart',
+    'weeklyCompletedChart'
+  ];
+
+  const ENGLISH_MONTHS = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // =============================================================================
+  // CHART / FILTER HELPERS
+  // =============================================================================
+
+  /**
+   * Lazily capture a Chart.js instance from the canvas (dashboard.js creates charts async).
+   */
+  function ensureChartInstance(chartId) {
+    if (chartInstances[chartId]) {
+      return chartInstances[chartId];
+    }
+
+    const canvas = document.getElementById(chartId);
+    if (!canvas || typeof Chart === 'undefined') {
+      return null;
+    }
+
+    const instance = Chart.getChart(canvas);
+    if (instance) {
+      chartInstances[chartId] = instance;
+    }
+
+    return chartInstances[chartId];
+  }
+
+  /**
+   * Poll until dashboard.js has finished creating charts, then start auto-refresh.
+   */
+  function captureChartInstances(maxAttempts = 30, intervalMs = 500) {
+    return new Promise(resolve => {
+      let attempts = 0;
+
+      const tryCapture = () => {
+        CHART_IDS.forEach(chartId => {
+          ensureChartInstance(chartId);
+        });
+
+        const capturedOnPage = CHART_IDS.filter(id => {
+          return document.getElementById(id) && chartInstances[id] !== null;
+        });
+
+        const pendingOnPage = CHART_IDS.filter(id => document.getElementById(id));
+        const allCaptured = pendingOnPage.length === 0 || capturedOnPage.length === pendingOnPage.length;
+
+        attempts += 1;
+
+        if (allCaptured || attempts >= maxAttempts) {
+          logger.log(
+            'Chart instances captured:',
+            Object.keys(chartInstances).filter(key => chartInstances[key] !== null)
+          );
+          resolve();
+          return;
+        }
+
+        setTimeout(tryCapture, intervalMs);
+      };
+
+      tryCapture();
+    });
+  }
+
+  /**
+   * Resolve dropdown item data-* value from the visible button label.
+   */
+  function getDropdownSelection(dropdownId, buttonId, dataAttribute) {
+    const button = document.getElementById(buttonId);
+    const dropdown = document.getElementById(dropdownId);
+    if (!button || !dropdown) {
+      return '';
+    }
+
+    const label = button.textContent.trim();
+    const items = dropdown.querySelectorAll('.dropdown-item');
+
+    for (const item of items) {
+      if (item.textContent.trim() === label) {
+        return item.getAttribute(dataAttribute) || '';
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * Parse month/year from #selectedMonth (e.g. "May 2026").
+   */
+  function parseSelectedMonthYear() {
+    const monthText = document.getElementById('selectedMonth')?.textContent?.trim() || '';
+    const parts = monthText.split(/\s+/);
+
+    if (parts.length >= 2) {
+      const year = parseInt(parts[parts.length - 1], 10);
+      const monthName = parts.slice(0, -1).join(' ');
+      const month = ENGLISH_MONTHS.indexOf(monthName) + 1;
+
+      if (!Number.isNaN(year) && month > 0) {
+        return { month, year };
+      }
+    }
+
+    const now = new Date();
+    return { month: now.getMonth() + 1, year: now.getFullYear() };
+  }
+
+  /**
+   * Build assigned-chart API URL matching dashboard.js.
+   */
+  function buildAssignedChartUrl() {
+    const { month, year } = parseSelectedMonthYear();
+    const categoryId = getDropdownSelection('categoryDropdown', 'selectedCategory', 'data-category-id');
+    const subcategoryId = getDropdownSelection('subcategoryDropdown', 'selectedSubcategory', 'data-subcategory-id');
+
+    let url = `/dashboard/total-assigned?month=${month}&year=${year}`;
+    if (categoryId) {
+      url += `&category_id=${encodeURIComponent(categoryId)}`;
+    }
+    if (subcategoryId) {
+      url += `&subcategory_id=${encodeURIComponent(subcategoryId)}`;
+    }
+
+    return { url, month, year };
+  }
+
   // =============================================================================
   // CARD REFRESH FUNCTIONS
   // =============================================================================
@@ -100,14 +239,17 @@ import logger from '../logger.js';
       const data = await response.json();
 
       if (data.success) {
-        // Update counts
+        // Update counts (API returns pending_count / total_count)
         const pendingElement = document.getElementById('pending-tickets-count');
         const totalElement = document.getElementById('total-tickets-count');
         const percentElement = document.getElementById('pending-percentage');
 
-        if (pendingElement) pendingElement.textContent = data.pending || 0;
-        if (totalElement) totalElement.textContent = data.total || 0;
-        if (percentElement) percentElement.textContent = data.percentage + '%';
+        if (pendingElement) pendingElement.textContent = data.pending_count ?? 0;
+        if (totalElement) totalElement.textContent = data.total_count ?? 0;
+        if (percentElement) {
+          const completedPercentage = (100 - (parseFloat(data.percentage) || 0)).toFixed(1);
+          percentElement.innerHTML = `${completedPercentage}%<br><small style="font-size: 9px; font-weight: normal;">Telah Disiapkan</small>`;
+        }
 
         // Update semi-circle chart
         updatePendingTicketsChart(data);
@@ -128,7 +270,7 @@ import logger from '../logger.js';
       if (data.success) {
         const element = document.getElementById('weekly-completed-count');
         if (element) {
-          element.textContent = data.count || 0;
+          element.textContent = data.total ?? 0;
         }
 
         // Update weekly bar chart
@@ -151,14 +293,16 @@ import logger from '../logger.js';
       const response = await fetch('/dashboard/status-tickets');
       const data = await response.json();
 
-      if (data.success && chartInstances.statusChart) {
+      if (data.success) {
         const labels = data.data.map(item => item.st_name);
         const counts = data.data.map(item => item.count);
+        const chart = ensureChartInstance('statusChart');
 
-        // Update chart data
-        chartInstances.statusChart.data.labels = labels;
-        chartInstances.statusChart.data.datasets[0].data = counts;
-        chartInstances.statusChart.update('none'); // No animation for smooth update
+        if (chart) {
+          chart.data.labels = labels;
+          chart.data.datasets[0].data = counts;
+          chart.update('none'); // No animation for smooth update
+        }
       }
     } catch (error) {
       logger.error('Error refreshing status chart:', error);
@@ -173,14 +317,16 @@ import logger from '../logger.js';
       const response = await fetch('/dashboard/category-tickets');
       const data = await response.json();
 
-      if (data.success && chartInstances.categoryChart) {
+      if (data.success) {
         const labels = data.data.map(item => item.cat_name);
         const counts = data.data.map(item => item.count);
+        const chart = ensureChartInstance('categoryChart');
 
-        // Update chart data
-        chartInstances.categoryChart.data.labels = labels;
-        chartInstances.categoryChart.data.datasets[0].data = counts;
-        chartInstances.categoryChart.update('none');
+        if (chart) {
+          chart.data.labels = labels;
+          chart.data.datasets[0].data = counts;
+          chart.update('none');
+        }
       }
     } catch (error) {
       logger.error('Error refreshing category chart:', error);
@@ -196,17 +342,20 @@ import logger from '../logger.js';
       const data = await response.json();
 
       if (data.success) {
-        // Update total count
+        const labels = (data.data || []).map(item => item.type_name);
+        const counts = (data.data || []).map(item => item.count);
+        const totalCount = data.total ?? counts.reduce((sum, count) => sum + count, 0);
+
         const totalElement = document.getElementById('totalCount');
         if (totalElement) {
-          totalElement.textContent = data.total || 0;
+          totalElement.textContent = totalCount;
         }
 
-        // Update chart if exists
-        if (chartInstances.totalChart) {
-          const counts = [data.completed || 0, data.pending || 0];
-          chartInstances.totalChart.data.datasets[0].data = counts;
-          chartInstances.totalChart.update('none');
+        const chart = ensureChartInstance('totalChart');
+        if (chart) {
+          chart.data.labels = labels;
+          chart.data.datasets[0].data = counts;
+          chart.update('none');
         }
       }
     } catch (error) {
@@ -219,13 +368,26 @@ import logger from '../logger.js';
    */
   async function refreshTrendChart() {
     try {
-      const selectedYear = document.getElementById('selectedYear')?.textContent || new Date().getFullYear();
+      const selectedYear = document.getElementById('selectedYear')?.textContent?.trim() || new Date().getFullYear();
       const response = await fetch(`/dashboard/monthly-trend?year=${selectedYear}`);
       const data = await response.json();
 
-      if (data.success && chartInstances.trendChart) {
-        chartInstances.trendChart.data.datasets[0].data = data.data;
-        chartInstances.trendChart.update('none');
+      if (data.success) {
+        const labels = (data.data || []).map(item => item.month_name);
+        const counts = (data.data || []).map(item => item.count);
+        const totalTickets = data.total ?? counts.reduce((sum, count) => sum + count, 0);
+
+        const subtitleElement = document.getElementById('trendSubtitle');
+        if (subtitleElement) {
+          subtitleElement.textContent = `Jumlah ${totalTickets} tiket pada tahun ${selectedYear}`;
+        }
+
+        const chart = ensureChartInstance('trendChart');
+        if (chart) {
+          chart.data.labels = labels;
+          chart.data.datasets[0].data = counts;
+          chart.update('none');
+        }
       }
     } catch (error) {
       logger.error('Error refreshing trend chart:', error);
@@ -240,21 +402,34 @@ import logger from '../logger.js';
     if (!assignedChartElement) return; // Not visible on this dashboard
 
     try {
-      // Get current filters
-      const categoryId = document.querySelector('#categoryDropdown .dropdown-item.active')?.dataset.categoryId || '';
-      const subcategoryId = document.querySelector('#subcategoryDropdown .dropdown-item.active')?.dataset.subcategoryId || '';
-      const month = document.getElementById('selectedMonth')?.textContent || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-      const response = await fetch(`/dashboard/total-assigned?category=${categoryId}&subcategory=${subcategoryId}&month=${month}`);
+      const { url, month, year } = buildAssignedChartUrl();
+      const response = await fetch(url);
       const data = await response.json();
 
-      if (data.success && chartInstances.assignedChart) {
-        const labels = data.data.map(item => item.name);
-        const counts = data.data.map(item => item.count);
+      if (data.success) {
+        const labels = (data.data || []).map(item => item.officer_name);
+        const completedTickets = (data.data || []).map(item => item.completed_tickets || 0);
+        const pendingTickets = (data.data || []).map(item => item.pending_tickets || 0);
+        const totalTickets = data.total ?? 0;
+        const totalCompleted = data.total_completed ?? 0;
+        const totalPending = data.total_pending ?? 0;
 
-        chartInstances.assignedChart.data.labels = labels;
-        chartInstances.assignedChart.data.datasets[0].data = counts;
-        chartInstances.assignedChart.update('none');
+        const subtitleElement =
+          document.getElementById('assignedSubtitle') ||
+          document.getElementById('assi1234gnedSubtitle');
+        if (subtitleElement) {
+          subtitleElement.textContent = `Jumlah ${totalTickets} tiket (${totalCompleted} selesai, ${totalPending} belum selesai) pada ${ENGLISH_MONTHS[month - 1]} ${year}`;
+        }
+
+        const chart = ensureChartInstance('assignedChart');
+        if (chart) {
+          chart.data.labels = labels;
+          chart.data.datasets[0].data = completedTickets;
+          if (chart.data.datasets[1]) {
+            chart.data.datasets[1].data = pendingTickets;
+          }
+          chart.update('none');
+        }
       }
     } catch (error) {
       logger.error('Error refreshing assigned chart:', error);
@@ -265,25 +440,28 @@ import logger from '../logger.js';
    * Update Pending Tickets Semi-Circle Chart
    */
   function updatePendingTicketsChart(data) {
-    if (!chartInstances.pendingTicketsChart) return;
+    const chart = ensureChartInstance('pendingTicketsChart');
+    if (!chart) return;
 
-    const percentage = parseFloat(data.percentage) || 0;
-    const remaining = 100 - percentage;
+    const pendingPercentage = parseFloat(data.percentage) || 0;
+    const completedPercentage = 100 - pendingPercentage;
 
-    chartInstances.pendingTicketsChart.data.datasets[0].data = [percentage, remaining];
-    chartInstances.pendingTicketsChart.update('none');
+    // Match dashboard.js: [completed, pending]
+    chart.data.datasets[0].data = [completedPercentage, pendingPercentage];
+    chart.update('none');
   }
 
   /**
    * Update Weekly Completed Bar Chart
    */
   function updateWeeklyCompletedChart(data) {
-    if (!chartInstances.weeklyCompletedChart) return;
+    const chart = ensureChartInstance('weeklyCompletedChart');
+    if (!chart) return;
 
     // Assuming data has daily counts (if backend provides this)
     if (data.daily && Array.isArray(data.daily)) {
-      chartInstances.weeklyCompletedChart.data.datasets[0].data = data.daily;
-      chartInstances.weeklyCompletedChart.update('none');
+      chart.data.datasets[0].data = data.daily;
+      chart.update('none');
     }
   }
 
@@ -354,6 +532,9 @@ import logger from '../logger.js';
     isRefreshing = true;
     logger.log('🔄 Refreshing all admin dashboard data...');
 
+    // Re-capture charts created asynchronously by dashboard.js
+    CHART_IDS.forEach(chartId => ensureChartInstance(chartId));
+
     try {
       // Refresh all cards
       await Promise.all([
@@ -398,10 +579,9 @@ import logger from '../logger.js';
       hour12: true
     });
 
-    const element = document.getElementById('admin-last-refresh-time');
-    if (element) {
+    document.querySelectorAll('.dashboard-live-clock').forEach(element => {
       element.textContent = timeString;
-    }
+    });
   }
 
   /**
@@ -485,30 +665,6 @@ import logger from '../logger.js';
   // CHART INSTANCE CAPTURE
   // =============================================================================
 
-  /**
-   * Capture existing chart instances created by dashboard.js
-   */
-  function captureChartInstances() {
-    // Wait a bit for charts to be initialized by dashboard.js
-    setTimeout(() => {
-      // Capture all chart instances
-      const chartIds = ['statusChart', 'categoryChart', 'totalChart', 'trendChart', 'assignedChart', 'pendingTicketsChart', 'weeklyCompletedChart'];
-
-      chartIds.forEach(chartId => {
-        const canvas = document.getElementById(chartId);
-        if (canvas) {
-          const chartInstance = Chart.getChart(canvas);
-          if (chartInstance) {
-            chartInstances[chartId] = chartInstance;
-            logger.log(`✅ Captured ${chartId} instance`);
-          }
-        }
-      });
-
-      logger.log('Chart instances captured:', Object.keys(chartInstances).filter(key => chartInstances[key] !== null));
-    }, 2000); // Wait 2 seconds for dashboard.js to initialize charts
-  }
-
   // =============================================================================
   // INITIALIZATION
   // =============================================================================
@@ -516,7 +672,7 @@ import logger from '../logger.js';
   /**
    * Initialize admin dashboard auto-refresh
    */
-  function initializeAdminDashboard() {
+  async function initializeAdminDashboard() {
     // Check if we're on admin/helpdesk/pengurusan dashboard
     const isAdminDashboard = document.getElementById('today-logs-count') !== null;
 
@@ -527,11 +683,14 @@ import logger from '../logger.js';
 
     logger.log('🚀 Initializing Admin/Helpdesk/Pengurusan Dashboard Auto-Refresh...');
 
+    // Start live clock immediately (do not wait for chart capture)
+    startRealtimeClock();
+
     // Initialize DataTable if exists
     initializeOverdueTable();
 
-    // Capture chart instances
-    captureChartInstances();
+    // Wait for dashboard.js async chart creation before first refresh
+    await captureChartInstances();
 
     // Start auto-refresh
     startAutoRefresh();
