@@ -44,92 +44,80 @@ class LaporanStatusAduanTahunanController extends Controller
         $months = $request->months ?? [];
 
         /**
-         * SUBQUERY:
-         * Ambil SEMUA STATUS yang pernah ada bagi setiap ticket
-         * (bukan hanya status terkini, konsisten dengan RekodLaporanController)
+         * SUBQUERY: Ambil STATUS TERKINI sahaja bagi setiap ticket
+         * (berdasarkan MAX id dari tickets_chronologies)
          */
-        $allStatuses = DB::table('tickets_chronologies as tc')
-            ->select('tc.ticket_id', 'tc.tick_status')
-            ->whereNull('tc.deleted_at')
-            ->groupBy('tc.ticket_id', 'tc.tick_status'); // Distinct combination
+        $latestStatus = DB::table('tickets_chronologies as tc1')
+            ->select('tc1.*')
+            ->join(DB::raw('(
+                SELECT ticket_id, MAX(id) AS latest_id
+                FROM tickets_chronologies
+                WHERE deleted_at IS NULL
+                GROUP BY ticket_id
+            ) latest'), function($join) {
+                $join->on('latest.latest_id', '=', 'tc1.id');
+            })
+            ->whereNull('tc1.deleted_at');
 
         /**
          * QUERY UTAMA:
-         * Kira jumlah aduan mengikut
+         * Kira jumlah aduan mengikut:
          * - Kategori
-         * - SEMUA status yang pernah ada (bukan hanya status terkini)
-         * - Tahun & Bulan (ikut tarikh tiket dicipta)
-         * Nota: Setiap ticket boleh dikira dalam multiple status jika pernah ada rekod status tersebut
+         * - Status TERKINI sahaja (dari chronology)
+         * - Tahun & Bulan (berdasarkan updated_at dari chronology)
+         * 
+         * Nota: Setiap ticket dikira SEKALI sahaja mengikut status terkini
          */
-        $data = DB::table('ref_categories as c')
-            ->whereNull('c.deleted_at')
-
-            ->leftJoin('tickets as t', function ($join) use ($year, $months) {
-                $join->on('t.cat_id', '=', 'c.id')
-                     ->whereNull('t.deleted_at');
-
-                if ($year) {
-                    $join->whereYear('t.created_at', $year);
-                }
-
-                if (!empty($months)) {
-                    $join->whereIn(DB::raw('MONTH(t.created_at)'), $months);
-                }
+        $query = DB::table('tickets as t')
+            ->join('ref_categories as c', 'c.id', '=', 't.cat_id')
+            ->joinSub($latestStatus, 'tc', function($join) {
+                $join->on('tc.ticket_id', '=', 't.id');
             })
+            ->whereNull('t.deleted_at')
+            ->whereNull('c.deleted_at');
 
-            ->leftJoinSub($allStatuses, 'als', function ($join) {
-                $join->on('als.ticket_id', '=', 't.id');
-            })
+        // Filter Tahun
+        if ($year) {
+            $query->whereYear('tc.updated_at', $year);
+        }
 
-            ->leftJoin('ref_ticket_statuses as s', function ($join) {
-                $join->on('s.id', '=', 'als.tick_status')
-                     ->whereNull('s.deleted_at');
-            })
+        // Filter Bulan
+        if (!empty($months)) {
+            $query->whereIn(DB::raw('MONTH(tc.updated_at)'), $months);
+        }
 
-            ->select(
+        // Aggregate data
+        $data = $query->select(
                 'c.id as category_id',
                 'c.cat_name',
-                's.id as status_id',
-                DB::raw('COUNT(DISTINCT t.id) as total')
+                DB::raw('SUM(CASE WHEN tc.tick_status = 1 THEN 1 ELSE 0 END) AS status_1'),
+                DB::raw('SUM(CASE WHEN tc.tick_status = 2 THEN 1 ELSE 0 END) AS status_2'),
+                DB::raw('SUM(CASE WHEN tc.tick_status = 3 THEN 1 ELSE 0 END) AS status_3'),
+                DB::raw('SUM(CASE WHEN tc.tick_status = 4 THEN 1 ELSE 0 END) AS status_4'),
+                DB::raw('SUM(CASE WHEN tc.tick_status = 5 THEN 1 ELSE 0 END) AS status_5'),
+                DB::raw('SUM(CASE WHEN tc.tick_status = 6 THEN 1 ELSE 0 END) AS status_6'),
+                DB::raw('COUNT(*) AS jumlah')
             )
-
-            ->groupBy('c.id', 'c.cat_name', 's.id')
+            ->groupBy('c.id', 'c.cat_name')
             ->orderBy('c.cat_name')
             ->get();
-
-        /**
-         * SUSUN DATA JADI MATRIX (Kategori x Status)
-         */
-        $statuses = DB::table('ref_ticket_statuses')
-            ->whereNull('deleted_at')
-            ->orderBy('id')
-            ->get();
-
-        $matrix = [];
-
-        foreach ($data as $row) {
-            $matrix[$row->category_id]['cat_name'] = $row->cat_name;
-            $matrix[$row->category_id]['status'][$row->status_id] = $row->total;
-        }
 
         /**
          * FORMAT AKHIR UNTUK DATATABLE
          */
         $final = [];
 
-        foreach ($matrix as $row) {
-            $temp = [
-                'kategori' => $row['cat_name'],
-                'jumlah'   => 0,
+        foreach ($data as $row) {
+            $final[] = [
+                'kategori'  => $row->cat_name,
+                'status_1'  => $row->status_1,
+                'status_2'  => $row->status_2,
+                'status_3'  => $row->status_3,
+                'status_4'  => $row->status_4,
+                'status_5'  => $row->status_5,
+                'status_6'  => $row->status_6,
+                'jumlah'    => $row->jumlah,
             ];
-
-            foreach ($statuses as $status) {
-                $count = $row['status'][$status->id] ?? 0;
-                $temp['status_' . $status->id] = $count;
-                $temp['jumlah'] += $count;
-            }
-
-            $final[] = $temp;
         }
 
         return DataTables::of(collect($final))->make(true);
