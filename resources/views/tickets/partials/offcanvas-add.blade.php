@@ -103,7 +103,7 @@
                     <!-- Username search field -->
                     <div class="col-12">
                         <label class="form-label">Cari Nama Pengguna</label>
-                        <small class="text-muted d-block mb-2">Masukkan nama penuh atau sebahagian nama pengguna</small>
+                        <small class="text-muted d-block mb-2">Masukkan nama penuh atau sebahagian nama pengguna (dengan atau tanpa apostrof, contoh: Azi'emah atau Aziemah)</small>
                         <div class="position-relative">
                             <div class="input-group">
                                 <input type="text" class="form-control username-search-input" id="search_name"

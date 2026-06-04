@@ -506,6 +506,40 @@ class User extends Authenticatable // Removed MustVerifyEmail interface
     }
 
     /**
+     * Normalize a name for search (strip apostrophe variants so "Rapi'ah" matches "Rapiah").
+     */
+    public static function normalizeNameForSearch(string $name): string
+    {
+        return preg_replace("/['\x{2019}\x{2018}`]/u", '', trim($name));
+    }
+
+    /**
+     * SQL expression for apostrophe-insensitive nama comparison (MySQL/SQLite compatible).
+     */
+    public static function normalizedNameSqlExpression(): string
+    {
+        return "REPLACE(REPLACE(REPLACE(nama, CHAR(39), ''), CHAR(8217), ''), CHAR(8218), '')";
+    }
+
+    /**
+     * Match nama with or without apostrophes in the search term or stored value.
+     */
+    public function scopeWhereNamaSearchLike($query, string $name)
+    {
+        $name = trim($name);
+        $normalized = self::normalizeNameForSearch($name);
+        $normalizedSql = self::normalizedNameSqlExpression();
+
+        return $query->where(function ($q) use ($name, $normalized, $normalizedSql) {
+            $q->where('nama', 'like', '%' . $name . '%');
+
+            if ($normalized !== '') {
+                $q->orWhereRaw($normalizedSql . ' LIKE ?', ['%' . $normalized . '%']);
+            }
+        });
+    }
+
+    /**
      * Impersonation Feature Implementation
      * ====================================
      *
