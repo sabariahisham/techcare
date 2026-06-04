@@ -7,6 +7,19 @@ import logger from '../logger.js';
 
 'use strict';
 
+function escapeHtml(text) {
+  if (text == null) {
+    return '';
+  }
+
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 $(function () {
   logger.log('User search functionality loaded');
 
@@ -158,6 +171,11 @@ $(function () {
     });
   }
 
+  // Minimum meaningful search length (apostrophes alone do not count)
+  function getSearchableNameLength(name) {
+    return name.replace(/['\u2019\u2018`]/g, '').trim().length;
+  }
+
   // Handle search user button click (ADD FORM)
   $('#searchUserBtn').on('click', function () {
     var username = $('#search_name').val().trim();
@@ -167,7 +185,7 @@ $(function () {
       return;
     }
 
-    if (username.length < 2) {
+    if (getSearchableNameLength(username) < 2) {
       toastr.error('Sila masukkan sekurang-kurangnya 2 aksara untuk mencari.');
       return;
     }
@@ -200,8 +218,8 @@ $(function () {
       return;
     }
 
-    // Only trigger search if query is at least 2 characters
-    if (query.length < 2) {
+    // Only trigger search if query has at least 2 meaningful characters
+    if (getSearchableNameLength(query) < 2) {
       hideAutocompleteDropdown();
       return;
     }
@@ -248,8 +266,15 @@ $(function () {
 
   // Handle autocomplete item selection
   $(document).on('click', '.autocomplete-item', function () {
-    const email = $(this).data('email');
-    const userData = $(this).data('user');
+    const index = $(this).data('index');
+    const userData = autocompleteResults[index];
+
+    if (!userData || !userData.email) {
+      toastr.error('Maklumat pengguna tidak sah. Sila cuba cari semula.');
+      return;
+    }
+
+    const email = userData.email;
 
     // Format the name to title case
     const formattedName = userData.nama.toLowerCase()
@@ -276,7 +301,7 @@ $(function () {
 
   // Function to perform autocomplete search
   function performAutocompleteSearch(query) {
-    if (query.length < 2) {
+    if (getSearchableNameLength(query) < 2) {
       hideAutocompleteDropdown();
       return;
     }
@@ -317,11 +342,11 @@ $(function () {
         .join(' ');
 
       return `
-        <div class="list-group-item autocomplete-item" data-email="${user.email}" data-user='${JSON.stringify(user)}' data-index="${index}">
+        <div class="list-group-item autocomplete-item" data-index="${index}">
           <div class="user-info">
             <div class="user-details">
-              <div class="user-name">${formattedName}</div>
-              <div class="user-email">${user.email}</div>
+              <div class="user-name">${escapeHtml(formattedName)}</div>
+              <div class="user-email">${escapeHtml(user.email)}</div>
             </div>
           </div>
         </div>

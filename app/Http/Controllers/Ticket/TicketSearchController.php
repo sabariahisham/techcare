@@ -278,10 +278,11 @@ class TicketSearchController extends Controller
 
     $name = $request->input('name');
 
-    // Search for user by name with relationships
+    // Search for user by name (with or without apostrophe in query or stored nama)
     $user = User::with(['sektor', 'bahagian', 'seksyen', 'unit', 'jawatan', 'skim'])
-      ->where('nama', 'like', '%' . $name . '%')
+      ->whereNamaSearchLike($name)
       ->where('id', '!=', Auth::id()) // Exclude current user
+      ->orderBy('nama')
       ->first();
 
     if (!$user) {
@@ -416,9 +417,9 @@ class TicketSearchController extends Controller
 
     $query = $request->input('query');
 
-    // Search for users by name, excluding the current user
+    // Search for users by name (with or without apostrophe in query or stored nama)
     $users = User::select('id', 'nama', 'email', 'kod_sektor', 'kod_bah')
-      ->where('nama', 'like', '%' . $query . '%')
+      ->whereNamaSearchLike($query)
       ->where('id', '!=', Auth::id()) // Exclude current user
       ->whereNotNull('nama') // Ensure nama is not null
       ->where('nama', '!=', '') // Ensure nama is not empty
