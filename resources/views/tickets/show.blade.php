@@ -558,8 +558,9 @@
                                                 {{ $ticket->tick_status == $status->id ? 'selected' : '' }}>
                                                 {{ $status->st_name }}
                                             </option>
-                                        @endforeach
+                                        @endforeach                                        
                                     </select>
+                                    <small class="text-muted d-block mt-1">Pilih <strong>Aduan Selesai</strong> untuk mengaktifkan butang <strong>Tutup Tiket</strong>.</small>
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -635,8 +636,7 @@
                                             </option>
                                         </select>
 
-                                        <small class="text-muted d-block mt-1">Tahap severity akan dipaparkan berdasarkan
-                                            kategori dan sub kategori yang dipilih.</small>
+                                        <small class="text-muted d-block mt-1">Tahap severity akan dipaparkan berdasarkan kategori dan sub kategori yang dipilih.</small>
                                     @endif
                                 </div>
                             </div>
@@ -827,11 +827,13 @@ $filteredOfficers = $officersQuery
                                     @endif
                                 </div>
                             </div>
+                            <input type="hidden" name="notes" id="notes" value="">
                             <hr>
                             @if (!$isReadOnlyView)
                                 <div class="row mt-6 mb-1">
                                     <div class="col-sm">
                                         <button type="button" class="btn btn-warning btn-sm "
+                                            id="pegawaiCommentBtn"
                                             onclick="openCommentModal('pegawai')">
                                             <i class="bx bx-message me-3"></i>Catatan Tindakan Yang Diambil
                                         </button>

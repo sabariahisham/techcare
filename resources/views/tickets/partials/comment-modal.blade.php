@@ -31,7 +31,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form method="POST" action="{{ route('tickets.add-comment', $ticket->id) }}" id="commentForm">
+                <form method="POST" action="{{ route('tickets.add-comment', $ticket->uuid) }}" id="commentForm">
                     @csrf
                     <div class="mb-3">
                         <div id="comment-editor" style="min-height: 200px; background-color: white;"></div>
@@ -59,14 +59,34 @@
         },
         pegawai: {
             title: 'Catatan Tindakan Yang Diambil',
-            subtitle: 'Masukkan catatan tindakan anda di bawah',
+            subtitle: 'Masukkan catatan tindakan anda di bawah (akan disimpan apabila Kemaskini diklik)',
             placeholder: 'Masukkan catatan tindakan anda di sini...',
-            submitBtn: 'Hantar Catatan',
+            submitBtn: 'Simpan Catatan',
             emptyAlert: 'Sila masukkan catatan tindakan anda.'
         }
     };
 
     let currentModalContext = 'pengadu';
+    let commentQuill = null;
+
+    function setPegawaiNotesDraftIndicator(hasDraft) {
+        const btn = document.getElementById('pegawaiCommentBtn');
+        if (!btn) {
+            return;
+        }
+
+        let badge = btn.querySelector('.notes-draft-badge');
+        if (hasDraft) {
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'badge bg-success ms-2 notes-draft-badge';
+                badge.textContent = 'Disimpan';
+                btn.appendChild(badge);
+            }
+        } else if (badge) {
+            badge.remove();
+        }
+    }
 
     function openCommentModal(context) {
         currentModalContext = context || 'pengadu';
@@ -80,8 +100,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-
-        let commentQuill = null;
 
         const commentModal = document.getElementById('commentModal');
 
@@ -97,17 +115,24 @@
                     window.applyQuillToolbarTooltips(commentQuill);
                 }
 
-                // Update placeholder based on context
                 const config = commentModalConfig[currentModalContext];
                 if (commentQuill) {
                     commentQuill.root.dataset.placeholder = config.placeholder;
                     commentQuill.root.setAttribute('data-placeholder', config.placeholder);
+
+                    if (currentModalContext === 'pegawai') {
+                        const notesInput = document.getElementById('notes');
+                        if (notesInput && notesInput.value.trim()) {
+                            commentQuill.root.innerHTML = notesInput.value;
+                        } else {
+                            commentQuill.setText('');
+                        }
+                    }
                 }
             });
 
             commentModal.addEventListener('hidden.bs.modal', function() {
-
-                if (commentQuill) {
+                if (commentQuill && currentModalContext === 'pengadu') {
                     commentQuill.setText('');
                 }
             });
@@ -119,23 +144,38 @@
 
             commentForm.addEventListener('submit', function(e) {
 
-                if (commentQuill) {
+                if (!commentQuill) {
+                    return;
+                }
 
-                    const content = commentQuill.root.innerHTML;
-                    const textContent = commentQuill.getText().trim();
+                const content = commentQuill.root.innerHTML;
+                const textContent = commentQuill.getText().trim();
+                const config = commentModalConfig[currentModalContext];
 
-                    if (textContent.length === 0) {
+                if (textContent.length === 0) {
+                    e.preventDefault();
+                    alert(config.emptyAlert);
+                    return false;
+                }
 
-                        e.preventDefault();
+                if (currentModalContext === 'pegawai') {
+                    e.preventDefault();
 
-                        const config = commentModalConfig[currentModalContext];
-                        alert(config.emptyAlert);
-
+                    const notesInput = document.getElementById('notes');
+                    if (!notesInput) {
+                        alert('Borang kemaskini tiket tidak ditemui. Sila muat semula halaman.');
                         return false;
                     }
 
-                    document.getElementById('comment').value = content;
+                    notesInput.value = content;
+                    setPegawaiNotesDraftIndicator(true);
+
+                    $('#commentModal').modal('hide');
+
+                    return false;
                 }
+
+                document.getElementById('comment').value = content;
             });
         }
     });
