@@ -26,8 +26,7 @@ class TicketCommentController extends Controller
   public function store(StoreCommentRequest $request, $uuid)
   {
     try {
-      // Find the ticket by ID
-      $ticket = Ticket::findOrFail($uuid);
+      $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
 
       TicketComment::create([
         'user_id' => Auth::id(),

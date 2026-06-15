@@ -523,12 +523,15 @@ class TicketAssignmentController extends Controller
         ]);
 
         // Also create a comment entry for "Catatan Tindakan" display
+        // created_at after chronology so status badge reflects the submitted form status
         TicketComment::create([
           'user_id' => Auth::id(),
           'ticket_id' => $ticket->id,
           'comment_text' => $request->notes,
           'created_by' => Auth::id(),
           'updated_by' => Auth::id(),
+          'created_at' => now()->addSecond(),
+          'updated_at' => now()->addSecond(),
         ]);
       } else {
         // Add default notes
@@ -818,15 +821,11 @@ class TicketAssignmentController extends Controller
         ->with(['comments.user', 'comments.createdBy', 'status'])
         ->firstOrFail();
 
-      // Get all chronologies to determine the status at the time each comment was made
-      // Group by status and get the earliest chronology for each status
+      // All chronologies in timeline order — used to resolve status at comment time
       $chronologies = $ticket->chronologies()
         ->with('status')
         ->orderBy('created_at', 'asc')
-        ->get()
-        ->unique(function ($item) {
-          return $item->tick_status;
-        });
+        ->get();
 
       // Get all comments from pengadu (ticket creator) and pegawai tugasan (officers)
       // Sort by created_at descending (newest first)
