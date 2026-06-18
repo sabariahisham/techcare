@@ -114,7 +114,8 @@
                                             $badgeColor = match ($emailType) {
                                                 'TICKET_CLOSED' => 'success',
                                                 'TICKET_ASSIGNED' => 'warning',
-                                                'TICKET_CREATED' => 'primary'
+                                                'TICKET_CREATED' => 'primary',
+                                                default => 'secondary'
                                             };
                                         @endphp
                                         <span class="badge bg-{{ $badgeColor }}">
