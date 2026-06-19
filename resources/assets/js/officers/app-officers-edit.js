@@ -117,13 +117,15 @@ $(function () {
             selectedUsers.forEach(function (userData) {
               // Extract nama from the text format "nama (email)"
               const userName = userData.text.split(' (')[0];
-              const userEmail = userData.email || userData.text.split(' (')[1]?.replace(')', '') || '';
+              const userEmail = userData.email || userData.text.split(' (')[1] ? .replace(')', '') || '';
 
               // Add user to officer via AJAX
               $.ajax({
                 type: 'POST',
                 url: `/officer/${officerId}/users`,
-                data: { user_id: userData.id },
+                data: {
+                  user_id: userData.id
+                },
                 headers: {
                   'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
@@ -150,8 +152,8 @@ $(function () {
           function completeOfficerUpdate() {
             // Show success message first (before hiding offcanvas)
             const successMessage = selectedUsers && selectedUsers.length > 0 ?
-              `Officer berjaya dikemaskini dan ${selectedUsers.length} pengguna ditambah` :
-              'Officer berjaya dikemaskini';
+              `Pegawai Tugasan berjaya dikemaskini dan ${selectedUsers.length} pengguna ditambah` :
+              'Pegawai Tugasan berjaya dikemaskini';
 
             // Show success toastr immediately
             toastr.success(successMessage, '', {
@@ -172,7 +174,7 @@ $(function () {
         }
       },
       error: function (xhr) {
-        const errorMessage = xhr.responseJSON?.message || 'Ralat mengemas kini pegawai tugasan';
+        const errorMessage = xhr.responseJSON ? .message || 'Ralat mengemas kini pegawai tugasan';
         toastr.error(errorMessage, 'Ralat!', {
           closeButton: true,
           tapToDismiss: false,
@@ -472,7 +474,9 @@ $(function () {
     $.ajax({
       type: 'POST',
       url: `/officer/${officerId}/users`,
-      data: { user_id: userId },
+      data: {
+        user_id: userId
+      },
       headers: {
         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       },
