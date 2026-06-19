@@ -6,8 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Officer;
 use App\Models\RefCategory;
 use App\Models\RefSubCategory;
-use App\Models\User;
 use App\Models\Sla;
+use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -41,11 +42,12 @@ class OfficerController extends Controller
         // Group officers by category, subcategory, and level
         $groupedOfficers = Officer::with(['subcategory.category', 'user'])
             ->get()
-            ->groupBy(function($officer) {
-                return $officer->cat_id . '_' . $officer->subcat_id . '_' . $officer->level_tugasan;
+            ->groupBy(function ($officer) {
+                return $officer->cat_id.'_'.$officer->subcat_id.'_'.$officer->level_tugasan;
             })
-            ->map(function($group) {
+            ->map(function ($group) {
                 $firstOfficer = $group->first();
+
                 return [
                     'id' => $firstOfficer->id, // Use first officer ID as representative
                     'cat_id' => $firstOfficer->cat_id,
@@ -59,8 +61,8 @@ class OfficerController extends Controller
                     'created_at' => $firstOfficer->created_at,
                 ];
             })
-            ->sortBy(function($item) {
-                return $item['cat_name'] . '_' . $item['subcat_name'] . '_' . $item['level_tugasan'];
+            ->sortBy(function ($item) {
+                return $item['cat_name'].'_'.$item['subcat_name'].'_'.$item['level_tugasan'];
             })
             ->values();
 
@@ -88,28 +90,28 @@ class OfficerController extends Controller
                         break;
                     default:
                         $badgeClass = 'bg-label-secondary';
-                        $levelText = 'Level ' . $level;
+                        $levelText = 'Level '.$level;
                         break;
                 }
 
-                return '<span class="badge ' . $badgeClass . '">' . $levelText . '</span>';
+                return '<span class="badge '.$badgeClass.'">'.$levelText.'</span>';
             })
             ->addColumn('user_name', function ($data) {
                 $users = $data['users'];
                 $userBadges = [];
 
                 foreach ($users as $user) {
-                    $userBadges[] = '<span class="badge bg-label-primary me-1 mb-1">' . $user . '</span>';
+                    $userBadges[] = '<span class="badge bg-label-primary me-1 mb-1">'.$user.'</span>';
                 }
 
                 return implode(' ', $userBadges);
             })
             ->addColumn('action', function ($data) {
                 return '<div class="d-inline-block text-nowrap">
-                    <button class="btn btn-sm btn-icon edit-record" data-id="' . $data['id'] . '" data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditOfficer">
+                    <button class="btn btn-sm btn-icon edit-record" data-id="'.$data['id'].'" data-bs-toggle="offcanvas" data-bs-target="#offcanvasEditOfficer">
                         <i class="bx bx-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-icon delete-record text-danger" data-id="' . $data['id'] . '">
+                    <button class="btn btn-sm btn-icon delete-record text-danger" data-id="'.$data['id'].'">
                         <i class="bx bx-trash"></i>
                     </button>
                 </div>';
@@ -132,57 +134,52 @@ class OfficerController extends Controller
 
         // Validate each user_id exists
         foreach ($userIds as $userId) {
-            if (!User::find($userId)) {
+            if (! User::find($userId)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Pegawai yang dipilih tidak wujud dalam sistem.'
+                    'message' => 'Pegawai yang dipilih tidak wujud dalam sistem.',
                 ], 422);
             }
         }
 
-        $createdOfficers = [];
-        $existingAssignments = [];
-
+        // First pass: check ALL users for conflicts before creating any.
+        // A pegawai can only hold one level per category/subcategory.
+        $conflicts = [];
         foreach ($userIds as $userId) {
-            // Check if officer assignment already exists for this user, category and subcategory
-            $existingOfficer = Officer::where('cat_id', $request->cat_id)
+            $existing = Officer::where('cat_id', $request->cat_id)
                 ->where('subcat_id', $request->subcat_id)
                 ->where('user_id', $userId)
                 ->first();
 
-            if ($existingOfficer) {
+            if ($existing) {
                 $user = User::find($userId);
-                $existingAssignments[] = $user->nama ?? "User ID: $userId";
-                continue;
+                $conflicts[] = ($user->nama ?? "User ID: $userId").' (sudah ada Level '.$existing->level_tugasan.')';
             }
+        }
 
-            $officer = Officer::create([
+        if (! empty($conflicts)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pegawai berikut sudah mempunyai tugasan untuk kategori dan sub kategori ini: '.implode(', ', $conflicts),
+            ], 422);
+        }
+
+        // Second pass: no conflicts — create all
+        $createdOfficers = [];
+        foreach ($userIds as $userId) {
+            $createdOfficers[] = Officer::create([
                 'cat_id' => $request->cat_id,
                 'subcat_id' => $request->subcat_id,
                 'user_id' => $userId,
                 'level_tugasan' => $request->level_tugasan,
                 'created_by' => Auth::id(),
             ]);
-
-            $createdOfficers[] = $officer;
-        }
-
-        if (empty($createdOfficers) && !empty($existingAssignments)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Semua pegawai yang dipilih sudah mempunyai tugasan untuk kategori dan sub kategori ini: ' . implode(', ', $existingAssignments)
-            ], 422);
-        }
-
-        $message = count($createdOfficers) . ' pegawai tugasan berjaya ditambah.';
-        if (!empty($existingAssignments)) {
-            $message .= ' Pegawai berikut sudah mempunyai tugasan: ' . implode(', ', $existingAssignments);
         }
 
         return response()->json([
             'success' => true,
-            'message' => $message,
-            'data' => $createdOfficers
+            'message' => count($createdOfficers).' pegawai tugasan berjaya ditambah.',
+            'data' => $createdOfficers,
         ]);
     }
 
@@ -213,8 +210,8 @@ class OfficerController extends Controller
                 'category_name' => $officer->subcategory->category->cat_name ?? '',
                 'subcategory_name' => $officer->subcategory->subcat_name ?? '',
                 'user_names' => $userNames, // Array of user names for reference
-                'related_officer_ids' => $relatedOfficers->pluck('id')->toArray() // All officer IDs in this group
-            ]
+                'related_officer_ids' => $relatedOfficers->pluck('id')->toArray(), // All officer IDs in this group
+            ],
         ]);
     }
 
@@ -232,55 +229,62 @@ class OfficerController extends Controller
 
         // Validate each user_id exists
         foreach ($userIds as $userId) {
-            if (!User::find($userId)) {
+            if (! User::find($userId)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Pegawai yang dipilih tidak wujud dalam sistem.'
+                    'message' => 'Pegawai yang dipilih tidak wujud dalam sistem.',
                 ], 422);
             }
         }
 
         $officer = Officer::findOrFail($id);
 
-        // For update, we'll delete all officers with the same category/subcategory/level and create new ones
-        // This approach handles group editing properly
+        // Get the current group members so we know who is already in this assignment
+        $currentGroupUserIds = Officer::where('cat_id', $officer->cat_id)
+            ->where('subcat_id', $officer->subcat_id)
+            ->where('level_tugasan', $officer->level_tugasan)
+            ->pluck('user_id')
+            ->map(fn ($id) => (int) $id)
+            ->toArray();
 
-        // First, collect the old assignment info for logging purposes
-        $oldOfficer = [
-            'id' => $officer->id,
-            'user_id' => $officer->user_id,
-            'cat_id' => $officer->cat_id,
-            'subcat_id' => $officer->subcat_id,
-            'level_tugasan' => $officer->level_tugasan
-        ];
+        // If the target cat/subcat is the same, existing group members are exempt from the conflict
+        // check (they will be deleted first). For new members — or if location changes — check always.
+        $sameLocation = ((int) $request->cat_id === $officer->cat_id
+            && (int) $request->subcat_id === $officer->subcat_id);
 
-        // Delete all officers with the same category, subcategory, and current level
-        // This handles both single and multiple officer scenarios
+        $conflicts = [];
+        foreach ($userIds as $userId) {
+            $isCurrentMember = in_array((int) $userId, $currentGroupUserIds);
+
+            if (! $isCurrentMember || ! $sameLocation) {
+                $existing = Officer::where('cat_id', $request->cat_id)
+                    ->where('subcat_id', $request->subcat_id)
+                    ->where('user_id', $userId)
+                    ->first();
+
+                if ($existing) {
+                    $user = User::find($userId);
+                    $conflicts[] = ($user->nama ?? "User ID: $userId").' (sudah ada Level '.$existing->level_tugasan.')';
+                }
+            }
+        }
+
+        if (! empty($conflicts)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pegawai berikut sudah mempunyai tugasan untuk kategori dan sub kategori ini: '.implode(', ', $conflicts),
+            ], 422);
+        }
+
+        // No conflicts — delete the old group and recreate with the new values
         Officer::where('cat_id', $officer->cat_id)
             ->where('subcat_id', $officer->subcat_id)
             ->where('level_tugasan', $officer->level_tugasan)
             ->delete();
 
-        // Create new officer records for each selected user
         $createdOfficers = [];
-        $existingAssignments = [];
-
         foreach ($userIds as $userId) {
-            // Check if officer assignment already exists for this user, category, subcategory and level
-            // But exclude the same combination we just deleted (in case of level change)
-            $existingOfficer = Officer::where('cat_id', $request->cat_id)
-                ->where('subcat_id', $request->subcat_id)
-                ->where('user_id', $userId)
-                ->where('level_tugasan', $request->level_tugasan)
-                ->first();
-
-            if ($existingOfficer) {
-                $user = User::find($userId);
-                $existingAssignments[] = $user->nama ?? "User ID: $userId";
-                continue;
-            }
-
-            $newOfficer = Officer::create([
+            $createdOfficers[] = Officer::create([
                 'cat_id' => $request->cat_id,
                 'subcat_id' => $request->subcat_id,
                 'user_id' => $userId,
@@ -288,33 +292,14 @@ class OfficerController extends Controller
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
-
-            $createdOfficers[] = $newOfficer;
         }
 
-        if (empty($createdOfficers)) {
-            if (!empty($existingAssignments)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Semua pegawai yang dipilih sudah mempunyai tugasan untuk kategori, sub kategori dan level yang sama: ' . implode(', ', $existingAssignments)
-                ], 422);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tiada pegawai tugasan yang berjaya dikemaskini.'
-                ], 422);
-            }
-        }
-
-        $message = count($createdOfficers) . ' pegawai tugasan berjaya dikemaskini.';
-        if (!empty($existingAssignments)) {
-            $message .= ' Pegawai berikut sudah mempunyai tugasan: ' . implode(', ', $existingAssignments);
-        }
+        $message = count($createdOfficers).' pegawai tugasan berjaya dikemaskini.';
 
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data' => $createdOfficers
+            'data' => $createdOfficers,
         ]);
     }
 
@@ -333,42 +318,42 @@ class OfficerController extends Controller
                     return [
                         'id' => $officer->id,
                         'user_name' => optional($officer->user)->nama ?? 'Tiada Pegawai Ditugaskan',
-                        'level_tugasan' => $officer->level_tugasan
+                        'level_tugasan' => $officer->level_tugasan,
                     ];
                 });
 
             Log::info('Preview delete officers retrieved successfully', [
                 'officer_id' => $id,
                 'officers_count' => $officersToDelete->count(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => true,
-                'officers' => $officersToDelete
+                'officers' => $officersToDelete,
             ]);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ModelNotFoundException $e) {
             Log::warning('Officer not found for preview delete', [
                 'officer_id' => $id,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Pegawai tugasan tidak dijumpai.'
+                'message' => 'Pegawai tugasan tidak dijumpai.',
             ], 404);
         } catch (\Exception $e) {
-            Log::error('Preview delete officer error: ' . $e->getMessage(), [
+            Log::error('Preview delete officer error: '.$e->getMessage(), [
                 'officer_id' => $id,
                 'user_id' => Auth::id(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => app()->environment('local')
-                    ? 'Ralat berlaku semasa mengambil maklumat pegawai: ' . $e->getMessage()
-                    : 'Ralat berlaku semasa mengambil maklumat pegawai.'
+                    ? 'Ralat berlaku semasa mengambil maklumat pegawai: '.$e->getMessage()
+                    : 'Ralat berlaku semasa mengambil maklumat pegawai.',
             ], 500);
         }
     }
@@ -397,12 +382,12 @@ class OfficerController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $message
+                'message' => $message,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ralat berlaku semasa memadam pegawai tugasan.'
+                'message' => 'Ralat berlaku semasa memadam pegawai tugasan.',
             ], 500);
         }
     }
