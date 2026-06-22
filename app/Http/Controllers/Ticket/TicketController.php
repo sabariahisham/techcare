@@ -1258,7 +1258,8 @@ class TicketController extends Controller
     $ticketHistory = TicketChronologyController::getTicketHistory($ticket);
 
     // Get other relevant data
-    $allStatuses = RefTicketStatus::all();
+    //$allStatuses = RefTicketStatus::all();
+    $allStatuses = RefTicketStatus::where('id', '!=', 1)->get();
     $allCategories = RefCategory::orderBy('cat_name', 'asc')->get();
     $allSubCategories = RefSubCategory::orderBy('subcat_name', 'asc')->get();
 

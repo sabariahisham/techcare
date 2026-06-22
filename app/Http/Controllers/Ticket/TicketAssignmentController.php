@@ -59,57 +59,12 @@ class TicketAssignmentController extends Controller
     // Dynamic validation rules based on status
     $validationRules = [
       'tick_status' => 'required|exists:ref_ticket_statuses,id',
-      'sla_severity' => 'nullable|string',
-      'action_date' => 'nullable|date',
+      'sla_severity' => 'required|in:High,Medium,Low',
+      'action_date' => 'required|date',
+      'assigned_officers' => 'required|array|min:1',
+      'assigned_officers.*' => 'exists:users,id',
       'notes' => 'nullable|string|max:1000'
     ];
-
-    // For status "Aduan Baru" (ID: 1), assigned_officers is optional (can be null)
-    // For all other statuses (2, 3, 4, 5, 6), assigned_officers is required
-    // BUT: If officers already exist for this ticket (from any status), allow optional selection
-    $isStatusChanging = $ticket->tick_status != $request->tick_status;
-
-    // Check if ticket has ANY officers assigned (from current or previous statuses)
-    $hasAnyOfficersAssigned = $ticket->chronologies()
-      ->whereNotNull('escalate_to')
-      ->exists();
-
-    // Check for officers in current status specifically
-    $hasOfficersInCurrentStatus = $ticket->chronologies()
-      ->whereNotNull('escalate_to')
-      ->where('tick_status', $ticket->tick_status)
-      ->exists();
-
-    // Log validation decision
-    \Illuminate\Support\Facades\Log::info('updateTicketAssignment - Validation Check', [
-      'ticket_id' => $ticket->id,
-      'current_status' => $ticket->tick_status,
-      'new_status' => $request->tick_status,
-      'is_status_changing' => $isStatusChanging,
-      'has_any_officers_assigned' => $hasAnyOfficersAssigned,
-      'has_officers_in_current_status' => $hasOfficersInCurrentStatus,
-      'is_aduan_baru' => $isAduanBaru,
-      'is_final_status' => $isFinalStatus,
-      'assigned_officers_provided' => $request->has('assigned_officers') ? count($request->assigned_officers) : 0
-    ]);
-
-    if ($isAduanBaru || $isFinalStatus) {
-      $validationRules['assigned_officers'] = 'nullable|array';
-      $validationRules['assigned_officers.*'] = 'exists:users,id';
-    } else {
-      // Only require assigned_officers if:
-      // 1. No officers have ever been assigned to this ticket AND none provided
-      // 2. Officers field can be optional if ticket already has officers assigned
-      if (!$hasAnyOfficersAssigned) {
-        // No officers exist at all - require selection
-        $validationRules['assigned_officers'] = 'required|array|min:1';
-        $validationRules['assigned_officers.*'] = 'exists:users,id';
-      } else {
-        // Officers already exist - allow optional (will use existing officers if none provided)
-        $validationRules['assigned_officers'] = 'nullable|array';
-        $validationRules['assigned_officers.*'] = 'exists:users,id';
-      }
-    }
 
     // Add kategori and sub kategori validation only for "Aduan Dirujuk" status
     if ($isAduanDirujuk) {
@@ -123,11 +78,14 @@ class TicketAssignmentController extends Controller
     $request->validate($validationRules, [
       'tick_status.required' => 'Sila pilih status tiket.',
       'tick_status.exists' => 'Status tiket yang dipilih tidak sah.',
+      'sla_severity.required' => 'Sila pilih tahap severity/priority.',
+      'sla_severity.in' => 'Tahap severity yang dipilih tidak sah.',
+      'action_date.required' => 'Sila masukkan tarikh tindakan.',
       'cat_id.required' => 'Sila pilih jenis aduan untuk status Aduan Dirujuk.',
       'cat_id.exists' => 'Kategori aduan yang dipilih tidak sah.',
       'subcat_id.required' => 'Sila pilih sub kategori aduan untuk status Aduan Dirujuk.',
       'subcat_id.exists' => 'Sub kategori aduan yang dipilih tidak sah.',
-      'assigned_officers.required' => 'Sila pilih sekurang-kurangnya satu pegawai tugasan untuk status ini.',
+      'assigned_officers.required' => 'Sila pilih sekurang-kurangnya satu pegawai tugasan.',
       'assigned_officers.min' => 'Sila pilih sekurang-kurangnya satu pegawai tugasan.',
       'assigned_officers.*.exists' => 'Pegawai tugasan yang dipilih tidak sah.',
       'action_date.date' => 'Format tarikh tindakan tidak sah.',
