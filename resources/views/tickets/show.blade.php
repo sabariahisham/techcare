@@ -3,7 +3,7 @@
 @section('title', 'Lihat Tiket - ' . $ticket->ticket_nolog)
 
 @section('vendor-style')
-    @vite(['resources/assets/vendor/libs/select2/select2.scss'])
+    @vite(['resources/assets/vendor/libs/select2/select2.scss', 'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss'])
     <style>
         /* Custom styling for disabled dropdowns */
         select.form-select.disabled,
@@ -114,7 +114,7 @@
 @endsection
 
 @section('vendor-script')
-    @vite(['resources/assets/vendor/libs/select2/select2.js', 'resources/assets/js/quill-editor.js'])
+    @vite(['resources/assets/vendor/libs/select2/select2.js', 'resources/assets/js/quill-editor.js', 'resources/assets/vendor/libs/sweetalert2/sweetalert2.js'])
 @endsection
 
 @section('content')
@@ -201,6 +201,27 @@
                                         <small class="text-muted">{{ $ticket->user->email ?? '-' }}</small>
                                     </div>
                                 </div>
+
+                                @if ($ticket->ticket_type == 2 && $ticket->createdBy)
+                                <!-- Maklumat Bagi Pihak -->
+                                <div class="col-12">
+                                    <h6 class="text-primary mt-6 mb-1">
+                                        <i class="bx bx-user-plus me-1"></i> Direkodkan Oleh
+                                    </h6>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar avatar-lg me-3">
+                                        <span class="avatar-initial rounded-circle bg-label-primary">
+                                            {{ strtoupper(substr($ticket->createdBy->nama ?? 'U', 0, 2)) }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ $ticket->createdBy->nama ?? 'Tidak Diketahui' }}</h6>
+                                        <h6 class="mb-0">{{ $ticket->createdBy->kod_jwtn ?? '-' }}</h6>
+                                        <small class="text-muted">{{ $ticket->createdBy->email ?? '-' }}</small>
+                                    </div>
+                                </div>
+                                @endif
                             </div>
 
                             <!-- Pemisah Vertikal - Hidden on mobile -->
@@ -442,7 +463,7 @@
                             @endif
                             <button type="button" class="btn btn-primary btn-sm float-end"
                                 onclick="$('#actionComment').modal('show')">
-                                <i class="bx bx-save me-1"></i>Catatan Tindakan
+                                <i class="bx bx-show me-1"></i>Aktiviti Catatan Tindakan
                                 @if (isset($newCommentsCount) && $newCommentsCount > 0)
                                     <span class="badge bg-danger ms-2 position-relative"
                                         style="font-size: 0.7rem; padding: 0.25rem 0.5rem; border-radius: 10px; animation: pulse-badge 2s infinite;">
@@ -542,7 +563,7 @@
                     </div>
                     <div class="card-body mt-3">
                         <form id="updateTicketForm" action="{{ route('ticket-assignments.update', $ticket->uuid) }}"
-                            method="POST">
+                            method="POST" novalidate>
                             @csrf
                             @method('PUT')
                             <div class="row mb-3">
@@ -550,17 +571,24 @@
                                     <h6 class="mb-0">Status Tiket</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
+                                    @php
+                                        $selectedStatus = $ticket->tick_status == 1 ? '' : $ticket->tick_status;
+                                    @endphp
+
                                     <select class="form-select" name="tick_status" id="tick_status" required
                                         {{ $isReadOnlyView ? 'disabled' : '' }}>
-                                        <option value="">Pilih Status</option>
+                                        <option value="" {{ $selectedStatus == '' ? 'selected' : '' }}>
+                                            Pilih Status
+                                        </option>
                                         @foreach ($allStatuses as $status)
-                                            <option value="{{ $status->id }}"
-                                                {{ $ticket->tick_status == $status->id ? 'selected' : '' }}>
+                                            <option value="{{ $status->id }}" {{-- {{ $status->id == 1 ? 'disabled' : '' }} --}}
+                                                {{ $selectedStatus == $status->id ? 'selected' : '' }}>
                                                 {{ $status->st_name }}
                                             </option>
-                                        @endforeach                                        
+                                        @endforeach
                                     </select>
-                                    <small class="text-muted d-block mt-1">Pilih <strong>Aduan Selesai</strong> untuk mengaktifkan butang <strong>Tutup Tiket</strong>.</small>
+                                    <small class="text-muted d-block mt-1">Pilih <strong>Aduan Selesai</strong> untuk
+                                        mengaktifkan butang <strong>Tutup Tiket</strong>.</small>
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -600,7 +628,7 @@
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-3">
-                                    <h6 class="mb-0">Tahap Severity</h6>
+                                    <h6 class="mb-0">Tahap Severity/Priority</h6>
                                 </div>
                                 <div class="col-sm-9 text-secondary">
                                     @if ($isReadOnlyView && $lastChronologyUpdate)
@@ -626,8 +654,8 @@
                                             // Get current severity from last chronology or ticket
                                             $currentSeverity = $lastChronologyUpdate->sla_severity ?? null;
                                         @endphp
-                                        <select class="form-select" name="sla_severity" id="sla_severity">
-                                            <option value="">Pilih Tahap Severity</option>
+                                        <select class="form-select" name="sla_severity" id="sla_severity" required>
+                                            <option value="">Pilih Tahap Severity/Priority</option>
                                             <option value="High" {{ $currentSeverity === 'High' ? 'selected' : '' }}>
                                                 High</option>
                                             <option value="Medium" {{ $currentSeverity === 'Medium' ? 'selected' : '' }}>
@@ -636,7 +664,8 @@
                                             </option>
                                         </select>
 
-                                        <small class="text-muted d-block mt-1">Tahap severity akan dipaparkan berdasarkan kategori dan sub kategori yang dipilih.</small>
+                                        <small class="text-muted d-block mt-1">Tahap severity akan dipaparkan berdasarkan
+                                            kategori dan sub kategori yang dipilih.</small>
                                     @endif
                                 </div>
                             </div>
@@ -774,7 +803,7 @@ $filteredOfficers = $officersQuery
                                     @else
                                         {{-- Editable view: Show datetime input --}}
                                         <input type="datetime-local" class="form-control" name="action_date"
-                                            id="action_date" value="{{ now()->format('Y-m-d\TH:i') }}" />
+                                            id="action_date" value="{{ now()->format('Y-m-d\TH:i') }}" required />
                                     @endif
                                 </div>
                             </div>
@@ -832,8 +861,7 @@ $filteredOfficers = $officersQuery
                             @if (!$isReadOnlyView)
                                 <div class="row mt-6 mb-1">
                                     <div class="col-sm">
-                                        <button type="button" class="btn btn-warning btn-sm "
-                                            id="pegawaiCommentBtn"
+                                        <button type="button" class="btn btn-warning btn-sm " id="pegawaiCommentBtn"
                                             onclick="openCommentModal('pegawai')">
                                             <i class="bx bx-message me-3"></i>Catatan Tindakan Yang Diambil
                                         </button>
@@ -935,7 +963,7 @@ $filteredOfficers = $officersQuery
                                 $getActionVerb = function ($statusName) {
                                     switch ($statusName) {
                                         case 'Aduan Baru':
-                                            return 'Direkod (Log) oleh:';
+                                            return 'Pengadu oleh:';
                                         case 'Aduan Diproses':
                                             return 'Diproses oleh:';
                                         case 'Serahan Kepada':
@@ -1132,6 +1160,9 @@ if (!$hasAduanBaru) {
             'status_name' => 'Aduan Baru',
             'description' => $getStatusDescription('Aduan Baru'),
             'created_by' => $ticket->user ? $ticket->user->nama : 'Pengguna',
+            'wakil_pengadu_name' => $ticket->ticket_type == 2 && $ticket->createdBy
+                ? $ticket->createdBy->nama
+                : null,
             'created_at' => $ticket->created_at,
             'escalated_to_list' => $initialAssignedOfficers,
             'escalated_to' => !empty($initialAssignedOfficers)
@@ -1198,6 +1229,11 @@ foreach ($groupedChronologies as $chronologyGroup) {
                 : ($firstChron->createdBy
                     ? $firstChron->createdBy->nama
                     : 'Sistem'),
+            'wakil_pengadu_name' => $firstChron->status->st_name === 'Aduan Baru' &&
+                $ticket->ticket_type == 2 &&
+                $ticket->createdBy
+                ? $ticket->createdBy->nama
+                : null,
             'created_at' => $firstChron->created_at,
             'escalated_to_list' => $assignedOfficerDisplayList,
             'escalated_to' => !empty($assignedOfficerDisplayList)
@@ -1314,6 +1350,14 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                                                 <strong>{{ $getActionVerb($item->status_name) }}</strong>
                                                 <span class="text-primary">{{ $item->created_by }}</span>
                                             </small>
+
+                                            @if ($item->status_name === 'Aduan Baru' && !empty($item->wakil_pengadu_name))
+                                                <small class="timeline-time d-block mb-1">
+                                                    <i class="bx bx-user-plus text-primary"></i>
+                                                    <strong>Direkodkan oleh:</strong>
+                                                    <span class="text-primary">{{ $item->wakil_pengadu_name }}</span>
+                                                </small>
+                                            @endif
 
                                             {{-- Show new category and subcategory info for Aduan Dirujuk --}}
                                             @if ($item->status_name === 'Aduan Dirujuk')
@@ -2265,33 +2309,90 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
             }
 
             // Form validation and submission handling for update form
+            function validateUpdateTicketForm() {
+                const statusSelect = document.getElementById('tick_status');
+                const categorySelect = document.getElementById('cat_id');
+                const subcategorySelect = document.getElementById('subcat_id');
+                const severitySelect = document.getElementById('sla_severity');
+                const actionDateInput = document.getElementById('action_date');
+                const errors = [];
+
+                if (!statusSelect || !statusSelect.value) {
+                    errors.push('Sila pilih status tiket.');
+                }
+
+                const selectedStatusText = statusSelect?.selectedOptions[0]?.text.trim() || '';
+                const isAduanDirujuk = selectedStatusText === 'Aduan Dirujuk';
+
+                if (isAduanDirujuk) {
+                    if (!categorySelect?.value) {
+                        errors.push('Sila pilih kategori untuk status Aduan Dirujuk.');
+                    }
+                    if (!subcategorySelect?.value) {
+                        errors.push('Sila pilih sub kategori untuk status Aduan Dirujuk.');
+                    }
+                }
+
+                if (!severitySelect?.value) {
+                    errors.push('Sila pilih tahap severity/priority.');
+                }
+
+                const assignedOfficers = $('#assigned_officers').length
+                    ? $('#assigned_officers').val()
+                    : [];
+
+                if (!assignedOfficers || assignedOfficers.length === 0) {
+                    errors.push('Sila pilih sekurang-kurangnya satu pegawai tugasan.');
+                }
+
+                if (!actionDateInput?.value) {
+                    errors.push('Sila masukkan tarikh tindakan.');
+                }
+
+                if (errors.length > 0) {
+                    const errorListHtml = '<ul class="text-start mb-0 ps-3">' +
+                        errors.map(function(error) {
+                            return '<li>' + error + '</li>';
+                        }).join('') +
+                        '</ul>';
+
+                    Swal.fire({
+                        title: 'Sila Lengkapkan Maklumat',
+                        html: errorListHtml,
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        },
+                        buttonsStyling: false,
+                        didClose: function() {
+                            if (!statusSelect?.value) {
+                                statusSelect?.focus();
+                            } else if (isAduanDirujuk && !categorySelect?.value) {
+                                categorySelect?.focus();
+                            } else if (isAduanDirujuk && !subcategorySelect?.value) {
+                                subcategorySelect?.focus();
+                            } else if (!severitySelect?.value) {
+                                severitySelect?.focus();
+                            } else if (!assignedOfficers || assignedOfficers.length === 0) {
+                                $('#assigned_officers').select2('open');
+                            } else if (!actionDateInput?.value) {
+                                actionDateInput?.focus();
+                            }
+                        }
+                    });
+
+                    return false;
+                }
+
+                return true;
+            }
+
             if (updateForm) {
                 updateForm.addEventListener('submit', function(e) {
-                    // Basic validation
-                    const statusSelect = document.getElementById('tick_status');
-                    const categorySelect = document.getElementById('cat_id');
-                    const subcategorySelect = document.getElementById('subcat_id');
-
-                    if (!statusSelect.value) {
+                    if (!validateUpdateTicketForm()) {
                         e.preventDefault();
-                        alert('Sila pilih status tiket.');
-                        statusSelect.focus();
                         return false;
-                    }
-
-                    // Only validate kategori and sub kategori if they are NOT disabled (status is not Aduan Dirujuk)
-                    const selectedStatusText = statusSelect.selectedOptions[0]?.text.trim();
-                    const isAduanDirujuk = selectedStatusText === 'Aduan Dirujuk';
-
-                    // Skip validation for kategori and sub kategori when status is Aduan Dirujuk
-                    if (!isAduanDirujuk) {
-                        if (categorySelect.value && !categorySelect.disabled) {
-                            // Category is set, continue
-                        }
-
-                        if (subcategorySelect.value && !subcategorySelect.disabled) {
-                            // Subcategory is set, continue
-                        }
                     }
 
                     // Show loading state
@@ -2326,6 +2427,56 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
             const closeTicketBtn = document.querySelector('#closeTicketBtn');
             /** Untuk Select2: kekalkan pemilihan berbilang selepas senarai pegawai dibina semula */
             const currentAuthUserIdStr = String({{ auth()->user()->id }});
+            const originalCatId = '{{ $ticket->cat_id ?? '' }}';
+            const originalSubcatId = '{{ $ticket->subcat_id ?? '' }}';
+            let allSubcategoryOptions = [];
+            let resetOfficersListFn = null;
+
+            function populateSubcategoryOptions(catId) {
+                if (!subcategorySelect) {
+                    return;
+                }
+
+                subcategorySelect.innerHTML = '<option value="">Pilih Sub Kategori</option>';
+
+                allSubcategoryOptions.forEach(function(option) {
+                    if (option.value === '') {
+                        return;
+                    }
+
+                    if (!catId || option.dataset.catId === catId) {
+                        subcategorySelect.appendChild(option.cloneNode(true));
+                    }
+                });
+            }
+
+            function clearCategoryFieldsForDirujuk() {
+                if (!categorySelect || !subcategorySelect) {
+                    return;
+                }
+
+                categorySelect.value = '';
+                populateSubcategoryOptions();
+                subcategorySelect.value = '';
+
+                if (severitySelect) {
+                    severitySelect.innerHTML = '<option value="">Pilih Tahap Severity/Priority</option>';
+                }
+
+                if (resetOfficersListFn) {
+                    resetOfficersListFn();
+                }
+            }
+
+            function restoreOriginalCategoryFields() {
+                if (!categorySelect || !subcategorySelect) {
+                    return;
+                }
+
+                categorySelect.value = originalCatId;
+                populateSubcategoryOptions(originalCatId || null);
+                subcategorySelect.value = originalSubcatId;
+            }
 
             function applyAssignedOfficersSelection($sel, availableIds, prevSelected) {
                 const avail = (availableIds || []).map(String);
@@ -2377,8 +2528,18 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                     closeTicketBtn.classList.toggle('d-none', !isFinalStatus);
                 }
 
-                // Remove required attributes when disabled
-                if (!isAduanDirujuk) {
+                // Kategori & Sub Kategori: kosongkan untuk pilihan baharu bila Aduan Dirujuk
+                if (isAduanDirujuk) {
+                    clearCategoryFieldsForDirujuk();
+                } else {
+                    restoreOriginalCategoryFields();
+                }
+
+                // Required attributes for Aduan Dirujuk only
+                if (isAduanDirujuk) {
+                    categorySelect.setAttribute('required', 'required');
+                    subcategorySelect.setAttribute('required', 'required');
+                } else {
                     categorySelect.removeAttribute('required');
                     subcategorySelect.removeAttribute('required');
                 }
@@ -2420,7 +2581,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
 
             if (categorySelect && subcategorySelect) {
                 // Store all subcategory options
-                const allSubcategoryOptions = Array.from(subcategorySelect.options);
+                allSubcategoryOptions = Array.from(subcategorySelect.options);
 
                 // Track if page is still loading
                 let isPageLoading = true;
@@ -2440,7 +2601,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                                 if (data.success) {
                                     // Update severity options
                                     severitySelect.innerHTML =
-                                        '<option value="">Pilih Tahap Severity</option>';
+                                        '<option value="">Pilih Tahap Severity/Priority</option>';
                                     data.severities.forEach(severity => {
                                         const option = document.createElement('option');
                                         option.value = severity.value;
@@ -2471,7 +2632,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                             });
                     } else {
                         // Clear severity options when category or subcategory not selected
-                        severitySelect.innerHTML = '<option value="">Pilih Tahap Severity</option>';
+                        severitySelect.innerHTML = '<option value="">Pilih Tahap Severity/Priority</option>';
                         resetOfficersList();
                     }
                 }
@@ -2603,6 +2764,8 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                     applyAssignedOfficersSelection($sel, availableIds, prevSelected);
                 }
 
+                resetOfficersListFn = resetOfficersList;
+
                 // Category change event
                 categorySelect.addEventListener('change', function() {
                     // Check if dropdown is disabled first
@@ -2633,7 +2796,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
 
                     // Clear severity and reset officers when category changes (but not on page load)
                     if (!isPageLoading) {
-                        severitySelect.innerHTML = '<option value="">Pilih Tahap Severity</option>';
+                        severitySelect.innerHTML = '<option value="">Pilih Tahap Severity/Priority</option>';
                         resetOfficersList();
                     }
                 });
