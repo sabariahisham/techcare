@@ -33,8 +33,7 @@ $(function () {
     var currentDateTime = day + '-' + month + '-' + year + ' ' + hours + ':' + minutes;
 
     var dt_report = dt_report_table.DataTable({
-      data: [
-        {
+      data: [{
           id: 1,
           name: 'Senarai Log Tiket',
           description: 'Laporan lengkap log aktiviti dan perubahan status tiket',
@@ -74,15 +73,26 @@ $(function () {
       ],
       columns: [
         // columns according to JSON
-        { data: '' },
-        { data: 'id' },
-        { data: 'name' },
-        { data: 'description' },
-        { data: 'updated_at' },
-        { data: 'action' }
-      ],
-      columnDefs: [
         {
+          data: ''
+        },
+        {
+          data: 'id'
+        },
+        {
+          data: 'name'
+        },
+        {
+          data: 'description'
+        },
+        {
+          data: 'updated_at'
+        },
+        {
+          data: 'action'
+        }
+      ],
+      columnDefs: [{
           // For Responsive
           className: 'control',
           searchable: false,
@@ -152,16 +162,13 @@ $(function () {
             } else if ($id === 3) {
               // Route for Laporan Bulanan Aduan
               viewUrl = '/report/aduan-tahunan';
-            }
-            else if ($id === 4) {
+            } else if ($id === 4) {
               // Route for Senarai Rekod Laporan Helpdesk
               viewUrl = '/report/rekod-laporan';
-            }
-            else if ($id === 5) {
+            } else if ($id === 5) {
               // Route for Statistik Log Aduan
               viewUrl = '/report/statistik-log';
-            }
-            else if ($id === 6) {
+            } else if ($id === 6) {
               // Route for Laporan Bulanan Aduan Mengikut Status Aduan
               viewUrl = '/report/laporan-status-aduan-tahunan';
             }
@@ -176,9 +183,10 @@ $(function () {
           }
         }
       ],
-      order: [[1, 'asc']],
-      dom:
-        '<"row"' +
+      order: [
+        [1, 'asc']
+      ],
+      dom: '<"row"' +
         '<"col-md-2"<"me-3"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-4"fB>>' +
         '>t' +
@@ -195,16 +203,14 @@ $(function () {
           previous: '<i class="bx bx-chevron-left bx-18px"></i>'
         }
       },
-      buttons: [
-        {
-          text: '<i class="bx bx-plus bx-sm me-0 me-sm-2 align-top"></i><span class="d-none d-sm-inline-block">Tambah Laporan</span>',
-          className: 'add-new btn btn-primary mb-6 mb-md-0 waves-effect waves-light',
-          attr: {
-            'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddReport'
-          }
+      buttons: [{
+        text: '<i class="bx bx-plus bx-sm me-0 me-sm-2 align-top"></i><span class="d-none d-sm-inline-block">Tambah Laporan</span>',
+        className: 'add-new btn btn-primary mb-6 mb-md-0 waves-effect waves-light',
+        attr: {
+          'data-bs-toggle': 'offcanvas',
+          'data-bs-target': '#offcanvasAddReport'
         }
-      ],
+      }],
       responsive: {
         details: {
           display: $.fn.dataTable.Responsive.display.modal({
@@ -217,7 +223,8 @@ $(function () {
           renderer: function (api, rowIdx, columns) {
             var data = $.map(columns, function (col, i) {
               return col.title !== '' // ? Do not show row in modal popup if title is blank (for check box)
-                ? '<tr data-dt-row="' +
+                ?
+                '<tr data-dt-row="' +
                 col.rowIndex +
                 '" data-dt-column="' +
                 col.columnIndex +
@@ -229,8 +236,8 @@ $(function () {
                 '<td>' +
                 col.data +
                 '</td>' +
-                '</tr>'
-                : '';
+                '</tr>' :
+                '';
             }).join('');
 
             return data ? $('<table class="table"/><tbody />').append(data) : false;

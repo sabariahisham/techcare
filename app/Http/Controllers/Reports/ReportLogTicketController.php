@@ -4,27 +4,26 @@ namespace App\Http\Controllers\Reports;
 
 use App\Http\Controllers\Controller;
 use App\Models\Officer;
-use App\Models\Report;
 use App\Models\RefBahagian;
 use App\Models\RefCategory;
 use App\Models\RefSubCategory;
 use App\Models\RefTicketStatus;
+use App\Models\Report;
 use App\Models\Ticket;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Yajra\DataTables\Facades\DataTables;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Response;
+use Yajra\DataTables\Facades\DataTables;
 
 class ReportLogTicketController extends Controller
 {
     /**
      * Apply common filters to ticket query
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param Request $request
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     private function applyFilters($query, Request $request)
     {
@@ -42,10 +41,10 @@ class ReportLogTicketController extends Controller
 
         if ($request->filled('officer')) {
             $officerId = (int) $request->officer;
-            $query->where(function($q) use ($officerId) {
-                $q->whereHas('category.officers', function($sq) use ($officerId) {
+            $query->where(function ($q) use ($officerId) {
+                $q->whereHas('category.officers', function ($sq) use ($officerId) {
                     $sq->where('user_id', $officerId);
-                })->orWhereHas('subCategory.officers', function($sq) use ($officerId) {
+                })->orWhereHas('subCategory.officers', function ($sq) use ($officerId) {
                     $sq->where('user_id', $officerId);
                 });
             });
@@ -53,7 +52,7 @@ class ReportLogTicketController extends Controller
 
         if ($request->filled('bahagian')) {
             $bahagian = e($request->bahagian);
-            $query->whereHas('user', function($q) use ($bahagian) {
+            $query->whereHas('user', function ($q) use ($bahagian) {
                 $q->where('kod_bah', $bahagian);
             });
         }
@@ -76,61 +75,41 @@ class ReportLogTicketController extends Controller
     }
 
     /**
-     * Get officer names for a ticket (optimized with caching)
+     * Get assigned officer names for a ticket from its chronologies.
      *
-     * @param \App\Models\Ticket $ticket
-     * @param array $officerCache
-     * @return string
+     * @param  Ticket  $ticket
      */
-    private function getOfficerNames($ticket, array &$officerCache): string
+    private function getAssignedOfficerNames($ticket): string
     {
-        $cacheKey = $ticket->subcat_id ? "subcat_{$ticket->subcat_id}" : "cat_{$ticket->cat_id}";
+        $names = $ticket->chronologies
+            ->whereNotNull('escalate_to')
+            ->where('tick_status', $ticket->tick_status)
+            ->map(fn ($c) => $c->escalatedTo?->nama)
+            ->filter()
+            ->unique()
+            ->values();
 
-        if (!isset($officerCache[$cacheKey])) {
-            $officers = collect();
-
-            if ($ticket->subcat_id) {
-                $officers = Officer::with('user')
-                    ->where('subcat_id', $ticket->subcat_id)
-                    ->whereHas('user')
-                    ->get();
-            }
-
-            if ($officers->isEmpty() && $ticket->cat_id) {
-                $officers = Officer::with('user')
-                    ->where('cat_id', $ticket->cat_id)
-                    ->whereNull('subcat_id')
-                    ->whereHas('user')
-                    ->get();
-            }
-
-            $officerCache[$cacheKey] = $officers->isEmpty()
-                ? '-'
-                : $officers->map(fn($o) => $o->user->nama)->implode(', ');
-        }
-
-        return $officerCache[$cacheKey];
+        return $names->isEmpty() ? '-' : $names->implode(', ');
     }
 
     /**
      * Format date in Malay
      *
-     * @param \Carbon\Carbon|null $date
-     * @return string
+     * @param  Carbon|null  $date
      */
     private function formatMalayDate($date): string
     {
-        if (!$date) {
+        if (! $date) {
             return '-';
         }
 
         $bulan = [
             1 => 'JANUARI', 2 => 'FEBRUARI', 3 => 'MAC', 4 => 'APRIL',
             5 => 'MEI', 6 => 'JUN', 7 => 'JULAI', 8 => 'OGOS',
-            9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DISEMBER'
+            9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DISEMBER',
         ];
 
-        return $date->format('d') . ' ' . $bulan[$date->month] . ' ' . $date->format('Y');
+        return $date->format('d').' '.$bulan[$date->month].' '.$date->format('Y');
     }
 
     public function index()
@@ -143,7 +122,9 @@ class ReportLogTicketController extends Controller
         $resolvedPercentage = $totalTickets > 0 ? round(($resolvedTickets / $totalTickets) * 100, 2) : 0;
 
         return view('report.index', compact('totalTickets', 'resolvedTickets', 'resolvedPercentage'));
-    }    public function logTicket()
+    }
+
+    public function logTicket()
     {
         $categories = RefCategory::orderBy('cat_name', 'asc')->get();
         $subCategories = RefSubCategory::orderBy('subcat_name', 'asc')->get();
@@ -188,14 +169,12 @@ class ReportLogTicketController extends Controller
             'user.bahagian',
             'category',
             'subCategory',
-            'status'
+            'status',
+            'chronologies.escalatedTo',
         ]);
 
         // Apply filters using shared method
         $this->applyFilters($query, $request);
-
-        // Cache for officer lookups to avoid N+1 queries
-        $officerCache = [];
 
         return DataTables::of($query)
             ->addIndexColumn()
@@ -210,7 +189,9 @@ class ReportLogTicketController extends Controller
             })
             ->addColumn('status_badge', function ($ticket) {
                 $status = $ticket->status;
-                if (!$status) return '<span class="badge bg-label-secondary">-</span>';
+                if (! $status) {
+                    return '<span class="badge bg-label-secondary">-</span>';
+                }
 
                 $badgeClass = 'bg-label-secondary';
                 // Map status IDs to badge classes
@@ -229,7 +210,7 @@ class ReportLogTicketController extends Controller
                         break;
                 }
 
-                return '<span class="badge ' . $badgeClass . '">' . e($status->st_name) . '</span>';
+                return '<span class="badge '.$badgeClass.'">'.e($status->st_name).'</span>';
             })
             ->addColumn('kategori', function ($ticket) {
                 return e($ticket->category?->cat_name ?? '-');
@@ -237,8 +218,8 @@ class ReportLogTicketController extends Controller
             ->addColumn('sub_kategori', function ($ticket) {
                 return e($ticket->subCategory?->subcat_name ?? '-');
             })
-            ->addColumn('pegawai_tugasan', function ($ticket) use (&$officerCache) {
-                return e($this->getOfficerNames($ticket, $officerCache));
+            ->addColumn('pegawai_tugasan', function ($ticket) {
+                return e($this->getAssignedOfficerNames($ticket));
             })
             ->addColumn('severity', function ($ticket) {
                 // You can customize this based on your severity logic
@@ -247,13 +228,15 @@ class ReportLogTicketController extends Controller
                     '<span class="badge bg-label-warning">MEDIUM</span>';
             })
             ->addColumn('sla_days', function ($ticket) {
-                if (!$ticket->tick_duedate) return '-';
+                if (! $ticket->tick_duedate) {
+                    return '-';
+                }
 
                 $now = now();
                 $dueDate = $ticket->tick_duedate;
                 $daysDiff = $now->diffInDays($dueDate, false);
 
-                return round($daysDiff) . ' hari';
+                return round($daysDiff).' hari';
             })
             ->rawColumns(['status_badge', 'severity'])
             ->make(true);
@@ -266,7 +249,8 @@ class ReportLogTicketController extends Controller
                 'user.bahagian',
                 'category',
                 'subCategory',
-                'status'
+                'status',
+                'chronologies.escalatedTo',
             ]);
 
             // Apply filters using shared method
@@ -277,23 +261,20 @@ class ReportLogTicketController extends Controller
             // Calculate statistics
             $totalTickets = $tickets->count();
             // Status ID 6 = 'Aduan Selesai' (Resolved/Completed)
-            $resolvedTickets = $tickets->filter(fn($ticket) => $ticket->tick_status == 6)->count();
+            $resolvedTickets = $tickets->filter(fn ($ticket) => $ticket->tick_status == 6)->count();
             $resolvedPercentage = $totalTickets > 0 ? round(($resolvedTickets / $totalTickets) * 100, 2) : 0;
 
-            // Cache for officer lookups
-            $officerCache = [];
-
             // Create CSV content
-            $filename = 'senarai-log-tiket-' . date('Y-m-d-His') . '.csv';
+            $filename = 'senarai-log-tiket-'.date('Y-m-d-His').'.csv';
             $headers = [
                 'Content-Type' => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
                 'Pragma' => 'no-cache',
                 'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-                'Expires' => '0'
+                'Expires' => '0',
             ];
 
-            $callback = function() use ($tickets, $totalTickets, $resolvedTickets, $resolvedPercentage, &$officerCache) {
+            $callback = function () use ($tickets, $totalTickets, $resolvedTickets, $resolvedPercentage) {
                 $file = fopen('php://output', 'w');
                 // Add BOM for UTF-8
                 fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
@@ -304,7 +285,7 @@ class ReportLogTicketController extends Controller
                 fputcsv($file, ['Jumlah Tiket', $totalTickets]);
                 fputcsv($file, ['Aduan Selesai', $resolvedTickets]);
                 fputcsv($file, ['Aduan Belum Selesai', $totalTickets - $resolvedTickets]);
-                fputcsv($file, ['Peratusan Aduan Selesai', $resolvedPercentage . '%']);
+                fputcsv($file, ['Peratusan Aduan Selesai', $resolvedPercentage.'%']);
                 fputcsv($file, []); // Empty row
 
                 // Add headers
@@ -317,18 +298,18 @@ class ReportLogTicketController extends Controller
                     'Kategori',
                     'Sub Kategori',
                     'Pegawai Tugasan',
-                    'Hari SLA'
+                    'Hari SLA',
                 ]);
 
                 // Add data rows
                 foreach ($tickets as $ticket) {
-                    $officerNames = $this->getOfficerNames($ticket, $officerCache);
+                    $officerNames = $this->getAssignedOfficerNames($ticket);
 
                     // Calculate SLA days
                     $slaDays = '-';
                     if ($ticket->tick_duedate) {
                         $daysDiff = now()->diffInDays($ticket->tick_duedate, false);
-                        $slaDays = round($daysDiff) . ' hari';
+                        $slaDays = round($daysDiff).' hari';
                     }
 
                     fputcsv($file, [
@@ -340,7 +321,7 @@ class ReportLogTicketController extends Controller
                         $ticket->category?->cat_name ?? '-',
                         $ticket->subCategory?->subcat_name ?? '-',
                         $officerNames,
-                        $slaDays
+                        $slaDays,
                     ]);
                 }
 
@@ -350,8 +331,9 @@ class ReportLogTicketController extends Controller
             return Response::stream($callback, 200, $headers);
 
         } catch (\Exception $e) {
-            Log::error('Excel export error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Ralat semasa eksport data: ' . $e->getMessage());
+            Log::error('Excel export error: '.$e->getMessage());
+
+            return redirect()->back()->with('error', 'Ralat semasa eksport data: '.$e->getMessage());
         }
     }
 
@@ -362,7 +344,8 @@ class ReportLogTicketController extends Controller
                 'user.bahagian',
                 'category',
                 'subCategory',
-                'status'
+                'status',
+                'chronologies.escalatedTo',
             ]);
 
             // Apply filters using shared method
@@ -371,16 +354,13 @@ class ReportLogTicketController extends Controller
             $tickets = $query->get();
             $totalTickets = $tickets->count();
             // Status ID 6 = 'Aduan Selesai' (Resolved/Completed)
-            $resolvedTickets = $tickets->filter(fn($ticket) => $ticket->tick_status == 6)->count();
+            $resolvedTickets = $tickets->filter(fn ($ticket) => $ticket->tick_status == 6)->count();
             $resolvedPercentage = $totalTickets > 0 ? round(($resolvedTickets / $totalTickets) * 100, 2) : 0;
             $generatedDate = now()->format('d/m/Y H:i:s');
 
-            // Cache for officer lookups to avoid N+1 queries
-            $officerCache = [];
-
-            // Process officer names for each ticket using cached method
+            // Process officer names for each ticket
             foreach ($tickets as $ticket) {
-                $ticket->officerNames = $this->getOfficerNames($ticket, $officerCache);
+                $ticket->officerNames = $this->getAssignedOfficerNames($ticket);
             }
 
             // Render Blade view for PDF
@@ -397,8 +377,9 @@ class ReportLogTicketController extends Controller
                 ->header('Content-Type', 'text/html; charset=UTF-8');
 
         } catch (\Exception $e) {
-            Log::error('PDF export error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Ralat semasa eksport PDF: ' . $e->getMessage());
+            Log::error('PDF export error: '.$e->getMessage());
+
+            return redirect()->back()->with('error', 'Ralat semasa eksport PDF: '.$e->getMessage());
         }
     }
 }

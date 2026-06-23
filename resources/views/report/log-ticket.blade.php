@@ -229,7 +229,7 @@
                 <th>KATEGORI</th>
                 <th>SUB KATEGORI</th>
                 <th>PEGAWAI TUGASAN</th>
-                <th>SEVERITY</th>
+                <th>SEVERITY / PRIORITY</th>
                 <th>JUMLAH HARI SLA</th>
               </tr>
             </thead>

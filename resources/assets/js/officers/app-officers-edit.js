@@ -117,7 +117,7 @@ $(function () {
             selectedUsers.forEach(function (userData) {
               // Extract nama from the text format "nama (email)"
               const userName = userData.text.split(' (')[0];
-              const userEmail = userData.email || userData.text.split(' (')[1] ? .replace(')', '') || '';
+              const userEmail = userData.email || (userData.text.split(' (')[1] ? userData.text.split(' (')[1].replace(')', '') : '');
 
               // Add user to officer via AJAX
               $.ajax({
