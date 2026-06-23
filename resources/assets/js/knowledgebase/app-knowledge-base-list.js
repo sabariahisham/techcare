@@ -72,12 +72,6 @@ $(function () {
           orderable: false
         },
         {
-          data: 'action',
-          name: 'action',
-          orderable: false,
-          searchable: false
-        },
-        {
           data: 'kb_status',
           name: 'kb_status'
         },
@@ -104,36 +98,28 @@ $(function () {
           name: 'creator_roles',
           orderable: false,
           searchable: false
+        },
+        {
+          data: 'action',
+          name: 'action',
+          orderable: false,
+          searchable: false
         }
       ],
       columnDefs: [{
-          // Responsive control column
           targets: 0,
-          className: 'dtr-control',
           orderable: false,
-          searchable: false,
-          responsivePriority: 2
-        },
-        {
-          targets: 1, // Bil.
-          responsivePriority: 3
+          searchable: false
         },
         {
           targets: 2, // Tajuk
-          responsivePriority: 1
-        },
-        {
-          targets: 3, // Kategori
-          responsivePriority: 5
-        },
-        {
-          targets: 4, // Sub Kategori
-          responsivePriority: 6
+          width: '400px',
+          className: 'text-nowrap'
         },
         {
           targets: 5, // Deskripsi
-          className: 'text-wrap',
-          responsivePriority: 8,
+          width: '300px',
+          className: 'text-wrap text-nowrap',
           render: function (data, type, row) {
             if (type === 'display' && data && data.length > 60) {
               return data.substr(0, 60) + '...';
@@ -144,23 +130,21 @@ $(function () {
         {
           targets: 6, // Tag
           className: 'text-wrap',
-          orderable: false,
-          responsivePriority: 9
+          orderable: false
         },
         {
-          targets: 7, // Tindakan
-          responsivePriority: 4
+          targets: 8, // Ditulis oleh
+          width: '160px',
+          className: 'text-nowrap'
         },
         {
-          targets: 8, // Status
-          responsivePriority: 7
-        },
-        {
-          targets: [9, 10, 11, 12, 13], // Ditulis oleh, Tarikh Ditulis, Kemaskini oleh, Tarikh Kemaskini, Peranan
-          responsivePriority: 10
+          targets: 10, // Kemaskini oleh
+          width: '160px',
+          className: 'text-nowrap'
         }
       ],
-      autoWidth: false,
+      autoWidth: true,
+      scrollX: true,
       dom: '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"fB>>' +
@@ -240,7 +224,7 @@ $(function () {
               });
           });
       },
-      responsive: true,
+      responsive: false,
       language: {
         search: '',
         searchPlaceholder: 'Carian'

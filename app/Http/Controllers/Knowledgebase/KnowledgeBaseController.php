@@ -34,14 +34,14 @@ class KnowledgeBaseController extends Controller
                     $user = Auth::user();
                     $canEditDelete = $user && ($user->hasRole('Administrator') || $user->id === $row->created_by);
 
-                    $btn = '<div class="d-flex align-items-center">';
+                    $btn = '<div class="d-flex gap-2">';
                     // View button - always visible to all users
-                    $btn .= '<a href="javascript:void(0);" class="text-body show-record" data-id="'.$row->id.'" title="View Details"><i class="bx bx-show mx-1"></i></a>';
+                    $btn .= '<a href="javascript:void(0);" class="btn btn-sm btn-icon btn-outline-secondary show-record" data-id="'.$row->id.'" title="View Details"><i class="bx bx-show"></i></a>';
 
                     // Edit and Delete buttons - only visible to Administrator or the article's author
                     if ($canEditDelete) {
-                        $btn .= '<a href="javascript:void(0);" class="text-body edit-record" data-id="'.$row->id.'" title="Edit"><i class="bx bx-edit mx-1"></i></a>';
-                        $btn .= '<a href="javascript:void(0);" class="text-body delete-record" data-id="'.$row->id.'" data-title="'.htmlspecialchars($row->kb_title, ENT_QUOTES, 'UTF-8').'" title="Delete"><i class="bx bx-trash mx-1"></i></a>';
+                        $btn .= '<a href="javascript:void(0);" class="btn btn-sm btn-icon btn-outline-primary edit-record" data-id="'.$row->id.'" title="Edit"><i class="bx bx-edit"></i></a>';
+                        $btn .= '<a href="javascript:void(0);" class="btn btn-sm btn-icon btn-outline-danger delete-record" data-id="'.$row->id.'" data-title="'.htmlspecialchars($row->kb_title, ENT_QUOTES, 'UTF-8').'" title="Delete"><i class="bx bx-trash"></i></a>';
                     }
 
                     $btn .= '</div>';
@@ -80,7 +80,7 @@ class KnowledgeBaseController extends Controller
                         return '<span class="badge bg-label-secondary">Tiada Peranan</span>';
                     }
                     return $roles->map(function($role) {
-                        return '<span class="badge bg-label-primary me-1">' . htmlspecialchars($role) . '</span>';
+                        return '<span class="badge bg-label-primary me-1 mb-1">' . htmlspecialchars($role) . '</span>';
                     })->implode('');
                 })
                 ->editColumn('kb_status', function($row) {
@@ -365,6 +365,7 @@ class KnowledgeBaseController extends Controller
                 'category',
                 'subCategory',
                 'chronologies.escalatedTo',
+                'comments',
             ])->where('tick_status', 6)
               ->orderBy('created_at', 'desc');
 
@@ -409,6 +410,22 @@ class KnowledgeBaseController extends Controller
                     }
                     return 'Belum Ditugaskan';
                 })
+                ->addColumn('tajuk_aduan', function ($ticket) {
+                    return htmlspecialchars($ticket->ticket_title ?? '-');
+                })
+                ->addColumn('keterangan_aduan', function ($ticket) {
+                    return nl2br(htmlspecialchars($ticket->ticket_desc ?? '-'));
+                })
+                ->addColumn('catatan_tindakan', function ($ticket) {
+                    $comments = $ticket->comments->sortByDesc('created_at');
+                    if ($comments->isEmpty()) {
+                        return '-';
+                    }
+                    return $comments->map(function ($comment) {
+                        $date = $comment->created_at ? $comment->created_at->format('d/m/Y H:i') : '';
+                        return '<div class="mb-1"><small class="text-muted">' . $date . '</small><br>' . nl2br(htmlspecialchars($comment->comment_text)) . '</div>';
+                    })->implode('<hr class="my-1">');
+                })
                 ->filterColumn('no_log_tiket', function ($query, $keyword) {
                     $query->where('ticket_nolog', 'like', "%{$keyword}%");
                 })
@@ -430,12 +447,66 @@ class KnowledgeBaseController extends Controller
                         $q->where('subcat_name', 'like', "%{$keyword}%");
                     });
                 })
+                ->filterColumn('tajuk_aduan', function ($query, $keyword) {
+                    $query->where('ticket_title', 'like', "%{$keyword}%");
+                })
+                ->filterColumn('keterangan_aduan', function ($query, $keyword) {
+                    $query->where('ticket_desc', 'like', "%{$keyword}%");
+                })
+                ->filterColumn('pegawai_tugasan', function ($query, $keyword) {
+                    $query->whereHas('chronologies.escalatedTo', function ($q) use ($keyword) {
+                        $q->where('nama', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('catatan_tindakan', function ($query, $keyword) {
+                    $query->whereHas('comments', function ($q) use ($keyword) {
+                        $q->where('comment_text', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('uuid', function ($ticket) {
                     return $ticket->uuid;
                 })
-                ->rawColumns(['status'])
+                ->rawColumns(['status', 'tajuk_aduan', 'keterangan_aduan', 'catatan_tindakan'])
                 ->make(true);
         }
+    }
+
+    /**
+     * Get ticket details by UUID for the "tambah ke Knowledge Base" modal
+     */
+    public function getAduanSelesaiTicketDetails($uuid)
+    {
+        $ticket = Ticket::with(['user', 'category', 'subCategory', 'comments.user.roles'])
+            ->where('uuid', $uuid)
+            ->where('tick_status', 6)
+            ->firstOrFail();
+
+        $catatan = $ticket->comments->sortByDesc('created_at')->map(function ($comment) {
+            return [
+                'teks'   => $comment->comment_text,
+                'nama'   => $comment->user ? $comment->user->nama : '-',
+                'roles'  => $comment->user ? $comment->user->roles->pluck('name')->toArray() : [],
+                'tarikh' => $comment->created_at ? $comment->created_at->format('d/m/Y') : '-',
+                'masa'   => $comment->created_at ? $comment->created_at->format('H:i') : '-',
+            ];
+        })->values()->toArray();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'uuid'             => $ticket->uuid,
+                'no_log_tiket'     => $ticket->ticket_nolog ?? '-',
+                'tajuk_aduan'      => $ticket->ticket_title ?? '',
+                'keterangan_aduan' => $ticket->ticket_desc ?? '',
+                'catatan_tindakan' => $catatan,
+                'cat_id'           => $ticket->cat_id,
+                'cat_name'         => $ticket->category ? $ticket->category->cat_name : '-',
+                'subcat_id'        => $ticket->subcat_id,
+                'subcat_name'      => $ticket->subCategory ? $ticket->subCategory->subcat_name : '-',
+                'nama_pengadu'     => $ticket->user ? $ticket->user->nama : '-',
+                'tarikh_aduan'     => $ticket->created_at ? $ticket->created_at->format('d/m/Y H:i') : '-',
+            ],
+        ]);
     }
 
     /**
