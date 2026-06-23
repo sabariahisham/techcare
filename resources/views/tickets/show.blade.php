@@ -200,28 +200,7 @@
                                         <h6 class="mb-0">{{ $ticket->user->kod_jwtn ?? '-' }}</h6>
                                         <small class="text-muted">{{ $ticket->user->email ?? '-' }}</small>
                                     </div>
-                                </div>
-
-                                @if ($ticket->ticket_type == 2 && $ticket->createdBy)
-                                <!-- Maklumat Bagi Pihak -->
-                                <div class="col-12">
-                                    <h6 class="text-primary mt-6 mb-1">
-                                        <i class="bx bx-user-plus me-1"></i> Direkodkan Oleh
-                                    </h6>
-                                </div>
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="avatar avatar-lg me-3">
-                                        <span class="avatar-initial rounded-circle bg-label-primary">
-                                            {{ strtoupper(substr($ticket->createdBy->nama ?? 'U', 0, 2)) }}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0">{{ $ticket->createdBy->nama ?? 'Tidak Diketahui' }}</h6>
-                                        <h6 class="mb-0">{{ $ticket->createdBy->kod_jwtn ?? '-' }}</h6>
-                                        <small class="text-muted">{{ $ticket->createdBy->email ?? '-' }}</small>
-                                    </div>
-                                </div>
-                                @endif
+                                </div>                               
                             </div>
 
                             <!-- Pemisah Vertikal - Hidden on mobile -->
@@ -299,6 +278,63 @@
                     @endif
                 </div>
             </div>
+
+            <!--Maklumat Pegawai Perekod-->
+            @if ($ticket->ticket_type == 2 && $ticket->createdBy)
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bx bx-user-plus me-1"></i> Maklumat Pegawai Perekod</h5>
+                </div>
+                <div class="card-body">
+                    @if ($ticket->user)
+                        <div class="row">
+                            <!-- Maklumat Peribadi -->
+                            <div class="col-12 col-md-4 col-lg-4 mb-3 mb-md-0">                                
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar avatar-lg me-3">
+                                        <span class="avatar-initial rounded-circle bg-label-primary">
+                                            {{ strtoupper(substr($ticket->createdBy->nama ?? 'U', 0, 2)) }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ $ticket->createdBy->nama ?? 'Tidak Diketahui' }}</h6>
+                                        <h6 class="mb-0">{{ $ticket->createdBy->kod_jwtn ?? '-' }}</h6>
+                                        <small class="text-muted">{{ $ticket->createdBy->email ?? '-' }}</small>
+                                    </div>
+                                </div>                                
+                            </div>
+
+                            <!-- Pemisah Vertikal - Hidden on mobile -->
+                            <div class="col-1 d-none d-md-flex justify-content-center">
+                                <div class="vr h-100"></div>
+                            </div>
+
+                            <!-- Maklumat Telefon -->
+                            <div class="col-12 col-md-7 col-lg-7">                                
+                                <div class="row">
+                                    <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                                        <h6 class="text-primary mb-1">
+                                            <i class="bx bx-phone me-1"></i>Telefon Pejabat
+                                        </h6>
+                                        <p class="mb-0 small">
+                                            {{ $ticket->createdBy->tel_no_p ?: 'Tiada Rekod' }}
+                                        </p>
+                                    </div>
+                                    <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                                        <h6 class="text-primary mb-1">
+                                            <i class="bx bx-mobile me-1"></i>Telefon Bimbit
+                                        </h6>
+                                        <p class="mb-0 small">
+                                            {{ $ticket->createdBy->tel_no_hp ?: 'Tiada Rekod' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 
@@ -539,6 +575,79 @@
                 // Set read-only view ONLY for Dibatal(5) and Selesai(6)
                 // For Dirujuk(4), assigned officers should be able to edit
                 $isReadOnlyView = $isFinalTicketStatus;
+
+                $assignedOfficerIds = $ticket
+                    ->chronologies()
+                    ->whereNotNull('escalate_to')
+                    ->where('tick_status', $ticket->tick_status)
+                    ->latest()
+                    ->pluck('escalate_to')
+                    ->unique()
+                    ->toArray();
+
+                $currentUserId = auth()->user()->id;
+
+                $actionOfficerUsers = $ticket
+                    ->chronologies()
+                    ->whereNotNull('escalate_to')
+                    ->where('tick_status', $ticket->tick_status)
+                    ->with('escalatedTo')
+                    ->get()
+                    ->pluck('escalatedTo')
+                    ->filter()
+                    ->unique('id')
+                    ->values();
+
+                $adminOfficerOptions = $actionOfficerUsers
+                    ->map(
+                        fn ($user) => (object) [
+                            'id' => $user->id,
+                            'nama' => $user->nama,
+                        ],
+                    )
+                    ->values();
+
+                if (!$adminOfficerOptions->contains('id', $currentUserId)) {
+                    $adminOfficerOptions->push((object) [
+                        'id' => auth()->user()->id,
+                        'nama' => auth()->user()->nama,
+                    ]);
+                }
+
+                $adminOfficerOptions = $adminOfficerOptions->sortBy('nama')->values();
+
+                $currentUserOfficerLevel = null;
+                if ($ticket->cat_id && $ticket->subcat_id) {
+                    $currentUserOfficerLevel = \Illuminate\Support\Facades\DB::table('officers')
+                        ->where('user_id', $currentUserId)
+                        ->where('cat_id', $ticket->cat_id)
+                        ->where('subcat_id', $ticket->subcat_id)
+                        ->whereNull('deleted_at')
+                        ->value('level_tugasan');
+                }
+
+                $buildOfficersByLevel = function (int $level) use ($ticket) {
+                    $query = \Illuminate\Support\Facades\DB::table('officers')
+                        ->join('users', 'officers.user_id', '=', 'users.id')
+                        ->whereNull('officers.deleted_at')
+                        ->where('officers.level_tugasan', $level);
+
+                    if ($ticket->cat_id) {
+                        $query->where('officers.cat_id', $ticket->cat_id);
+                    }
+                    if ($ticket->subcat_id) {
+                        $query->where('officers.subcat_id', $ticket->subcat_id);
+                    }
+
+                    return $query
+                        ->select('users.id', 'users.nama', 'users.email')
+                        ->distinct()
+                        ->orderBy('users.nama')
+                        ->get();
+                };
+
+                $level2CategoryOfficers = $buildOfficersByLevel(2);
+                $level1CategoryOfficers = $buildOfficersByLevel(1);
             @endphp
 
             @if ($canSeeTindakanPegawai)
@@ -669,7 +778,7 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="row mb-3">
+                            <div class="row mb-3" id="pegawai_tugasan_row">
                                 <div class="col-sm-3">
                                     <h6 class="mb-0">Pegawai Tugasan</h6>
                                 </div>
@@ -677,115 +786,113 @@
                                     @if ($isReadOnlyView)
                                         {{-- Read-only view: Display assigned officers --}}
                                         @php
-                                            $displayOfficers = filled($finalActionOfficerName)
-                                                ? collect([$finalActionOfficerName])
-                                                : $ticket
-                                                    ->chronologies()
-                                                    ->whereNotNull('escalate_to')
-                                                    ->where('tick_status', $ticket->tick_status)
-                                                    ->with('escalatedTo')
-                                                    ->get()
-                                                    ->pluck('escalatedTo.nama')
-                                                    ->filter()
-                                                    ->unique()
-                                                    ->values();
+                                            if ($restrictOfficerToSelf) {
+                                                $displayOfficers = collect([auth()->user()->nama]);
+                                            } elseif ($canManageAllOfficers ?? false) {
+                                                $displayOfficers = $adminOfficerOptions->pluck('nama');
+                                            } else {
+                                                $displayOfficers = filled($finalActionOfficerName)
+                                                    ? collect([$finalActionOfficerName])
+                                                    : $ticket
+                                                        ->chronologies()
+                                                        ->whereNotNull('escalate_to')
+                                                        ->where('tick_status', $ticket->tick_status)
+                                                        ->with('escalatedTo')
+                                                        ->get()
+                                                        ->pluck('escalatedTo.nama')
+                                                        ->filter()
+                                                        ->unique()
+                                                        ->values();
+                                            }
                                         @endphp
-                                        <div class="alert alert-secondary mb-0">
+                                        <div class="alert {{ $restrictOfficerToSelf ? 'alert-success' : 'alert-secondary' }} mb-0">
                                             <i class="bx bx-user-check me-1"></i>
                                             @if ($displayOfficers->count() > 0)
-                                                {{ $displayOfficers->implode(', ') }}
+                                                @if ($restrictOfficerToSelf)
+                                                    <span class="fw-medium">{{ $displayOfficers->first() }}</span>
+                                                @elseif ($canManageAllOfficers ?? false)
+                                                    @foreach ($adminOfficerOptions as $officer)
+                                                        @if ($officer->id === auth()->user()->id)
+                                                            <span class="badge bg-success me-1">{{ $officer->nama }}</span>
+                                                        @else
+                                                            <span class="me-1">{{ $officer->nama }}</span>
+                                                        @endif
+                                                    @endforeach
+                                                @else
+                                                    {{ $displayOfficers->implode(', ') }}
+                                                @endif
                                             @else
                                                 Tiada pegawai ditugaskan
                                             @endif
                                         </div>
                                     @else
-                                        {{-- Editable view: Show multi-select dropdown --}}
+                                        <div id="pegawai_tugasan_placeholder"
+                                            class="text-muted {{ $selectedStatus != '' ? 'd-none' : '' }}">
+                                            <i class="bx bx-info-circle me-1"></i>Sila pilih status tiket terlebih dahulu.
+                                        </div>
+                                        <div id="pegawai_tugasan_dirujuk_placeholder"
+                                            class="text-muted d-none">
+                                            <i class="bx bx-info-circle me-1"></i>Sila pilih Kategori dan Sub Kategori terlebih dahulu.
+                                        </div>
+                                        <div id="pegawai_tugasan_field"
+                                            class="{{ $selectedStatus == '' || ($selectedStatus == 4 && (!$ticket->cat_id || !$ticket->subcat_id)) ? 'd-none' : '' }}">
+                                        @php
+                                            $initialOfficerOptions = collect();
+                                            if ($canManageAllOfficers ?? false) {
+                                                if ($ticket->tick_status == 4) {
+                                                    $initialOfficerOptions = $level1CategoryOfficers->values();
+                                                    if (!$initialOfficerOptions->contains('id', auth()->user()->id)) {
+                                                        $initialOfficerOptions->push((object) [
+                                                            'id' => auth()->user()->id,
+                                                            'nama' => auth()->user()->nama,
+                                                        ]);
+                                                    }
+                                                    $initialOfficerOptions = $initialOfficerOptions->sortBy('nama')->values();
+                                                } elseif ($ticket->tick_status == 3) {
+                                                    $initialOfficerOptions = $level2CategoryOfficers->values();
+                                                    if (!$initialOfficerOptions->contains('id', auth()->user()->id)) {
+                                                        $initialOfficerOptions->push((object) [
+                                                            'id' => auth()->user()->id,
+                                                            'nama' => auth()->user()->nama,
+                                                        ]);
+                                                    }
+                                                    $initialOfficerOptions = $initialOfficerOptions->sortBy('nama')->values();
+                                                } else {
+                                                    $initialOfficerOptions = $adminOfficerOptions;
+                                                }
+                                            } elseif ($isPegawaiTugasanOnly ?? false) {
+                                                if ($restrictOfficerToSelf) {
+                                                    $initialOfficerOptions = collect([
+                                                        (object) [
+                                                            'id' => auth()->user()->id,
+                                                            'nama' => auth()->user()->nama,
+                                                        ],
+                                                    ]);
+                                                } elseif ($ticket->tick_status == 3 && (int) $currentUserOfficerLevel === 1) {
+                                                    $initialOfficerOptions = $level2CategoryOfficers;
+                                                } elseif ($ticket->tick_status == 3 && (int) $currentUserOfficerLevel === 2) {
+                                                    $initialOfficerOptions = collect([
+                                                        (object) [
+                                                            'id' => auth()->user()->id,
+                                                            'nama' => auth()->user()->nama,
+                                                        ],
+                                                    ]);
+                                                } elseif ($ticket->tick_status == 4) {
+                                                    $initialOfficerOptions = $level1CategoryOfficers;
+                                                }
+                                            }
+                                        @endphp
                                         <select class="form-select" name="assigned_officers[]" id="assigned_officers"
                                             multiple>
-                                            @php
-                                                // Get currently assigned officers from latest chronologies
-                                                $assignedOfficerIds = $ticket
-                                                    ->chronologies()
-                                                    ->whereNotNull('escalate_to')
-                                                    ->where('tick_status', $ticket->tick_status)
-                                                    ->latest()
-                                                    ->pluck('escalate_to')
-                                                    ->unique()
-                                                    ->toArray();
-
-                                                // Keep original assigned officers for dropdown selection
-                                                // Don't add current user as fallback
-
-// Get currently assigned officers and their levels
-$currentAssignedOfficerData = \Illuminate\Support\Facades\DB::table(
-    'officers',
-)
-    ->whereIn('user_id', $assignedOfficerIds)
-    ->whereNull('deleted_at')
-    ->get(['user_id', 'level_tugasan']);
-
-// Determine what level officers to show based on assigned officers
-$showLevelTugasan = null; // Default to show all
-
-// If any assigned officer has level 1, show level 2 officers
-foreach ($currentAssignedOfficerData as $officerData) {
-    if ($officerData->level_tugasan == 1) {
-        $showLevelTugasan = 2;
-        break;
-    }
-}
-
-// Get current ticket category and subcategory
-$currentCatId = $ticket->cat_id;
-$currentSubcatId = $ticket->subcat_id;
-
-// Get officers from officers table with level, category and subcategory filtering
-$officersQuery = \Illuminate\Support\Facades\DB::table('officers')
-    ->join('users', 'officers.user_id', '=', 'users.id')
-    ->whereNull('officers.deleted_at');
-
-// Filter by category and subcategory if available
-if ($currentCatId) {
-    $officersQuery->where('officers.cat_id', $currentCatId);
-}
-if ($currentSubcatId) {
-    $officersQuery->where('officers.subcat_id', $currentSubcatId);
-}
-
-// Filter by level if required
-if ($showLevelTugasan !== null) {
-    $officersQuery->where('officers.level_tugasan', $showLevelTugasan);
-}
-
-$filteredOfficers = $officersQuery
-    ->select('users.id', 'users.nama', 'users.email')
-    ->distinct()
-    ->orderBy('users.nama')
-    ->get();
-
-// IMPORTANT: Always include the logged-in user in the dropdown (with green tag)
-// even if they don't match the category/subcategory filter
-                                                $currentUserId = auth()->user()->id;
-                                                $currentUserExists = $filteredOfficers->contains('id', $currentUserId);
-
-                                                if (!$currentUserExists) {
-                                                    // Add current user to the list
-                                                    $currentUser = (object) [
-                                                        'id' => auth()->user()->id,
-                                                        'nama' => auth()->user()->nama,
-                                                        'email' => auth()->user()->email,
-                                                    ];
-                                                    $filteredOfficers->prepend($currentUser);
-                                                }
-                                            @endphp
-                                            @foreach ($filteredOfficers as $officer)
+                                            @foreach ($initialOfficerOptions as $officer)
                                                 <option value="{{ $officer->id }}"
                                                     data-current-user="{{ $officer->id === auth()->user()->id ? 'true' : 'false' }}"
-                                                    {{ in_array($officer->id, $assignedOfficerIds) ? 'selected' : '' }}>
+                                                    {{ $selectedStatus != '' && in_array($officer->id, $assignedOfficerIds) ? 'selected' : '' }}>
                                                     {{ $officer->nama }}
                                                 </option>
                                             @endforeach
                                         </select>
+                                        </div>
                                     @endif
                                 </div>
                             </div>
@@ -2337,11 +2444,14 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                     errors.push('Sila pilih tahap severity/priority.');
                 }
 
-                const assignedOfficers = $('#assigned_officers').length
+                const assignedOfficers = statusSelect?.value && $('#assigned_officers').length
                     ? $('#assigned_officers').val()
                     : [];
 
-                if (!assignedOfficers || assignedOfficers.length === 0) {
+                const requireAssignedOfficers = statusSelect?.value &&
+                    !(isAduanDirujuk && (!categorySelect?.value || !subcategorySelect?.value));
+
+                if (requireAssignedOfficers && (!assignedOfficers || assignedOfficers.length === 0)) {
                     errors.push('Sila pilih sekurang-kurangnya satu pegawai tugasan.');
                 }
 
@@ -2427,10 +2537,27 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
             const closeTicketBtn = document.querySelector('#closeTicketBtn');
             /** Untuk Select2: kekalkan pemilihan berbilang selepas senarai pegawai dibina semula */
             const currentAuthUserIdStr = String({{ auth()->user()->id }});
+            const currentAuthUserName = @json(auth()->user()->nama);
+            const isPegawaiTugasanOnly = @json($isPegawaiTugasanOnly ?? false);
+            const canManageAllOfficers = @json($canManageAllOfficers ?? false);
+            const restrictedOfficerStatuses = ['Aduan Diproses', 'Aduan DiBatal', 'Aduan Selesai'];
+            const adminOfficerOptionsData = @json($adminOfficerOptions);
+            const currentUserOfficerLevel = @json($currentUserOfficerLevel);
             const originalCatId = '{{ $ticket->cat_id ?? '' }}';
             const originalSubcatId = '{{ $ticket->subcat_id ?? '' }}';
+            const initialTicketStatusId = '{{ $ticket->tick_status }}';
             let allSubcategoryOptions = [];
             let resetOfficersListFn = null;
+            let statusChangeInitialized = false;
+            let previousStatusText = null;
+
+            function sortOfficersByNama(officers) {
+                return (officers || []).slice().sort(function(a, b) {
+                    return String(a.nama || '').localeCompare(String(b.nama || ''), 'ms', {
+                        sensitivity: 'base',
+                    });
+                });
+            }
 
             function populateSubcategoryOptions(catId) {
                 if (!subcategorySelect) {
@@ -2462,10 +2589,6 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                 if (severitySelect) {
                     severitySelect.innerHTML = '<option value="">Pilih Tahap Severity/Priority</option>';
                 }
-
-                if (resetOfficersListFn) {
-                    resetOfficersListFn();
-                }
             }
 
             function restoreOriginalCategoryFields() {
@@ -2478,11 +2601,256 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                 subcategorySelect.value = originalSubcatId;
             }
 
+            function getSelectedStatusText() {
+                return statusSelect?.selectedOptions[0]?.text.trim() || '';
+            }
+
+            function shouldRestrictOfficerToSelf() {
+                if (!isPegawaiTugasanOnly || !statusSelect) {
+                    return false;
+                }
+
+                return restrictedOfficerStatuses.includes(getSelectedStatusText());
+            }
+
+            function hasStatusSelected() {
+                return statusSelect && statusSelect.value !== '';
+            }
+
+            function toggleOfficersFieldVisibility() {
+                const statusPlaceholder = document.getElementById('pegawai_tugasan_placeholder');
+                const dirujukPlaceholder = document.getElementById('pegawai_tugasan_dirujuk_placeholder');
+                const field = document.getElementById('pegawai_tugasan_field');
+                const hasStatus = hasStatusSelected();
+                const isDirujuk = getSelectedStatusText() === 'Aduan Dirujuk';
+                const hasCategorySubcategory = Boolean(categorySelect?.value && subcategorySelect?.value);
+
+                if (!hasStatus) {
+                    statusPlaceholder?.classList.remove('d-none');
+                    dirujukPlaceholder?.classList.add('d-none');
+                    field?.classList.add('d-none');
+                    return;
+                }
+
+                statusPlaceholder?.classList.add('d-none');
+
+                if (isDirujuk && !hasCategorySubcategory) {
+                    dirujukPlaceholder?.classList.remove('d-none');
+                    field?.classList.add('d-none');
+                    return;
+                }
+
+                dirujukPlaceholder?.classList.add('d-none');
+                field?.classList.remove('d-none');
+            }
+
+            function clearOfficersList() {
+                const $sel = $('#assigned_officers');
+                if (!$sel.length) {
+                    return;
+                }
+
+                if ($sel.data('select2')) {
+                    $sel.empty().val(null).trigger('change');
+                } else {
+                    $sel.empty();
+                }
+            }
+
+            function populateOfficersSelect(officers, prevSelected) {
+                const $sel = $('#assigned_officers');
+                if (!$sel.length) {
+                    return;
+                }
+
+                const previous = (prevSelected || $sel.val() || []).map(String);
+
+                if ($sel.data('select2')) {
+                    $sel.empty();
+                }
+
+                const availableIds = [];
+                sortOfficersByNama(officers).forEach(function(officer) {
+                    const officerId = String(officer.id ?? officer.user_id ?? '');
+                    if (!officerId) {
+                        return;
+                    }
+
+                    const isCurrentUser = officerId === currentAuthUserIdStr;
+                    const option = new Option(officer.nama, officerId, false, false);
+                    $(option).attr('data-current-user', isCurrentUser ? 'true' : 'false');
+                    $sel.append(option);
+                    availableIds.push(officerId);
+                });
+
+                applyAssignedOfficersSelection($sel, availableIds, previous);
+            }
+
+            function setSelfOnlyOfficersList() {
+                populateOfficersSelect([
+                    {
+                        id: currentAuthUserIdStr,
+                        nama: currentAuthUserName,
+                    },
+                ]);
+            }
+
+            function setAdminActionOfficersList() {
+                populateOfficersSelect(adminOfficerOptionsData);
+            }
+
+            function setLevel2CategoryOfficersList() {
+                const officers = [];
+                @foreach ($level2CategoryOfficers as $officer)
+                    officers.push({
+                        id: '{{ $officer->id }}',
+                        nama: @json($officer->nama),
+                    });
+                @endforeach
+                populateOfficersSelect(officers);
+            }
+
+            function setAdminLevel2CategoryOfficersList() {
+                const officers = [];
+                @foreach ($level2CategoryOfficers as $officer)
+                    officers.push({
+                        id: '{{ $officer->id }}',
+                        nama: @json($officer->nama),
+                    });
+                @endforeach
+                populateOfficersSelect(mergeOfficersWithCurrentUser(officers));
+            }
+
+            function setLevel1CategoryOfficersList() {
+                const officers = [];
+                @foreach ($level1CategoryOfficers as $officer)
+                    officers.push({
+                        id: '{{ $officer->id }}',
+                        nama: @json($officer->nama),
+                    });
+                @endforeach
+                populateOfficersSelect(officers);
+            }
+
+            function mergeOfficersWithCurrentUser(officers) {
+                const map = new Map();
+
+                (officers || []).forEach(function(officer) {
+                    const officerId = String(officer.id ?? officer.user_id ?? '');
+                    if (!officerId) {
+                        return;
+                    }
+
+                    map.set(officerId, {
+                        id: officerId,
+                        nama: officer.nama,
+                    });
+                });
+
+                if (!map.has(currentAuthUserIdStr)) {
+                    map.set(currentAuthUserIdStr, {
+                        id: currentAuthUserIdStr,
+                        nama: currentAuthUserName,
+                    });
+                }
+
+                return sortOfficersByNama(Array.from(map.values()));
+            }
+
+            function loadLevel1OfficersForDirujuk(includeCurrentUser = false) {
+                const catId = categorySelect?.value;
+                const subcatId = subcategorySelect?.value;
+
+                if (!catId || !subcatId) {
+                    clearOfficersList();
+                    return;
+                }
+
+                fetch(`/api/available-officers?cat_id=${catId}&subcat_id=${subcatId}&level_tugasan=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let officers = data.success && data.officers ? data.officers : [];
+
+                        if (includeCurrentUser) {
+                            officers = mergeOfficersWithCurrentUser(officers);
+                        }
+
+                        if (officers.length > 0) {
+                            populateOfficersSelect(officers);
+                        } else {
+                            clearOfficersList();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading Level 1 officers:', error);
+                        clearOfficersList();
+                    });
+            }
+
+            function shouldShowSelfOnlyOfficers() {
+                if (shouldRestrictOfficerToSelf()) {
+                    return true;
+                }
+
+                return (
+                    isPegawaiTugasanOnly &&
+                    getSelectedStatusText() === 'Serahan Kepada' &&
+                    Number(currentUserOfficerLevel) === 2
+                );
+            }
+
+            function updateOfficersByStatus() {
+                if (!hasStatusSelected()) {
+                    clearOfficersList();
+                    return;
+                }
+
+                const status = getSelectedStatusText();
+
+                if (canManageAllOfficers) {
+                    if (status === 'Aduan Dirujuk') {
+                        loadLevel1OfficersForDirujuk(true);
+                    } else if (status === 'Serahan Kepada') {
+                        setAdminLevel2CategoryOfficersList();
+                    } else {
+                        setAdminActionOfficersList();
+                    }
+                    return;
+                }
+
+                if (!isPegawaiTugasanOnly) {
+                    return;
+                }
+
+                if (restrictedOfficerStatuses.includes(status)) {
+                    setSelfOnlyOfficersList();
+                    return;
+                }
+
+                if (status === 'Serahan Kepada') {
+                    if (Number(currentUserOfficerLevel) === 1) {
+                        setLevel2CategoryOfficersList();
+                    } else if (Number(currentUserOfficerLevel) === 2) {
+                        setSelfOnlyOfficersList();
+                    } else {
+                        clearOfficersList();
+                    }
+                    return;
+                }
+
+                if (status === 'Aduan Dirujuk') {
+                    loadLevel1OfficersForDirujuk(false);
+                    return;
+                }
+
+                clearOfficersList();
+            }
+
             function applyAssignedOfficersSelection($sel, availableIds, prevSelected) {
                 const avail = (availableIds || []).map(String);
                 const prev = (prevSelected || []).map(String);
                 let toSelect = prev.filter(id => avail.includes(id));
-                if (toSelect.length === 0 && avail.includes(currentAuthUserIdStr)) {
+                if (toSelect.length === 0 && avail.includes(currentAuthUserIdStr) && shouldShowSelfOnlyOfficers()) {
                     toSelect = [currentAuthUserIdStr];
                 }
                 $sel.val(toSelect);
@@ -2516,8 +2884,30 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                 // Tahap Severity: Always enabled (never disabled)
                 if (severitySelect) severitySelect.disabled = false;
 
-                // Assigned Officers: Always enabled for all statuses
-                if (assignedOfficersSelect) assignedOfficersSelect.disabled = false;
+                // Kategori & Sub Kategori: kosongkan bila baru pilih Aduan Dirujuk
+                if (isAduanDirujuk) {
+                    if (!statusChangeInitialized && String(initialTicketStatusId) === '4' && originalCatId) {
+                        restoreOriginalCategoryFields();
+                    } else if (
+                        statusChangeInitialized &&
+                        previousStatusText !== null &&
+                        previousStatusText !== 'Aduan Dirujuk'
+                    ) {
+                        clearCategoryFieldsForDirujuk();
+                    }
+                } else {
+                    restoreOriginalCategoryFields();
+                }
+
+                toggleOfficersFieldVisibility();
+
+                // Assigned Officers: ikut jadual status tiket (selepas kategori/sub dikemaskini)
+                if (assignedOfficersSelect) {
+                    updateOfficersByStatus();
+                }
+
+                previousStatusText = selectedStatusText;
+                statusChangeInitialized = true;
 
                 // Toggle action buttons based on selected status
                 if (updateTicketBtn) {
@@ -2526,13 +2916,6 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
 
                 if (closeTicketBtn) {
                     closeTicketBtn.classList.toggle('d-none', !isFinalStatus);
-                }
-
-                // Kategori & Sub Kategori: kosongkan untuk pilihan baharu bila Aduan Dirujuk
-                if (isAduanDirujuk) {
-                    clearCategoryFieldsForDirujuk();
-                } else {
-                    restoreOriginalCategoryFields();
                 }
 
                 // Required attributes for Aduan Dirujuk only
@@ -2563,7 +2946,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                     severitySelect.style.color = '';
                 }
 
-                // Assigned Officers: Always keep normal styling (never disabled)
+                // Assigned Officers: keep normal styling
                 if (assignedOfficersSelect) {
                     assignedOfficersSelect.style.backgroundColor = '';
                     assignedOfficersSelect.style.color = '';
@@ -2615,8 +2998,8 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                                         severitySelect.value = currentSeverityValue;
                                     }
 
-                                    // Trigger officer filtering
-                                    filterOfficersBySLA();
+                                    // Kekalkan senarai pegawai mengikut status tiket
+                                    updateOfficersByStatus();
                                 } else {
                                     // Clear severity options if no SLA found
                                     severitySelect.innerHTML =
@@ -2637,131 +3020,16 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                     }
                 }
 
-                // Function to update officers based on category and subcategory
                 function updateOfficersByCategory() {
-                    const categoryId = categorySelect.value;
-                    const subcategoryId = subcategorySelect.value;
-
-                    if (categoryId && subcategoryId) {
-                        // Call API to get officers filtered by category and subcategory
-                        fetch(
-                                `/api/available-officers?cat_id=${categoryId}&subcat_id=${subcategoryId}`
-                            )
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success && data.officers && data.officers.length > 0) {
-                                    updateOfficersList(data.officers);
-                                } else {
-                                    // Show original filtered officers if no specific officers found
-                                    resetOfficersList();
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error loading officers by category:', error);
-                                resetOfficersList();
-                            });
-                    } else {
-                        resetOfficersList();
-                    }
+                    updateOfficersByStatus();
                 }
 
-                // Function to filter officers based on SLA criteria
                 function filterOfficersBySLA() {
-                    const categoryId = categorySelect.value;
-                    const subcategoryId = subcategorySelect.value;
-                    const severity = severitySelect.value;
-
-                    if (categoryId && subcategoryId && severity) {
-                        // Load officers from officers table based on category, subcategory, and severity
-                        fetch(
-                                `/api/officers-by-category-severity?cat_id=${categoryId}&subcat_id=${subcategoryId}&severity=${severity}`
-                            )
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success && data.officers && data.officers.length > 0) {
-                                    updateOfficersList(data.officers);
-                                } else {
-                                    // Show all officers if no specific officers found
-                                    resetOfficersList();
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error loading officers by severity:', error);
-                                resetOfficersList();
-                            });
-                    } else {
-                        resetOfficersList();
-                    }
+                    updateOfficersByStatus();
                 }
 
-                // Function to update officers list
-                function updateOfficersList(officers) {
-                    const $sel = $('#assigned_officers');
-                    const prevSelected = ($sel.val() || []).map(String);
-
-                    if ($sel.data('select2')) {
-                        $sel.empty();
-                    }
-
-                    // Deduplicate by user id, then fallback by normalized name
-                    const uniqueOfficersMap = new Map();
-                    officers.forEach(officer => {
-                        const resolvedId = officer.user_id ?? officer.id;
-                        const officerId = String(resolvedId ?? '').trim();
-                        const normalizedName = String(officer.nama ?? '').trim().toLowerCase();
-                        const dedupeKey = officerId || `name:${normalizedName}`;
-
-                        if (!uniqueOfficersMap.has(dedupeKey)) {
-                            uniqueOfficersMap.set(dedupeKey, officer);
-                        }
-                    });
-
-                    const availableIds = [];
-                    Array.from(uniqueOfficersMap.values()).forEach(officer => {
-                        const resolvedId = officer.user_id ?? officer.id;
-                        const isCurrentUser = String(resolvedId) === currentAuthUserIdStr;
-                        const option = new Option(officer.nama, resolvedId, false, false);
-                        $(option).attr('data-current-user', isCurrentUser ? 'true' : 'false');
-                        $sel.append(option);
-                        availableIds.push(resolvedId);
-                    });
-
-                    applyAssignedOfficersSelection($sel, availableIds, prevSelected);
-                }
-
-                // Function to reset officers list to original state
                 function resetOfficersList() {
-                    const $sel = $('#assigned_officers');
-                    const prevSelected = ($sel.val() || []).map(String);
-
-                    if ($sel.data('select2')) {
-                        $sel.empty();
-                    }
-
-                    // Restore filtered officers list (only from officers table)
-                    @php
-                        // Get officer user IDs from officers table in database
-                        $officerUserIdsForJS = \Illuminate\Support\Facades\DB::table('officers')->whereNull('deleted_at')->pluck('user_id')->toArray();
-
-                        // Filter officers to show only those in officers table
-                        $filteredOfficersForJS = $officers->whereIn('id', $officerUserIdsForJS)->unique('id')->values();
-                    @endphp
-                    @foreach ($filteredOfficersForJS as $officer)
-                        @php
-                            $isCurrentUser = $officer->id === auth()->user()->id;
-                        @endphp
-                        const option{{ $officer->id }} = new Option('{{ $officer->nama }}',
-                            {{ $officer->id }},
-                            false, false);
-                        $(option{{ $officer->id }}).attr('data-current-user',
-                            '{{ $isCurrentUser ? 'true' : 'false' }}');
-                        $sel.append(option{{ $officer->id }});
-                    @endforeach
-
-                    const availableIds = $sel.find('option').map(function() {
-                        return this.value;
-                    }).get();
-                    applyAssignedOfficersSelection($sel, availableIds, prevSelected);
+                    updateOfficersByStatus();
                 }
 
                 resetOfficersListFn = resetOfficersList;
@@ -2798,6 +3066,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
                     if (!isPageLoading) {
                         severitySelect.innerHTML = '<option value="">Pilih Tahap Severity/Priority</option>';
                         resetOfficersList();
+                        toggleOfficersFieldVisibility();
                     }
                 });
 
@@ -2814,6 +3083,7 @@ $timelineItems = $timelineItems->sortByDesc('created_at')->values();
 
                     // Update officers list based on selected category and subcategory
                     updateOfficersByCategory();
+                    toggleOfficersFieldVisibility();
                 });
 
                 // Add click prevention for disabled dropdowns

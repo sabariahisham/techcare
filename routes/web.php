@@ -82,7 +82,7 @@ Route::get('/test-email', function () {
 Route::get('/', function () {
   return redirect('/dashboard');
 })->middleware($authMiddleware)
-->name('dashboard');
+  ->name('dashboard');
 
 Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
   ->middleware(['auth'])
@@ -196,6 +196,7 @@ Route::prefix('api')->middleware($authMiddleware)->group(function () {
   Route::get('/officers-by-sla/{categoryId}/{subcategoryId}/{severity}', [App\Http\Controllers\Api\SlaApiController::class, 'getOfficersBySla'])->name('api.officers-by-sla');
   Route::get('/officers-by-category-severity', [App\Http\Controllers\Api\SlaApiController::class, 'getOfficersByCategorySeverity'])->name('api.officers-by-category-severity');
   Route::get('/officers', [App\Http\Controllers\Api\SlaApiController::class, 'getAllOfficers'])->name('api.officers');
+  Route::get('/available-officers', [TicketController::class, 'getAvailableOfficers'])->name('api.available-officers');
 });
 
 // Legacy dashboard route (redirect to new grouped route)
