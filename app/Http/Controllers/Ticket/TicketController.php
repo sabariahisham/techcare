@@ -1356,7 +1356,32 @@ class TicketController extends Controller
       }
     }
 
-    return view('tickets.show', compact('ticket', 'location', 'ticketHistory', 'allStatuses', 'allCategories', 'allSubCategories', 'officers', 'currentSLA', 'newCommentsCount'));
+    $currentUser = Auth::user();
+    $canManageAllOfficers = $currentUser && $currentUser->hasAnyRole([
+      'Administrator',
+      'Pentadbir Sistem',
+      'Penyelia Helpdesk',
+      'Helpdesk On Duty',
+    ]);
+    $isPegawaiTugasanOnly = $currentUser
+      && $currentUser->hasRole('Pegawai Tugasan')
+      && !$canManageAllOfficers;
+    $restrictOfficerToSelf = $isPegawaiTugasanOnly && in_array($ticket->tick_status, [2, 5, 6]);
+
+    return view('tickets.show', compact(
+      'ticket',
+      'location',
+      'ticketHistory',
+      'allStatuses',
+      'allCategories',
+      'allSubCategories',
+      'officers',
+      'currentSLA',
+      'newCommentsCount',
+      'isPegawaiTugasanOnly',
+      'restrictOfficerToSelf',
+      'canManageAllOfficers'
+    ));
   }
 
   /**
@@ -1936,6 +1961,7 @@ class TicketController extends Controller
    * Get available officers for a category and subcategory (API endpoint)
    * Returns officers whose cat_id and subcat_id match the provided values
    * This ensures escalate_to will refer to valid officer user_ids
+   * Status tiket = Aduan Dirujuk: Return all officers for this category and subcategory
    */
   public function getAvailableOfficers(Request $request)
   {
