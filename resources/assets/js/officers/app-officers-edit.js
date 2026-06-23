@@ -174,7 +174,8 @@ $(function () {
         }
       },
       error: function (xhr) {
-        const errorMessage = xhr.responseJSON ? .message || 'Ralat mengemas kini pegawai tugasan';
+        // DIBAIKI: Membuang jarak pada operator optional chaining (?.)
+        const errorMessage = xhr.responseJSON?xhr.responseJSON.message : 'Ralat mengemas kini pegawai tugasan';
         toastr.error(errorMessage, 'Ralat!', {
           closeButton: true,
           tapToDismiss: false,

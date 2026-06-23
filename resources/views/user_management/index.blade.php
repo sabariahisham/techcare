@@ -139,30 +139,29 @@
       <div class="col-md-4"></div>
     </div>
   </div> --}}
-  <div class="card-datatable table-responsive">
-    <table class="datatables-users table border-top table-sm" style="width: 100%; min-width: 1400px; font-size: 0.775rem;">
+  <div class="card-datatable">
+    <table class="datatables-users table border-top" style="width: 100%;">
       <thead>
         <tr>
-          <th style="width: 10px; white-space: nowrap; font-size: 0.75rem;"></th>
-          <th style="width: 10px; white-space: nowrap; font-size: 0.75rem;">Bil</th>
-          <th style="width: 120px; white-space: nowrap; font-size: 0.75rem;">Nama</th>
-          <th style="width: 80px; white-space: nowrap; font-size: 0.75rem;">Peranan</th>
+          <th style="width: 10px; white-space: nowrap;">Bil</th>
+          <th style="width: 250px; white-space: nowrap;">Nama</th>
+          <th style="width: 80px; white-space: nowrap;">Peranan</th>
           {{-- <th>LDAP</th> --}}
-          <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">Emel</th>
-          <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">No.KP</th>
-          <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">No.Tel(O)</th>
-          <th style="width: 50px; white-space: nowrap; font-size: 0.75rem;">No.Tel(M)</th>
+          <th style="width: 50px; white-space: nowrap;">Emel</th>
+          <th style="width: 50px; white-space: nowrap;">No.KP</th>
+          <th style="width: 150px; white-space: nowrap;">No.Tel(O)</th>
+          <th style="width: 50px; white-space: nowrap;">No.Tel(M)</th>
           {{-- <th>Sektor</th> --}}
-          <th style="width: 120px; white-space: nowrap; font-size: 0.75rem;">Bahagian</th>
-          <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">Seksyen</th>
-          <th style="width: 80px; white-space: nowrap; font-size: 0.75rem;">Unit</th>
+          <th style="width: 300px; white-space: nowrap;">Bahagian</th>
+          <th style="width: 350px; white-space: nowrap;">Seksyen</th>
+          <th style="width: 250px; white-space: nowrap;">Unit</th>
           {{-- <th>Kod Skim</th> --}}
           {{-- <th>Kod Kump Khidmat</th> --}}
-          <th style="width: 80px; white-space: nowrap; font-size: 0.75rem;">Kod Jwtn</th>
+          <th style="width: 150px; white-space: nowrap;">Kod Jwtn</th>
           {{-- <th style="width: 100px; white-space: nowrap; font-size: 0.75rem;">Kod Jawatan</th> --}}
           {{-- <th>Gelaran Jawatan</th> --}}
-          <th style="width: 70px; white-space: nowrap; font-size: 0.75rem;">Status</th>
-          <th style="width: 150px; white-space: nowrap; font-size: 0.75rem;">Tindakan</th>
+          <th style="width: 70px; white-space: nowrap;">Status</th>
+          <th style="width: 150px; white-space: nowrap;">Tindakan</th>
         </tr>
       </thead>
     </table>

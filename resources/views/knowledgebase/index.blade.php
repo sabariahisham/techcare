@@ -128,7 +128,7 @@
 </div>
 
 <!-- Senarai Aduan Selesai Table -->
-<div class="card mb-6" hidden>
+<div class="card mb-6">
   <div class="card-header border-bottom">
     <h5 class="card-title mb-0">SENARAI ADUAN SELESAI</h5>
   </div>
@@ -145,6 +145,9 @@
           <th>Sub Kategori</th>
           <th>Status</th>
           <th>Pegawai Tugasan</th>
+          <th>Tajuk Aduan</th>
+          <th>Keterangan Aduan</th>
+          <th>Catatan Tindakan</th>
           <th>Tindakan</th>
         </tr>
       </thead>
@@ -159,7 +162,7 @@
 
   </div>
   <div class="card-datatable table-responsive">
-    <table class="datatables-knowledgebase table">
+    <table class="datatables-knowledgebase table align-top">
       <thead class="border-top">
         <tr>
           <th></th>
@@ -169,13 +172,13 @@
           <th>Sub Kategori</th>
           <th>Deskripsi</th>
           <th>Tag</th>
-          <th>Tindakan</th>
           <th>Status</th>
           <th>Ditulis oleh</th>
           <th>Tarikh Ditulis</th>
           <th>Kemaskini oleh</th>
           <th>Tarikh Kemaskini</th>
           <th>Peranan</th>
+          <th>Tindakan</th>
         </tr>
       </thead>
     </table>
@@ -184,6 +187,9 @@
 
 <!-- Include Knowledge Base Add Modal -->
 @include('knowledgebase.partials.add-modal')
+
+<!-- Include Knowledge Base Add from Aduan Selesai Modal -->
+@include('knowledgebase.partials.add-from-aduan-modal')
 
 <!-- Include Knowledge Base Edit Modal -->
 @include('knowledgebase.partials.edit-modal')

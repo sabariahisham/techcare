@@ -29,6 +29,7 @@ yarn-error.log
 /.github/copilot-instructions.md
 AGENTS.md
 yarn.lock
+AGENTS.md
 
 /developer-guide/docs
 /.cursorrules.md

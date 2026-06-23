@@ -25,9 +25,18 @@ $(function () {
     select2 = $('.select2'),
     userView = baseUrl + 'app/user/view/account',
     statusObj = {
-      1: { title: 'Pending', class: 'bg-label-warning' },
-      2: { title: 'Active', class: 'bg-label-success' },
-      3: { title: 'Inactive', class: 'bg-label-secondary' }
+      1: {
+        title: 'Pending',
+        class: 'bg-label-warning'
+      },
+      2: {
+        title: 'Active',
+        class: 'bg-label-success'
+      },
+      3: {
+        title: 'Inactive',
+        class: 'bg-label-secondary'
+      }
     };
 
   if (select2.length) {
@@ -43,7 +52,7 @@ $(function () {
     var dt_user = dt_user_table.DataTable({
       processing: true,
       serverSide: true,
-      pageLength: 100,
+      pageLength: 10,
       ajax: {
         url: '/user-management/data',
         error: function (xhr, error, code) {
@@ -60,35 +69,72 @@ $(function () {
           });
         }
       },
-      columns: [
-        {
-          // For Responsive
-          data: null,
-          defaultContent: '',
-          orderable: false,
-          searchable: true
-        },
-        {
+      columns: [{
           // Index column
           data: null,
+          name: '',
+          orderable: false,
+          searchable: false,
           render: function (data, type, row, meta) {
             return meta.row + meta.settings._iDisplayStart + 1;
           }
         },
-        { data: 'nama', name: 'nama' },
-        { data: 'role', name: 'role' },
+        {
+          data: 'nama',
+          name: 'nama',
+          width: '250px',
+          className: 'text-nowrap'
+        },
+        {
+          data: 'role',
+          name: 'role'
+        },
         // { data: 'id_pgn_ldap', name: 'id_pgn_ldap' },
-        { data: 'email', name: 'email' },
-        { data: 'no_kp', name: 'no_kp' },
-        { data: 'tel_no_p', name: 'tel_no_p' },
-        { data: 'tel_no_hp', name: 'tel_no_hp' },
+        {
+          data: 'email',
+          name: 'email'
+        },
+        {
+          data: 'no_kp',
+          name: 'no_kp'
+        },
+        {
+          data: 'tel_no_p',
+          name: 'tel_no_p',
+          width: '150px',
+          className: 'text-nowrap'
+        },
+        {
+          data: 'tel_no_hp',
+          name: 'tel_no_hp'
+        },
         // { data: 'sektor_nama', name: 'sektor_nama' },
-        { data: 'bahagian_nama', name: 'bahagian_nama' },
-        { data: 'seksyen_nama', name: 'seksyen_nama' },
-        { data: 'unit_nama', name: 'unit_nama' },
+        {
+          data: 'bahagian_nama',
+          name: 'bahagian_nama',
+          width: '300px',
+          className: 'text-nowrap'
+        },
+        {
+          data: 'seksyen_nama',
+          name: 'seksyen_nama',
+          width: '300px',
+          className: 'text-nowrap'
+        },
+        {
+          data: 'unit_nama',
+          name: 'unit_nama',
+          width: 'px',
+          className: 'text-nowrap'
+        },
         // { data: 'kod_skim', name: 'kod_skim' },
         // { data: 'kod_kump_khidmat', name: 'kod_kump_khidmat' },
-        { data: 'kod_jwtn', name: 'kod_jwtn' },
+        {
+          data: 'kod_jwtn',
+          name: 'kod_jwtn',
+          width: '150px',
+          className: 'text-nowrap'
+        },
         // { data: 'jawatan_name', name: 'jawatan_name' },
         // { data: 'nama_gred', name: 'nama_gred' },
         {
@@ -111,8 +157,7 @@ $(function () {
         }
 
       ],
-      dom:
-        '<"row"' +
+      dom: '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"fB>>' +
         '>t' +
@@ -120,50 +165,47 @@ $(function () {
         '<"col-sm-12 col-md-6"i>' +
         '<"col-sm-12 col-md-6"p>' +
         '>',
-      buttons: [
-        {
-          extend: 'collection',
-          className: 'btn btn-label-secondary dropdown-toggle me-4 d-none', // Add d-none class to hide the button
-          text: '<i class="bx bx-export me-2 bx-sm"></i>Export',
-          buttons: [
-            {
-              extend: 'print',
-              text: '<i class="bx bx-printer me-2" ></i>Print',
-              className: 'dropdown-item'
-            },
-            {
-              extend: 'csv',
-              text: '<i class="bx bx-file me-2" ></i>Csv',
-              className: 'dropdown-item'
-            },
-            {
-              extend: 'excel',
-              text: '<i class="bx bxs-file-export me-2"></i>Excel',
-              className: 'dropdown-item'
-            },
-            {
-              extend: 'pdf',
-              text: '<i class="bx bxs-file-pdf me-2"></i>Pdf',
-              className: 'dropdown-item'
-            },
-            {
-              extend: 'copy',
-              text: '<i class="bx bx-copy me-2" ></i>Copy',
-              className: 'dropdown-item'
-            }
-          ]
-        }
-      ],
+      buttons: [{
+        extend: 'collection',
+        className: 'btn btn-label-secondary dropdown-toggle me-4 d-none', // Add d-none class to hide the button
+        text: '<i class="bx bx-export me-2 bx-sm"></i>Export',
+        buttons: [{
+            extend: 'print',
+            text: '<i class="bx bx-printer me-2" ></i>Print',
+            className: 'dropdown-item'
+          },
+          {
+            extend: 'csv',
+            text: '<i class="bx bx-file me-2" ></i>Csv',
+            className: 'dropdown-item'
+          },
+          {
+            extend: 'excel',
+            text: '<i class="bx bxs-file-export me-2"></i>Excel',
+            className: 'dropdown-item'
+          },
+          {
+            extend: 'pdf',
+            text: '<i class="bx bxs-file-pdf me-2"></i>Pdf',
+            className: 'dropdown-item'
+          },
+          {
+            extend: 'copy',
+            text: '<i class="bx bx-copy me-2" ></i>Copy',
+            className: 'dropdown-item'
+          }
+        ]
+      }],
       // Initialize role filter
       initComplete: function () {
         // Adding role filter once table initialized
         this.api()
-          .columns(3)
+          .columns(2)
           .every(function () {
             var column = this;
             var select = $(
-              '<select id="UserRole" class="form-select text-capitalize"><option value=""> Select Role </option></select>'
-            )
+                '<select id="UserRole" class="form-select text-capitalize"><option value=""> Select Role </option></select>'
+              )
               .appendTo('.user_role')
               .on('change', function () {
                 var val = $.fn.dataTable.util.escapeRegex($(this).val());
@@ -179,7 +221,7 @@ $(function () {
               });
           });
       },
-      responsive: true,
+      scrollX: true,
       language: {
         search: '',
         searchPlaceholder: 'Carian'

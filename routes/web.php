@@ -324,6 +324,7 @@ Route::middleware(['auth'])->prefix('knowledgebase')->group(function () {
   Route::get('/', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'index'])->name('knowledgebase.index');
   Route::get('/data', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'getData'])->name('knowledgebase.data');
   Route::get('/aduan-selesai/data', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'getAduanSelesaiData'])->name('knowledgebase.aduan-selesai.data');
+  Route::get('/aduan-selesai/{uuid}/ticket-details', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'getAduanSelesaiTicketDetails'])->name('knowledgebase.aduan-selesai.ticket-details');
   Route::post('/', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'store'])->name('knowledgebase.store');
   Route::get('/{article}/details', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'getDetails'])->name('knowledgebase.details');
   Route::post('/{article}/soft-delete', [App\Http\Controllers\Knowledgebase\KnowledgeBaseController::class, 'softDelete'])->name('knowledgebase.soft-delete');
