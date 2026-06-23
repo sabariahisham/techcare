@@ -30,6 +30,10 @@ use App\Http\Controllers\Ticket\TicketChronologyController;
 use App\Http\Controllers\Reports\StatistikLogAduanController;
 use App\Http\Controllers\Notifications\TicketStatusController;
 use App\Http\Controllers\Configuration\UserManagementController;
+use App\Http\Controllers\Reports\LaporanStatusAduanTahunanController;
+use App\Http\Controllers\Configuration\RefCategoryManagementController;
+//use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
+
 
 // ============================================================================
 // DYNAMIC MIDDLEWARE CONFIGURATION
@@ -41,6 +45,17 @@ $authMiddleware = config('cas.cas_enabled')
   ? ['cas.auth']
   : ['auth', config('jetstream.auth_session')];
 // ============================================================================
+
+// Redirect default Laravel login and register routes to the dashboard
+Route::get('/login', function () {
+    return redirect('/');
+})->name('login');
+
+Route::get('/register', function () {
+    return redirect('/');
+})->name('register');
+
+
 
 // Test route to check CAS configuration
 Route::get('/auth-status', function () {
@@ -66,9 +81,6 @@ Route::get('/auth-status', function () {
 
 // Test email route using Mailtrap
 // run at browser: ../test-email
-use App\Http\Controllers\Reports\LaporanStatusAduanTahunanController;
-use App\Http\Controllers\Configuration\RefCategoryManagementController;
-use Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController;
 
 Route::get('/test-email', function () {
   Mail::raw('Test email from Laravel', function ($message) {
@@ -84,13 +96,17 @@ Route::get('/', function () {
 })->middleware($authMiddleware)
 ->name('dashboard');
 
-Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
-  ->middleware(['auth'])
-  ->name('two-factor.login');
 
-Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'store'])
-  ->middleware(['auth'])
-  ->name('two-factor.login.store');
+// ============================================================================
+// Disabled Two-Factor Authentication Routes (for future use if needed)
+// ============================================================================
+// Route::get('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'create'])
+//   ->middleware(['auth'])
+//   ->name('two-factor.login');
+
+// Route::post('/two-factor-challenge', [TwoFactorAuthenticatedSessionController::class, 'store'])
+//   ->middleware(['auth'])
+//   ->name('two-factor.login.store');
 
 // ============================================================================
 // DYNAMIC CAS/LOCAL AUTHENTICATION ROUTES
