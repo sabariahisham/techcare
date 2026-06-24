@@ -10,6 +10,7 @@ use App\Models\RefSubCategory;
 use App\Models\RefTicketStatus;
 use App\Models\Report;
 use App\Models\Ticket;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -39,14 +40,14 @@ class ReportLogTicketController extends Controller
             $query->where('subcat_id', (int) $request->subcategory);
         }
 
+        if ($request->filled('pengadu')) {
+            $query->where('user_id', (int) $request->pengadu);
+        }
+
         if ($request->filled('officer')) {
             $officerId = (int) $request->officer;
-            $query->where(function ($q) use ($officerId) {
-                $q->whereHas('category.officers', function ($sq) use ($officerId) {
-                    $sq->where('user_id', $officerId);
-                })->orWhereHas('subCategory.officers', function ($sq) use ($officerId) {
-                    $sq->where('user_id', $officerId);
-                });
+            $query->whereHas('chronologies', function ($q) use ($officerId) {
+                $q->where('escalate_to', $officerId);
             });
         }
 
@@ -138,6 +139,10 @@ class ReportLogTicketController extends Controller
         $bahagians = RefBahagian::where('status', 'active')
             ->orderBy('nama_bah', 'asc')
             ->get();
+        $pengaduIds = Ticket::whereNotNull('user_id')->distinct()->pluck('user_id');
+        $pengadus = User::whereIn('id', $pengaduIds)
+            ->orderBy('nama', 'asc')
+            ->pluck('nama', 'id');
 
         $totalTickets = Ticket::count();
 
@@ -148,7 +153,7 @@ class ReportLogTicketController extends Controller
         // Calculate percentage
         $resolvedPercentage = $totalTickets > 0 ? round(($resolvedTickets / $totalTickets) * 100, 2) : 0;
 
-        return view('report.log-ticket', compact('categories', 'subCategories', 'officers', 'bahagians', 'statuses', 'totalTickets', 'resolvedTickets', 'resolvedPercentage'));
+        return view('report.log-ticket', compact('categories', 'subCategories', 'officers', 'bahagians', 'pengadus', 'statuses', 'totalTickets', 'resolvedTickets', 'resolvedPercentage'));
     }
 
     public function data(Request $request)
@@ -179,10 +184,10 @@ class ReportLogTicketController extends Controller
         return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('pengadu', function ($ticket) {
-                return e($ticket->user?->nama ?? '-');
+                return $ticket->user?->nama ?? '-';
             })
             ->addColumn('bahagian', function ($ticket) {
-                return e($ticket->user?->bahagian?->nama_bah ?? '-');
+                return $ticket->user?->bahagian?->nama_bah ?? '-';
             })
             ->addColumn('tarikh_tiket', function ($ticket) {
                 return $this->formatMalayDate($ticket->created_at);
@@ -213,13 +218,13 @@ class ReportLogTicketController extends Controller
                 return '<span class="badge '.$badgeClass.'">'.e($status->st_name).'</span>';
             })
             ->addColumn('kategori', function ($ticket) {
-                return e($ticket->category?->cat_name ?? '-');
+                return $ticket->category?->cat_name ?? '-';
             })
             ->addColumn('sub_kategori', function ($ticket) {
-                return e($ticket->subCategory?->subcat_name ?? '-');
+                return $ticket->subCategory?->subcat_name ?? '-';
             })
             ->addColumn('pegawai_tugasan', function ($ticket) {
-                return e($this->getAssignedOfficerNames($ticket));
+                return $this->getAssignedOfficerNames($ticket);
             })
             ->addColumn('severity', function ($ticket) {
                 // You can customize this based on your severity logic

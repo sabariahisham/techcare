@@ -167,6 +167,15 @@
             </select>
           </div>
           <div class="col-md-4">
+            <label for="filter-pengadu" class="form-label">NAMA PENGADU</label>
+            <select id="filter-pengadu" class="form-select select2">
+              <option value="">Semua</option>
+              @foreach($pengadus as $userId => $userName)
+                <option value="{{ $userId }}">{{ $userName }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-md-4">
             <label for="filter-officer" class="form-label">PEGAWAI TUGASAN</label>
             <select id="filter-officer" class="form-select select2">
               <option value="">Semua</option>

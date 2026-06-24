@@ -69,6 +69,8 @@ $(function () {
       placeholder: 'Pilih',
       allowClear: true
     });
+
+    $subCategorySelect.val('').trigger('change');
   });
 
   // Initialize Flatpickr for date range
@@ -87,25 +89,47 @@ $(function () {
   // --------------------------------------------------------------------
 
   var dt_log_ticket_table = $('.datatables-log-ticket');
+  var dt_log_ticket = null;
+
+  function getLogTicketFilters() {
+    return {
+      status: $('#filter-status').val() || '',
+      category: $('#filter-category').val() || '',
+      subcategory: $('#filter-subcategory').val() || '',
+      pengadu: $('#filter-pengadu').val() || '',
+      officer: $('#filter-officer').val() || '',
+      bahagian: $('#filter-department').val() || '',
+      month: $('#filter-month').val() || '',
+      year: $('#filter-year').val() || ''
+    };
+  }
+
+  function reloadLogTicketTable() {
+    if (dt_log_ticket) {
+      dt_log_ticket.ajax.reload(null, true);
+    }
+  }
 
   if (dt_log_ticket_table.length) {
-    var dt_log_ticket = dt_log_ticket_table.DataTable({
+    dt_log_ticket = dt_log_ticket_table.DataTable({
       processing: true,
       serverSide: true,
       ajax: {
         url: '/report/senarai-log-tiket/data',
         data: function (d) {
-          d.status = $('#filter-status').val();
-          d.category = $('#filter-category').val();
-          d.subcategory = $('#filter-subcategory').val();
-          d.officer = $('#filter-officer').val();
-          d.bahagian = $('#filter-department').val();
-          d.month = $('#filter-month').val();
-          d.year = $('#filter-year').val();
+          var filters = getLogTicketFilters();
+          d.status = filters.status;
+          d.category = filters.category;
+          d.subcategory = filters.subcategory;
+          d.pengadu = filters.pengadu;
+          d.officer = filters.officer;
+          d.bahagian = filters.bahagian;
+          d.month = filters.month;
+          d.year = filters.year;
         }
       },
       columns: [{
-          data: null
+          data: ''
         },
         {
           data: 'ticket_nolog'
@@ -139,37 +163,31 @@ $(function () {
         }
       ],
       columnDefs: [{
-          // BIL
+          // For Responsive
+          className: 'control',
           searchable: false,
           orderable: false,
+          responsivePriority: 2,
           targets: 0,
           render: function (data, type, full, meta) {
-            return meta.row + 1;
+            return '';
           }
         },
         {
           // No Log Tiket
           targets: 1,
           responsivePriority: 1,
-          width: '130px',
           render: function (data, type, full, meta) {
-            return '<span class="fw-semibold" style="white-space:nowrap;">' + data + '</span>';
+            return '<span class="fw-semibold">' + data + '</span>';
           }
         },
         {
           // Pengadu
-          targets: 2,
-          width: '160px',
-          render: function (data, type, full, meta) {
-            return '<span style="white-space:nowrap;">' + (data || '') + '</span>';
-          }
+          targets: 2
         },
         {
           // Bahagian
-          targets: 3,
-          render: function (data, type, full, meta) {
-            return '<span style="white-space:nowrap;">' + (data || '') + '</span>';
-          }
+          targets: 3
         },
         {
           // Tarikh Tiket
@@ -182,28 +200,16 @@ $(function () {
         },
         {
           // Kategori
-          targets: 6,
-          render: function (data, type, full, meta) {
-            return '<span style="white-space:nowrap;">' + (data || '') + '</span>';
-          }
+          targets: 6
         },
         {
           // Sub Kategori
-          targets: 7,
-          render: function (data, type, full, meta) {
-            return '<span style="white-space:nowrap;">' + (data || '') + '</span>';
-          }
+          targets: 7
         },
         {
           // Pegawai Tugasan
           targets: 8,
-          width: '200px',
-          render: function (data, type, full, meta) {
-            if (!data) return '';
-            return data.split(',').map(function (name) {
-              return '<span style="white-space:nowrap;display:block;">' + name.trim() + '</span>';
-            }).join('');
-          }
+          width: '200px'
         },
         {
           // Severity
@@ -218,7 +224,6 @@ $(function () {
       order: [
         [1, 'desc']
       ], // Sort by ticket number descending
-      scrollX: true,
       dom: '<"row"' +
         '<"col-md-2"<"me-3"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-4"fB>>' +
@@ -243,43 +248,111 @@ $(function () {
           text: '<i class="bx bx-file me-1"></i>EXCEL',
           className: 'btn btn-success btn-sm mb-6 mb-md-0 waves-effect waves-light me-2',
           action: function (e, dt, button, config) {
-            var filters = {
-              status: $('#filter-status').val(),
-              category: $('#filter-category').val(),
-              subcategory: $('#filter-subcategory').val(),
-              officer: $('#filter-officer').val(),
-              bahagian: $('#filter-department').val(),
-              month: $('#filter-month').val(),
-              year: $('#filter-year').val()
-            };
-            window.location.href = '/report/senarai-log-tiket/export-excel?' + $.param(filters);
+            var queryParams = $.param(getLogTicketFilters());
+            var exportUrl = '/report/senarai-log-tiket/export-excel?' + queryParams;
+
+            // Check if Swal is available
+            if (typeof Swal !== 'undefined') {
+              // Show loading
+              Swal.fire({
+                title: 'Memproses...',
+                text: 'Sila tunggu sebentar',
+                allowOutsideClick: false,
+                didOpen: function () {
+                  Swal.showLoading();
+                }
+              });
+
+              // Trigger download
+              window.location.href = exportUrl;
+
+              // Close loading after a short delay
+              setTimeout(function () {
+                Swal.close();
+              }, 2000);
+            } else {
+              // Fallback if Swal is not available
+              window.location.href = exportUrl;
+            }
           }
         },
         {
           text: '<i class="bx bx-file me-1"></i>PDF',
           className: 'btn btn-primary btn-sm mb-6 mb-md-0 waves-effect waves-light',
           action: function (e, dt, button, config) {
-            var filters = {
-              status: $('#filter-status').val(),
-              category: $('#filter-category').val(),
-              subcategory: $('#filter-subcategory').val(),
-              officer: $('#filter-officer').val(),
-              bahagian: $('#filter-department').val(),
-              month: $('#filter-month').val(),
-              year: $('#filter-year').val()
-            };
-            window.open('/report/senarai-log-tiket/export-pdf?' + $.param(filters), '_blank');
+            var queryParams = $.param(getLogTicketFilters());
+            var exportUrl = '/report/senarai-log-tiket/export-pdf?' + queryParams;
+
+            // Check if Swal is available
+            if (typeof Swal !== 'undefined') {
+              // Show loading
+              Swal.fire({
+                title: 'Memproses PDF...',
+                text: 'Sila tunggu sebentar',
+                allowOutsideClick: false,
+                didOpen: function () {
+                  Swal.showLoading();
+                }
+              });
+
+              // Open in new window for PDF printing
+              var pdfWindow = window.open(exportUrl, '_blank');
+
+              // Close loading after a short delay
+              setTimeout(function () {
+                Swal.close();
+                if (pdfWindow) {
+                  // Auto-trigger print dialog after page loads
+                  setTimeout(function () {
+                    pdfWindow.print();
+                  }, 1000);
+                }
+              }, 1000);
+            } else {
+              // Fallback if Swal is not available
+              window.open(exportUrl, '_blank');
+            }
           }
         }
       ],
-      responsive: false
+      responsive: {
+        details: {
+          display: $.fn.dataTable.Responsive.display.modal({
+            header: function (row) {
+              var data = row.data();
+              return 'Butiran Tiket - ' + data['ticket_nolog'];
+            }
+          }),
+          type: 'column',
+          renderer: function (api, rowIdx, columns) {
+            var data = $.map(columns, function (col, i) {
+              return col.title !== '' ?
+                '<tr data-dt-row="' +
+                col.rowIndex +
+                '" data-dt-column="' +
+                col.columnIndex +
+                '">' +
+                '<td>' +
+                col.title +
+                ':' +
+                '</td> ' +
+                '<td>' +
+                col.data +
+                '</td>' +
+                '</tr>' :
+                '';
+            }).join('');
+
+            return data ? $('<table class="table"/><tbody />').append(data) : false;
+          }
+        }
+      }
     });
 
     $('.dataTables_length').addClass('my-0');
 
-    // Apply filters on change
-    $('#filter-status, #filter-category, #filter-subcategory, #filter-officer, #filter-department, #filter-month, #filter-year').on('change', function () {
-      dt_log_ticket.ajax.reload();
+    $('#filter-status, #filter-category, #filter-subcategory, #filter-pengadu, #filter-officer, #filter-department, #filter-month, #filter-year').on('change', function () {
+      reloadLogTicketTable();
     });
   }
 });
