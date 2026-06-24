@@ -9,8 +9,16 @@ $(document).ready(function () {
   // Check if table exists
   if ($('#syncSppLogsTable').length) {
     $('#syncSppLogsTable').DataTable({
-      order: [[6, 'desc']], // Sort by Started date (descending)
+      order: [[6, 'desc']],
       pageLength: 25,
+      columnDefs: [{ targets: 0, orderable: false }],
+      drawCallback: function () {
+        var api = this.api();
+        var start = api.page.info().start;
+        api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+          cell.innerHTML = start + i + 1;
+        });
+      },
       language: {
         url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/ms.json'
       }

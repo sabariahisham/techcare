@@ -131,6 +131,8 @@ $(document).ready(function () {
         $('#auditDetailModal').modal('show');
       },
       success: function (response) {
+        var lookups = response.lookups || {};
+
         // Populate basic info
         var basicInfo = '';
         basicInfo += '<tr><td width="40%" class="fw-semibold">ID Audit:</td><td>' + response.id + '</td></tr>';
@@ -156,7 +158,7 @@ $(document).ready(function () {
 
           Object.keys(response.old_values).forEach(function (key) {
             var value = response.old_values[key];
-            var displayValue = formatValue(value);
+            var displayValue = formatValue(value, key, lookups);
             oldValuesHtml += '<tr><td class="fw-semibold">' + formatFieldName(key) + '</td><td>' + displayValue + '</td></tr>';
           });
 
@@ -174,7 +176,7 @@ $(document).ready(function () {
 
           Object.keys(response.new_values).forEach(function (key) {
             var value = response.new_values[key];
-            var displayValue = formatValue(value);
+            var displayValue = formatValue(value, key, lookups);
             newValuesHtml += '<tr><td class="fw-semibold">' + formatFieldName(key) + '</td><td>' + displayValue + '</td></tr>';
           });
 
@@ -214,9 +216,16 @@ function formatFieldName(fieldName) {
 }
 
 // Helper function to format values
-function formatValue(value) {
+function formatValue(value, key, lookups) {
+  lookups = lookups || {};
+
   if (value === null || value === undefined) {
     return '<span class="text-muted">null</span>';
+  }
+
+  // Resolve tick_status and updated_by to display names
+  if (key && lookups[key] && lookups[key][value] !== undefined) {
+    return lookups[key][value] + ' <small class="text-muted">(' + value + ')</small>';
   }
 
   if (typeof value === 'boolean') {

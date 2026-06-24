@@ -30,7 +30,8 @@ class AuditLogController extends Controller
                     'size' => $file->getSize(),
                 ];
             })
-            ->sortByDesc('date');
+            ->sortBy('date')
+            ->values();
 
         return view('audit.logs.index', compact('logFiles'));
     }
