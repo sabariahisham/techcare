@@ -68,6 +68,53 @@ class LogParserService
   }
 
   /**
+   * Parse all available SLA log files.
+   *
+   * @return array Array of parsed log entries
+   */
+  public function parseAllSlaLogs(): array
+  {
+    $logs = [];
+
+    foreach ($this->getAvailableSlaLogDates() as $dateInfo) {
+      $logs = array_merge($logs, $this->parseSlaLog($dateInfo['date']));
+    }
+
+    return $logs;
+  }
+
+  /**
+   * Parse SLA log files for a date range.
+   *
+   * @param string|null $dateFrom Date in format Y-m-d
+   * @param string|null $dateTo Date in format Y-m-d
+   * @return array Array of parsed log entries
+   */
+  public function parseSlaLogRange(?string $dateFrom = null, ?string $dateTo = null): array
+  {
+    if (!$dateFrom && !$dateTo) {
+      return [];
+    }
+
+    $start = Carbon::parse($dateFrom ?? $dateTo)->startOfDay();
+    $end = Carbon::parse($dateTo ?? $dateFrom)->endOfDay();
+
+    if ($start->gt($end)) {
+      [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+    }
+
+    $logs = [];
+    $current = $start->copy();
+
+    while ($current->lte($end)) {
+      $logs = array_merge($logs, $this->parseSlaLog($current->format('Y-m-d')));
+      $current->addDay();
+    }
+
+    return $logs;
+  }
+
+  /**
    * Parse Mail log file
    *
    * @param string $date Date in format Y-m-d
@@ -94,6 +141,82 @@ class LogParserService
           $logs[] = $parsed;
         }
       }
+    }
+
+    return $logs;
+  }
+
+  /**
+   * Parse all available Mail log files.
+   *
+   * @return array Array of parsed log entries
+   */
+  public function parseAllMailLogs(): array
+  {
+    $logs = [];
+
+    foreach ($this->getAvailableMailLogDates() as $dateInfo) {
+      $logs = array_merge($logs, $this->parseMailLog($dateInfo['date']));
+    }
+
+    return $logs;
+  }
+
+  /**
+   * Parse Mail log files for a date range.
+   *
+   * @param string|null $dateFrom Date in format Y-m-d
+   * @param string|null $dateTo Date in format Y-m-d
+   * @return array Array of parsed log entries
+   */
+  public function parseMailLogRange(?string $dateFrom = null, ?string $dateTo = null): array
+  {
+    if (!$dateFrom && !$dateTo) {
+      return [];
+    }
+
+    $start = Carbon::parse($dateFrom ?? $dateTo)->startOfDay();
+    $end = Carbon::parse($dateTo ?? $dateFrom)->endOfDay();
+
+    if ($start->gt($end)) {
+      [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+    }
+
+    $logs = [];
+    $current = $start->copy();
+
+    while ($current->lte($end)) {
+      $logs = array_merge($logs, $this->parseMailLog($current->format('Y-m-d')));
+      $current->addDay();
+    }
+
+    return $logs;
+  }
+
+  /**
+   * Attach ticket UUIDs to parsed mail logs for linking.
+   *
+   * @param array $logs
+   * @return array
+   */
+  public function enrichMailLogsWithTicketUuids(array $logs): array
+  {
+    $ticketNumbers = array_values(array_unique(array_filter(
+      array_column($logs, 'ticket'),
+      fn ($ticket) => filled($ticket) && $ticket !== '-'
+    )));
+
+    if (empty($ticketNumbers)) {
+      return $logs;
+    }
+
+    $ticketUuids = DB::table('tickets')
+      ->whereIn('ticket_nolog', $ticketNumbers)
+      ->whereNull('deleted_at')
+      ->pluck('uuid', 'ticket_nolog');
+
+    foreach ($logs as $index => $log) {
+      $logs[$index]['ticket_uuid'] = $ticketUuids[$log['ticket']] ?? null;
     }
 
     return $logs;
@@ -209,6 +332,7 @@ class LogParserService
     // Extract data from context
     $ticket = $context['ticket'] ?? $this->extractTicketFromMessage($message);
     $email = $context['recipient_email'] ?? null;
+    $recipients = $this->resolveMailRecipients($context);
 
     // Parse date and time separately
     $dt = \Carbon\Carbon::parse($timestamp);
@@ -259,11 +383,14 @@ class LogParserService
     $chronologies = [];
 
     // Priority 1: Use recipient_name from context if available (for TICKET_CREATED and TICKET_CLOSED to owner)
-    if (isset($context['recipient_name'])) {
+    if (!empty($recipients)) {
+      $recipientName = implode(', ', array_column($recipients, 'name'));
+      $email = implode(', ', array_column($recipients, 'email'));
+    } elseif (isset($context['recipient_name'])) {
       $recipientName = $context['recipient_name'];
     }
 
-    if ($ticket) {
+    if ($ticket && empty($recipients)) {
       // Get ticket data with creator and latest assigned officer
       $ticketData = DB::table('tickets')
         ->leftJoin('users as creator', 'tickets.user_id', '=', 'creator.id')
@@ -368,6 +495,8 @@ class LogParserService
       'context' => $context,
       'recipient_name' => $recipientName,
       'recipient_email' => $email, // Add recipient_email field
+      'recipients' => $recipients,
+      'recipient_count' => !empty($recipients) ? count($recipients) : ($recipientName ? 1 : 0),
       'ticket_status' => $ticketStatus,
       'creator_name' => $creatorName,
       'creator_email' => $creatorEmail ?? null,
@@ -376,6 +505,58 @@ class LogParserService
       'chronologies' => $chronologies,
       'tick_status' => $context['tick_status'] ?? $context['new_status'] ?? $context['old_status'] ?? null
     ];
+  }
+
+  /**
+   * Resolve mail recipients from log context (single or grouped email).
+   *
+   * @param array $context
+   * @return array<int, array{name: string, email: string|null}>
+   */
+  private function resolveMailRecipients(array $context): array
+  {
+    if (!empty($context['recipient_names']) && is_array($context['recipient_names'])) {
+      $maskedEmails = is_array($context['recipient_emails'] ?? null)
+        ? $context['recipient_emails']
+        : [];
+      $recipients = [];
+
+      foreach ($context['recipient_names'] as $index => $name) {
+        $name = trim((string) $name);
+        if ($name === '') {
+          continue;
+        }
+
+        $maskedEmail = isset($maskedEmails[$index]) ? trim((string) $maskedEmails[$index]) : null;
+        $realEmail = DB::table('users')
+          ->where('nama', $name)
+          ->whereNull('deleted_at')
+          ->value('email');
+
+        $recipients[] = [
+          'name' => $name,
+          'email' => $realEmail ?? $maskedEmail,
+        ];
+      }
+
+      return $recipients;
+    }
+
+    if (!empty($context['recipient_name'])) {
+      $name = trim((string) $context['recipient_name']);
+      $maskedEmail = isset($context['recipient_email']) ? trim((string) $context['recipient_email']) : null;
+      $realEmail = DB::table('users')
+        ->where('nama', $name)
+        ->whereNull('deleted_at')
+        ->value('email');
+
+      return [[
+        'name' => $name,
+        'email' => $realEmail ?? $maskedEmail,
+      ]];
+    }
+
+    return [];
   }
 
   /**

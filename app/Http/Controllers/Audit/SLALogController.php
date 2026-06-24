@@ -21,46 +21,50 @@ class SLALogController extends Controller
    */
   public function index(Request $request)
   {
-    $date = $request->get('date', null);
+    $dateFrom = $request->get('date_from', null);
+    $dateTo = $request->get('date_to', null);
     $category = $request->get('category', '');
+    $ticket = trim((string) $request->get('ticket', ''));
 
-    // Parse logs for the selected date (only if date is provided)
-    $logs = $date ? $this->logParser->parseSlaLog($date) : [];
+    // Backward compatibility for old single-date filter
+    if (!$dateFrom && !$dateTo && $request->get('date')) {
+      $dateFrom = $request->get('date');
+      $dateTo = $request->get('date');
+    }
 
-    // Filter out COMMAND category logs - only show REMINDER and OVERDUE
+    $logs = $this->loadSlaLogs($dateFrom, $dateTo, $ticket);
+    $logs = $this->filterSlaCategories($logs);
+
+    if ($ticket !== '') {
+      $logs = array_values(array_filter($logs, function ($log) use ($ticket) {
+        return $this->matchesTicketSearch((string) ($log['ticket'] ?? ''), $ticket);
+      }));
+    }
+
     if (!empty($logs)) {
-      $logs = array_filter($logs, function ($log) {
-        $category = strtoupper($log['category'] ?? '');
-        return in_array($category, ['REMINDER', 'OVERDUE']);
-      });
-
-      // Sort by category priority (OVERDUE = 1, REMINDER = 2), then by time descending
       usort($logs, function ($a, $b) {
-        // Define priority order (lower number = higher priority)
-        // OVERDUE = 1 (highest priority)
-        // REMINDER = 2 (lower priority)
         $getPriority = function ($log) {
-          $category = strtoupper($log['category'] ?? '');
-          return $category === 'OVERDUE' ? 1 : 2;
+          $logCategory = strtoupper($log['category'] ?? '');
+          return $logCategory === 'OVERDUE' ? 1 : 2;
         };
 
         $priorityA = $getPriority($a);
         $priorityB = $getPriority($b);
 
-        // First sort by priority
         if ($priorityA !== $priorityB) {
           return $priorityA <=> $priorityB;
         }
 
-        // If same priority, sort by time descending (newest first)
-        $dateA = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $a['date'] . ' ' . $a['time']);
-        $dateB = \Carbon\Carbon::createFromFormat('d/m/Y H:i:s', $b['date'] . ' ' . $b['time']);
+        $dateA = Carbon::createFromFormat('d/m/Y H:i:s', $a['date'] . ' ' . $a['time']);
+        $dateB = Carbon::createFromFormat('d/m/Y H:i:s', $b['date'] . ' ' . $b['time']);
+
         return $dateB <=> $dateA;
       });
     }
 
-    // Calculate statistics BEFORE category filtering (to show all available counts)
-    $allLogs = $logs; // Keep copy of all logs for statistics
+    $logs = $this->logParser->enrichMailLogsWithTicketUuids($logs);
+
+    $allLogs = $logs;
     $statistics = [
       'total' => count($allLogs),
       'by_category' => []
@@ -71,21 +75,22 @@ class SLALogController extends Controller
       $statistics['by_category'][$logCategory] = ($statistics['by_category'][$logCategory] ?? 0) + 1;
     }
 
-    // NOW apply filter by category if provided (this only affects $logs, not statistics)
     if (!empty($logs) && $category) {
       $logs = array_filter($logs, function ($log) use ($category) {
         return strtoupper($log['category']) === $category;
       });
     }
 
-    // Get available log dates
+    $logs = array_values($logs);
     $availableDates = $this->logParser->getAvailableSlaLogDates();
 
     return view('audit.logs-sla.index', [
       'logs' => $logs,
       'availableDates' => $availableDates,
-      'selectedDate' => $date,
+      'dateFrom' => $dateFrom,
+      'dateTo' => $dateTo,
       'selectedCategory' => $category,
+      'selectedTicket' => $ticket,
       'statistics' => $statistics
     ]);
   }
@@ -95,8 +100,19 @@ class SLALogController extends Controller
    */
   public function getSlaLogData(Request $request)
   {
-    $date = $request->get('date', Carbon::today()->format('Y-m-d'));
-    $logs = $this->logParser->parseSlaLog($date);
+    $dateFrom = $request->get('date_from', null);
+    $dateTo = $request->get('date_to', null);
+    $ticket = trim((string) $request->get('ticket', ''));
+
+    $logs = $this->loadSlaLogs($dateFrom, $dateTo, $ticket);
+    $logs = $this->filterSlaCategories($logs);
+    $logs = $this->logParser->enrichMailLogsWithTicketUuids($logs);
+
+    if ($ticket !== '') {
+      $logs = array_values(array_filter($logs, function ($log) use ($ticket) {
+        return $this->matchesTicketSearch((string) ($log['ticket'] ?? ''), $ticket);
+      }));
+    }
 
     return response()->json([
       'success' => true,
@@ -107,16 +123,10 @@ class SLALogController extends Controller
 
   /**
    * Manual run SLA notifications task
-   * This is a backup option to run SLA notifications manually
-   * Useful for:
-   * - Local development testing
-   * - Production backup when scheduler fails
-   * - Immediate notification sending
    */
   public function runTask(Request $request)
   {
     try {
-      // Log the manual execution
       \Illuminate\Support\Facades\Log::channel('sla')->info('[SLA][MANUAL_RUN][START] Manual task execution triggered', [
         'user_id' => auth()->id(),
         'user_email' => auth()->user()->email ?? 'N/A',
@@ -124,27 +134,24 @@ class SLALogController extends Controller
         'timestamp' => now()->toDateTimeString()
       ]);
 
-      // Execute the SLA notification command
       \Illuminate\Support\Facades\Artisan::call('sla:send-notifications', [
         '--type' => 'all'
       ]);
 
-      // Get the output
       $output = \Illuminate\Support\Facades\Artisan::output();
 
-      // Parse results from output (extract sent/failed/skipped counts)
       $sent = 0;
       $failed = 0;
       $skipped = 0;
 
       if (preg_match('/Total Sent: (\d+)/', $output, $matches)) {
-        $sent = (int)$matches[1];
+        $sent = (int) $matches[1];
       }
       if (preg_match('/Total Failed: (\d+)/', $output, $matches)) {
-        $failed = (int)$matches[1];
+        $failed = (int) $matches[1];
       }
       if (preg_match('/Total Skipped: (\d+)/', $output, $matches)) {
-        $skipped = (int)$matches[1];
+        $skipped = (int) $matches[1];
       }
 
       \Illuminate\Support\Facades\Log::channel('sla')->info('[SLA][MANUAL_RUN][SUCCESS] Manual task completed', [
@@ -177,5 +184,52 @@ class SLALogController extends Controller
         'message' => 'Failed to execute task: ' . $e->getMessage()
       ], 500);
     }
+  }
+
+  /**
+   * Load SLA logs based on date range or ticket-only search.
+   */
+  private function loadSlaLogs(?string $dateFrom, ?string $dateTo, string $ticket = ''): array
+  {
+    if ($dateFrom || $dateTo) {
+      return $this->logParser->parseSlaLogRange($dateFrom, $dateTo);
+    }
+
+    if ($ticket !== '') {
+      return $this->logParser->parseAllSlaLogs();
+    }
+
+    return [];
+  }
+
+  /**
+   * Keep only REMINDER and OVERDUE SLA log entries.
+   */
+  private function filterSlaCategories(array $logs): array
+  {
+    return array_values(array_filter($logs, function ($log) {
+      $logCategory = strtoupper($log['category'] ?? '');
+      return in_array($logCategory, ['REMINDER', 'OVERDUE'], true);
+    }));
+  }
+
+  /**
+   * Match ticket number using partial or normalized search.
+   */
+  private function matchesTicketSearch(string $ticketNumber, string $search): bool
+  {
+    $search = trim($search);
+    if ($search === '' || $ticketNumber === '' || $ticketNumber === '-') {
+      return false;
+    }
+
+    if (stripos($ticketNumber, $search) !== false) {
+      return true;
+    }
+
+    $normalizedTicket = preg_replace('/[^a-zA-Z0-9]/', '', $ticketNumber);
+    $normalizedSearch = preg_replace('/[^a-zA-Z0-9]/', '', $search);
+
+    return $normalizedSearch !== '' && stripos($normalizedTicket, $normalizedSearch) !== false;
   }
 }
