@@ -28,7 +28,7 @@
 @section('content')
 
     {{-- Alert: Setup Instructions if no logs for today --}}
-    @if (!$selectedDate || $selectedDate === date('Y-m-d'))
+    @if ((!$dateFrom && !$dateTo && !$selectedTicket) || ($dateFrom === date('Y-m-d') && ($dateTo === date('Y-m-d') || !$dateTo)))
         @php
             $todayLogFile = storage_path('logs/sla-' . date('Y-m-d') . '.log');
             $hasLogsToday = file_exists($todayLogFile) && filesize($todayLogFile) > 0;
@@ -55,34 +55,56 @@
     <div class="card mb-4">
         <div class="card-body">
             <h4 class="mb-1">LOG SLA</h4>
-            <p class="mb-6">Papar rekod log SLA sistem.</p>
+            <p class="mb-6">Papar rekod log SLA sistem.
+                <br><small class="text-muted">Rekod log SLA sistem merujuk kepada fail SLA Log yang dijana oleh sistem
+                    selama 14 hari dari tarikh semasa (path: storage/logs/sla-YYYY-MM-DD.log).</small>
+            </p>
 
-            {{-- Date Filter --}}
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="dateFilter" class="form-label">Pilih Tarikh:</label>
-                    <input type="date" class="form-control" id="dateFilter" value="{{ $selectedDate ?? '' }}"
-                        onchange="filterByDate()">
-                    <small class="text-muted">Sila pilih tarikh untuk melihat log</small>
+            {{-- Filters --}}
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label for="dateFrom" class="form-label">Tarikh Dari:</label>
+                    <input type="date" class="form-control" id="dateFrom" value="{{ $dateFrom ?? '' }}">
+                    <small class="text-muted">Pilihan (jika ada no. tiket)</small>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label for="dateTo" class="form-label">Tarikh Hingga:</label>
+                    <input type="date" class="form-control" id="dateTo" value="{{ $dateTo ?? '' }}">
+                    <small class="text-muted">Pilihan (jika ada no. tiket)</small>
+                </div>
+                <div class="col-md-2">
                     <label for="categoryFilter" class="form-label">Pilih Kategori:</label>
-                    <select class="form-select" id="categoryFilter" onchange="filterByCategory()">
+                    <select class="form-select" id="categoryFilter">
                         <option value="" {{ $selectedCategory == '' ? 'selected' : '' }}>Semua Kategori</option>
                         <option value="REMINDER" {{ $selectedCategory == 'REMINDER' ? 'selected' : '' }}>REMINDER</option>
                         <option value="OVERDUE" {{ $selectedCategory == 'OVERDUE' ? 'selected' : '' }}>OVERDUE</option>
                     </select>
-                    <small class="text-muted">Tapis mengikut kategori SLA</small>
+                    <small class="text-muted">Kategori SLA</small>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label for="ticketFilter" class="form-label">No. Tiket:</label>
+                    <input type="text" class="form-control" id="ticketFilter" value="{{ $selectedTicket ?? '' }}"
+                        placeholder="Contoh: 0001/HELP-YYYY-MM-0001">
+                    <small class="text-muted">Boleh cari tanpa pilih tarikh</small>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-primary w-100" onclick="applyFilters()">
+                        <i class="bx bx-filter"></i> Tapis
+                    </button>
+                    <small class="text-muted">&nbsp;</small>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
                     <button type="button" class="btn btn-outline-secondary w-100" onclick="resetFilters()">
                         <i class="bx bx-refresh"></i> Reset Filter
                     </button>
                     <small class="text-muted">&nbsp;</small>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">&nbsp;</label>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-12">
                     <div class="d-flex gap-2 flex-wrap">
                         <div class="badge bg-primary p-2 text-center">
                             <i class="bx bx-list-ul"></i> Jumlah: {{ $statistics['total'] }}
@@ -98,7 +120,6 @@
                             </div>
                         @endif
                     </div>
-                    <small class="text-muted">&nbsp;</small>
                 </div>
             </div>
         </div>
@@ -140,7 +161,14 @@
                                 <tr>
                                     <td><small>{{ $log['date'] }}, {{ $log['time'] }}</small></td>
                                     <td>
-                                        <span class="fw-semibold">{{ $log['ticket'] }}</span>
+                                        @if (!empty($log['ticket_uuid']))
+                                            <a href="{{ route('tickets.show', $log['ticket_uuid']) }}"
+                                                class="fw-semibold text-primary">
+                                                {{ $log['ticket'] }}
+                                            </a>
+                                        @else
+                                            <span class="fw-semibold">{{ $log['ticket'] }}</span>
+                                        @endif
                                     </td>
                                     <td>
                                         <span
@@ -179,9 +207,15 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-5">
+                                    <td colspan="5" class="text-center text-muted py-5">
                                         <i class="bx bx-calendar bx-lg"></i><br>
-                                        <strong>{{ $selectedDate ? 'Tiada rekod log untuk tarikh ini.' : 'Sila pilih tarikh untuk melihat log SLA.' }}</strong>
+                                        <strong>
+                                            @if ($dateFrom || $dateTo || $selectedTicket)
+                                                Tiada rekod log untuk tapisan yang dipilih.
+                                            @else
+                                                Sila pilih julat tarikh atau masukkan no. tiket.
+                                            @endif
+                                        </strong>
                                     </td>
                                 </tr>
                             @endforelse
@@ -230,97 +264,145 @@
             const btnText = document.getElementById('btnText');
             const originalText = btnText.textContent;
 
-            // Confirm action
-            if (!confirm(
-                    'Adakah anda pasti untuk menjalankan SLA notifications task sekarang?\n\nIni akan menghantar email reminder dan overdue kepada pegawai yang berkaitan.'
-                )) {
-                return;
-            }
+            Swal.fire({
+                title: 'Jalankan SLA Task?',
+                html: 'Adakah anda pasti untuk menjalankan SLA notifications task sekarang?<br><small class="text-muted">Ini akan menghantar email reminder dan overdue kepada pegawai yang berkaitan.</small>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#696cff',
+                cancelButtonColor: '#8592a3',
+                confirmButtonText: '<i class="bx bx-play-circle me-1"></i>Ya, Jalankan',
+                cancelButtonText: '<i class="bx bx-x me-1"></i>Batal'
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
 
-            // Disable button and show loading
-            btn.disabled = true;
-            btnText.innerHTML =
-                '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Sedang dijalankan...';
+                btn.disabled = true;
+                btnText.innerHTML =
+                    '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Sedang dijalankan...';
 
-            // Make AJAX request
-            fetch("{{ route('log-sla-run-task') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                Swal.fire({
+                    title: 'Sedang Dijalankan...',
+                    text: 'Sila tunggu semasa SLA notifications task dijalankan.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
                     }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Show success message with results
-                        let message = '✅ Task berjaya dijalankan!\n\n';
-                        message += '📊 Keputusan:\n';
-                        message += `✓ Dihantar: ${data.results.sent}\n`;
-                        message += `✗ Gagal: ${data.results.failed}\n`;
-                        message += `⊘ Dilangkau: ${data.results.skipped}\n\n`;
-                        message += `⏰ Masa: ${data.timestamp}`;
-
-                        alert(message);
-
-                        // Reload page to show new logs
-                        if (data.results.sent > 0) {
-                            // Redirect to today's logs
-                            const today = new Date().toISOString().split('T')[0];
-                            window.location.href = "{{ route('log-sla-index') }}?date=" + today;
-                        }
-                    } else {
-                        alert('❌ Ralat: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('❌ Ralat: Gagal menjalankan task. Sila cuba lagi.');
-                })
-                .finally(() => {
-                    // Re-enable button
-                    btn.disabled = false;
-                    btnText.textContent = originalText;
                 });
+
+                fetch("{{ route('log-sla-run-task') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Task Berjaya Dijalankan!',
+                                html: `
+                                    <div class="text-start">
+                                        <p class="mb-2"><strong>Keputusan:</strong></p>
+                                        <ul class="mb-2">
+                                            <li>Dihantar: <strong>${data.results.sent}</strong></li>
+                                            <li>Gagal: <strong>${data.results.failed}</strong></li>
+                                            <li>Dilangkau: <strong>${data.results.skipped}</strong></li>
+                                        </ul>
+                                        <small class="text-muted">Masa: ${data.timestamp}</small>
+                                    </div>
+                                `,
+                                icon: 'success',
+                                confirmButtonColor: '#696cff',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                if (data.results.sent > 0) {
+                                    const today = new Date().toISOString().split('T')[0];
+                                    window.location.href =
+                                        "{{ route('log-sla-index') }}?date_from=" + today + "&date_to=" + today;
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Ralat',
+                                text: data.message,
+                                confirmButtonColor: '#696cff',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Ralat',
+                            text: 'Gagal menjalankan task. Sila cuba lagi.',
+                            confirmButtonColor: '#696cff',
+                            confirmButtonText: 'OK'
+                        });
+                    })
+                    .finally(() => {
+                        btn.disabled = false;
+                        btnText.textContent = originalText;
+                    });
+            });
         }
 
-        function filterByDate() {
-            const selectedDate = document.getElementById('dateFilter').value;
-            if (!selectedDate) {
-                alert('Sila pilih tarikh terlebih dahulu.');
-                return;
-            }
-            const selectedCategory = document.getElementById('categoryFilter').value;
-            let url = "{{ route('log-sla-index') }}?date=" + selectedDate;
-            if (selectedCategory) {
-                url += "&category=" + selectedCategory;
-            }
-            window.location.href = url;
-        }
+        function applyFilters() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const selectedTicket = document.getElementById('ticketFilter').value.trim();
 
-        function filterByCategory() {
-            const selectedDate = document.getElementById('dateFilter').value;
-            if (!selectedDate) {
-                alert('Sila pilih tarikh terlebih dahulu.');
+            if (!dateFrom && !dateTo && !selectedTicket) {
+                alert('Sila pilih julat tarikh atau masukkan no. tiket.');
                 return;
             }
-            const selectedCategory = document.getElementById('categoryFilter').value;
-            let url = "{{ route('log-sla-index') }}?date=" + selectedDate;
-            if (selectedCategory) {
-                url += "&category=" + selectedCategory;
+
+            const url = new URL("{{ route('log-sla-index') }}", window.location.origin);
+
+            if (dateFrom) {
+                url.searchParams.set('date_from', dateFrom);
             }
-            window.location.href = url;
+
+            if (dateTo) {
+                url.searchParams.set('date_to', dateTo);
+            }
+
+            const selectedCategory = document.getElementById('categoryFilter').value;
+            if (selectedCategory) {
+                url.searchParams.set('category', selectedCategory);
+            }
+
+            if (selectedTicket) {
+                url.searchParams.set('ticket', selectedTicket);
+            }
+
+            window.location.href = url.toString();
         }
 
         function resetFilters() {
-            // Reset to empty date and all categories
             window.location.href = "{{ route('log-sla-index') }}";
         }
 
+        function filterTicketInTable(searchValue) {
+            if (!window.slaLogsTable) {
+                return;
+            }
+
+            window.slaLogsTable.column(1).search(searchValue).draw();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            const ticketFilter = document.getElementById('ticketFilter');
+
             @if (!empty($logs) && count($logs) > 0)
                 if (typeof jQuery !== 'undefined') {
-                    jQuery('#slaLogsTable').DataTable({
+                    window.slaLogsTable = jQuery('#slaLogsTable').DataTable({
                         pageLength: 10,
                         lengthMenu: [
                             [10, 25, 50, 100, -1],
@@ -329,7 +411,7 @@
                         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
                         order: [
                             [0, 'desc']
-                        ], // Sort by time descending
+                        ],
                         language: {
                             search: "Cari:",
                             lengthMenu: "Papar _MENU_ rekod",
@@ -345,8 +427,25 @@
                             zeroRecords: "Tiada rekod dijumpai"
                         }
                     });
+
+                    if (ticketFilter && ticketFilter.value.trim() !== '') {
+                        filterTicketInTable(ticketFilter.value.trim());
+                    }
                 }
             @endif
+
+            if (ticketFilter) {
+                ticketFilter.addEventListener('input', function() {
+                    filterTicketInTable(this.value.trim());
+                });
+
+                ticketFilter.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        applyFilters();
+                    }
+                });
+            }
         });
     </script>
     @include('audit.logs.partials.log-details-modal')

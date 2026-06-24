@@ -30,43 +30,60 @@
     <div class="card mb-4">
         <div class="card-body">
             <h4 class="mb-1">LOG EMAIL</h4>
-            <p class="mb-6">Papar rekod log email sistem.</p>
+            <p class="mb-6">Papar rekod log email sistem.
+                <br><small class="text-muted">Rekod log email sistem merujuk kepada fail Mail Log yang dijana oleh sistem selama 14 hari dari tarikh semasa (path: storage/logs/mail-YYYY-MM-DD.log).</small>
+            </p>
+           
 
-            {{-- Date Filter --}}
-            <div class="row">
-                <div class="col-md-3">
-                    <label for="dateFilter" class="form-label">Pilih Tarikh:</label>
-                    <input type="date" class="form-control" id="dateFilter" value="{{ $selectedDate ?? '' }}"
-                        onchange="filterByDate()">
-                    <small class="text-muted">Sila pilih tarikh untuk melihat log</small>
+            {{-- Filters --}}
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label for="dateFrom" class="form-label">Tarikh Dari:</label>
+                    <input type="date" class="form-control" id="dateFrom" value="{{ $dateFrom ?? '' }}">
+                    <small class="text-muted">Pilihan (jika ada no. tiket)</small>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label for="dateTo" class="form-label">Tarikh Hingga:</label>
+                    <input type="date" class="form-control" id="dateTo" value="{{ $dateTo ?? '' }}">
+                    <small class="text-muted">Pilihan (jika ada no. tiket)</small>
+                </div>
+                <div class="col-md-2">
                     <label for="statusFilter" class="form-label">Pilih Status:</label>
-                    <select class="form-select" id="statusFilter" onchange="filterByStatus()">
+                    <select class="form-select" id="statusFilter">
                         <option value="" {{ $selectedStatus == '' ? 'selected' : '' }}>Semua Status</option>
                         <option value="SENT" {{ $selectedStatus == 'SENT' ? 'selected' : '' }}>SENT</option>
                         <option value="FAILED" {{ $selectedStatus == 'FAILED' ? 'selected' : '' }}>FAILED</option>
                     </select>
-                    <small class="text-muted">Tapis mengikut status email</small>
+                    <small class="text-muted">Status email</small>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label for="ticketFilter" class="form-label">No. Tiket:</label>
+                    <input type="text" class="form-control" id="ticketFilter" value="{{ $selectedTicket ?? '' }}"
+                        placeholder="Contoh: 0001/HELP-YYYY-MM-0001">
+                    <small class="text-muted">Boleh cari tanpa pilih tarikh</small>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-primary w-100" onclick="applyFilters()">
+                        <i class="bx bx-filter"></i> Tapis
+                    </button>
+                    <small class="text-muted">&nbsp;</small>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
                     <button type="button" class="btn btn-outline-secondary w-100" onclick="resetFilters()">
                         <i class="bx bx-refresh"></i> Reset Filter
                     </button>
                     <small class="text-muted">&nbsp;</small>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">&nbsp;</label>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-12">
                     <div class="d-flex gap-2 flex-wrap">
                         <div class="badge bg-primary p-2 text-center">
                             <i class="bx bx-list-ul"></i> Jumlah: {{ $statistics['total'] }}
                         </div>
-                        {{-- @foreach ($statistics['by_type'] as $type => $count)
-                            <div class="badge bg-{{ $type === 'REMINDER' ? 'warning' : 'danger' }} p-2 text-center">
-                                {{ $type }}: {{ $count }}
-                            </div>
-                        @endforeach --}}
                         @foreach ($statistics['by_status'] as $status => $count)
                             <div
                                 class="badge bg-{{ $status === 'SENT' ? 'success' : ($status === 'FAILED' ? 'danger' : 'secondary') }} p-2 text-center">
@@ -74,7 +91,6 @@
                             </div>
                         @endforeach
                     </div>
-                    <small class="text-muted">&nbsp;</small>
                 </div>
             </div>
         </div>
@@ -106,7 +122,14 @@
                                 <tr>
                                     <td><small>{{ $log['date'] }}, {{ $log['time'] }}</small></td>
                                     <td>
-                                        <span class="fw-semibold">{{ $log['ticket'] }}</span>
+                                        @if (!empty($log['ticket_uuid']))
+                                            <a href="{{ route('tickets.show', $log['ticket_uuid']) }}"
+                                                class="fw-semibold text-primary">
+                                                {{ $log['ticket'] }}
+                                            </a>
+                                        @else
+                                            <span class="fw-semibold">{{ $log['ticket'] }}</span>
+                                        @endif
                                     </td>
                                     <td>
                                         @php
@@ -134,8 +157,16 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <strong>Pegawai:</strong> {{ $log['recipient_name'] ?? 'N/A' }}<br>
-                                        <small><strong>Email:</strong> {{ $log['email'] ?? 'N/A' }}</small><br>
+                                        @if (!empty($log['recipients']) && count($log['recipients']) > 1)
+                                            <strong>Pegawai ({{ count($log['recipients']) }}):</strong><br>
+                                            @foreach ($log['recipients'] as $recipient)
+                                                <small>&bull; {{ $recipient['name'] }}
+                                                    ({{ $recipient['email'] ?? 'N/A' }})</small><br>
+                                            @endforeach
+                                        @else
+                                            <strong>Pegawai:</strong> {{ $log['recipient_name'] ?? 'N/A' }}<br>
+                                            <small><strong>Email:</strong> {{ $log['email'] ?? 'N/A' }}</small><br>
+                                        @endif
                                         @php
                                             $statusName = $log['ticket_status'] ?? 'N/A';
                                             $badgeClass = match ($statusName) {
@@ -156,87 +187,74 @@
                                 <tr>
                                     <td colspan="5" class="text-center text-muted py-5">
                                         <i class="bx bx-calendar bx-lg"></i><br>
-                                        <strong>{{ $selectedDate ? 'Tiada rekod log untuk tarikh ini.' : 'Sila pilih tarikh untuk melihat log email.' }}</strong>
+                                        <strong>
+                                            @if ($dateFrom || $dateTo || $selectedTicket)
+                                                Tiada rekod log untuk tapisan yang dipilih.
+                                            @else
+                                                Sila pilih julat tarikh atau masukkan no. tiket.
+                                            @endif
+                                        </strong>
                                     </td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
-
-                    {{-- <table class="table table-hover" id="logsTable" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>Tarikh</th>
-                                <th>Nama Fail</th>
-                                <th>Saiz</th>
-                                <th>Tindakan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($logFiles as $log)
-                                <tr>
-                                    <td>{{ $log['date'] }}</td>
-                                    <td>{{ $log['filename'] }}</td>
-                                    @php
-                                        $size = $log['size'];
-                                        if ($size >= 1048576) {
-                                            $sizeText = number_format($size / 1048576, 2) . ' MB';
-                                        } else {
-                                            $sizeText = number_format($size / 1024, 2) . ' KB';
-                                        }
-                                    @endphp
-                                    <td>{{ $sizeText }}</td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary btn-sm" onclick="showLogDetails('{{ $log['date'] }}', '{{ $log['filename'] }}')">Lihat</button>
-                                        <a href="{{ route('audit.logs.download', $log['date']) }}" class="btn btn-success btn-sm">Download</a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table> --}}
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function filterByDate() {
-            const selectedDate = document.getElementById('dateFilter').value;
-            if (!selectedDate) {
-                alert('Sila pilih tarikh terlebih dahulu.');
-                return;
-            }
-            const selectedStatus = document.getElementById('statusFilter').value;
-            let url = "{{ route('log-mail-index') }}?date=" + selectedDate;
-            if (selectedStatus) {
-                url += "&status=" + selectedStatus;
-            }
-            window.location.href = url;
-        }
+        function applyFilters() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const selectedTicket = document.getElementById('ticketFilter').value.trim();
 
-        function filterByStatus() {
-            const selectedDate = document.getElementById('dateFilter').value;
-            if (!selectedDate) {
-                alert('Sila pilih tarikh terlebih dahulu.');
+            if (!dateFrom && !dateTo && !selectedTicket) {
+                alert('Sila pilih julat tarikh atau masukkan no. tiket.');
                 return;
             }
-            const selectedStatus = document.getElementById('statusFilter').value;
-            let url = "{{ route('log-mail-index') }}?date=" + selectedDate;
-            if (selectedStatus) {
-                url += "&status=" + selectedStatus;
+
+            const url = new URL("{{ route('log-mail-index') }}", window.location.origin);
+
+            if (dateFrom) {
+                url.searchParams.set('date_from', dateFrom);
             }
-            window.location.href = url;
+
+            if (dateTo) {
+                url.searchParams.set('date_to', dateTo);
+            }
+
+            const selectedStatus = document.getElementById('statusFilter').value;
+            if (selectedStatus) {
+                url.searchParams.set('status', selectedStatus);
+            }
+
+            if (selectedTicket) {
+                url.searchParams.set('ticket', selectedTicket);
+            }
+
+            window.location.href = url.toString();
         }
 
         function resetFilters() {
-            // Reset to empty date and all statuses
             window.location.href = "{{ route('log-mail-index') }}";
         }
 
+        function filterTicketInTable(searchValue) {
+            if (!window.mailLogsTable) {
+                return;
+            }
+
+            window.mailLogsTable.column(1).search(searchValue).draw();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            const ticketFilter = document.getElementById('ticketFilter');
+
             @if (!empty($logs) && count($logs) > 0)
                 if (typeof jQuery !== 'undefined') {
-                    jQuery('#mailLogsTable').DataTable({
+                    window.mailLogsTable = jQuery('#mailLogsTable').DataTable({
                         pageLength: 10,
                         lengthMenu: [
                             [10, 25, 50, 100, -1],
@@ -245,7 +263,7 @@
                         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
                         order: [
                             [0, 'desc']
-                        ], // Sort by time descending
+                        ],
                         language: {
                             search: "Cari:",
                             lengthMenu: "Papar _MENU_ rekod",
@@ -261,8 +279,25 @@
                             zeroRecords: "Tiada rekod dijumpai"
                         }
                     });
+
+                    if (ticketFilter && ticketFilter.value.trim() !== '') {
+                        filterTicketInTable(ticketFilter.value.trim());
+                    }
                 }
             @endif
+
+            if (ticketFilter) {
+                ticketFilter.addEventListener('input', function() {
+                    filterTicketInTable(this.value.trim());
+                });
+
+                ticketFilter.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        applyFilters();
+                    }
+                });
+            }
         });
     </script>
     @include('audit.logs.partials.log-details-modal')
