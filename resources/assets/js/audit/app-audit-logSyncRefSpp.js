@@ -17,7 +17,8 @@ $(document).ready(function () {
       order: [[7, 'desc']], // Sort by Started date (column index 7 - descending)
       pageLength: 25,
       language: {
-        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/ms.json'
+        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/ms.json',
+        emptyTable: '<div class="text-center text-muted py-4"><i class="bx bx-calendar bx-lg d-block mb-2"></i><strong>Tiada rekod log untuk tempoh ini.</strong></div>'
       },
       columnDefs: [
         { orderable: false, targets: [9] } // Disable sorting on Message column

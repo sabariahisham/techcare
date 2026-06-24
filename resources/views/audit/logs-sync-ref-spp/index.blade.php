@@ -134,7 +134,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($logs as $index => $log)
+                            @foreach ($logs as $index => $log)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td><strong>{{ $log->table_name }}</strong></td>
@@ -179,7 +179,7 @@
                                     </td>
                                     <td>
                                         @if ($log->message)
-                                            <small class="text-muted" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" 
+                                            <small class="text-muted" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;"
                                                    title="{{ $log->message }}">
                                                 {{ $log->message }}
                                             </small>
@@ -188,14 +188,7 @@
                                         @endif
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="10" class="text-center text-muted py-5">
-                                        <i class="bx bx-calendar bx-lg"></i><br>
-                                        <strong>Tiada rekod log untuk tempoh ini.</strong>
-                                    </td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
