@@ -68,6 +68,7 @@
                     <table class="table table-hover" id="logsTable" style="width:100%">
                         <thead>
                             <tr>
+                                <th>Bil.</th>
                                 <th>Tarikh</th>
                                 <th>Nama Fail</th>
                                 <th>Saiz</th>
@@ -77,6 +78,7 @@
                         <tbody>
                             @foreach ($logFiles as $log)
                                 <tr>
+                                    <td>{{ $loop->iteration }}</td>
                                     <td>{{ $log['date'] }}</td>
                                     <td>{{ $log['filename'] }}</td>
                                     @php

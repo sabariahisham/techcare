@@ -161,7 +161,7 @@
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td data-order="{{ $log->started_at ?? '' }}">
                                         @if ($log->started_at)
                                             <small>{{ \Carbon\Carbon::parse($log->started_at)->format('d/m/Y H:i:s') }}</small>
                                         @else

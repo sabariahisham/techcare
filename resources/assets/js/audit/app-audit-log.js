@@ -6,8 +6,17 @@ $(document).ready(function () {
     $('#logsTable').DataTable({
         pageLength: 10,
         ordering: true,
+        order: [[1, 'desc']],
         searching: true,
         lengthChange: true,
+        columnDefs: [{ targets: 0, orderable: false }],
+        drawCallback: function () {
+            var api = this.api();
+            var start = api.page.info().start;
+            api.column(0, { page: 'current' }).nodes().each(function (cell, i) {
+                cell.innerHTML = start + i + 1;
+            });
+        },
         language: {
             lengthMenu: "Show _MENU_ entries",
             zeroRecords: "No matching records found",
