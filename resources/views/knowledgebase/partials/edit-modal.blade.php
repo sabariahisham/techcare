@@ -38,8 +38,11 @@
 
           <div class="row">
             <div class="col-12 mb-4">
-              <label class="form-label" for="edit-kb-desc">Deskripsi <span class="text-danger">*</span></label>
-              <textarea class="form-control" id="edit-kb-desc" rows="4" placeholder="Masukkan deskripsi artikel yang terperinci" name="kb_desc" required></textarea>
+              <label class="form-label" for="edit-editor">Deskripsi <span class="text-danger">*</span></label>
+              <div class="quill-editor-wrapper">
+                <div id="edit-editor"></div>
+              </div>
+              <input type="hidden" id="edit-kb-desc" name="kb_desc" required>
             </div>
           </div>
 

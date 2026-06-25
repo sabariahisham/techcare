@@ -14,6 +14,76 @@
   max-height: 200px;
   overflow-y: auto;
 }
+
+/* Description formatting styles */
+#show-kb-description {
+  line-height: 1.6;
+  color: #333;
+}
+
+#show-kb-description p {
+  margin-bottom: 0.75rem;
+}
+
+#show-kb-description p:last-child {
+  margin-bottom: 0;
+}
+
+#show-kb-description strong {
+  font-weight: 600;
+  color: #212529;
+}
+
+#show-kb-description em {
+  font-style: italic;
+}
+
+#show-kb-description u {
+  text-decoration: underline;
+}
+
+#show-kb-description ol,
+#show-kb-description ul {
+  margin-bottom: 0.75rem;
+  margin-left: 1.5rem;
+}
+
+#show-kb-description li {
+  margin-bottom: 0.25rem;
+}
+
+#show-kb-description blockquote {
+  border-left: 4px solid #dee2e6;
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: #6c757d;
+  font-style: italic;
+}
+
+#show-kb-description code {
+  background-color: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+#show-kb-description pre {
+  background-color: #f8f9fa;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+}
+
+#show-kb-description a {
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+#show-kb-description a:hover {
+  text-decoration: underline;
+}
 </style>
 
 <div class="modal fade" id="showKnowledgeBaseModal" tabindex="-1" aria-labelledby="showKnowledgeBaseModalLabel" aria-hidden="true">

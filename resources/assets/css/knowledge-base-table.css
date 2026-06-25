@@ -1,0 +1,141 @@
+/* Knowledge Base Table Styles */
+
+/* Compact wrapped cells for text columns */
+.td-wrap-compact {
+  max-width: 200px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.wrapped-cell {
+  display: block;
+  max-height: 80px;
+  overflow-y: auto;
+  padding: 4px;
+  line-height: 1.3;
+  font-size: 0.875rem;
+}
+
+/* DataTable responsive adjustments */
+.datatables-aduan-selesai {
+  font-size: 0.875rem;
+}
+
+.datatables-aduan-selesai thead th {
+  padding: 8px 4px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  white-space: normal;
+}
+
+.datatables-aduan-selesai tbody td {
+  padding: 6px 4px;
+  vertical-align: middle;
+}
+
+/* Make table header compact */
+.datatables-aduan-selesai.table {
+  margin-bottom: 0;
+}
+
+/* Improve action buttons alignment */
+.datatables-aduan-selesai .d-flex.gap-2 {
+  gap: 0.25rem;
+}
+
+/* Scrollbar styling for wrapped cells */
+.wrapped-cell::-webkit-scrollbar {
+  width: 4px;
+}
+
+.wrapped-cell::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wrapped-cell::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+.wrapped-cell::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Quill Editor Wrapper */
+.quill-editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+/* Quill Editor Container Styling */
+.quill-editor-wrapper .ql-container {
+  font-size: 0.875rem;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 0.25rem 0.25rem;
+  flex: 1;
+}
+
+.quill-editor-wrapper .ql-editor {
+  min-height: 200px;
+  max-height: 300px;
+  padding: 12px 15px;
+  line-height: 1.5;
+}
+
+.quill-editor-wrapper .ql-editor.ql-blank::before {
+  color: #999;
+  font-style: italic;
+}
+
+.quill-editor-wrapper .ql-toolbar {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem 0.25rem 0 0;
+  background-color: #f8f9fa;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.quill-editor-wrapper .ql-toolbar.ql-snow {
+  padding: 8px;
+  gap: 4px;
+}
+
+.quill-editor-wrapper .ql-toolbar.ql-snow .ql-picker-label {
+  color: #495057;
+}
+
+.quill-editor-wrapper .ql-toolbar.ql-snow button:hover,
+.quill-editor-wrapper .ql-toolbar.ql-snow button.ql-active {
+  color: #0d6efd;
+}
+
+.quill-editor-wrapper .ql-toolbar.ql-snow button {
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.quill-editor-wrapper .ql-toolbar.ql-snow button:hover {
+  background-color: #e9ecef;
+}
+
+/* Error state for Quill editor wrapper */
+.quill-editor-wrapper.is-invalid .ql-toolbar {
+  border-color: #dc3545;
+}
+
+.quill-editor-wrapper.is-invalid .ql-container {
+  border-color: #dc3545;
+}
+
+/* File upload area - ensure proper spacing */
+.file-upload-wrapper {
+  margin-top: 1rem;
+  clear: both;
+}

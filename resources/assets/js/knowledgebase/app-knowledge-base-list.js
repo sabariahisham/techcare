@@ -4,6 +4,14 @@
 
 'use strict';
 
+// ─── Utility Functions ──────────────────────────────────────────────────────
+function stripHtmlTags(html) {
+  if (!html) return '';
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
 // Datatable (jquery)
 $(function () {
   let borderColor, bodyBg, headingColor;
@@ -113,34 +121,105 @@ $(function () {
         },
         {
           targets: 2, // Tajuk
-          width: '400px',
-          className: 'text-nowrap'
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
+        },
+        {
+          targets: 3, // Kategori
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
+        },
+        {
+          targets: 4, // Sub Kategori
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
         },
         {
           targets: 5, // Deskripsi
-          width: '300px',
-          className: 'text-wrap text-nowrap',
+          className: 'td-wrap-compact',
           render: function (data, type, row) {
-            if (type === 'display' && data && data.length > 60) {
-              return data.substr(0, 60) + '...';
-            }
-            return data;
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
           }
         },
         {
           targets: 6, // Tag
-          className: 'text-wrap',
-          orderable: false
+          className: 'td-wrap-compact',
+          orderable: false,
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
+        },
+        {
+          targets: 7, // Status
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
         },
         {
           targets: 8, // Ditulis oleh
-          width: '160px',
-          className: 'text-nowrap'
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
+        },
+        {
+          targets: 9, // Tarikh Ditulis
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
         },
         {
           targets: 10, // Kemaskini oleh
-          width: '160px',
-          className: 'text-nowrap'
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
+        },
+        {
+          targets: 11, // Tarikh Kemaskini
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
+        },
+        {
+          targets: 12, // Peranan
+          className: 'td-wrap-compact',
+          orderable: false,
+          searchable: false,
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
         }
       ],
       autoWidth: true,

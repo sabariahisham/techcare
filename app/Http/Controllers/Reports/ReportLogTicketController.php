@@ -183,6 +183,44 @@ class ReportLogTicketController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
+            ->filter(function ($query) use ($request) {
+                $search = $request->input('search.value');
+
+                if (! filled($search)) {
+                    return;
+                }
+
+                $keyword = '%'.$search.'%';
+
+                $query->where(function ($q) use ($keyword) {
+                    // No Log Tiket (column on tickets table)
+                    $q->where('ticket_nolog', 'like', $keyword)
+                        // Pengadu (user name)
+                        ->orWhereHas('user', function ($sub) use ($keyword) {
+                            $sub->where('nama', 'like', $keyword);
+                        })
+                        // Bahagian (user's department name)
+                        ->orWhereHas('user.bahagian', function ($sub) use ($keyword) {
+                            $sub->where('nama_bah', 'like', $keyword);
+                        })
+                        // Status Tiket
+                        ->orWhereHas('status', function ($sub) use ($keyword) {
+                            $sub->where('st_name', 'like', $keyword);
+                        })
+                        // Kategori
+                        ->orWhereHas('category', function ($sub) use ($keyword) {
+                            $sub->where('cat_name', 'like', $keyword);
+                        })
+                        // Sub Kategori
+                        ->orWhereHas('subCategory', function ($sub) use ($keyword) {
+                            $sub->where('subcat_name', 'like', $keyword);
+                        })
+                        // Pegawai Tugasan (escalated officer name)
+                        ->orWhereHas('chronologies.escalatedTo', function ($sub) use ($keyword) {
+                            $sub->where('nama', 'like', $keyword);
+                        });
+                });
+            }, true)
             ->addColumn('pengadu', function ($ticket) {
                 return $ticket->user?->nama ?? '-';
             })

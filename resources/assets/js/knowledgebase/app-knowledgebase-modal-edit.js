@@ -3,11 +3,15 @@
  */
 
 import logger from '../logger.js';
+import Quill from 'quill';
+import 'quill/dist/quill.snow.css';
 
 'use strict';
 
 // Knowledge Base Edit Modal Initialization
 (function () {
+  // ─── Quill Editor State ────────────────────────────────────────────────────
+  let editQuillEditor = null;
 
   // Handle edit button/link click to open modal and populate data
   $(document).on('click', '.edit-record', function (e) {
@@ -72,6 +76,19 @@ import logger from '../logger.js';
   $(document).on('submit', '#editKnowledgeBaseForm', function (e) {
     e.preventDefault();
     logger.log('Edit form submission started'); // Debug log
+
+    // Capture Quill content before validation
+    if (editQuillEditor) {
+      const quillContent = editQuillEditor.root.innerHTML;
+      const plainText = editQuillEditor.getText().trim();
+
+      if (!plainText) {
+        toastr.error('Sila masukkan deskripsi artikel.', 'Ralat!');
+        return false;
+      }
+
+      $('#edit-kb-desc').val(quillContent);
+    }
 
     // Validate form first
     if (!validateEditForm()) {
@@ -302,6 +319,11 @@ import logger from '../logger.js';
     $('#editKnowledgeBaseForm')[0].reset();
     $('#edit-kb-subcategory').html('<option value="">Select Sub Category</option>');
 
+    // Clear Quill editor
+    if (editQuillEditor) {
+      editQuillEditor.setContents([{ insert: '\n' }]);
+    }
+
     // Clear file selections
     if (typeof window.removeAllEditFiles !== 'undefined') {
       window.removeAllEditFiles();
@@ -315,10 +337,40 @@ import logger from '../logger.js';
     $(this).find('.invalid-feedback').remove();
   });
 
-  // Handle modal show event to focus on first input
+  // Handle modal show event to initialize Quill and focus on first input
   $(document).on('shown.bs.modal', '#editKnowledgeBaseModal', function () {
+    setTimeout(() => {
+      initializeEditQuillEditor();
+    }, 100);
     $('#edit-kb-title').focus();
   });
+
+  // Initialize Quill editor for edit modal
+  function initializeEditQuillEditor() {
+    if (editQuillEditor) {
+      editQuillEditor.enable();
+      return;
+    }
+
+    const editorElement = document.getElementById('edit-editor');
+    if (!editorElement) return;
+
+    editQuillEditor = new Quill('#edit-editor', {
+      theme: 'snow',
+      placeholder: 'Masukkan deskripsi artikel yang terperinci',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ color: [] }, { background: [] }],
+          ['blockquote', 'code-block'],
+          ['link'],
+          ['clean'],
+        ],
+      },
+    });
+  }
 
   // Form validation enhancement
   function validateEditForm() {
@@ -435,9 +487,15 @@ import logger from '../logger.js';
           $('#edit-kb-id').val(data.id);
           $('#edit-kb-title').val(data.kb_title);
           $('#edit-kb-category').val(data.cat_id);
-          $('#edit-kb-desc').val(data.kb_desc);
           $('#edit-kb-tag').val(data.kb_tag);
           $('#edit-kb-status').val(data.kb_status);
+
+          // Populate description with Quill
+          if (editQuillEditor) {
+            editQuillEditor.root.innerHTML = data.kb_desc || '';
+          } else {
+            $('#edit-kb-desc').val(data.kb_desc || '');
+          }
 
           // Load subcategories for selected category
           if (data.cat_id) {
