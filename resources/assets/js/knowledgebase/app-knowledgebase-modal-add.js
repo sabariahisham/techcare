@@ -4,10 +4,16 @@
 
 'use strict';
 
+import Quill from 'quill';
+import 'quill/dist/quill.snow.css';
+
 // Knowledge Base Add Modal Initialization
 (function () {
   // Global variable for FormValidation instance
   let fv;
+
+  // ─── Quill Editor State ────────────────────────────────────────────────────
+  let addQuillEditor = null;
 
   // ─── Add File Upload State ─────────────────────────────────────────────────
   const ADD_MAX_FILES = 5;
@@ -515,8 +521,50 @@
     });
   }
 
+  // Initialize Quill editor for add modal
+  function initializeAddQuillEditor() {
+    if (addQuillEditor) {
+      addQuillEditor.enable();
+      addQuillEditor.setContents([{ insert: '\n' }]);
+      return;
+    }
+
+    const editorElement = document.getElementById('add-editor');
+    if (!editorElement) return;
+
+    addQuillEditor = new Quill('#add-editor', {
+      theme: 'snow',
+      placeholder: 'Masukkan deskripsi artikel yang terperinci',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ color: [] }, { background: [] }],
+          ['blockquote', 'code-block'],
+          ['link'],
+          ['clean'],
+        ],
+      },
+    });
+  }
+
   // Trigger FormValidation when the footer submit button is clicked
   $(document).on('click', '#btnAddKnowledgeBase', function () {
+    // Capture Quill content before validation
+    if (addQuillEditor) {
+      const quillContent = addQuillEditor.root.innerHTML;
+      const plainText = addQuillEditor.getText().trim();
+
+      if (!plainText) {
+        $('#add-kb-desc').val('');
+        toastr.error('Sila masukkan deskripsi artikel.', 'Ralat!');
+        return;
+      }
+
+      $('#add-kb-desc').val(quillContent);
+    }
+
     if (fv) {
       fv.validate();
     }
@@ -534,6 +582,11 @@
     // Reset form data
     form.reset();
     $('#add-kb-subcategory').html('<option value="">Pilih Sub Kategori</option>').prop('disabled', true);
+
+    // Clear Quill editor
+    if (addQuillEditor) {
+      addQuillEditor.setContents([{ insert: '\n' }]);
+    }
 
     // Reset FormValidation if it exists
     if (fv) {
@@ -557,10 +610,14 @@
   $(document).on('shown.bs.modal shown.bs.offcanvas', '#knowledgeBaseModal, #offcanvasAddKnowledgeBase', function () {
     // Initialize / reset file upload on each open
     initializeAddFileUpload();
+    // Initialize Quill editor
+    setTimeout(() => {
+      initializeAddQuillEditor();
+    }, 100);
     // Focus on first input after a small delay to ensure modal is fully rendered
     setTimeout(function () {
       $('#add-kb-title').focus();
-    }, 100);
+    }, 150);
   });
 
   // Handle subcategory change for validation

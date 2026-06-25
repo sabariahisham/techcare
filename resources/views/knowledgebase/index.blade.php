@@ -11,6 +11,7 @@
   'resources/assets/vendor/libs/@form-validation/form-validation.scss',
   'resources/assets/vendor/libs/toastr/toastr.scss',
   'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss',
+  'resources/assets/css/knowledge-base-table.css',
 ])
 @endsection
 

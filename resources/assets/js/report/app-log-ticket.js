@@ -114,6 +114,7 @@ $(function () {
     dt_log_ticket = dt_log_ticket_table.DataTable({
       processing: true,
       serverSide: true,
+      responsive: false,
       ajax: {
         url: '/report/senarai-log-tiket/data',
         data: function (d) {
@@ -129,7 +130,7 @@ $(function () {
         }
       },
       columns: [{
-          data: ''
+          data: 'DT_RowIndex'
         },
         {
           data: 'ticket_nolog'
@@ -163,20 +164,14 @@ $(function () {
         }
       ],
       columnDefs: [{
-          // For Responsive
-          className: 'control',
+          // BIL (row index)
           searchable: false,
           orderable: false,
-          responsivePriority: 2,
-          targets: 0,
-          render: function (data, type, full, meta) {
-            return '';
-          }
+          targets: 0
         },
         {
           // No Log Tiket
           targets: 1,
-          responsivePriority: 1,
           render: function (data, type, full, meta) {
             return '<span class="fw-semibold">' + data + '</span>';
           }
@@ -314,39 +309,7 @@ $(function () {
             }
           }
         }
-      ],
-      responsive: {
-        details: {
-          display: $.fn.dataTable.Responsive.display.modal({
-            header: function (row) {
-              var data = row.data();
-              return 'Butiran Tiket - ' + data['ticket_nolog'];
-            }
-          }),
-          type: 'column',
-          renderer: function (api, rowIdx, columns) {
-            var data = $.map(columns, function (col, i) {
-              return col.title !== '' ?
-                '<tr data-dt-row="' +
-                col.rowIndex +
-                '" data-dt-column="' +
-                col.columnIndex +
-                '">' +
-                '<td>' +
-                col.title +
-                ':' +
-                '</td> ' +
-                '<td>' +
-                col.data +
-                '</td>' +
-                '</tr>' :
-                '';
-            }).join('');
-
-            return data ? $('<table class="table"/><tbody />').append(data) : false;
-          }
-        }
-      }
+      ]
     });
 
     $('.dataTables_length').addClass('my-0');

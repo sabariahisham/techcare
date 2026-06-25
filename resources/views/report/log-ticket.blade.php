@@ -226,7 +226,7 @@
 
         <!-- DataTable -->
         <div class="card-datatable table-responsive">
-          <table class="datatables-log-ticket table border-top">
+          <table class="datatables-log-ticket table border-top text-nowrap">
             <thead>
               <tr>
                 <th>BIL</th>

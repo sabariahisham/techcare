@@ -23,7 +23,13 @@
           $('#show-kb-title').text(data.kb_title || 'N/A');
           $('#show-kb-category').text(data.category_name || 'N/A');
           $('#show-kb-subcategory').text(data.subcategory_name || 'N/A');
-          $('#show-kb-description').text(data.kb_desc || 'N/A');
+
+          // Display description with HTML formatting
+          if (data.kb_desc && data.kb_desc.trim() !== '') {
+            $('#show-kb-description').html(data.kb_desc);
+          } else {
+            $('#show-kb-description').text('N/A');
+          }
           // Format tags as badges
           if (data.kb_tag && data.kb_tag.trim() !== '') {
             var tags = data.kb_tag.split(',');

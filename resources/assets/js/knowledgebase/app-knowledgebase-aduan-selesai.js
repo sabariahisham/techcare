@@ -4,6 +4,20 @@
 
 'use strict';
 
+import Quill from 'quill';
+import 'quill/dist/quill.snow.css';
+
+// ─── Utility Functions ──────────────────────────────────────────────────────
+function stripHtmlTags(html) {
+  if (!html) return '';
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
+// ─── Quill Editor State ─────────────────────────────────────────────────────
+let fromAduanQuillEditor = null;
+
 // ─── Add From Aduan: State ──────────────────────────────────────────────────
 let fromAduanCatatanPlainText = [];
 
@@ -143,14 +157,16 @@ function initFromAduanFileUpload() {
   });
 }
 
-// Handle catatan tindakan checkbox → copy to Deskripsi
+// Handle catatan tindakan checkbox → copy to Deskripsi (Quill editor)
 function updateFromAduanDesc() {
-  const textarea = document.getElementById('from-aduan-kb-desc');
   if (!$('#checkbox-salin-catatan').is(':checked')) {
-    $('#from-aduan-kb-desc').val('');
-    if (textarea) textarea.style.height = '';
+    // Clear Quill editor
+    if (fromAduanQuillEditor) {
+      fromAduanQuillEditor.setContents([{ insert: '\n' }]);
+    }
     return;
   }
+
   const selectedLines = [];
   $('.catatan-entry-check:checked').each(function () {
     const idx = parseInt($(this).data('index'));
@@ -158,11 +174,24 @@ function updateFromAduanDesc() {
       selectedLines.push(fromAduanCatatanPlainText[idx]);
     }
   });
+
+  if (selectedLines.length === 0) {
+    if (fromAduanQuillEditor) {
+      fromAduanQuillEditor.setContents([{ insert: '\n' }]);
+    }
+    return;
+  }
+
+  // Format selected catatan as HTML for Quill
   const plainText = selectedLines.join('\n\n');
-  $('#from-aduan-kb-desc').val(plainText);
-  if (textarea) {
-    textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 320) + 'px';
+  const htmlContent = plainText
+    .split('\n\n')
+    .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+
+  if (fromAduanQuillEditor) {
+    // Set HTML content in Quill
+    fromAduanQuillEditor.root.innerHTML = htmlContent;
   }
 }
 
@@ -185,6 +214,41 @@ $(document).on('change', '.catatan-entry-check', function () {
     pilihSemua.checked = checked === total;
   }
   updateFromAduanDesc();
+});
+
+// Initialize Quill editor for from-aduan modal
+function initializeFromAduanQuillEditor() {
+  if (fromAduanQuillEditor) {
+    fromAduanQuillEditor.enable();
+    fromAduanQuillEditor.setContents([{ insert: '\n' }]);
+    return;
+  }
+
+  const editorElement = document.getElementById('from-aduan-editor');
+  if (!editorElement) return;
+
+  fromAduanQuillEditor = new Quill('#from-aduan-editor', {
+    theme: 'snow',
+    placeholder: 'Masukkan deskripsi artikel yang terperinci',
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ color: [] }, { background: [] }],
+        ['blockquote', 'code-block'],
+        ['link'],
+        ['clean'],
+      ],
+    },
+  });
+}
+
+// Handle modal shown event to initialize Quill
+$(document).on('shown.bs.modal', '#addFromAduanModal', function () {
+  setTimeout(() => {
+    initializeFromAduanQuillEditor();
+  }, 100);
 });
 
 // Handle "Tambah ke Knowledge Base" button in datatable
@@ -282,9 +346,26 @@ $(document).on('click', '#btnAddFromAduan', function () {
   const form = document.getElementById('addFromAduanForm');
   if (!form) return;
 
+  // Capture Quill content to hidden field
+  if (fromAduanQuillEditor) {
+    const quillContent = fromAduanQuillEditor.root.innerHTML;
+    const plainText = fromAduanQuillEditor.getText().trim();
+
+    // Check if editor has content (not just empty or whitespace)
+    if (!plainText) {
+      $('#from-aduan-kb-desc').val('');
+      $('#from-aduan-kb-desc').addClass('is-invalid');
+      $('#from-aduan-kb-desc').siblings('.invalid-feedback').text('Medan ini diperlukan.').show();
+      toastr.error('Sila masukkan deskripsi artikel.', 'Ralat!');
+      return;
+    }
+
+    $('#from-aduan-kb-desc').val(quillContent);
+  }
+
   // Basic validation
   let isValid = true;
-  $(form).find('input[required], select[required], textarea[required]').each(function () {
+  $(form).find('input[required], select[required]').each(function () {
     if (!$(this).val()) {
       $(this).addClass('is-invalid');
       $(this).siblings('.invalid-feedback').text('Medan ini diperlukan.').show();
@@ -335,6 +416,10 @@ $(document).on('click', '#btnAddFromAduan', function () {
         });
         bootstrap.Modal.getOrCreateInstance(document.getElementById('addFromAduanModal')).hide();
         form.reset();
+        // Clear Quill editor
+        if (fromAduanQuillEditor) {
+          fromAduanQuillEditor.setContents([{ insert: '\n' }]);
+        }
         fromAduanRemoveAllFiles();
         $('#from-aduan-kb-category-display').text('-');
         $('#from-aduan-kb-subcategory-display').text('-');
@@ -451,11 +536,23 @@ $(function () {
         },
         {
           targets: 2, // No. Log Tiket
-          className: 'text-nowrap'
+          className: 'td-wrap-compact'
+        },
+        {
+          targets: 3, // Tarikh Aduan
+          className: 'td-wrap-compact'
         },
         {
           targets: 4, // Nama Pengadu
           className: 'text-nowrap'
+        },
+        {
+          targets: 5, // Kategori
+          className: 'td-wrap-compact'
+        },
+        {
+          targets: 6, // Sub Kategori
+          className: 'td-wrap-compact'
         },
         {
           targets: 8, // Pegawai Tugasan
@@ -463,15 +560,30 @@ $(function () {
         },
         {
           targets: 9, // Tajuk Aduan
-          className: 'text-nowrap'
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
         },
         {
           targets: 10, // Keterangan Aduan
-          className: 'text-nowrap'
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
         },
         {
           targets: 11, // Catatan Tindakan
-          className: 'text-nowrap'
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
         },
         {
           targets: 7,
