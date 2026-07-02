@@ -155,7 +155,7 @@ $(function () {
 
     $('#editCatId').select2({
       placeholder: 'Pilih Kategori',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasEditTicket'),
       theme: 'bootstrap-5'
@@ -163,7 +163,7 @@ $(function () {
 
     $('#editSubcatId').select2({
       placeholder: 'Pilih Sub Kategori',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasEditTicket'),
       theme: 'bootstrap-5'
@@ -171,7 +171,7 @@ $(function () {
 
     $('#edit_building_loc').select2({
       placeholder: 'Pilih Bangunan',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasEditTicket'),
       theme: 'bootstrap-5'
@@ -179,7 +179,7 @@ $(function () {
 
     $('#edit_block_loc').select2({
       placeholder: 'Pilih Blok',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasEditTicket'),
       theme: 'bootstrap-5'
@@ -187,11 +187,83 @@ $(function () {
 
     $('#edit_level_loc').select2({
       placeholder: 'Pilih Aras',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasEditTicket'),
       theme: 'bootstrap-5'
     });
+  }
+
+  // Location options by building (EDIT FORM)
+  var editLocationOptionsByBuilding = {
+    P1: {
+      blocks: [
+        { value: 'U', label: 'Utara' },
+        { value: 'TU', label: 'Tengah-Utara' },
+        { value: 'T', label: 'Tengah' },
+        { value: 'TS', label: 'Tengah-Selatan' },
+        { value: 'S', label: 'Selatan' }
+      ],
+      levels: [
+        { value: 'G', label: 'G' },
+        { value: '1', label: '1' },
+        { value: '2', label: '2' },
+        { value: '3', label: '3' },
+        { value: '4', label: '4' },
+        { value: '5', label: '5' },
+        { value: '6', label: '6' },
+        { value: '7', label: '7' },
+        { value: '8', label: '8' },
+        { value: '8.5', label: '8.5' },
+        { value: '9', label: '9' },
+        { value: '10', label: '10' },
+        { value: '11', label: '11' },
+        { value: '12', label: '12' }
+      ]
+    },
+    P2: {
+      blocks: [
+        { value: 'U_BSN', label: 'Utara - (Blok BSN)' },
+        { value: 'S_CIMB', label: 'Selatan - (Blok CIMB)' }
+      ],
+      levels: [
+        { value: 'G', label: 'G' },
+        { value: '1', label: '1' },
+        { value: '2', label: '2' },
+        { value: '3', label: '3' },
+        { value: '4', label: '4' }
+      ]
+    }
+  };
+
+  function populateEditLocationSelect($select, placeholder, options) {
+    $select.empty();
+    $select.append('<option value="">' + placeholder + '</option>');
+
+    if (options && options.length > 0) {
+      options.forEach(function (option) {
+        $select.append('<option value="' + option.value + '">' + option.label + '</option>');
+      });
+    }
+  }
+
+  function filterEditLocationByBuilding(buildingCode, selectedBlock, selectedLevel) {
+    var selectedBuilding = editLocationOptionsByBuilding[buildingCode];
+    var $blockSelect = $('#edit_block_loc');
+    var $levelSelect = $('#edit_level_loc');
+
+    if (!selectedBuilding) {
+      populateEditLocationSelect($blockSelect, 'Pilih Blok', []);
+      populateEditLocationSelect($levelSelect, 'Pilih Aras', []);
+    } else {
+      populateEditLocationSelect($blockSelect, 'Pilih Blok', selectedBuilding.blocks);
+      populateEditLocationSelect($levelSelect, 'Pilih Aras', selectedBuilding.levels);
+    }
+
+    $blockSelect.val(selectedBlock || '');
+    $levelSelect.val(selectedLevel || '');
+    $blockSelect.trigger('change.select2');
+    $levelSelect.trigger('change.select2');
   }
 
   // Initialize when Edit Ticket offcanvas is shown
@@ -225,7 +297,17 @@ $(function () {
     // Reinitialize with proper configuration
     setTimeout(function () {
       initializeEditTicketSelect2();
+      filterEditLocationByBuilding(
+        $('#edit_building_loc').val(),
+        $('#edit_block_loc').val(),
+        $('#edit_level_loc').val()
+      );
     }, 150);
+  });
+
+  $(document).on('change', '#edit_building_loc', function () {
+    filterEditLocationByBuilding($(this).val(), '', '');
+    clearValidationErrors();
   });
 
   // Clean up when offcanvas is hidden
@@ -316,12 +398,14 @@ $(function () {
     // Populate location fields
     if (location) {
       $('#edit_building_loc').val(location.building_loc || '').trigger('change');
-      $('#edit_block_loc').val(location.block_loc || '').trigger('change');
-      $('#edit_level_loc').val(location.level_loc || '').trigger('change');
+      filterEditLocationByBuilding(
+        location.building_loc || '',
+        location.block_loc || '',
+        location.level_loc || ''
+      );
     } else {
       $('#edit_building_loc').val('').trigger('change');
-      $('#edit_block_loc').val('').trigger('change');
-      $('#edit_level_loc').val('').trigger('change');
+      filterEditLocationByBuilding('', '', '');
     }
 
     // Populate categories dropdown
@@ -562,6 +646,7 @@ $(function () {
     $('#editOtherInfo').addClass('d-none');
     $('#editTicketType').val('1');
     $('#editTicketFormFields').removeClass('d-none');
+    filterEditLocationByBuilding('', '', '');
 
     // Clear validation errors
     clearValidationErrors();

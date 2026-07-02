@@ -144,11 +144,6 @@
                         <select name="block_loc" id="edit_block_loc" class="form-select" data-validation="custom"
                             required>
                             <option value="">Pilih Blok</option>
-                            <option value="U">Utara</option>
-                            <option value="TU">Tengah-Utara</option>
-                            <option value="T">Tengah</option>
-                            <option value="TS">Tengah-Selatan</option>
-                            <option value="S">Selatan</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -158,20 +153,6 @@
                         <select name="level_loc" id="edit_level_loc" class="form-select" data-validation="custom"
                             required>
                             <option value="">Pilih Aras</option>
-                            <option value="G">G</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="8.5">8.5</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>

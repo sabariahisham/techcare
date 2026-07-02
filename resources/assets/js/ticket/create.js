@@ -20,7 +20,7 @@ $(function () {
 
     $('#cat_id').select2({
       placeholder: 'Pilih Kategori',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasAddTicket'),
       theme: 'bootstrap-5'
@@ -28,7 +28,7 @@ $(function () {
 
     $('#subcat_id').select2({
       placeholder: 'Pilih Sub Kategori',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasAddTicket'),
       theme: 'bootstrap-5'
@@ -36,7 +36,7 @@ $(function () {
 
     $('#building_id').select2({
       placeholder: 'Pilih Bangunan',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasAddTicket'),
       theme: 'bootstrap-5'
@@ -44,7 +44,7 @@ $(function () {
 
     $('#block_id').select2({
       placeholder: 'Pilih Blok',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasAddTicket'),
       theme: 'bootstrap-5'
@@ -52,7 +52,7 @@ $(function () {
 
     $('#level_id').select2({
       placeholder: 'Pilih Aras',
-      allowClear: true,
+      allowClear: false,
       width: '100%',
       dropdownParent: $('#offcanvasAddTicket'),
       theme: 'bootstrap-5'
