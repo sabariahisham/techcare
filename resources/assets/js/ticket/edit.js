@@ -223,8 +223,8 @@ $(function () {
     },
     P2: {
       blocks: [
-        { value: 'U_BSN', label: 'Utara - (Blok BSN)' },
-        { value: 'S_CIMB', label: 'Selatan - (Blok CIMB)' }
+        { value: 'U', label: 'Utara - (Blok BSN)' },
+        { value: 'S', label: 'Selatan - (Blok CIMB)' }
       ],
       levels: [
         { value: 'G', label: 'G' },
