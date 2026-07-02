@@ -213,6 +213,87 @@ $(function () {
     }
   });
 
+  // Location options by building (ADD FORM)
+  var locationOptionsByBuilding = {
+    P1: {
+      blocks: [
+        { value: 'U', label: 'Utara' },
+        { value: 'TU', label: 'Tengah-Utara' },
+        { value: 'T', label: 'Tengah' },
+        { value: 'TS', label: 'Tengah-Selatan' },
+        { value: 'S', label: 'Selatan' }
+      ],
+      levels: [
+        { value: 'G', label: 'G' },
+        { value: '1', label: '1' },
+        { value: '2', label: '2' },
+        { value: '3', label: '3' },
+        { value: '4', label: '4' },
+        { value: '5', label: '5' },
+        { value: '6', label: '6' },
+        { value: '7', label: '7' },
+        { value: '8', label: '8' },
+        { value: '8.5', label: '8.5' },
+        { value: '9', label: '9' },
+        { value: '10', label: '10' },
+        { value: '11', label: '11' },
+        { value: '12', label: '12' }
+      ]
+    },
+    P2: {
+      blocks: [
+        { value: 'U_BSN', label: 'Utara - (Blok BSN)' },
+        { value: 'S_CIMB', label: 'Selatan - (Blok CIMB)' }
+      ],
+      levels: [
+        { value: 'G', label: 'G' },
+        { value: '1', label: '1' },
+        { value: '2', label: '2' },
+        { value: '3', label: '3' },
+        { value: '4', label: '4' }
+      ]
+    }
+  };
+
+  function populateLocationSelect($select, placeholder, options) {
+    $select.empty();
+    $select.append('<option value="">' + placeholder + '</option>');
+
+    if (options && options.length > 0) {
+      options.forEach(function (option) {
+        $select.append('<option value="' + option.value + '">' + option.label + '</option>');
+      });
+    }
+  }
+
+  function filterLocationByBuilding(buildingCode) {
+    var selectedBuilding = locationOptionsByBuilding[buildingCode];
+    var $blockSelect = $('#block_id');
+    var $levelSelect = $('#level_id');
+
+    if (!selectedBuilding) {
+      populateLocationSelect($blockSelect, 'Pilih Blok', []);
+      populateLocationSelect($levelSelect, 'Pilih Aras', []);
+    } else {
+      populateLocationSelect($blockSelect, 'Pilih Blok', selectedBuilding.blocks);
+      populateLocationSelect($levelSelect, 'Pilih Aras', selectedBuilding.levels);
+    }
+
+    $blockSelect.val('');
+    $levelSelect.val('');
+    $blockSelect.trigger('change.select2');
+    $levelSelect.trigger('change.select2');
+  }
+
+  $(document).on('change', '#building_id', function () {
+    filterLocationByBuilding($(this).val());
+  });
+
+  // Ensure location dropdowns are always filtered correctly when offcanvas opens
+  $('#offcanvasAddTicket').on('shown.bs.offcanvas', function () {
+    filterLocationByBuilding($('#building_id').val());
+  });
+
   // Function to show Serial Number field
   function showSerialNumberField() {
     $('#serialNumberField').show();
@@ -448,6 +529,7 @@ $(function () {
         // Reset form
         $('#addTicketForm')[0].reset();
         $('#subcat_id').empty().append('<option value="">Pilih Sub Kategori</option>');
+        filterLocationByBuilding('');
 
         // Hide Serial Number field on reset
         hideSerialNumberField();
