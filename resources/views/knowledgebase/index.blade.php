@@ -131,7 +131,7 @@
 <!-- Senarai Aduan Selesai Table -->
 <div class="card mb-6">
   <div class="card-header border-bottom">
-    <h5 class="card-title mb-0">SENARAI ADUAN SELESAI</h5>
+    <h5 class="card-title mb-0">SENARAI ADUAN KNOWLEDGE BASE</h5>
   </div>
   <div class="card-datatable table-responsive">
     <table class="datatables-aduan-selesai table">
@@ -140,13 +140,12 @@
           <th></th>
           <th>Bil.</th>
           <th>No. Log Tiket</th>
+          <th>Tajuk Aduan</th>
           <th>Tarikh Aduan</th>
           <th>Nama Pengadu</th>
           <th>Kategori</th>
           <th>Sub Kategori</th>
-          <th>Status</th>
           <th>Pegawai Tugasan</th>
-          <th>Tajuk Aduan</th>
           <th>Keterangan Aduan</th>
           <th>Catatan Tindakan</th>
           <th>Tindakan</th>
