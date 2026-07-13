@@ -3,23 +3,15 @@
 /* Compact wrapped cells for text columns */
 .td-wrap-compact {
   max-width: 200px;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
-}
-
-.wrapped-cell {
-  display: block;
-  max-height: 80px;
-  overflow-y: auto;
-  padding: 4px;
-  line-height: 1.3;
-  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* DataTable responsive adjustments */
 .datatables-aduan-selesai {
   font-size: 0.875rem;
+  table-layout: fixed;
 }
 
 .datatables-aduan-selesai thead th {
@@ -27,11 +19,23 @@
   font-weight: 600;
   font-size: 0.8125rem;
   white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 150px;
+}
+
+.datatables-aduan-selesai thead th.td-wrap-compact {
+  max-width: 150px;
 }
 
 .datatables-aduan-selesai tbody td {
   padding: 6px 4px;
-  vertical-align: middle;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 150px;
+  line-height: 1.4;
 }
 
 /* Make table header compact */
@@ -44,23 +48,32 @@
   gap: 0.25rem;
 }
 
+/* Word wrap for Aduan Selesai table */
+.datatables-aduan-selesai tbody td.td-wrap-compact {
+  max-width: 150px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
+}
+
+/* Smaller width for Bil. column in Aduan Selesai */
+.datatables-aduan-selesai tbody td:nth-child(2),
+.datatables-aduan-selesai thead th:nth-child(2) {
+  max-width: 30px;
+  width: 30px;
+  text-align: left;
+}
+
+/* Larger width for No. Log Tiket column */
+.datatables-aduan-selesai tbody td:nth-child(3),
+.datatables-aduan-selesai thead th:nth-child(3) {
+  max-width: 120px;
+  width: 120px;
+}
+
 /* Scrollbar styling for wrapped cells */
-.wrapped-cell::-webkit-scrollbar {
-  width: 4px;
-}
-
-.wrapped-cell::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.wrapped-cell::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 2px;
-}
-
-.wrapped-cell::-webkit-scrollbar-thumb:hover {
-  background: #999;
-}
+/* Removed - no longer needed */
 
 /* Quill Editor Wrapper */
 .quill-editor-wrapper {
@@ -138,4 +151,121 @@
 .file-upload-wrapper {
   margin-top: 1rem;
   clear: both;
+}
+
+/* Knowledge Base DataTable - Word Wrap for All Columns */
+.datatables-knowledgebase {
+  font-size: 0.875rem;
+  table-layout: fixed;
+}
+
+.datatables-knowledgebase thead th {
+  padding: 8px 4px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 150px;
+}
+
+.datatables-knowledgebase tbody td {
+  padding: 6px 4px;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 150px;
+  line-height: 1.4;
+}
+
+/* Specific column widths for better layout */
+.datatables-knowledgebase tbody td:nth-child(1),
+.datatables-knowledgebase thead th:nth-child(1) {
+  max-width: 30px;
+  width: 30px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(2),
+.datatables-knowledgebase thead th:nth-child(2) {
+  max-width: 30px;
+  width: 30px;
+  text-align: left;
+}
+
+.datatables-knowledgebase tbody td:nth-child(3),
+.datatables-knowledgebase thead th:nth-child(3) {
+  max-width: 180px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(4),
+.datatables-knowledgebase thead th:nth-child(4) {
+  max-width: 120px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(5),
+.datatables-knowledgebase thead th:nth-child(5) {
+  max-width: 140px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(6),
+.datatables-knowledgebase thead th:nth-child(6) {
+  max-width: 160px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(7),
+.datatables-knowledgebase thead th:nth-child(7) {
+  max-width: 120px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(8),
+.datatables-knowledgebase thead th:nth-child(8) {
+  max-width: 100px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(9),
+.datatables-knowledgebase thead th:nth-child(9) {
+  max-width: 120px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(10),
+.datatables-knowledgebase thead th:nth-child(10) {
+  max-width: 130px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(11),
+.datatables-knowledgebase thead th:nth-child(11) {
+  max-width: 120px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(12),
+.datatables-knowledgebase thead th:nth-child(12) {
+  max-width: 130px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(13),
+.datatables-knowledgebase thead th:nth-child(13) {
+  max-width: 200px;
+}
+
+.datatables-knowledgebase tbody td:nth-child(14),
+.datatables-knowledgebase thead th:nth-child(14) {
+  max-width: 100px;
+}
+
+/* Improve action buttons alignment */
+.datatables-knowledgebase .d-flex.gap-2 {
+  gap: 0.25rem;
+}
+
+/* Make table responsive */
+.datatables-knowledgebase.table {
+  margin-bottom: 0;
+}
+
+/* Badge styling for Peranan column - ensure each badge on new line */
+.datatables-knowledgebase tbody td:nth-child(13) .badge {
+  display: block;
+  width: fit-content;
+  margin: 3px 0;
 }

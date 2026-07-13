@@ -203,14 +203,7 @@ $(function () {
           previous: '<i class="bx bx-chevron-left bx-18px"></i>'
         }
       },
-      buttons: [{
-        text: '<i class="bx bx-plus bx-sm me-0 me-sm-2 align-top"></i><span class="d-none d-sm-inline-block">Tambah Laporan</span>',
-        className: 'add-new btn btn-primary mb-6 mb-md-0 waves-effect waves-light',
-        attr: {
-          'data-bs-toggle': 'offcanvas',
-          'data-bs-target': '#offcanvasAddReport'
-        }
-      }],
+      buttons: [],
       responsive: {
         details: {
           display: $.fn.dataTable.Responsive.display.modal({

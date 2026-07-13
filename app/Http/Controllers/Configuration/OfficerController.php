@@ -24,7 +24,7 @@ class OfficerController extends Controller
         $totalCategories = RefCategory::count();
         $totalSubCategories = RefSubCategory::count();
         $totalSlas = Sla::count();
-        $totalOfficers = Officer::count();
+        $totalOfficers = Officer::whereNull('deleted_at')->pluck('user_id')->unique()->count();
 
         // Calculate categories with officers assigned
         $categoriesWithOfficers = RefCategory::whereHas('officers')->count();

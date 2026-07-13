@@ -127,8 +127,14 @@ $(function () {
             const plainText = stripHtmlTags(data);
             return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
           }
+        }, {
+          targets: 5, // Deskripsi
+          visible: false
         },
         {
+          targets: 6, // Tag
+          visible: false
+        }, {
           targets: 3, // Kategori
           className: 'td-wrap-compact',
           render: function (data, type, row) {
@@ -147,31 +153,16 @@ $(function () {
           }
         },
         {
-          targets: 5, // Deskripsi
-          className: 'td-wrap-compact',
-          render: function (data, type, row) {
-            if (!data) return '-';
-            const plainText = stripHtmlTags(data);
-            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
-          }
-        },
-        {
-          targets: 6, // Tag
-          className: 'td-wrap-compact',
-          orderable: false,
-          render: function (data, type, row) {
-            if (!data) return '-';
-            const plainText = stripHtmlTags(data);
-            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
-          }
-        },
-        {
           targets: 7, // Status
           className: 'td-wrap-compact',
           render: function (data, type, row) {
             if (!data) return '-';
             const plainText = stripHtmlTags(data);
-            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+            if (!plainText) return '-';
+            if (plainText.toLowerCase() === 'active') {
+              return '<span class="badge bg-label-success">' + plainText + '</span>';
+            }
+            return plainText;
           }
         },
         {
@@ -215,15 +206,40 @@ $(function () {
           className: 'td-wrap-compact',
           orderable: false,
           searchable: false,
+          visible: false,
           render: function (data, type, row) {
             if (!data) return '-';
             const plainText = stripHtmlTags(data);
-            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+            if (!plainText) return '-';
+            // Split by comma, newline, pipe or semicolon and create separate badges on new lines
+            const roles = plainText
+              .split(/[,\n|;]/g)
+              .map(role => role.trim())
+              .filter(role => role);
+            if (roles.length > 0) {
+              return roles
+                .map(role => '<div class="mb-2"><span class="badge bg-label-info">' + role + '</span></div>')
+                .join('');
+            }
+            return '-';
           }
         }
       ],
       autoWidth: true,
       scrollX: true,
+      pagingType: 'full_numbers',
+      language: {
+        paginate: {
+          first: 'Pertama',
+          last: 'Terakhir',
+          next: 'Seterusnya',
+          previous: 'Sebelumnya'
+        },
+        lengthMenu: 'Papar _MENU_ baris',
+        info: 'Memaparkan _START_ hingga _END_ daripada _TOTAL_ entri',
+        infoEmpty: 'Tiada data tersedia',
+        search: 'Carian:'
+      },
       dom: '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"fB>>' +

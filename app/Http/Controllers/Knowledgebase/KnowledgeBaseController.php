@@ -386,9 +386,6 @@ class KnowledgeBaseController extends Controller
                 ->addColumn('sub_kategori', function ($ticket) {
                     return $ticket->subCategory->subcat_name ?? 'N/A';
                 })
-                ->addColumn('status', function ($ticket) {
-                    return '<span class="badge bg-success">Aduan Selesai</span>';
-                })
                 ->addColumn('pegawai_tugasan', function ($ticket) {
                     $latestChronology = $ticket->chronologies()
                         ->whereNotNull('escalate_to')

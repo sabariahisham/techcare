@@ -162,7 +162,9 @@ function updateFromAduanDesc() {
   if (!$('#checkbox-salin-catatan').is(':checked')) {
     // Clear Quill editor
     if (fromAduanQuillEditor) {
-      fromAduanQuillEditor.setContents([{ insert: '\n' }]);
+      fromAduanQuillEditor.setContents([{
+        insert: '\n'
+      }]);
     }
     return;
   }
@@ -177,7 +179,9 @@ function updateFromAduanDesc() {
 
   if (selectedLines.length === 0) {
     if (fromAduanQuillEditor) {
-      fromAduanQuillEditor.setContents([{ insert: '\n' }]);
+      fromAduanQuillEditor.setContents([{
+        insert: '\n'
+      }]);
     }
     return;
   }
@@ -220,7 +224,9 @@ $(document).on('change', '.catatan-entry-check', function () {
 function initializeFromAduanQuillEditor() {
   if (fromAduanQuillEditor) {
     fromAduanQuillEditor.enable();
-    fromAduanQuillEditor.setContents([{ insert: '\n' }]);
+    fromAduanQuillEditor.setContents([{
+      insert: '\n'
+    }]);
     return;
   }
 
@@ -232,10 +238,20 @@ function initializeFromAduanQuillEditor() {
     placeholder: 'Masukkan deskripsi artikel yang terperinci',
     modules: {
       toolbar: [
-        [{ header: [1, 2, 3, false] }],
+        [{
+          header: [1, 2, 3, false]
+        }],
         ['bold', 'italic', 'underline', 'strike'],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        [{ color: [] }, { background: [] }],
+        [{
+          list: 'ordered'
+        }, {
+          list: 'bullet'
+        }],
+        [{
+          color: []
+        }, {
+          background: []
+        }],
         ['blockquote', 'code-block'],
         ['link'],
         ['clean'],
@@ -418,7 +434,9 @@ $(document).on('click', '#btnAddFromAduan', function () {
         form.reset();
         // Clear Quill editor
         if (fromAduanQuillEditor) {
-          fromAduanQuillEditor.setContents([{ insert: '\n' }]);
+          fromAduanQuillEditor.setContents([{
+            insert: '\n'
+          }]);
         }
         fromAduanRemoveAllFiles();
         $('#from-aduan-kb-category-display').text('-');
@@ -486,6 +504,10 @@ $(function () {
           name: 'no_log_tiket'
         },
         {
+          data: 'tajuk_aduan',
+          name: 'tajuk_aduan'
+        },
+        {
           data: 'tarikh_aduan',
           name: 'tarikh_aduan'
         },
@@ -502,16 +524,8 @@ $(function () {
           name: 'sub_kategori'
         },
         {
-          data: 'status',
-          name: 'status'
-        },
-        {
           data: 'pegawai_tugasan',
           name: 'pegawai_tugasan'
-        },
-        {
-          data: 'tajuk_aduan',
-          name: 'tajuk_aduan'
         },
         {
           data: 'keterangan_aduan',
@@ -539,28 +553,38 @@ $(function () {
           className: 'td-wrap-compact'
         },
         {
-          targets: 3, // Tarikh Aduan
+          targets: 3, // Tajuk Aduan
+          className: 'td-wrap-compact',
+          render: function (data, type, row) {
+            if (!data) return '-';
+            const plainText = stripHtmlTags(data);
+            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
+          }
+        },
+        {
+          targets: 4, // Tarikh Aduan
           className: 'td-wrap-compact'
         },
         {
-          targets: 4, // Nama Pengadu
-          className: 'text-nowrap'
-        },
-        {
-          targets: 5, // Kategori
+          targets: 5, // Nama Pengadu
           className: 'td-wrap-compact'
         },
         {
-          targets: 6, // Sub Kategori
+          targets: 6, // Kategori
+          className: 'td-wrap-compact'
+        },
+        {
+          targets: 7, // Sub Kategori
           className: 'td-wrap-compact'
         },
         {
           targets: 8, // Pegawai Tugasan
-          className: 'text-nowrap'
+          className: 'td-wrap-compact'
         },
         {
-          targets: 9, // Tajuk Aduan
+          targets: 9, // Keterangan Aduan
           className: 'td-wrap-compact',
+          visible: false,
           render: function (data, type, row) {
             if (!data) return '-';
             const plainText = stripHtmlTags(data);
@@ -568,8 +592,9 @@ $(function () {
           }
         },
         {
-          targets: 10, // Keterangan Aduan
+          targets: 10, // Catatan Tindakan
           className: 'td-wrap-compact',
+          visible: false,
           render: function (data, type, row) {
             if (!data) return '-';
             const plainText = stripHtmlTags(data);
@@ -577,21 +602,7 @@ $(function () {
           }
         },
         {
-          targets: 11, // Catatan Tindakan
-          className: 'td-wrap-compact',
-          render: function (data, type, row) {
-            if (!data) return '-';
-            const plainText = stripHtmlTags(data);
-            return plainText ? '<div class="wrapped-cell">' + plainText + '</div>' : '-';
-          }
-        },
-        {
-          targets: 7,
-          orderable: false,
-          searchable: false
-        },
-        {
-          targets: 12,
+          targets: 11,
           orderable: false,
           searchable: false,
           render: function (data, type, row) {
@@ -608,6 +619,19 @@ $(function () {
       ],
       autoWidth: true,
       scrollX: true,
+      pagingType: 'full_numbers',
+      language: {
+        paginate: {
+          first: 'Pertama',
+          last: 'Terakhir',
+          next: 'Seterusnya',
+          previous: 'Sebelumnya'
+        },
+        lengthMenu: 'Papar _MENU_ baris',
+        info: 'Memaparkan _START_ hingga _END_ daripada _TOTAL_ entri',
+        infoEmpty: 'Tiada data tersedia',
+        search: 'Carian:'
+      },
       dom: '<"row"' +
         '<"col-md-2"<"ms-n2"l>>' +
         '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-6 mb-md-0 mt-n6 mt-md-0 gap-md-4"f>>' +
