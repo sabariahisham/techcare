@@ -54,6 +54,7 @@ const CssFiles = GetFilesArray('resources/assets/css/!(_)*.css');
 //Processing Js Files that need window assignment
 const JsAudit = GetFilesArray('resources/assets/js/audit/!(_)*.js');
 const JsCategories = GetFilesArray('resources/assets/js/categories/!(_)*.js');
+const JsDashboard = GetFilesArray('resources/assets/js/dashboard/!(_)*.js');
 const JsKnowledge = GetFilesArray('resources/assets/js/knowledgebase/!(_)*.js');
 const JsModules = GetFilesArray('resources/assets/js/modules/!(_)*.js');
 const JsOfficer = GetFilesArray('resources/assets/js/officers/!(_)*.js');
@@ -71,6 +72,7 @@ const JsQuill = GetFilesArray('resources/assets/js/quill-editor.js');
 const LibsJsFilesCustom = [
   ...JsAudit,
   ...JsCategories,
+  ...JsDashboard,
   ...JsKnowledge,
   ...JsModules,
   ...JsOfficer,

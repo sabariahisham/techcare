@@ -19,6 +19,7 @@ use App\Http\Controllers\Audit\AuditLogController;
 use App\Http\Controllers\Audit\AuditTrailController;
 use App\Http\Controllers\Ticket\TicketSLAController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\MonitoringController;
 use App\Http\Controllers\Ticket\TicketSearchController;
 use App\Http\Controllers\Configuration\ModuleController;
 use App\Http\Controllers\Reports\AduanTahunanController;
@@ -165,6 +166,17 @@ if (config('cas.cas_enabled')) {
 Route::middleware($authMiddleware)->prefix('dashboard')->name('dashboard.')->group(function () {
   // Main dashboard page
   Route::get('/', [DashboardController::class, 'index'])->name('index');
+
+  // Monitoring dashboard page (for TV display)
+  Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring');
+  // Monitoring API endpoints for real-time updates
+  Route::get('/monitoring/cards-data', [MonitoringController::class, 'getCardsData'])->name('monitoring.cards-data');
+  Route::get('/monitoring/status-chart', [MonitoringController::class, 'getStatusChartData'])->name('monitoring.status-chart');
+  Route::get('/monitoring/category-chart', [MonitoringController::class, 'getCategoryChartData'])->name('monitoring.category-chart');
+  Route::get('/monitoring/subcategory-chart', [MonitoringController::class, 'getSubCategoryChartData'])->name('monitoring.subcategory-chart');
+  Route::get('/monitoring/overdue-tickets', [MonitoringController::class, 'getOverdueTickets'])->name('monitoring.overdue-tickets');
+  Route::get('/monitoring/action-tickets', [MonitoringController::class, 'getActionTickets'])->name('monitoring.action-tickets');
+
   // Dashboard API endpoints
   Route::get('/current-status', [DashboardController::class, 'getCurrentStatus'])->name('current-status');
   Route::get('/status-tickets', [DashboardController::class, 'getStatusTickets'])->name('status-tickets');

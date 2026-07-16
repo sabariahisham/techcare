@@ -1,0 +1,942 @@
+/**
+Dashboard Monitoring Layout
+Optimized for TV / Large Display
+*/
+
+/* =====================================================
+HIDE SCROLLBAR (ALL BROWSERS)
+===================================================== */
+
+/* Hide scrollbar for HTML and BODY */
+html:has(.monitoring-dashboard),
+body:has(.monitoring-dashboard) {
+  overflow: hidden !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+}
+
+html:has(.monitoring-dashboard)::-webkit-scrollbar,
+body:has(.monitoring-dashboard)::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Hide scrollbar for all children */
+body:has(.monitoring-dashboard) *,
+.monitoring-dashboard,
+.monitoring-dashboard * {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+}
+
+body:has(.monitoring-dashboard) *::-webkit-scrollbar,
+.monitoring-dashboard::-webkit-scrollbar,
+.monitoring-dashboard *::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+}
+
+/* =====================================================
+HIDE ADMIN LAYOUT (TV MODE)
+===================================================== */
+
+/* Layout Wrapper & Container */
+body:has(.monitoring-dashboard) .layout-wrapper,
+body:has(.monitoring-dashboard) .layout-container {
+  overflow: hidden !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.layout-page::before {
+  display: none;
+}
+
+.layout-page {
+  background: transparent;
+}
+
+body:has(.monitoring-dashboard) .layout-navbar {
+  display: none !important;
+}
+
+body:has(.monitoring-dashboard) #layout-menu,
+body:has(.monitoring-dashboard) .layout-menu {
+  transform: translateX(-100%) !important;
+  transition: transform 0.3s ease;
+}
+
+body:has(.monitoring-dashboard) #layout-menu:hover,
+body:has(.monitoring-dashboard) #layout-menu.menu-visible,
+body:has(.monitoring-dashboard) .layout-menu:hover,
+body:has(.monitoring-dashboard) .layout-menu.menu-visible {
+  transform: translateX(0) !important;
+  z-index: 1000;
+}
+
+body:has(.monitoring-dashboard) .content-footer,
+body:has(.monitoring-dashboard) footer {
+  display: none !important;
+}
+
+body:has(.monitoring-dashboard) .layout-page {
+  padding-left: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  overflow: hidden !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+body:has(.monitoring-dashboard) .content-wrapper {
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+body:has(.monitoring-dashboard) .container-xxl {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
+
+/* =====================================================
+MAIN DASHBOARD CONTAINER
+===================================================== */
+
+.monitoring-dashboard {
+  /* Fixed positioning detaches this from the Sneat layout flow (menu/navbar/
+     container padding chain), so it always fills the real viewport exactly —
+     regardless of any offset/padding inherited from ancestor elements.
+     This is what guarantees the footer is never pushed past the visible area. */
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 10;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-top: 10px !important;
+  padding-right: 8px !important;
+  padding-bottom: 6px !important;
+  padding-left: 20px !important;
+  /* ^ jarak khas antara sidebar (kiri) dengan card — ubah nilai ini untuk
+     tambah/kurangkan jarak */
+  margin: 0 !important;
+  overflow: hidden !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+}
+
+
+/* main card fill screen */
+
+.monitoring-dashboard>.card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* card body expand */
+
+.monitoring-dashboard .card-body {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.monitoring-dashboard .card-header {
+  flex: 0 0 auto;
+}
+
+.monitoring-footer {
+  flex: 0 0 auto;
+  min-height: 56px;
+  padding: 0.25rem 0 0.35rem;
+  margin-top: 0 !important;
+}
+
+/* =====================================================
+DASHBOARD STRUCTURE
+===================================================== */
+
+.dashboard-row-consistent {
+  /* Grid lebih stabil daripada flex+% untuk nisbah tinggi merentas device */
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.dashboard-row-consistent > .cards-status-row,
+.dashboard-row-consistent > .charts-row {
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* status cards */
+
+.cards-status-row {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cards-status-row > .h-100 {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.cards-status-row .status-cards-container {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  --bs-gutter-y: 0;
+}
+
+/* chart section */
+
+.charts-row {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 0 !important;
+  --bs-gutter-y: 0;
+}
+
+.charts-row > [class*="col"] {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Desktop: nisbah tinggi tetap (fr unit — gap dikira automatik oleh grid) */
+@media (min-width: 1200px) and (max-width: 1919.98px) {
+  /* Laptop: row status ikut kandungan (auto) supaya tak terpotong;
+     row carta ambil baki ruang (1fr) */
+  .dashboard-row-consistent {
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0.35rem;
+  }
+
+  .dashboard-row-consistent > .cards-status-row {
+    min-height: auto;
+    max-height: none;
+    height: auto;
+    overflow: visible;
+  }
+
+  .cards-status-row > .h-100,
+  .cards-status-row .status-cards-container {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .status-cards-container .card {
+    height: auto;
+  }
+
+  .dashboard-row-consistent > .charts-row {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .monitoring-header {
+    padding: 0.35rem 0.5rem 0.15rem !important;
+  }
+
+  .monitoring-dashboard .card-body {
+    padding: 0.5rem 0.35rem !important;
+  }
+
+  .monitoring-footer {
+    min-height: 42px;
+    padding: 0.1rem 0 0.2rem;
+  }
+
+  .chart-card .card-header {
+    padding: 0.3rem 0.5rem !important;
+  }
+
+  .chart-card .card-body {
+    padding: 0.2rem !important;
+  }
+
+  .status-cards-container .card-body {
+    padding: 0.4rem !important;
+  }
+
+  .status-cards-container .pending-stats-wrapper {
+    gap: 0.35rem;
+  }
+
+  .status-cards-container .pending-stat-row {
+    padding: 0.3rem 0.5rem;
+  }
+}
+
+/* Full HD */
+@media (min-width: 1920px) and (max-width: 2559.98px) {
+  .dashboard-row-consistent {
+    grid-template-rows: minmax(0, 32fr) minmax(0, 68fr);
+    gap: 0.35rem;
+  }
+
+  .monitoring-header {
+    padding: 0.4rem 0.5rem 0.2rem !important;
+  }
+
+  .monitoring-dashboard .card-body {
+    padding: 0.25rem 0.4rem !important;
+  }
+
+  .monitoring-footer {
+    min-height: 44px;
+    padding: 0.15rem 0 0.25rem;
+  }
+}
+
+/* 4K / TV besar */
+@media (min-width: 2560px) {
+  .dashboard-row-consistent {
+    grid-template-rows: minmax(0, 35fr) minmax(0, 65fr);
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 1199.98px) {
+  .monitoring-footer {
+    min-height: 50px;
+    padding: 0.2rem 0 0.3rem;
+  }
+}
+
+/* Tablet landscape — elak row bawah terkeluar */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .dashboard-row-consistent {
+    grid-template-rows: minmax(0, 36fr) minmax(0, 64fr);
+    gap: 0.4rem;
+  }
+}
+
+/* chart column sizing — col-lg-4 (33% setiap carta) */
+
+.charts-row > .col-lg-4 {
+  flex: 0 0 33.333333%;
+  max-width: 33.333333%;
+  min-height: 0;
+}
+
+/* Legacy selectors (jika partial lama masih guna col-lg-6 / col-lg-3) */
+.charts-row > .col-lg-6 {
+  flex: 0 0 40%;
+  max-width: 40%;
+  min-height: 0;
+}
+
+.charts-row > .col-lg-3 {
+  flex: 0 0 30%;
+  max-width: 30%;
+  min-height: 0;
+}
+
+/* Full HD & TV (1920px+): bar chart lebih besar, donut 25% cukup */
+@media (min-width: 1920px) {
+  .charts-row>.col-lg-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .charts-row>.col-lg-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+}
+
+/* =====================================================
+CARD STYLING
+===================================================== */
+
+.monitoring-dashboard .card {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all .25s ease;
+}
+
+.monitoring-dashboard .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* =====================================================
+TYPOGRAPHY — SEMANTIC CLASSES
+Saiz font dikawal ikut 5 tier device: Mobile / Tablet / Laptop / Full HD / 4K
+Base rule di bawah = Mobile (skrin terkecil, <768px)
+===================================================== */
+
+/* Nombor besar — Aduan Hari Ini */
+.md-count-lg        { font-size: 2.0rem;  line-height: 1.1; font-weight: 700; }
+/* Label utama — "Aduan Hari Ini" */
+.md-label-lg        { font-size: 1.0rem; font-weight: 500; }
+/* Nombor sederhana — Lewat SLA */
+.md-count-md        { font-size: 2.0rem;  line-height: 1.1; font-weight: 700; }
+/* Label kad lain */
+.md-label-md        { font-size: 0.85rem; font-weight: 500; }
+/* Nombor kecil — Belum Selesai, Selesai Minggu Ini */
+.md-count-sm        { font-size: 1.5rem; font-weight: 700; }
+/* Teks kecil / subtitle */
+.md-label-sm        { font-size: 0.75rem; }
+/* Teks sangat kecil */
+.md-label-xs        { font-size: 0.8rem; }
+/* Peratusan / nisbah pending */
+.md-pending-pct     { font-size: 0.65rem; font-weight: 700; color: #384551; }
+/* Tajuk halaman */
+.md-page-title      { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.5px; }
+/* Ikon menu */
+.md-menu-icon       { font-size: 1.6rem; }
+/* Tarikh / masa */
+.md-datetime        { font-size: 0.8rem; font-weight: 600; }
+/* Footer */
+.md-footer-text     { font-size: 0.5rem; }
+
+/* =====================================================
+FONT SCALE — Tablet (768px – 1199.98px)
+===================================================== */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .md-count-lg      { font-size: 2.4rem; }
+  .md-label-lg      { font-size: 1.1rem; }
+  .md-count-md      { font-size: 2.4rem; }
+  .md-label-md      { font-size: 0.9rem; }
+  .md-count-sm      { font-size: 1.7rem; }
+  .md-label-sm      { font-size: 0.75rem; }
+  .md-label-xs      { font-size: 0.75rem; }
+  .md-pending-pct   { font-size: 0.7rem; }
+  .md-page-title    { font-size: 1.05rem; }
+  .md-menu-icon     { font-size: 1.8rem; }
+  .md-datetime      { font-size: 0.75rem; }
+  .md-footer-text   { font-size: 0.75rem; }
+}
+
+/* =====================================================
+FONT SCALE — Laptop & Monitor (1200px – 1919.98px)
+===================================================== */
+@media (min-width: 1200px) and (max-width: 1919.98px) {
+  .md-count-lg      { font-size: 3.0rem; }
+  .md-label-lg      { font-size: 1.3rem; }
+  .md-count-md      { font-size: 3.0rem; }
+  .md-label-md      { font-size: 1.1rem; }
+  .md-count-sm      { font-size: 2.1rem; }
+  .md-label-sm      { font-size: 0.9rem; }
+  .md-label-xs      { font-size: 1.0rem; }
+  .md-pending-pct   { font-size: 0.95rem; }
+  .md-page-title    { font-size: 1.55rem; }
+  .md-menu-icon     { font-size: 2.4rem; }
+  .md-datetime      { font-size: 0.95rem; }
+  .md-footer-text   { font-size: 0.95rem; }
+}
+
+/* =====================================================
+FONT SCALE — Full HD (1920px – 2559.98px)
+===================================================== */
+@media (min-width: 1920px) and (max-width: 2559.98px) {
+  .md-count-lg      { font-size: 4.2rem; }
+  .md-label-lg      { font-size: 1.5rem; }
+  .md-count-md      { font-size: 4.5rem; }
+  .md-label-md      { font-size: 1.5rem; }
+  .md-count-sm      { font-size: 2.8rem; }
+  .md-label-sm      { font-size: 1.05rem; }
+  .md-label-xs      { font-size: 1.15rem; }
+  .md-pending-pct   { font-size: 1.3rem; }
+  .md-page-title    { font-size: 1.85rem; }
+  .md-menu-icon     { font-size: 2.4rem; }
+  .md-datetime      { font-size: 1.0rem; }
+  .md-footer-text   { font-size: 0.85rem; }
+}
+
+/* =====================================================
+FONT SCALE — 4K / TV Besar (2560px+)
+===================================================== */
+@media (min-width: 2560px) {
+  .md-count-lg      { font-size: 6.5rem; }
+  .md-label-lg      { font-size: 2.3rem; }
+  .md-count-md      { font-size: 6.5rem; }
+  .md-label-md      { font-size: 2.2rem; }
+  .md-count-sm      { font-size: 4.0rem; }
+  .md-label-sm      { font-size: 1.55rem; }
+  .md-label-xs      { font-size: 1.45rem; }
+  .md-pending-pct   { font-size: 1.85rem; }
+  .md-page-title    { font-size: 2.5rem; }
+  .md-menu-icon     { font-size: 3.2rem; }
+  .md-datetime      { font-size: 1.5rem; }
+  .md-footer-text   { font-size: 0.85rem; }
+}
+
+/* =====================================================
+STATUS CARDS
+===================================================== */
+
+.status-cards-container .card {
+  height: 100%;
+  min-height: 0;
+  background: white;
+  /* .card is forced to 100% row height above — must be a flex container so
+     .card-body actually stretches to fill it, otherwise leftover space just
+     becomes an empty gap at the bottom on taller rows (HD/4K). */
+  display: flex;
+  flex-direction: column;
+}
+
+.status-cards-container .card-body {
+  flex: 1 1 auto;
+  padding: 0.5rem;
+}
+
+/* KPI Data — "Tiket Belum Selesai" (Keseluruhan & Bulan Semasa) */
+
+.status-cards-container .pending-stats-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.status-cards-container .pending-stat-row {
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+}
+
+.status-cards-container .pending-stat-row i {
+  color: #667eea;
+  font-size: 1.15em;
+}
+
+@media (min-width: 1200px) and (max-width: 1919.98px) {
+  .status-cards-container .pending-stats-wrapper {
+    gap: 0.5rem;
+  }
+
+  .status-cards-container .pending-stat-row {
+    padding: 0.45rem 0.65rem;
+  }
+}
+
+@media (min-width: 1920px) and (max-width: 2559.98px) {
+  .status-cards-container .pending-stats-wrapper {
+    gap: 0.65rem;
+  }
+
+  .status-cards-container .pending-stat-row {
+    padding: 0.6rem 0.85rem;
+    border-radius: 10px;
+  }
+
+  .status-cards-container .pending-stat-row i {
+    font-size: 1.3em;
+  }
+}
+
+@media (min-width: 2560px) {
+  .status-cards-container .pending-stats-wrapper {
+    gap: 0.9rem;
+  }
+
+  .status-cards-container .pending-stat-row {
+    padding: 0.8rem 1.1rem;
+    border-radius: 12px;
+  }
+
+  .status-cards-container .pending-stat-row i {
+    font-size: 1.35em;
+  }
+}
+
+@media (min-width: 2560px) {
+  .status-cards-container .pending-stat-row {
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+  }
+}
+
+/* =====================================================
+CHART CARDS
+===================================================== */
+
+.chart-card {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.chart-card .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card .card-header {
+  background: linear-gradient(90deg, #f8f9fa, #ffffff);
+  border-bottom: 2px solid #e9ecef;
+  padding: .4rem .6rem;
+}
+
+.chart-card .card-body {
+  flex: 1;
+  padding: .3rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Tajuk carta — skala ikut device (Mobile default) */
+/* Warna sama seperti label kad status (Aduan Hari Ini / Lewat SLA) */
+.chart-card .card-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--bs-body-color);
+}
+
+.chart-card .card-subtitle {
+  font-size: 0.7rem;
+  color: #6c757d;
+}
+
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .chart-card .card-title    { font-size: 0.95rem; }
+  .chart-card .card-subtitle { font-size: 0.75rem; }
+}
+
+@media (min-width: 1200px) and (max-width: 1919.98px) {
+  .chart-card .card-title    { font-size: 1.05rem; }
+  .chart-card .card-subtitle { font-size: 0.85rem; }
+}
+
+@media (min-width: 1920px) and (max-width: 2559.98px) {
+  .chart-card .card-title    { font-size: 1.15rem; }
+  .chart-card .card-subtitle { font-size: 0.95rem; }
+}
+
+@media (min-width: 2560px) {
+  .chart-card .card-title    { font-size: 1.75rem; }
+  .chart-card .card-subtitle { font-size: 1.35rem; }
+}
+
+/* =====================================================
+CHART CONTAINER
+===================================================== */
+
+.chart-container {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  min-height: 0;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* =====================================================
+DATE TIME
+===================================================== */
+
+#currentDateTime {
+  font-weight: 600;
+  color: #2c3e50;
+  background: white;
+  padding: .4rem .9rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .1);
+}
+
+#currentDateTime i {
+  color: #667eea;
+}
+
+/* =====================================================
+MOBILE SCROLL — telefon sahaja (< 768px)
+Benarkan scroll + scrollbar bila kandungan melebihi viewport.
+Laptop / tablet / HD / TV kekal tanpa scrollbar (overflow hidden).
+===================================================== */
+/* @media (max-width: 768px) { */
+@media (max-width: 767.98px) {
+  html:has(.monitoring-dashboard),
+  body:has(.monitoring-dashboard) {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+    scrollbar-width: thin;
+    -ms-overflow-style: auto;
+  }
+
+  html:has(.monitoring-dashboard)::-webkit-scrollbar,
+  body:has(.monitoring-dashboard)::-webkit-scrollbar {
+    display: block !important;
+    width: 6px !important;
+    height: 6px !important;
+  }
+
+  html:has(.monitoring-dashboard)::-webkit-scrollbar-thumb,
+  body:has(.monitoring-dashboard)::-webkit-scrollbar-thumb {
+    background-color: rgba(102, 126, 234, 0.55);
+    border-radius: 4px;
+  }
+
+  body:has(.monitoring-dashboard) .layout-wrapper,
+  body:has(.monitoring-dashboard) .layout-container,
+  body:has(.monitoring-dashboard) .layout-page,
+  body:has(.monitoring-dashboard) .content-wrapper,
+  body:has(.monitoring-dashboard) .container-xxl {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  .monitoring-dashboard {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .monitoring-dashboard > .card {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .monitoring-dashboard .card-body {
+    flex: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .dashboard-row-consistent {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    gap: 0.75rem;
+  }
+
+  .cards-status-row,
+  .cards-status-row > .h-100,
+  .cards-status-row .status-cards-container {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Jarak rapat antara kad status pada mobile/tablet */
+  .cards-status-row .status-cards-container {
+    --bs-gutter-y: 0.5rem;
+    --bs-gutter-x: 0.5rem;
+    margin-bottom: 0 !important;
+  }
+
+  .charts-row {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .charts-row > [class*="col"] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .charts-row > [class*="col"]:last-child {
+    margin-bottom: 0;
+  }
+
+  .monitoring-footer {
+    min-height: 48px;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Header — stack & font lebih kecil */
+  .monitoring-header {
+    padding: 0.6rem 0.25rem 0.25rem !important;
+  }
+
+  .monitoring-header-bar {
+    padding: 0.55rem 0.65rem !important;
+  }
+
+  .monitoring-header-title {
+    min-width: 0;
+  }
+
+  .md-page-title {
+    font-size: 0.92rem !important;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+
+  .md-menu-icon {
+    font-size: 1.35rem !important;
+  }
+
+  .md-datetime,
+  #currentDateTime {
+    font-size: 0.68rem !important;
+    padding: 0.3rem 0.55rem !important;
+    width: 100%;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+
+  .md-count-lg,
+  .md-count-md {
+    font-size: 1.65rem !important;
+  }
+
+  .md-count-sm {
+    font-size: 1.25rem !important;
+  }
+
+  .md-label-lg {
+    font-size: 0.95rem !important;
+  }
+
+  .md-label-md {
+    font-size: 0.85rem !important;
+  }
+
+  .md-label-sm,
+  .md-label-xs {
+    font-size: 0.75rem !important;
+  }
+
+  .md-pending-pct {
+    font-size: 0.6rem !important;
+  }
+
+  .md-footer-text {
+    font-size: 0.68rem !important;
+    line-height: 1.35;
+  }
+
+  .status-cards-container .card-body {
+    padding: 0.45rem !important;
+  }
+
+  .status-cards-container .pending-stats-wrapper {
+    gap: 0.3rem;
+  }
+
+  .status-cards-container .pending-stat-row {
+    padding: 0.25rem 0.4rem;
+  }
+
+  .monitoring-dashboard .card:hover {
+    transform: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Carta — ketinggian & tipografi */
+  .charts-row {
+    --bs-gutter-y: 0.5rem;
+    --bs-gutter-x: 0.5rem;
+  }
+
+  .charts-row > [class*="col"] {
+    margin-bottom: 0.5rem;
+  }
+
+  .chart-card {
+    min-height: 0;
+  }
+
+  .chart-card .card-header {
+    padding: 0.35rem 0.5rem !important;
+  }
+
+  .chart-card .card-title {
+    font-size: 0.88rem !important;
+    line-height: 1.25;
+  }
+
+  .chart-card .card-subtitle {
+    font-size: 0.72rem !important;
+    line-height: 1.2;
+  }
+
+  .chart-card .card-body {
+    padding: 0.2rem !important;
+  }
+
+  /* Bar chart — lebih tinggi untuk label paksi-x */
+  .charts-row > [class*="col"]:first-child .chart-card {
+    min-height: 300px;
+  }
+
+  .charts-row > [class*="col"]:first-child .chart-container {
+    min-height: 240px;
+  }
+
+  /* Donut — ruang untuk legend bawah */
+  .charts-row > [class*="col"]:not(:first-child) .chart-card {
+    min-height: 340px;
+  }
+
+  .charts-row > [class*="col"]:not(:first-child) .chart-container {
+    min-height: 200px;
+    flex: 1 1 auto;
+  }
+}

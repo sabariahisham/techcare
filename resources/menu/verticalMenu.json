@@ -7,6 +7,12 @@
       "slug": "dashboard.index"
     },
     {
+      "url": "dashboard/monitoring",
+      "icon": "menu-icon tf-icons bx bx-tv",
+      "name": "Pemantauan Tiket",
+      "slug": "ticket-monitoring"
+    },
+    {
       "url": "tickets",
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",

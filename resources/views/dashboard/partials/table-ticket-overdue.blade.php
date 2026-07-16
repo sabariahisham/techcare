@@ -22,7 +22,6 @@
                             <th>DITUGASKAN</th>
                             <th>TARIKH DUE</th>
                             <th>LEWAT</th>
-                            <th>TINDAKAN</th>
                         </tr>
                     </thead>
                     <tbody>
