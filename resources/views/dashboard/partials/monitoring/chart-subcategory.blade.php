@@ -1,5 +1,5 @@
 <div class="col-12 col-lg-4 d-flex align-items-stretch chart-card">
-    <div class="card flex-fill d-flex flex-column">
+    <div class="card flex-fill d-flex flex-column" style="padding-left: 10px; padding-right: 10px;">
         <div class="card-header" style="flex-shrink: 0;">
             <h5 class="card-title mb-0">Aduan Mengikut Sub Kategori</h5>
             <p class="card-subtitle text-muted mb-0">Top 10 sub-categories</p>
@@ -26,6 +26,7 @@
                 .then(result => {
                     if (result.success) {
                         const ctx = document.getElementById('subCategoryChart');
+                        const isCompactViewport = window.innerWidth <= 1366;
 
                         // Destroy existing chart if it exists
                         if (subCategoryChart) {
@@ -58,7 +59,8 @@
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
-                                cutout: window.isMonitoringMobile && window.isMonitoringMobile() ? '52%' : '60%',
+                                cutout: window.isMonitoringMobile && window.isMonitoringMobile() ?
+                                    '40%' : '44%',
                                 layout: window.getMonitoringDoughnutLayoutOptions ?
                                     window.getMonitoringDoughnutLayoutOptions() : {},
                                 plugins: {
@@ -72,17 +74,19 @@
                                                 boxHeight: 10,
                                                 padding: 12,
                                                 font: {
-                                                    size: window.getChartFont ? window.getChartFont(0.85) : 12
+                                                    size: window.getChartFont ? window.getChartFont(
+                                                        0.85) : 12
                                                 }
                                             }
                                         },
-                                        // Data label (top on donut)
+                                    // Data label (top on donut)
                                     datalabels: window.getMonitoringDoughnutDataLabelOptions ?
-                                        window.getMonitoringDoughnutDataLabelOptions(1.25) : {
+                                        window.getMonitoringDoughnutDataLabelOptions(isCompactViewport ? 1.05 : 1.25) : {
                                             color: '#fff',
                                             font: {
                                                 weight: 'bold',
-                                                size: window.getChartFont ? window.getChartFont(1.25) : 12
+                                                size: window.getChartFont ? window.getChartFont(
+                                                    isCompactViewport ? 1.05 : 1.25) : (isCompactViewport ? 11 : 12)
                                             },
                                             formatter: function(value) {
                                                 if (value > 0) {

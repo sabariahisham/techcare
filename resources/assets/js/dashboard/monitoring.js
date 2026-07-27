@@ -12,6 +12,7 @@ let overdueTable = null;
 let actionTable = null;
 let refreshInterval = 60000; // 1 minute
 
+
 /**
  * Register ChartDataLabels plugin once Chart.js is available.
  * Must run before inline chart scripts on DOMContentLoaded.
@@ -25,6 +26,15 @@ function registerMonitoringChartPlugins() {
     window.Chart.register(ChartDataLabels);
     window.ChartDataLabels = ChartDataLabels;
     window.__monitoringChartDataLabelsRegistered = true;
+  }
+
+  if (!window.__monitoringDoughnutLabelsRegistered) {
+    if (typeof monitoringDoughnutLineLabelPlugin !== 'undefined') {
+      window.Chart.register(monitoringDoughnutLineLabelPlugin);
+      window.__monitoringDoughnutLabelsRegistered = true;
+    } else {
+      console.warn('monitoringDoughnutLineLabelPlugin is not defined; skipping plugin registration.');
+    }
   }
 
   return true;
@@ -305,13 +315,13 @@ function updateDateTime() {
     const mobile = window.innerWidth < 768;
     const displayString = mobile
       ? now.toLocaleString('ms-MY', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        })
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })
       : dateTimeString;
 
     dateTimeElement.innerHTML = `<i class="bx bx-time-five me-1 me-sm-2"></i>${displayString}`;
@@ -416,18 +426,46 @@ function updateWeeklyChart(weeklyData) {
       datasets: [{
         label: 'Selesai',
         data: counts,
-        backgroundColor: 'rgba(46, 184, 92, 0.8)',
-        borderColor: 'rgba(46, 184, 92, 1)',
+        backgroundColor: 'rgba(113, 221, 55, 0.8)',
+        borderColor: 'rgba(113, 221, 55, 1)',
         borderWidth: 1
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top: 32,
+          right: 6,
+          left: 6,
+          bottom: 0
+        }
+      },
       plugins: {
         legend: {
           display: false
-        }
+        },
+        datalabels: window.getMonitoringBarDataLabelOptions ?
+          Object.assign({}, window.getMonitoringBarDataLabelOptions(), {
+            offset: 6,
+            font: {
+              weight: 'bold',
+              size: getMonitoringChartFontSize(1.0)
+            }
+          }) : {
+            anchor: 'end',
+            align: 'top',
+            color: '#2c3e50',
+            offset: 6,
+            font: {
+              weight: 'bold',
+              size: getMonitoringChartFontSize(1.0)
+            },
+            formatter: function (value) {
+              return value;
+            }
+          }
       },
       scales: {
         y: {

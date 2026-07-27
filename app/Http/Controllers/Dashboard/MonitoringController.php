@@ -3,18 +3,14 @@
 namespace App\Http\Controllers\dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ticket;
-use App\Models\RefTicketStatus;
-use App\Models\RefCategory;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
  * MonitoringController
- * 
+ *
  * Handles real-time monitoring dashboard for Helpdesk On Duty
  * Designed for TV display with auto-refresh every 1 minute
  */
@@ -22,7 +18,7 @@ class MonitoringController extends Controller
 {
   /**
    * Display the monitoring dashboard
-   * 
+   *
    * @return \Illuminate\View\View
    */
   public function index()
@@ -39,7 +35,7 @@ class MonitoringController extends Controller
 
   /**
    * Get cards data (Aduan Hari Ini, Belum Selesai, Lewat SLA, Selesai Hari Ini)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getCardsData()
@@ -216,7 +212,7 @@ class MonitoringController extends Controller
 
   /**
    * Get status chart data (Bar chart showing ticket counts by status)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getStatusChartData()
@@ -234,6 +230,7 @@ class MonitoringController extends Controller
         })
         ->join('ref_ticket_statuses as rts', 'tc.tick_status', '=', 'rts.id')
         ->select(
+          'rts.id as status_id',
           'rts.st_name as status',
           DB::raw('COUNT(DISTINCT t.id) as count')
         )
@@ -244,14 +241,26 @@ class MonitoringController extends Controller
         ->orderBy('rts.id')
         ->get();
 
-      $labels = $statusData->pluck('status')->toArray();
-      $counts = $statusData->pluck('count')->toArray();
+      $completedCount = $statusData
+        ->filter(function ($row) {
+          return (int) $row->status_id === 6 || strcasecmp(trim($row->status), 'Aduan Selesai') === 0;
+        })
+        ->sum('count');
+
+      $filteredStatusData = $statusData
+        ->reject(function ($row) {
+          return (int) $row->status_id === 6 || strcasecmp(trim($row->status), 'Aduan Selesai') === 0;
+        });
+
+      $labels = $filteredStatusData->pluck('status')->toArray();
+      $counts = $filteredStatusData->pluck('count')->toArray();
 
       return response()->json([
         'success' => true,
         'data' => [
           'labels' => $labels,
-          'counts' => $counts
+          'counts' => $counts,
+          'completed_count' => $completedCount
         ]
       ]);
     } catch (\Exception $e) {
@@ -263,11 +272,6 @@ class MonitoringController extends Controller
     }
   }
 
-  /**
-   * Get category chart data (Pie chart showing ticket counts by category)
-   * 
-   * @return \Illuminate\Http\JsonResponse
-   */
   public function getCategoryChartData()
   {
     try {
@@ -304,7 +308,7 @@ class MonitoringController extends Controller
 
   /**
    * Get sub-category chart data (Pie chart showing ticket counts by sub-category)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getSubCategoryChartData()
@@ -344,7 +348,7 @@ class MonitoringController extends Controller
 
   /**
    * Get overdue tickets (tickets past SLA)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getOverdueTickets()
@@ -402,7 +406,7 @@ class MonitoringController extends Controller
 
   /**
    * Get action tickets (tickets requiring action)
-   * 
+   *
    * @return \Illuminate\Http\JsonResponse
    */
   public function getActionTickets()

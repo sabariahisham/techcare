@@ -92,13 +92,14 @@
 }
 
 .weekly-completed-card .weekly-chart-container {
-  height: 60px;
-  /* Increased height for better chart visibility */
+  height: 110px;
+  /* Increased height for better chart visibility and labels above bars */
   margin-top: 0.75rem;
+  overflow: visible;
 }
 
 .weekly-completed-card .weekly-chart-container canvas {
-  height: 60px !important;
+  height: 110px !important;
 }
 
 /* Pending tickets card with semi-pie chart */
