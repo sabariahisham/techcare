@@ -27,6 +27,9 @@ yarn-error.log
 /public/css
 /public/js
 /.github/copilot-instructions.md
+/.github/instructions/
+/.github/hooks/
+/.github/skills/
 AGENTS.md
 yarn.lock
 AGENTS.md

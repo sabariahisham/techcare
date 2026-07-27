@@ -1,6 +1,5 @@
 {
-  "menu": [
-    {
+  "menu": [{
       "url": "/dashboard",
       "name": "Dashboard",
       "icon": "menu-icon tf-icons bx bx-home-smile",
@@ -11,8 +10,7 @@
       "name": "Log Tiket",
       "icon": "menu-icon tf-icons bx bx-task",
       "slug": "ticket",
-      "submenu": [
-        {
+      "submenu": [{
           "url": "tickets/user",
           "name": "Tiket Saya",
           "slug": "tickets.user"
@@ -66,13 +64,11 @@
         "Pentadbir Sistem",
         "Administrator"
       ],
-      "submenu": [
-        {
+      "submenu": [{
           "name": "Pengurusan Pengguna",
           "slug": "user-management",
           "permission": "pengguna.view",
-          "submenu": [
-            {
+          "submenu": [{
               "url": "user-management/index",
               "name": "Pengguna",
               "slug": "user-management-index",
@@ -106,8 +102,7 @@
           "name": "Konfigurasi",
           "slug": "configuration",
           "permission": "konfigurasi.view",
-          "submenu": [
-            {
+          "submenu": [{
               "url": "ref-category-management/index",
               "name": "Kategori",
               "slug": "ref-category-management-index",
@@ -130,6 +125,12 @@
               "name": "Pegawai Tugasan",
               "slug": "officer-index",
               "permission": "konfigurasi.view"
+            },
+            {
+              "url": "public-holidays/index",
+              "name": "Cuti Umum",
+              "slug": "public-holidays-index",
+              "permission": "konfigurasi.view"
             }
           ]
         }
@@ -145,8 +146,7 @@
       "icon": "menu-icon icon-base bx bx-list-check",
       "permission": "audit.view",
       "role": "Administrator",
-      "submenu": [
-        {
+      "submenu": [{
           "url": "audit-trail",
           "name": "Senarai Audit Trail",
           "slug": "audit.index",

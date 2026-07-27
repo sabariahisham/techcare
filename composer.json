@@ -19,6 +19,7 @@
     "opcodesio/log-viewer": "^3.19",
     "owen-it/laravel-auditing": "^14.0",
     "spatie/laravel-permission": "^6.10",
+    "voku/simple_html_dom": "^5.0",
     "yajra/laravel-datatables-oracle": "12.0"
   },
   "require-dev": {
