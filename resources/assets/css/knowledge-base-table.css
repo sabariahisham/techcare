@@ -66,6 +66,13 @@
 }
 
 /* Larger width for No. Log Tiket column */
+/* First empty column width */
+.datatables-aduan-selesai tbody td:nth-child(1),
+.datatables-aduan-selesai thead th:nth-child(1) {
+  max-width: 30px;
+  width: 30px;
+}
+
 .datatables-aduan-selesai tbody td:nth-child(3),
 .datatables-aduan-selesai thead th:nth-child(3) {
   max-width: 120px;
