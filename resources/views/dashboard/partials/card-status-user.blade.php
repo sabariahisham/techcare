@@ -7,9 +7,10 @@
                     <div class="d-flex align-items-center my-1">
                         <h4 class="mb-0 me-2">{{ number_format($newTickets + $newTicketsOnBehalf) }}</h4>
                     </div>
-                </div>
+                </div>                
                 <div class="avatar flex-shrink-0">
-                    <span class="avatar-initial rounded bg-label-primary">
+                    <a href="{{ route('tickets.user') }}">
+                        <span class="avatar-initial rounded bg-label-primary">
                         <i class="bx bx-plus-circle bx-sm"></i>
                     </span>
                     </a>
@@ -36,9 +37,11 @@
                     </div>
                 </div>
                 <div class="avatar flex-shrink-0">
-                    <span class="avatar-initial rounded bg-label-warning">
-                        <i class="bx bx-time-five bx-lg"></i>
-                    </span>
+                    <a href="{{ route('tickets.user') }}">
+                        <span class="avatar-initial rounded bg-label-warning">
+                            <i class="bx bx-time-five bx-lg"></i>
+                        </span>
+                    </a>
                 </div>
             </div>
             <small class="text-muted mt-auto">Aduan sedang disemak dan diambil tindakan</small>
@@ -57,9 +60,11 @@
                     </div>
                 </div>
                 <div class="avatar flex-shrink-0">
-                    <span class="avatar-initial rounded bg-label-danger">
-                        <i class="bx bx-pause-circle bx-lg"></i>
-                    </span>
+                    <a href="{{ route('tickets.user') }}">
+                        <span class="avatar-initial rounded bg-label-danger">
+                            <i class="bx bx-pause-circle bx-lg"></i>
+                        </span>
+                    </a>
                 </div>
             </div>
             <small class="text-muted mt-auto">Aduan dirujuk kepada pihak yang berkenaan</small>
@@ -78,9 +83,11 @@
                     </div>
                 </div>
                 <div class="avatar flex-shrink-0">
-                    <span class="avatar-initial rounded bg-label-success">
-                        <i class="bx bx-check-shield bx-lg"></i>
-                    </span>
+                    <a href="{{ route('tickets.user') }}">
+                        <span class="avatar-initial rounded bg-label-success">
+                            <i class="bx bx-check-shield bx-lg"></i>
+                        </span>
+                    </a>
                 </div>
             </div>
             <small class="text-muted mt-auto">Aduan telah diselesaikan</small>

@@ -10,6 +10,10 @@ use App\Http\Controllers\Audit\MailLogController;
 use App\Http\Controllers\Audit\SLALogController;
 use App\Http\Controllers\Audit\SyncRefSPPLogController;
 use App\Http\Controllers\Audit\SyncSPPLogController;
+use App\Http\Controllers\Ticket\TicketSLAController;
+use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\MonitoringController;
+use App\Http\Controllers\Ticket\TicketSearchController;
 use App\Http\Controllers\Configuration\ModuleController;
 use App\Http\Controllers\Configuration\OfficerController;
 use App\Http\Controllers\Configuration\PermissionController;
@@ -202,6 +206,44 @@ Route::middleware($authMiddleware)->prefix('dashboard')->name('dashboard.')->gro
     Route::get('/pegawai/category-tickets', [DashboardController::class, 'getCategoryTicketsPegawai'])->name('pegawai.category-tickets');
     Route::get('/pegawai/subcategory-tickets', [DashboardController::class, 'getSubcategoryTicketsPegawai'])->name('pegawai.subcategory-tickets');
     Route::get('/pegawai/list-overdue', [DashboardController::class, 'getListOverduePegawai'])->name('pegawai.list-overdue');
+  // Main dashboard page
+  Route::get('/', [DashboardController::class, 'index'])->name('index');
+
+  // Monitoring dashboard page (for TV display)
+  Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring');
+  // Monitoring API endpoints for real-time updates
+  Route::get('/monitoring/cards-data', [MonitoringController::class, 'getCardsData'])->name('monitoring.cards-data');
+  Route::get('/monitoring/status-chart', [MonitoringController::class, 'getStatusChartData'])->name('monitoring.status-chart');
+  Route::get('/monitoring/category-chart', [MonitoringController::class, 'getCategoryChartData'])->name('monitoring.category-chart');
+  Route::get('/monitoring/subcategory-chart', [MonitoringController::class, 'getSubCategoryChartData'])->name('monitoring.subcategory-chart');
+  Route::get('/monitoring/overdue-tickets', [MonitoringController::class, 'getOverdueTickets'])->name('monitoring.overdue-tickets');
+  Route::get('/monitoring/action-tickets', [MonitoringController::class, 'getActionTickets'])->name('monitoring.action-tickets');
+
+  // Dashboard API endpoints
+  Route::get('/current-status', [DashboardController::class, 'getCurrentStatus'])->name('current-status');
+  Route::get('/status-tickets', [DashboardController::class, 'getStatusTickets'])->name('status-tickets');
+  Route::get('/category-tickets', [DashboardController::class, 'getCategoryTickets'])->name('category-tickets');
+  Route::get('/category/{categoryId}/subcategories', [DashboardController::class, 'getSubcategoriesByCategory'])->name('category.subcategories');
+  Route::get('/total-tickets', [DashboardController::class, 'getTotalTickets'])->name('total-tickets');
+  Route::get('/monthly-trend', [DashboardController::class, 'getMonthlyTrends'])->name('monthly-trend');
+  Route::get('/total-assigned', [DashboardController::class, 'getTotalAssigned'])->name('total-assigned');
+  Route::get('/list-overdue', [DashboardController::class, 'getListOverdue'])->name('list-overdue');
+
+  // Dashboard cards API endpoints
+  Route::get('/today-logs-count', [DashboardController::class, 'getTodayLogsCount'])->name('today-logs-count');
+  Route::get('/weekly-completed', [DashboardController::class, 'getWeeklyCompletedTickets'])->name('weekly-completed');
+  Route::get('/pending-stats', [DashboardController::class, 'getPendingTicketsStats'])->name('pending-stats');
+  Route::get('/overdue-sla-count', [DashboardController::class, 'getOverdueSLACount'])->name('overdue-sla-count');
+
+  // Pegawai Tugasan specific endpoints (always filtered by assigned tasks)
+  Route::get('/pegawai/today-logs-count', [DashboardController::class, 'getTodayLogsCountPegawai'])->name('pegawai.today-logs-count');
+  Route::get('/pegawai/weekly-completed', [DashboardController::class, 'getWeeklyCompletedTicketsPegawai'])->name('pegawai.weekly-completed');
+  Route::get('/pegawai/pending-stats', [DashboardController::class, 'getPendingTicketsStatsPegawai'])->name('pegawai.pending-stats');
+  Route::get('/pegawai/overdue-sla-count', [DashboardController::class, 'getOverdueSLACountPegawai'])->name('pegawai.overdue-sla-count');
+  Route::get('/pegawai/status-tickets', [DashboardController::class, 'getStatusTicketsPegawai'])->name('pegawai.status-tickets');
+  Route::get('/pegawai/category-tickets', [DashboardController::class, 'getCategoryTicketsPegawai'])->name('pegawai.category-tickets');
+  Route::get('/pegawai/subcategory-tickets', [DashboardController::class, 'getSubcategoryTicketsPegawai'])->name('pegawai.subcategory-tickets');
+  Route::get('/pegawai/list-overdue', [DashboardController::class, 'getListOverduePegawai'])->name('pegawai.list-overdue');
 });
 
 // Manual Pengguna Route - Download PDF
