@@ -9,7 +9,12 @@
       "url": "dashboard/monitoring",
       "icon": "menu-icon tf-icons bx bx-tv",
       "name": "Pemantauan Tiket",
-      "slug": "ticket-monitoring"
+      "slug": "ticket-monitoring",
+      "role": [
+            "Administrator",
+            "Pentadbir Sistem",
+            "Penyelia Helpdesk"
+          ]
     },
     {
       "url": "tickets",
