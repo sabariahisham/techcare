@@ -136,7 +136,8 @@
               "url": "public-holidays/index",
               "name": "Cuti Umum",
               "slug": "public-holidays-index",
-              "permission": "konfigurasi.view"
+              "permission": "konfigurasi.view",
+              "disabled": true
             }
           ]
         }

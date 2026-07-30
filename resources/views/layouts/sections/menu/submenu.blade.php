@@ -52,9 +52,10 @@
             @endphp
 
             @if (
-                (!isset($submenu->permission) && !isset($submenu->role)) ||
+                !isset($submenu->disabled) &&
+                ((!isset($submenu->permission) && !isset($submenu->role)) ||
                     (isset($submenu->permission) && auth()->user()->can($submenu->permission)) ||
-                    (isset($submenu->role) && auth()->user()->hasAnyRole((array) $submenu->role)))
+                    (isset($submenu->role) && auth()->user()->hasAnyRole((array) $submenu->role))))
                 <li class="menu-item {{ $activeClass }}">
                     <a href="{{ isset($submenu->url) ? url($submenu->url) : 'javascript:void(0)' }}"
                         class="{{ $linkClass }}" @if (isset($submenu->target) and !empty($submenu->target)) target="_blank" @endif>
