@@ -18,8 +18,10 @@ class KnowledgeBaseController extends Controller
     {
         $user = Auth::user();
         $hasRole = $user && $user->roles->isNotEmpty();
+        $isMofRole = $user && $user->hasRole('Pengurusan MOF');
+        $showAduanTable = $hasRole && !$isMofRole;
 
-        return view('knowledgebase.index', compact('hasRole'));
+        return view('knowledgebase.index', compact('hasRole', 'showAduanTable'));
     }
 
     public function getData(Request $request)

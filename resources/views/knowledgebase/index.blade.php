@@ -86,7 +86,7 @@
       </div>
     </div>
   </div>
-  <div class="col-sm-6 col-xl-3">
+  {{-- <div class="col-sm-6 col-xl-3">
     <div class="card">
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
@@ -105,17 +105,17 @@
         </div>
       </div>
     </div>
-  </div>
-  <div class="col-sm-6 col-xl-3">
+  </div> --}}
+  {{-- <div class="col-sm-6 col-xl-3">
     <div class="card">
       <div class="card-body">
         <div class="d-flex align-items-start justify-content-between">
           <div class="content-left">
-            <span class="text-heading">Artikel Tidak Aktif</span>
+            <span class="text-heading">Senarai Aduan Knowledge Base</span>
             <div class="d-flex align-items-center my-1">
               <h4 class="mb-0 me-2">{{ \App\Models\KnowledgeBase::where('kb_status', 'tidak aktif')->count() }}</h4>
             </div>
-            <small class="mb-0">Artikel Draf</small>
+            <small class="mb-0">Untuk tindakan</small>
           </div>
           <div class="avatar">
             <span class="avatar-initial rounded bg-label-warning">
@@ -125,10 +125,11 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> --}}
 </div>
 
 <!-- Senarai Aduan Selesai Table -->
+@if($showAduanTable)
 <div class="card mb-6">
   <div class="card-header border-bottom">
     <h5 class="card-title mb-0">SENARAI ADUAN KNOWLEDGE BASE</h5>
@@ -154,6 +155,7 @@
     </table>
   </div>
 </div>
+@endif
 
 <!-- Knowledge Base List Table -->
 <div class="card">
