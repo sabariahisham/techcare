@@ -542,7 +542,7 @@ import 'quill/dist/quill.snow.css';
           [{ list: 'ordered' }, { list: 'bullet' }],
           [{ color: [] }, { background: [] }],
           ['blockquote', 'code-block'],
-          ['link'],
+          ['link', 'image'],
           ['clean'],
         ],
       },

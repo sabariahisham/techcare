@@ -253,7 +253,7 @@ function initializeFromAduanQuillEditor() {
           background: []
         }],
         ['blockquote', 'code-block'],
-        ['link'],
+        ['link', 'image'],
         ['clean'],
       ],
     },
