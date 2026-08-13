@@ -16,6 +16,12 @@
         pointer-events: none;
         transform: translate(-50%, calc(-100% - 8px));
     }
+
+    #comment-editor .ql-editor img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+    }
 </style>
 
 {{-- modal dialog box for comment input and submit button --}}

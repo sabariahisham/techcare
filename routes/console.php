@@ -118,3 +118,28 @@ if (config('app.enable_sync_refs_spp')) {
             \Illuminate\Support\Facades\Log::error('✗ Reference data sync from SPP failed at ' . now()->toDateTimeString());
         });
 }
+
+
+// ============================================================================
+// PRUNE ORPHAN TICKET CATATAN TINDAKAN IMAGES
+// ============================================================================
+// Daily - Delete Quill-uploaded catatan tindakan images that were never
+// attached to a saved comment (abandoned edits, images removed before submit)
+// Features:
+// - Runs once a day
+// - Deletes ticket_catatan_images rows with comment_id still null after 24 hours
+// - Also deletes the matching physical file in storage/app/public/ticket_comment_images
+// - php artisan ticket-catatan-images:prune-orphans
+// ============================================================================
+
+Schedule::command('ticket-catatan-images:prune-orphans')
+    ->daily()
+    ->timezone('Asia/Kuala_Lumpur')
+    ->name('Prune Orphan Ticket Catatan Images')
+    ->description('Delete catatan tindakan images uploaded via Quill but never attached to a saved comment')
+    ->onSuccess(function () {
+        \Illuminate\Support\Facades\Log::info('✓ Prune orphan ticket catatan images executed successfully at ' . now()->toDateTimeString());
+    })
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('✗ Prune orphan ticket catatan images failed at ' . now()->toDateTimeString());
+    });

@@ -23,8 +23,102 @@ const QUILL_TOOLBAR_TOOLTIPS = {
   blockquote: 'Quote',
   'code-block': 'Code Block',
   link: 'Insert Link',
+  image: 'Sisipkan Gambar',
   clean: 'Clear Formatting',
 };
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
+
+function notify(type, message) {
+    if (typeof toastr !== 'undefined') {
+        toastr[type](message);
+    } else {
+        alert(message);
+    }
+}
+
+/**
+ * Prompt for an image file, validate it (JPG/JPEG/PNG/WEBP, max 2MB), upload it to the
+ * server, then insert the returned URL into the Quill editor at the cursor position.
+ */
+function handleImageUpload(quill) {
+    const range = quill.getSelection(true);
+
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/jpeg,image/jpg,image/png,image/webp');
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        input.remove();
+
+        if (!file) {
+            return;
+        }
+
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            notify('error', 'Format gambar tidak dibenarkan. Hanya JPG, JPEG, PNG dan WEBP dibenarkan.');
+            return;
+        }
+
+        if (file.size > MAX_IMAGE_SIZE) {
+            notify('error', 'Saiz gambar tidak boleh melebihi 2MB.');
+            return;
+        }
+
+        uploadImage(quill, file, range);
+    });
+
+    input.click();
+}
+
+function uploadImage(quill, file, range) {
+    const ticketUuid = window.ticketData && window.ticketData.uuid;
+    if (!ticketUuid) {
+        notify('error', 'Tiket tidak ditemui. Sila muat semula halaman.');
+        return;
+    }
+
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const toolbarContainer = quill.getModule('toolbar')?.container;
+    const imageButton = toolbarContainer ? toolbarContainer.querySelector('.ql-image') : null;
+
+    if (imageButton) {
+        imageButton.disabled = true;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    fetch(`/ticket-comments/${ticketUuid}/upload-image`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfMeta ? csrfMeta.getAttribute('content') : '',
+            'Accept': 'application/json',
+        },
+        body: formData,
+    })
+        .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
+        .then(({ ok, data }) => {
+            if (!ok || !data.success) {
+                throw new Error(data.message || 'Ralat semasa memuat naik gambar.');
+            }
+
+            quill.insertEmbed(range.index, 'image', data.url, 'user');
+            quill.setSelection(range.index + 1, 0, 'user');
+        })
+        .catch((error) => {
+            notify('error', error.message || 'Ralat semasa memuat naik gambar.');
+        })
+        .finally(() => {
+            if (imageButton) {
+                imageButton.disabled = false;
+            }
+        });
+}
 
 let floatingTipEl = null;
 
@@ -150,11 +244,13 @@ window.initCommentEditor = function (selector = '#comment-editor') {
                 [{ list: 'ordered' }, { list: 'bullet' }],
                 [{ color: [] }, { background: [] }],
                 ['blockquote', 'code-block'],
-                ['link'],
+                ['link', 'image'],
                 ['clean'],
             ],
         },
     });
+
+    quill.getModule('toolbar').addHandler('image', () => handleImageUpload(quill));
 
     applyQuillToolbarTooltips(quill);
 

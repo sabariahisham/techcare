@@ -199,6 +199,13 @@
         text-decoration: underline;
     }
 
+    .comment-card .comment-html img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+        margin-top: 0.25rem;
+    }
+
     .comment-card small {
         line-height: 1.2;
     }

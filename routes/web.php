@@ -670,6 +670,7 @@ Route::middleware(['auth'])->prefix('ticket-comments')->group(function () {
     Route::post('/{uuid}/add-comment', [TicketCommentController::class, 'store'])->name('tickets.add-comment');
     Route::post('/{uuid}/store', [TicketCommentController::class, 'store'])->name('ticket-comments.store');
     Route::get('/{uuid}/data', [TicketCommentController::class, 'getComments'])->name('ticket-comments.data');
+    Route::post('/{uuid}/upload-image', [TicketCommentController::class, 'uploadEditorImage'])->name('ticket-comments.upload-image');
 });
 
 // Ticket Assignment Routes Group
