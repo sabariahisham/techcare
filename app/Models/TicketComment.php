@@ -48,6 +48,13 @@ class TicketComment extends Model
         $model->updated_by = Auth::id();
       }
     });
+
+    // Permanent deletion removes the comment for good, so its Quill-uploaded
+    // images (and their physical files) must go with it — each delete() call
+    // triggers TicketCatatanImage's own `deleting` hook, which removes the file.
+    static::forceDeleting(function (TicketComment $model) {
+      $model->images()->get()->each->delete();
+    });
   }
 
   /**
@@ -80,6 +87,14 @@ class TicketComment extends Model
   public function updatedBy()
   {
     return $this->belongsTo(User::class, 'updated_by');
+  }
+
+  /**
+   * Images uploaded from the Quill editor and embedded in comment_text
+   */
+  public function images()
+  {
+    return $this->hasMany(TicketCatatanImage::class, 'comment_id');
   }
 
   /**

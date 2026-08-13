@@ -39,7 +39,8 @@ class StoreCommentRequest extends FormRequest
           'ol,ul,li[class|style],' .
           'h1[class|style],h2[class|style],h3[class|style],h4[class|style],h5[class|style],h6[class|style],' .
           'blockquote[class|style],pre[class|style],code[class|style],' .
-          'a[href|target|rel|class|style],span[class|style],div[class|style]',
+          'a[href|target|rel|class|style],span[class|style],div[class|style],' .
+          'img[src|alt|class]',
         'CSS.AllowedProperties' =>
           'font-weight,font-style,text-decoration,text-decoration-line,text-decoration-style,text-decoration-color,text-align,color,background-color,white-space',
         'AutoFormat.AutoParagraph' => false,

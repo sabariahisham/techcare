@@ -33,6 +33,7 @@ yarn-error.log
 AGENTS.md
 yarn.lock
 AGENTS.md
+.claude/settings.json
 
 /developer-guide/docs
 /.cursorrules.md

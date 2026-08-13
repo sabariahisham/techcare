@@ -63,7 +63,7 @@ class TicketAssignmentController extends Controller
       'action_date' => 'required|date',
       'assigned_officers' => 'required|array|min:1',
       'assigned_officers.*' => 'exists:users,id',
-      'notes' => 'nullable|string|max:1000'
+      'notes' => 'nullable|string|max:10000'
     ];
 
     // Add kategori and sub kategori validation only for "Aduan Dirujuk" status
@@ -482,7 +482,7 @@ class TicketAssignmentController extends Controller
 
         // Also create a comment entry for "Catatan Tindakan" display
         // created_at after chronology so status badge reflects the submitted form status
-        TicketComment::create([
+        $notesComment = TicketComment::create([
           'user_id' => Auth::id(),
           'ticket_id' => $ticket->id,
           'comment_text' => $request->notes,
@@ -491,6 +491,14 @@ class TicketAssignmentController extends Controller
           'created_at' => now()->addSecond(),
           'updated_at' => now()->addSecond(),
         ]);
+
+        // Claim any Quill-uploaded images referenced in the notes for this comment
+        \App\Models\TicketCatatanImage::attachReferencedImages(
+          $request->notes,
+          $ticket->id,
+          $notesComment->id,
+          Auth::id()
+        );
       } else {
         // Add default notes
         $chronology->update([

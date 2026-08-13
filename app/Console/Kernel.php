@@ -12,8 +12,8 @@ class Kernel extends ConsoleKernel
    protected function schedule(Schedule $schedule)
 {
     // Run on 31 Dec at 11pm — scrapes next year's holidays before the year starts
-    $schedule->command('scrape:holidays ' . (date('Y') + 1))
-        ->yearlyOn(12, 31, '23:00');
+    // $schedule->command('scrape:holidays ' . (date('Y') + 1))
+    //     ->yearlyOn(12, 31, '23:00');
 }
 
     protected function commands(): void
