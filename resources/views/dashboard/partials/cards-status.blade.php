@@ -49,9 +49,9 @@
         </div>
 
         <!-- Card 3: Belum Selesai (Number with semi pie chart) -->
-        <div class="col d-flex align-items-stretch weekly-completed-card">
+        <div class="col d-flex align-items-stretch pending-tickets-card">
             <div class="card flex-fill" style="height: 162px;">
-                <div class="card-body d-flex flex-column p-3">
+                <div class="card-body d-flex flex-column p-3" style="overflow: hidden;">
                     <span class="d-block fw-medium mb-1" style="font-size: 0.8125rem;">Tiket Belum Selesai</span>
                     <h3 class="card-title mb-0" style="font-size: 1.5rem;">
                         <span id="pending-tickets-count" class="fw-bold">
@@ -69,10 +69,10 @@
                         </span> tiket
                     </small>
 
-                    <div class="mt-auto text-center">
+                    <div class="mt-auto text-center" style="min-height: 50px;">
                         <div class="pending-chart-container position-relative mx-auto"
-                            style="max-width:80px; height:50px;">
-                            <canvas id="pendingTicketsChart" height="30"></canvas>
+                            style="max-width:80px; height:50px; position: relative; width: 100%;">
+                            <canvas id="pendingTicketsChart"></canvas>
 
                             <div id="pending-percentage" class="position-absolute"
                                 style="
@@ -98,7 +98,7 @@
         <!-- Card 4: Selesai Minggu Ini (Number with bar chart) -->
         <div class="col d-flex align-items-stretch weekly-completed-card">
             <div class="card flex-fill" style="height: 162px;">
-                <div class="card-body d-flex flex-column p-3">
+                <div class="card-body d-flex flex-column p-3" style="overflow: hidden;">
                     <span class="d-block fw-medium mb-1" style="font-size: 0.8125rem;">Selesai Minggu Ini</span>
                     <h3 class="card-title mb-1" style="font-size: 1.5rem;">
                         <span id="weekly-completed-count">
@@ -109,9 +109,9 @@
                         <small class="text-muted" style="font-size: 0.875rem;">Tiket</small>
                     </h3>
 
-                    <div class="mt-auto">
-                        <div class="weekly-chart-container">
-                            <canvas id="weeklyCompletedChart" height="35"></canvas>
+                    <div class="mt-auto" style="min-height: 50px; position: relative; width: 100%;">
+                        <div class="weekly-chart-container" style="position: relative; height: 50px; width: 100%;">
+                            <canvas id="weeklyCompletedChart"></canvas>
                         </div>
                     </div>
                 </div>

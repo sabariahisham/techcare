@@ -11,12 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('sla', function (Blueprint $table) {
-            // Drop the incorrectly created deleted_by column if it exists
-            if (Schema::hasColumn('sla', 'deleted_by')) {
+        if (Schema::hasColumn('sla', 'deleted_by')) {
+            Schema::table('sla', function (Blueprint $table) {
+                $table->dropForeign(['deleted_by']);
+            });
+
+            Schema::table('sla', function (Blueprint $table) {
                 $table->dropColumn('deleted_by');
-            }
-        });
+            });
+        }
 
         Schema::table('sla', function (Blueprint $table) {
             // Add the correct deleted_by column as foreign key

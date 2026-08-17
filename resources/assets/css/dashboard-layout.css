@@ -89,17 +89,22 @@
 
 .weekly-completed-card .card-body {
   padding: 1.25rem;
+  overflow: hidden;
 }
 
 .weekly-completed-card .weekly-chart-container {
-  height: 110px;
-  /* Increased height for better chart visibility and labels above bars */
+  height: 50px;
+  /* Fixed height for bar chart */
   margin-top: 0.75rem;
-  overflow: visible;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
 }
 
 .weekly-completed-card .weekly-chart-container canvas {
-  height: 110px !important;
+  height: 50px !important;
+  width: 100% !important;
+  max-width: 100%;
 }
 
 /* Pending tickets card with semi-pie chart */
@@ -107,14 +112,22 @@
   min-height: 180px;
 }
 
+.pending-tickets-card .card-body {
+  overflow: hidden;
+}
+
 .pending-tickets-card .pending-chart-container {
-  height: 80px;
-  /* More space for the semi-pie chart */
+  height: 50px;
+  /* Fixed height for the semi-pie chart */
   margin-top: 0.5rem;
+  overflow: hidden;
+  position: relative;
 }
 
 .pending-tickets-card .pending-chart-container canvas {
-  height: 80px !important;
+  height: 50px !important;
+  width: 100% !important;
+  max-width: 100%;
 }
 
 /* Responsive adjustments */

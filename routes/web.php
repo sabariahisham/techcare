@@ -60,14 +60,9 @@ $authMiddleware = config('cas.cas_enabled')
   : ['auth', config('jetstream.auth_session')];
 // ============================================================================
 
-// Redirect default Laravel login and register routes to the dashboard
-Route::get('/login', function () {
-    return redirect('/');
-})->name('login');
-
-Route::get('/register', function () {
-    return redirect('/');
-})->name('register');
+// Register route is handled by Laravel Fortify/Jetstream
+// Laravel Fortify akan automatically provide register routes jika Features::registration() enabled
+// No need to manually override it here - Jetstream will handle it
 
 // Test route to check CAS configuration
 Route::get('/auth-status', function () {
@@ -103,10 +98,13 @@ Route::get('/test-email', function () {
     return 'Email sent!';
 });
 
+// Root route - redirect to login page if not authenticated, to dashboard if authenticated
 Route::get('/', function () {
-    return redirect('/dashboard');
-})->middleware($authMiddleware)
-    ->name('dashboard');
+    if (Auth::check()) {
+        return redirect('/dashboard');
+    }
+    return redirect('/login');
+})->name('home');
 
 // ============================================================================
 // Disabled Two-Factor Authentication Routes (for future use if needed)
